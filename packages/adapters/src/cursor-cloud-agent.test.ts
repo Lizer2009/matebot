@@ -52,6 +52,25 @@ describe("Cursor HTTP boundary", () => {
       /^bc-[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/,
     );
   });
+  it("attaches the configured default model id and omits model when unset", async () => {
+    const previous = process.env.CLOUD_AGENT_MODEL;
+    const wire = new CursorCloudAgentEmulator();
+    const provider = new CursorCloudAgentProvider({ apiKey: "fake-key", fetch: wire.fetch });
+    try {
+      process.env.CLOUD_AGENT_MODEL = "  deepseek-v41-flash-1017  ";
+      await provider.launch({ idempotencyKey: "model", prompt: "Task" }, context);
+      expect(wire.requests[0]?.body).toMatchObject({
+        model: { id: "deepseek-v41-flash-1017" },
+      });
+      delete process.env.CLOUD_AGENT_MODEL;
+      wire.requests.length = 0;
+      await provider.launch({ idempotencyKey: "no-model", prompt: "Task" }, context);
+      expect(wire.requests[0]?.body).not.toHaveProperty("model");
+    } finally {
+      if (previous === undefined) delete process.env.CLOUD_AGENT_MODEL;
+      else process.env.CLOUD_AGENT_MODEL = previous;
+    }
+  });
   it.each([400, 401, 403, 404, 422, 429, 500, 503])(
     "never exposes a %s response body",
     async (status) => {
