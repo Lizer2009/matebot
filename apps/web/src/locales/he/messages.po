@@ -2488,8 +2488,8 @@ msgid "Create space"
 msgstr "יצירת מרחב"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "יצירת Rakazo משלך"
+msgid "Create your {PRODUCT_DISPLAY_NAME}"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -4600,6 +4600,11 @@ msgstr "פתיחת {0}"
 msgid "Open {name}"
 msgstr "פתיחת {name}"
 
+#: src/components/pages/PublicPageShell.tsx
+#: src/pages/SharedPage.tsx
+msgid "Open {PRODUCT_DISPLAY_NAME}"
+msgstr ""
+
 #: src/components/pages/PageCard.tsx
 msgid "Open {title}"
 msgstr "פתיחת {title}"
@@ -4638,11 +4643,6 @@ msgstr "פתיחת הקישור"
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
 msgstr "פתיחת הניווט"
-
-#: src/components/pages/PublicPageShell.tsx
-#: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "פתיחת Rakazo"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -5911,8 +5911,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "התחברו ב-<0>{0}</0> והדביקו כאן את הקוד."
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "התחברות ל-Rakazo"
+msgid "Sign in to {PRODUCT_DISPLAY_NAME}"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"

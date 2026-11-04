@@ -3,7 +3,7 @@
 > **仓库**：[Lizer2009/matebot](https://github.com/Lizer2009/matebot)（fork 自 [elie222/rakazo](https://github.com/elie222/rakazo)）  
 > **目标**：把 matebot 作为**第二个 Grok Bot 实例**，在**不依赖本地电脑**的前提下，通过 Cursor Cloud Agent / 云端 VPS 完成在线迭代。  
 > **本文档性质**：规划稿（Planning pass）。实现工作按文末 P0/P1/P2 分阶段进行。  
-> **验证日期**：2026-11-04 — fork `main` 与 upstream `main` 同为 commit `927ffd8e`，**尚未做任何 matebot 品牌化或配置分叉**。
+> **验证日期**：2026-11-04 — P1-5 **轻量品牌**已落地：图标、favicon、Web/Electron 壳产品名、`docs/MATEBOT_BRAND.md`（见对应 PR）。包名与 GHCR 默认值仍为 upstream 形态。
 
 ---
 
@@ -254,7 +254,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | P1-2 | **install 脚本分叉** | `RAKAZO_DOWNLOAD_BASE` 默认指向 `Lizer2009/matebot` raw；smoke 仍过 |
 | P1-3 | **Cursor 开发环境** | 提交 `environment.json`（或等价）+ 简短 `docs/MATEBOT_CURSOR.md`：Cloud Agent 如何 `pnpm test` / 开 PR |
 | P1-4 | **启用 Cursor 集成** | 部署 env 含 `CLOUD_AGENT_PROVIDER=cursor`；Bot 成功 launch 一次 emulator 或真实 agent（staging） |
-| P1-5 | **轻量品牌** | README 顶部说明「Matebot — fork of Rakazo」+ 链 upstream；**不**强制全 monorepo rename |
+| P1-5 | **轻量品牌** | ✅ README 顶部 fork 说明；Matebot 图标与 Web/PWA/桌面 favicon；`PRODUCT_DISPLAY_NAME`；**不**强制全 monorepo rename |
 
 ### P2 — 后续
 

@@ -2488,8 +2488,8 @@ msgid "Create space"
 msgstr ""
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "अपना Rakazo बनाएं"
+msgid "Create your {PRODUCT_DISPLAY_NAME}"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -4600,6 +4600,11 @@ msgstr ""
 msgid "Open {name}"
 msgstr "{name} खोलें"
 
+#: src/components/pages/PublicPageShell.tsx
+#: src/pages/SharedPage.tsx
+msgid "Open {PRODUCT_DISPLAY_NAME}"
+msgstr ""
+
 #: src/components/pages/PageCard.tsx
 msgid "Open {title}"
 msgstr "{title} खोलें"
@@ -4638,11 +4643,6 @@ msgstr "लिंक खोलें"
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
 msgstr "नेविगेशन खोलें"
-
-#: src/components/pages/PublicPageShell.tsx
-#: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "Rakazo खोलें"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -5911,8 +5911,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "<0>{0}</0> पर साइन इन करें, फिर कोड यहाँ पेस्ट करें।"
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Rakazo में साइन इन करें"
+msgid "Sign in to {PRODUCT_DISPLAY_NAME}"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"

@@ -44,6 +44,11 @@
       "development": "./src/node/screen-proxy-response.ts",
       "default": "./src/node/screen-proxy-response.ts"
     },
+    "./product-brand": {
+      "types": "./src/product-brand.ts",
+      "development": "./src/product-brand.ts",
+      "default": "./src/product-brand.ts"
+    },
     "./plot": {
       "types": "./src/plot/plot-spec.ts",
       "development": "./src/plot/plot-spec.ts",

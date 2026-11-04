@@ -3,6 +3,7 @@ import {
   credentialIssue,
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
+  PRODUCT_DISPLAY_NAME,
   signupRequiresEmailVerification,
   suggestEmailCorrection,
 } from "@rakazo/core";
@@ -57,9 +58,9 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     sent || codeStep ? (
       <Trans>Check your email</Trans>
     ) : mode === "in" ? (
-      <Trans>Sign in to Rakazo</Trans>
+      t`Sign in to ${PRODUCT_DISPLAY_NAME}`
     ) : mode === "up" ? (
-      <Trans>Create your Rakazo</Trans>
+      t`Create your ${PRODUCT_DISPLAY_NAME}`
     ) : (
       <Trans>Reset your password</Trans>
     );
