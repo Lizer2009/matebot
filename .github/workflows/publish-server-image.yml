@@ -6,9 +6,12 @@ name: publish-server-image
 # read-only token and an isolated cache, so untrusted code can validate the images without
 # receiving package-publish authority.
 #
-# Image namespace is always ghcr.io/${{ github.repository }}/<app|computer|updater> (e.g.
-# ghcr.io/lizer2009/matebot/app on the matebot fork). Fork operators: see docs/MATEBOT_DEPLOY.md
-# for workflow_dispatch, GITHUB_TOKEN package write, and private GHCR pull login.
+# Image namespace is always lowercase ghcr.io/<repository>/<app|computer|updater> (e.g.
+# ghcr.io/lizer2009/matebot/app on the matebot fork). A registry reference must be lowercase, so
+# each job lowercases github.repository instead of interpolating it: an owner spelled with capitals
+# would otherwise fail every build at export with "repository name ... must be lowercase".
+# Fork operators: see docs/MATEBOT_DEPLOY.md for workflow_dispatch, GITHUB_TOKEN package write,
+# and private GHCR pull login.
 #
 # Published builds run on Depot when the DEPOT_PROJECT_ID repository variable names a project, and
 # on GitHub's runners otherwise (forks) or when a Depot build fails. Pull requests never use Depot.
@@ -83,10 +86,15 @@ jobs:
         with:
           persist-credentials: false
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Resolve the image reference
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}/${{ matrix.name }}" >> "$GITHUB_OUTPUT"
       - id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
-          images: ghcr.io/${{ github.repository }}/${{ matrix.name }}
+          images: ${{ steps.image.outputs.name }}
           tags: type=sha,prefix=sha-
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
@@ -143,6 +151,24 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
+      # A cold app build stores every layer on the runner and also streams the whole filesystem to
+      # /tmp for the credential scan; both share the root disk. GitHub's image ships several GB of
+      # toolchains this workflow never uses, so drop them first. Without this a fork's first
+      # uncached build dies at export with "write /tmp/rootfs.tar: no space left on device".
+      - name: Free disk space
+        run: |
+          set -euo pipefail
+          sudo rm -rf \
+            /usr/local/lib/android \
+            /usr/share/dotnet \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /usr/local/share/boost \
+            /opt/az \
+            /opt/microsoft \
+            /opt/google/chrome
+          docker image prune --all --force
+          df -h /
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
       - name: Log in to GHCR
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
@@ -150,11 +176,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Resolve the image reference
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}/${{ matrix.name }}" >> "$GITHUB_OUTPUT"
       - id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           # Labels only; publication applies tags after validation.
-          images: ghcr.io/${{ github.repository }}/${{ matrix.name }}
+          images: ${{ steps.image.outputs.name }}
           tags: type=sha,prefix=sha-
       - id: build
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
@@ -166,7 +197,7 @@ jobs:
           # A fork can publish only to its own namespace; no credential can redirect this value.
           # The app's filesystem is also written locally so the credential scan needs no registry pull.
           outputs: |
-            type=image,name=ghcr.io/${{ github.repository }}/${{ matrix.name }},push-by-digest=true,name-canonical=true,push=true
+            type=image,name=${{ steps.image.outputs.name }},push-by-digest=true,name-canonical=true,push=true
             ${{ matrix.name == 'app' && 'type=tar,dest=/tmp/rootfs.tar' || '' }}
           # GET /health can report the exact source commit without a deployment-supplied override.
           build-args: ${{ matrix.name == 'app' && format('GIT_SHA={0}', github.sha) || '' }}
@@ -238,11 +269,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Resolve the image reference
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}/${{ matrix.name }}" >> "$GITHUB_OUTPUT"
       - id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           # Labels only; publication applies tags after validation.
-          images: ghcr.io/${{ github.repository }}/${{ matrix.name }}
+          images: ${{ steps.image.outputs.name }}
           tags: type=sha,prefix=sha-
       - id: build
         uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
@@ -254,7 +290,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           labels: ${{ steps.meta.outputs.labels }}
           # A fork can publish only to its own namespace; no credential can redirect this value.
-          outputs: type=image,name=ghcr.io/${{ github.repository }}/${{ matrix.name }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ steps.image.outputs.name }},push-by-digest=true,name-canonical=true,push=true
           build-args: ${{ matrix.name == 'app' && format('GIT_SHA={0}', github.sha) || '' }}
           provenance: mode=max
           sbom: true
@@ -268,7 +304,7 @@ jobs:
       - name: Check the app image ships no credentials
         if: matrix.name == 'app' && steps.build.outcome == 'success'
         env:
-          IMAGE: ghcr.io/${{ github.repository }}/app@${{ steps.build.outputs.digest }}
+          IMAGE: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
         # Exporting a filesystem needs no emulation, so one runner checks both platforms.
         run: |
           set -euo pipefail
@@ -290,7 +326,7 @@ jobs:
       - if: steps.build.outcome == 'success'
         uses: ./.github/actions/publish-image
         with:
-          image: ghcr.io/${{ github.repository }}/${{ matrix.name }}
+          image: ${{ steps.image.outputs.name }}
           digests-directory: /tmp/digests
 
   publish:
@@ -331,7 +367,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Resolve the image reference
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}/${{ matrix.name }}" >> "$GITHUB_OUTPUT"
       - uses: ./.github/actions/publish-image
         with:
-          image: ghcr.io/${{ github.repository }}/${{ matrix.name }}
+          image: ${{ steps.image.outputs.name }}
           digests-directory: /tmp/digests

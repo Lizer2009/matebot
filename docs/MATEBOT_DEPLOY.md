@@ -33,6 +33,25 @@ CI 工作流 [`.github/workflows/publish-server-image.yml`](../.github/workflows
 
 Pull request 只**构建校验**，不向 GHCR 推送。
 
+镜像名由 job 内 `Resolve the image reference` 步骤生成，会先把 `github.repository` 转成小写（`${REPOSITORY,,}`）。镜像引用必须是全小写，`Lizer2009/matebot` 这种含大写的 owner 若直接拼接，每个 Build job 都会在导出阶段报 `repository name ... must be lowercase`。原生 `build` job 在 `setup-buildx` 之前会先 `Free disk space` 并 `docker image prune --all`：`app` 首次无缓存构建要把整层与 `/tmp/rootfs.tar`（供凭据扫描）同时放在根盘上，不清理会在 `write /tmp/rootfs.tar` 处 `no space left on device`。
+
+手动重跑（fork 上没有 `DEPOT_PROJECT_ID` 时走原生 runner）：
+
+```bash
+# 1) 确认修复已在 main 上（否则 workflow_dispatch 仍会用旧版本）
+git fetch origin main && git log --oneline -1 origin/main
+
+# 2) 触发一次发布；edge 只在 github.ref 是 refs/heads/main 时打
+gh workflow run publish-server-image.yml --repo Lizer2009/matebot --ref main
+
+# 3) 跟踪结果
+gh run list --repo Lizer2009/matebot --workflow publish-server-image.yml --limit 3
+gh run watch --repo Lizer2009/matebot <run-id> --exit-status
+
+# 4) 核对包已可见（公开包可匿名；私有包需先 docker login ghcr.io）
+docker manifest inspect ghcr.io/lizer2009/matebot/app:edge | head -20
+```
+
 ### 一次性：fork 上的 GHCR / Actions 权限
 
 若推送失败且日志出现 package 权限或 `denied`：
