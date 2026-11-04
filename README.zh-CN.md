@@ -5,6 +5,8 @@
 **Matebot** 是本仓库的产品名：个人第二个 Grok 风格 Bot，以及无需本地电脑即可在线迭代的 [Cursor](https://cursor.com) 编程队友。代码 fork 自 **[Rakazo](https://github.com/elie222/rakazo)**（Apache-2.0），刻意保留上游署名、`@rakazo/*` 包名与基础设施命名。
 
 - 分叉计划：[docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md)
+- 部署记录：[docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md)
+- Cursor Cloud Agent：[docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md)
 - 品牌资源：[docs/MATEBOT_BRAND.md](./docs/MATEBOT_BRAND.md)
 
 ---

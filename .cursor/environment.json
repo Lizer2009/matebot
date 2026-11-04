@@ -1,0 +1,3 @@
+{
+  "install": "pnpm install --frozen-lockfile && DATABASE_URL=postgres://rakazo:rakazo@127.0.0.1:5433/rakazo pnpm db:generate"
+}
