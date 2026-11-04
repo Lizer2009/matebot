@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { isBuildId } from "@rakazo/contracts/client-build";
+import { PRODUCT_DISPLAY_NAME } from "@rakazo/core/product-brand";
 import { webDarkTokens } from "@rakazo/ui-tokens";
 import type { Plugin, Rolldown } from "vite";
 import { CACHE_PREFIX } from "./service-worker.js";
@@ -17,8 +18,8 @@ export function webManifest() {
   }));
   return {
     id: "/",
-    name: "Rakazo",
-    short_name: "Rakazo",
+    name: PRODUCT_DISPLAY_NAME,
+    short_name: PRODUCT_DISPLAY_NAME,
     description: "Your team of always-on agents.",
     start_url: "/",
     scope: "/",

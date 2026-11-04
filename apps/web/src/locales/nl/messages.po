@@ -2488,8 +2488,8 @@ msgid "Create space"
 msgstr "Space aanmaken"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Maak je Rakazo"
+msgid "Create your {PRODUCT_DISPLAY_NAME}"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -4600,6 +4600,11 @@ msgstr "{0} openen"
 msgid "Open {name}"
 msgstr "{name} openen"
 
+#: src/components/pages/PublicPageShell.tsx
+#: src/pages/SharedPage.tsx
+msgid "Open {PRODUCT_DISPLAY_NAME}"
+msgstr ""
+
 #: src/components/pages/PageCard.tsx
 msgid "Open {title}"
 msgstr "{title} openen"
@@ -4638,11 +4643,6 @@ msgstr "Link openen"
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
 msgstr "Navigatie openen"
-
-#: src/components/pages/PublicPageShell.tsx
-#: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "Rakazo openen"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -5911,8 +5911,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "Meld je aan op <0>{0}</0> en plak de code hier."
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Aanmelden bij Rakazo"
+msgid "Sign in to {PRODUCT_DISPLAY_NAME}"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"

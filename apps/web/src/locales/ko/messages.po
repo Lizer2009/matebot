@@ -2488,8 +2488,8 @@ msgid "Create space"
 msgstr "스페이스 만들기"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Rakazo 계정 만들기"
+msgid "Create your {PRODUCT_DISPLAY_NAME}"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -4600,6 +4600,11 @@ msgstr "{0} 열기"
 msgid "Open {name}"
 msgstr "{name} 열기"
 
+#: src/components/pages/PublicPageShell.tsx
+#: src/pages/SharedPage.tsx
+msgid "Open {PRODUCT_DISPLAY_NAME}"
+msgstr ""
+
 #: src/components/pages/PageCard.tsx
 msgid "Open {title}"
 msgstr "{title} 열기"
@@ -4638,11 +4643,6 @@ msgstr "링크 열기"
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
 msgstr "메뉴 열기"
-
-#: src/components/pages/PublicPageShell.tsx
-#: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "Rakazo 열기"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -5911,8 +5911,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "<0>{0}</0>에서 로그인한 다음 코드를 여기에 붙여넣으세요."
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Rakazo 로그인"
+msgid "Sign in to {PRODUCT_DISPLAY_NAME}"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"

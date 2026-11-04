@@ -3,7 +3,7 @@
 > **仓库**：[Lizer2009/matebot](https://github.com/Lizer2009/matebot)（fork 自 [elie222/rakazo](https://github.com/elie222/rakazo)）  
 > **目标**：把 matebot 作为**第二个 Grok Bot 实例**，在**不依赖本地电脑**的前提下，通过 Cursor Cloud Agent / 云端 VPS 完成在线迭代。  
 > **本文档性质**：规划稿（Planning pass）。实现工作按文末 P0/P1/P2 分阶段进行。  
-> **验证日期**：2026-11-04 — fork `main` 为 `b722f80f`，upstream `main` 为 `d97c5fd7`（见 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#跟踪-commit2026-11-04-自本仓库观测)）。**部署路径已定为 VPS/LAN Compose（192.168.10.12）；Railway 暂缓。**
+> **验证日期**：2026-11-04 — fork `main` 在合并部署文档 PR 后为 `5480b877`，upstream `main` 为 `d97c5fd7`（见 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#跟踪-commit2026-11-04-自本仓库观测)）。**部署路径已定为 VPS/LAN Compose（192.168.10.12）；Railway 暂缓。** P1-5 **轻量品牌**：几何 Matebot 图标、favicon/PWA、`PRODUCT_DISPLAY_NAME`、`docs/MATEBOT_BRAND.md`（PR #3）；包名与 GHCR 默认值仍为 upstream 形态。
 
 ---
 
@@ -254,7 +254,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | P1-2 | **install 脚本分叉** | `RAKAZO_DOWNLOAD_BASE` 默认指向 `Lizer2009/matebot` raw；smoke 仍过 |
 | P1-3 | **Cursor 开发环境** | ✅ 2026-11-04 — [`.cursor/environment.json`](../.cursor/environment.json) + [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md) |
 | P1-4 | **启用 Cursor 集成** | 部署 env 含 `CLOUD_AGENT_PROVIDER=cursor`；Bot 成功 launch 一次 emulator 或真实 agent（staging） |
-| P1-5 | **轻量品牌** | ✅ 2026-11-04 — README / README.zh-CN 顶部 + 链计划/部署文档；**未**改 `@rakazo/*` |
+| P1-5 | **轻量品牌** | ✅ 2026-11-04 — README / README.zh-CN 顶部（链计划/部署/Cursor/品牌）；几何 Matebot 图标与 Web/PWA/Linux·Windows favicon；`PRODUCT_DISPLAY_NAME`；**未**改 `@rakazo/*` |
 
 ### P2 — 后续
 

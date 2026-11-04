@@ -2488,8 +2488,8 @@ msgid "Create space"
 msgstr "Create space"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Create your Rakazo"
+msgid "Create your {PRODUCT_DISPLAY_NAME}"
+msgstr "Create your {PRODUCT_DISPLAY_NAME}"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -4600,6 +4600,11 @@ msgstr "Open {0}"
 msgid "Open {name}"
 msgstr "Open {name}"
 
+#: src/components/pages/PublicPageShell.tsx
+#: src/pages/SharedPage.tsx
+msgid "Open {PRODUCT_DISPLAY_NAME}"
+msgstr "Open {PRODUCT_DISPLAY_NAME}"
+
 #: src/components/pages/PageCard.tsx
 msgid "Open {title}"
 msgstr "Open {title}"
@@ -4638,11 +4643,6 @@ msgstr "Open link"
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
 msgstr "Open navigation"
-
-#: src/components/pages/PublicPageShell.tsx
-#: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "Open Rakazo"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -5911,8 +5911,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "Sign in at <0>{0}</0>, then paste the code here."
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Sign in to Rakazo"
+msgid "Sign in to {PRODUCT_DISPLAY_NAME}"
+msgstr "Sign in to {PRODUCT_DISPLAY_NAME}"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"

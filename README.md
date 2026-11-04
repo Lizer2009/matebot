@@ -1,12 +1,19 @@
 # Matebot
 
-This repository ([Lizer2009/matebot](https://github.com/Lizer2009/matebot)) is a **fork of [Rakazo](https://github.com/elie222/rakazo)** ([upstream](https://github.com/elie222/rakazo)). npm packages remain `@rakazo/*`. Fork roadmap: [docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md). Deployment notes: [docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md). Cursor Cloud Agent: [docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md).
+[English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
+
+**Matebot** is this repository’s product name: a personal second Grok-style bot and online [Cursor](https://cursor.com) coding teammate, deployable without relying on a local desktop. The codebase is a fork of **[Rakazo](https://github.com/elie222/rakazo)** (Apache-2.0). Upstream attribution, `@rakazo/*` packages, and infrastructure names are preserved on purpose.
+
+- Fork plan: [docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md)
+- Deployment: [docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md)
+- Cursor Cloud Agent: [docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md)
+- Brand assets and colors: [docs/MATEBOT_BRAND.md](./docs/MATEBOT_BRAND.md)
 
 ---
 
-# Rakazo
+## Rakazo (upstream codebase)
 
-[English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
+The following describes the shared Rakazo stack this fork builds on.
 
 [![GitHub stars](https://img.shields.io/github/stars/elie222/rakazo?labelColor=black&style=for-the-badge&color=2563EB)](https://github.com/elie222/rakazo/stargazers)
 [![Discord](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?labelColor=black&style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/RWwKa2Sn7h)

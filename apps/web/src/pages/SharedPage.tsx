@@ -1,5 +1,6 @@
 import { Trans } from "@lingui/react/macro";
 import type { SharedPage } from "@rakazo/contracts";
+import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
 import { pageShareTokenFromSlug, SHARED_PAGE_PATH_PREFIX } from "@rakazo/contracts";
 import { Button, buttonVariants, Spinner } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
@@ -56,7 +57,7 @@ function SharedPageBody() {
             <Trans>The owner may have turned off its link or deleted it.</Trans>
           </p>
           <a href="/" className={`${buttonVariants({ variant: "outline", size: "sm" })} mt-1`}>
-            <Trans>Open Rakazo</Trans>
+            <Trans>Open {PRODUCT_DISPLAY_NAME}</Trans>
           </a>
         </div>
       </main>

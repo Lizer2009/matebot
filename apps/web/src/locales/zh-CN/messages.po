@@ -2488,8 +2488,8 @@ msgid "Create space"
 msgstr "创建工作区"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "创建你的 Rakazo"
+msgid "Create your {PRODUCT_DISPLAY_NAME}"
+msgstr "创建你的 {PRODUCT_DISPLAY_NAME}"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -4600,6 +4600,11 @@ msgstr "打开 {0}"
 msgid "Open {name}"
 msgstr "打开 {name}"
 
+#: src/components/pages/PublicPageShell.tsx
+#: src/pages/SharedPage.tsx
+msgid "Open {PRODUCT_DISPLAY_NAME}"
+msgstr "打开 {PRODUCT_DISPLAY_NAME}"
+
 #: src/components/pages/PageCard.tsx
 msgid "Open {title}"
 msgstr "打开 {title}"
@@ -4638,11 +4643,6 @@ msgstr "打开链接"
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
 msgstr "打开导航"
-
-#: src/components/pages/PublicPageShell.tsx
-#: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "打开 Rakazo"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -5911,8 +5911,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "在 <0>{0}</0> 登录，然后将代码粘贴到这里。"
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "登录 Rakazo"
+msgid "Sign in to {PRODUCT_DISPLAY_NAME}"
+msgstr "登录 {PRODUCT_DISPLAY_NAME}"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
