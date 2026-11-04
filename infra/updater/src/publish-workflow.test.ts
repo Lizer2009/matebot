@@ -12,6 +12,7 @@ interface WorkflowStep {
   name?: string;
   if?: string;
   uses?: string;
+  shell?: string;
   "continue-on-error"?: boolean;
   run?: string;
   with?: Record<string, unknown>;
@@ -87,6 +88,18 @@ describe("server image publish workflow", () => {
     );
     expect(manifest).toBeGreaterThanOrEqual(0);
     expect(attest).toBeGreaterThan(manifest);
+  });
+
+  it("does not fail a published image just because the repository cannot store attestations", () => {
+    const attest = publisher.runs.steps.find((step) =>
+      step.uses?.startsWith("actions/attest-build-provenance@"),
+    );
+    // Tags are pushed before this step, so a user-owned private repository's "Feature not
+    // available" response must leave the publication intact and only warn.
+    expect(attest?.["continue-on-error"]).toBe(true);
+    const warn = publisher.runs.steps.find((step) => step.name === "Report a skipped attestation");
+    expect(warn?.if).toContain("steps.attest.outcome");
+    expect(warn?.shell).toBe("bash");
   });
 
   it("builds on Depot only when the repository names a project, and never for pull requests", () => {
