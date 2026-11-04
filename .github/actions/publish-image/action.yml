@@ -33,8 +33,20 @@ runs:
         GH_TOKEN: ${{ github.token }}
       run: bash "$ACTION_PATH/publish.sh"
     - name: Attest the published image
+      id: attest
+      # GitHub cannot store attestations for a repository it does not bill as public here: a
+      # user-owned private fork gets "Feature not available for user-owned private repositories".
+      # The tags are already pushed by the step above, so a missing attestation must not fail the
+      # release and hide an otherwise complete publication.
+      continue-on-error: true
       uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
       with:
         subject-name: ${{ inputs.image }}
         subject-digest: ${{ steps.manifest.outputs.digest }}
         push-to-registry: true
+    - name: Report a skipped attestation
+      if: steps.attest.outcome != 'success'
+      shell: bash
+      env:
+        IMAGE: ${{ inputs.image }}
+      run: echo "::warning::${IMAGE} was published but not attested; this repository cannot store attestations."
