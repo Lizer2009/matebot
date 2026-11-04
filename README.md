@@ -1,3 +1,9 @@
+# Matebot
+
+This repository ([Lizer2009/matebot](https://github.com/Lizer2009/matebot)) is a **fork of [Rakazo](https://github.com/elie222/rakazo)** ([upstream](https://github.com/elie222/rakazo)). npm packages remain `@rakazo/*`. Fork roadmap: [docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md). Deployment notes: [docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md). Cursor Cloud Agent: [docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md).
+
+---
+
 # Rakazo
 
 [English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)

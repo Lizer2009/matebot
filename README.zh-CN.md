@@ -1,3 +1,9 @@
+# Matebot
+
+本仓库（[Lizer2009/matebot](https://github.com/Lizer2009/matebot)）是 **[Rakazo](https://github.com/elie222/rakazo)**（[上游](https://github.com/elie222/rakazo)）的 fork；npm 包名仍为 `@rakazo/*`。分叉计划见 [docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md)，部署记录见 [docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md)，Cursor Cloud Agent 用法见 [docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md)。
+
+---
+
 # Rakazo
 
 [English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)

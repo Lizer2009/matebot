@@ -3,7 +3,7 @@
 > **仓库**：[Lizer2009/matebot](https://github.com/Lizer2009/matebot)（fork 自 [elie222/rakazo](https://github.com/elie222/rakazo)）  
 > **目标**：把 matebot 作为**第二个 Grok Bot 实例**，在**不依赖本地电脑**的前提下，通过 Cursor Cloud Agent / 云端 VPS 完成在线迭代。  
 > **本文档性质**：规划稿（Planning pass）。实现工作按文末 P0/P1/P2 分阶段进行。  
-> **验证日期**：2026-11-04 — fork `main` 与 upstream `main` 同为 commit `927ffd8e`，**尚未做任何 matebot 品牌化或配置分叉**。
+> **验证日期**：2026-11-04 — fork `main` 为 `b722f80f`，upstream `main` 为 `d97c5fd7`（见 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#跟踪-commit2026-11-04-自本仓库观测)）。**部署路径已定为 VPS/LAN Compose（192.168.10.12）；Railway 暂缓。**
 
 ---
 
@@ -12,7 +12,7 @@
 | 维度 | 结论 |
 | --- | --- |
 | 与 upstream 关系 | 当前与 `elie222/rakazo` **字节级一致**；所有 `@rakazo/*` 包名、GHCR 镜像、`rakazo.com` 文档链接仍指向上游。 |
-| 推荐部署形态（无本地机） | **Railway 一键模板** 或 **VPS + 官方 Compose 镜像**；Bot **计算机**用 **E2B / Boat / Daytona** 等远程沙箱，避免在云端 VM 上嵌套 Docker 沙箱。 |
+| 推荐部署形态（无本地机） | **Matebot 当前：VPS + Compose 镜像**（`192.168.10.12`）；**Railway 暂缓**。Bot **计算机**可用 Docker（有 socket）或 **E2B / Boat / Daytona** 等远程沙箱。 |
 | Cursor 集成 | 产品已内置 **Cursor Cloud Agent** 适配器（`CLOUD_AGENT_PROVIDER=cursor`）；Bot 可通过 `cloud_agent_*` 工具在**你的 GitHub 仓库**上启动 Cursor 云端 Agent，与「在 Cursor 里改 matebot 代码」是**互补**关系。 |
 | 首轮编码重点 | 分叉标识（可选）、**自有 GHCR/安装脚本默认值**、**matebot 专用 `.env` 模板**、CI 可绿、文档与 upstream 同步策略。 |
 
@@ -227,7 +227,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 
 | 阶段 | 名称 | 交付物 |
 | --- | --- | --- |
-| **M0** | 规划冻结 | 本文档 + PR 合并；确认部署目标（Railway vs VPS） |
+| **M0** | 规划冻结 | 本文档 + PR 合并；✅ 部署目标：**VPS/LAN Compose**（Railway 暂缓，2026-11-04） |
 | **M1** | 可部署分叉 | fork GHCR 或文档化 `RAKAZO_IMAGE`；matebot 安装说明；**一处**在线实例可登录 |
 | **M2** | 迭代闭环 | `.cursor/environment.json`；CI 绿；默认 `CLOUD_AGENT_*` 文档；Bot 能 `cloud_agent_launch` 到 matebot 仓库 |
 | **M3** | 差异化（可选） | 默认模型/审批策略、关闭不需要的集成、自定义 www 落地页 |
@@ -240,11 +240,11 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 
 | ID | 项 | 验收标准 |
 | --- | --- | --- |
-| P0-1 | **确认部署目标并记录** | `docs/MATEBOT_DEPLOY.md`（或本文 §3 链接清单）写明 Railway **或** VPS；含占位符域名与 secrets 清单 |
+| P0-1 | **确认部署目标并记录** | ✅ 2026-11-04 — [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md)：VPS/LAN Compose；Railway 暂缓；secrets 清单 |
 | P0-2 | **在线实例跑起来** | HTTPS URL 可注册/登录；至少一个 Bot 能完成一轮对话（已接模型） |
 | P0-3 | **远程计算机** | 在目标环境 `SANDBOX_PROVIDER≠docker`（若 host 无 socket）且 Bot 能执行简单 `shell` 或明确文档「仅 none」 |
-| P0-4 | **CI 在 fork 上通过** | `main` 上 PR 触发 `ci.yml` 必需检查通过（允许忽略 fork 上预期的 Vercel 授权失败） |
-| P0-5 | **Upstream 远程** | `upstream` remote 文档化；记录当前跟踪 commit |
+| P0-4 | **CI 在 fork 上通过** | ✅ 2026-11-04 — fork 回退 `ubuntu-latest` runner；Vercel 失败文档化（[MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#fork-ci-说明)） |
+| P0-5 | **Upstream 远程** | ✅ 2026-11-04 — [MATEBOT_DEPLOY.md §Git](./MATEBOT_DEPLOY.md#与-upstream-同步git) + 跟踪 SHA |
 
 ### P1 — 第二轮
 
@@ -252,9 +252,9 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | --- | --- | --- |
 | P1-1 | **自有容器镜像** | Actions 发布到 `ghcr.io/<owner>/matebot/...`；`.env.images.example` 或 README 默认指向 fork |
 | P1-2 | **install 脚本分叉** | `RAKAZO_DOWNLOAD_BASE` 默认指向 `Lizer2009/matebot` raw；smoke 仍过 |
-| P1-3 | **Cursor 开发环境** | 提交 `environment.json`（或等价）+ 简短 `docs/MATEBOT_CURSOR.md`：Cloud Agent 如何 `pnpm test` / 开 PR |
+| P1-3 | **Cursor 开发环境** | ✅ 2026-11-04 — [`.cursor/environment.json`](../.cursor/environment.json) + [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md) |
 | P1-4 | **启用 Cursor 集成** | 部署 env 含 `CLOUD_AGENT_PROVIDER=cursor`；Bot 成功 launch 一次 emulator 或真实 agent（staging） |
-| P1-5 | **轻量品牌** | README 顶部说明「Matebot — fork of Rakazo」+ 链 upstream；**不**强制全 monorepo rename |
+| P1-5 | **轻量品牌** | ✅ 2026-11-04 — README / README.zh-CN 顶部 + 链计划/部署文档；**未**改 `@rakazo/*` |
 
 ### P2 — 后续
 
@@ -300,6 +300,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 
 | 主题 | 文档 |
 | --- | --- |
+| Matebot 部署 / Cursor / 计划 | [`MATEBOT_DEPLOY.md`](./MATEBOT_DEPLOY.md)、[`MATEBOT_CURSOR.md`](./MATEBOT_CURSOR.md)、本文 |
 | 自托管总览 | [`docs/self-host.md`](./self-host.md) |
 | 生产 HTTPS | [`docs/self-host-production.md`](./self-host-production.md) |
 | 模型 | [`docs/self-host-models.md`](./self-host-models.md) |
