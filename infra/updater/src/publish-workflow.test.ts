@@ -9,6 +9,7 @@ const publisherDir = path.resolve(workflowsDir, "../actions/publish-image");
 const publisherText = readFileSync(path.join(publisherDir, "action.yml"), "utf8");
 interface WorkflowStep {
   id?: string;
+  name?: string;
   if?: string;
   uses?: string;
   "continue-on-error"?: boolean;
@@ -43,6 +44,13 @@ const ci = parse(readFileSync(path.join(workflowsDir, "ci.yml"), "utf8")) as {
 };
 const publisher = parse(publisherText) as { runs: { steps: WorkflowStep[] } };
 const publicationAction = "./.github/actions/publish-image";
+// Literal GitHub Actions expressions, spelled out so the assertions below read like the workflow.
+// biome-ignore lint/suspicious/noTemplateCurlyInString: literal workflow expression
+const imageOutput = "${{ steps.image.outputs.name }}";
+// biome-ignore lint/suspicious/noTemplateCurlyInString: literal workflow expression
+const repositoryImage = "ghcr.io/${{ github.repository }}";
+// biome-ignore lint/suspicious/noTemplateCurlyInString: literal shell parameter expansion
+const lowercasedRepository = "${REPOSITORY,,}";
 
 describe("server image publish workflow", () => {
   it("builds every architecture natively instead of emulating arm64", () => {
@@ -126,6 +134,38 @@ describe("server image publish workflow", () => {
     expect(depotScan).toBeGreaterThanOrEqual(0);
     expect(depotSteps[depotScan]?.run).toContain("for platform in linux/amd64 linux/arm64; do");
     expect(publish).toBeGreaterThan(depotScan);
+  });
+
+  it("lowercases the image namespace so an owner with capitals can publish", () => {
+    // A registry reference must be lowercase, so no job may interpolate github.repository directly.
+    expect(workflowText).not.toContain(repositoryImage);
+    expect(workflowText).toContain(lowercasedRepository);
+    for (const name of ["validate", "build", "build-depot", "publish"] as const) {
+      const job = workflow.jobs[name] as WorkflowJob;
+      const image = job.steps.find((step) => step.id === "image");
+      expect(image?.run, name).toContain(lowercasedRepository);
+      const meta = job.steps.find((step) => step.id === "meta");
+      if (meta !== undefined) {
+        expect(meta.with?.images, name).toBe(imageOutput);
+      }
+      const build = job.steps.find((step) => step.id === "build");
+      if (build?.with?.outputs !== undefined) {
+        expect(build.with.outputs, name).toContain(imageOutput);
+      }
+    }
+    for (const step of [...workflow.jobs["build-depot"].steps, ...workflow.jobs.publish.steps]) {
+      if (step.uses === publicationAction) {
+        expect(step.with?.image).toBe(imageOutput);
+      }
+    }
+  });
+
+  it("frees runner disk before a cold app build exports its filesystem", () => {
+    const steps = workflow.jobs.build.steps;
+    const free = steps.findIndex((step) => step.name === "Free disk space");
+    const build = steps.findIndex((step) => step.id === "build");
+    expect(free).toBeGreaterThanOrEqual(0);
+    expect(build).toBeGreaterThan(free);
   });
 
   it("publishes main from ci.yml so the production deploy waits for its image", () => {
