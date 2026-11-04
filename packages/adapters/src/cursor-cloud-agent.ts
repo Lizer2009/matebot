@@ -75,6 +75,7 @@ export class CursorCloudAgentProvider implements CloudAgentProvider {
         },
         ...(request.repository ? { repos: [{ url: request.repository }] } : {}),
         ...(request.openPr !== undefined ? { autoCreatePR: request.openPr } : {}),
+        ...defaultCloudAgentModel(),
       },
       request.signal ?? context.signal,
       true,
@@ -238,6 +239,12 @@ export class CursorCloudAgentProvider implements CloudAgentProvider {
       throw new Error("Invalid cloud agent response");
     }
   }
+}
+
+/** Optional default model. Cursor v1 accepts `{ id }` and rejects a string. */
+function defaultCloudAgentModel(): { model?: { id: string } } {
+  const id = process.env.CLOUD_AGENT_MODEL?.trim();
+  return id ? { model: { id } } : {};
 }
 
 /** Retry-After is delta-seconds or an HTTP date. */

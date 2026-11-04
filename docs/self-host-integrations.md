@@ -210,6 +210,8 @@ Configure the API and worker with the same values:
 CLOUD_AGENT_PROVIDER=cursor
 CLOUD_AGENT_SPACE_ID=example-space-id
 CURSOR_API_KEY=replace-with-your-key
+# Optional. A model id, sent as {"model":{"id":"..."}}. Unset keeps the provider default.
+# CLOUD_AGENT_MODEL=deepseek-v41-flash-1017
 ```
 
 The key and explicit Space ID are both required. Use a credential whose connected repositories may be accessed by members of that Space. Each created agent is additionally bound to its initiating user; another user cannot inspect, reply to, or cancel it by supplying an agent ID. The deployment key is never a model tool argument.

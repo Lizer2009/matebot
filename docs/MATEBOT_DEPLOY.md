@@ -94,6 +94,7 @@ bash install-images.sh --prepare-only
 | `CLOUD_AGENT_PROVIDER` | 产品内 Cursor 工具：`emulator`（无网络）或 `cursor`（生产） |
 | `CLOUD_AGENT_SPACE_ID` | Cursor Space（与 upstream 实例 **分开**） |
 | `CURSOR_API_KEY` | 仅服务器 env；启用 `cursor` 时必填 |
+| `CLOUD_AGENT_MODEL` | 可选。Cursor 云端 Agent 的模型 id（如 `deepseek-v41-flash-1017`）；不设则保持提供方默认 |
 
 Cursor 集成说明：[self-host-integrations.md](./self-host-integrations.md#enable-cursor)。本 fork 的 Cloud Agent **改代码**流程见 [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md)（与服务器上 `CLOUD_AGENT_*` 互补）。
 
