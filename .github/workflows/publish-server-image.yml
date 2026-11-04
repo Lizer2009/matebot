@@ -6,6 +6,10 @@ name: publish-server-image
 # read-only token and an isolated cache, so untrusted code can validate the images without
 # receiving package-publish authority.
 #
+# Image namespace is always ghcr.io/${{ github.repository }}/<app|computer|updater> (e.g.
+# ghcr.io/lizer2009/matebot/app on the matebot fork). Fork operators: see docs/MATEBOT_DEPLOY.md
+# for workflow_dispatch, GITHUB_TOKEN package write, and private GHCR pull login.
+#
 # Published builds run on Depot when the DEPOT_PROJECT_ID repository variable names a project, and
 # on GitHub's runners otherwise (forks) or when a Depot build fails. Pull requests never use Depot.
 on:

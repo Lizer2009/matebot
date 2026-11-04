@@ -7,15 +7,51 @@
 
 | 决策 | 说明 |
 | --- | --- |
-| **当前采用** | **VPS / 局域网 Compose**（`infra/compose/install-images.sh` + `docker-compose.images.yml`） |
+| **当前采用** | **VPS / 局域网 Compose**（`infra/compose/install-images-matebot.sh` + `docker-compose.images.yml`） |
 | **运行位置（今日）** | 局域网主机 `192.168.10.12`（HTTPS / 域名以该机 `.env` 为准，本文不记录真实密钥） |
 | **暂缓** | **[Railway 一键模板](../infra/railway/README.md)** — 个人第二实例先走可控 VPS；待 fork 镜像与模板默认值分叉后再评估 Railway |
 
 Railway 仍适合「零 Docker 运维」场景，见 upstream [infra/railway/README.md](../infra/railway/README.md)。Matebot **不在本阶段**维护 Railway 部署或改模板按钮。
 
-## VPS / Compose 要点
+## 容器镜像（P1-1）
 
-1. 在部署目录使用 upstream 或 fork 的 compose 文件；当前实例通过 **install-images** 流程拉取 **upstream GHCR** 镜像（`ghcr.io/elie222/rakazo/*`），与 [MATEBOT_PLAN §3.4](./MATEBOT_PLAN.md#34-fork-镜像与安装脚本中期必做) 中期目标（fork GHCR）无关，可继续运行。
+CI 工作流 [`.github/workflows/publish-server-image.yml`](../.github/workflows/publish-server-image.yml) 将镜像推送到 **`ghcr.io/${{ github.repository }}/…`**。在本 fork 上即：
+
+| 镜像 | 用途 |
+| --- | --- |
+| `ghcr.io/lizer2009/matebot/app` | API、worker、web、栈内 supervisor |
+| `ghcr.io/lizer2009/matebot/computer` | Bot 计算机桌面 |
+| `ghcr.io/lizer2009/matebot/updater` | 应用内 Compose 更新 sidecar |
+
+常见标签：`edge`（跟踪 `main`）、`sha-<full-git-sha>`、发布 tag `v*` 对应的 semver。
+
+### 如何触发发布
+
+1. **推送到 `main`**：`ci.yml` 会调用 `publish-server-image`，在 GitHub runner（或配置了 `DEPOT_PROJECT_ID` 时用 Depot）构建并推送。
+2. **手动**：GitHub → Actions → **publish-server-image** → **Run workflow**（`workflow_dispatch`）。
+3. **发版 tag**：推送 `v*` tag 会走同一工作流并打上 semver 标签。
+
+Pull request 只**构建校验**，不向 GHCR 推送。
+
+### 一次性：fork 上的 GHCR / Actions 权限
+
+若推送失败且日志出现 package 权限或 `denied`：
+
+1. **Settings → Actions → General → Workflow permissions**：选 **Read and write permissions**，并允许 workflow 写入 packages（或保持默认「Read repository contents + packages: write」由 job 声明）。
+2. **Settings → Actions → General**：确认 **Allow GitHub Actions to create and approve pull requests** 按需即可；发布镜像不需要 PAT，job 使用 `GITHUB_TOKEN` 登录 `ghcr.io`。
+3. **私有包拉取**：在 VPS 上对私有 GHCR 包执行 `docker login ghcr.io`（Classic PAT 或 fine-grained token，scope 含 `read:packages`）。公开包可匿名 pull。
+4. 首次推送后，在 **Packages** 里可将包可见性设为 private/public；Compose 默认引用本仓库命名空间下的包。
+
+仍可通过 `.env` 覆盖任意镜像，例如 `RAKAZO_IMAGE=ghcr.io/elie222/rakazo/app` 继续用上游镜像。
+
+### 环境模板默认值
+
+- 上游默认：[`infra/compose/.env.images.example`](../infra/compose/.env.images.example) → `ghcr.io/elie222/rakazo/…`
+- Matebot 默认：[`infra/compose/.env.images.matebot.example`](../infra/compose/.env.images.matebot.example) → `ghcr.io/lizer2009/matebot/…`
+
+## VPS / Compose 要点（P1-2）
+
+1. 推荐使用 fork 安装入口（下载基址与 env 模板均指向本仓库）；仍可用 upstream GHCR 镜像时在 `.env` 覆盖 `RAKAZO_IMAGE`。
 2. 公网或 LAN 访问：配置 `BETTER_AUTH_URL`、`WEB_ORIGIN`、`API_URL`、`RAKAZO_HOST`（生产见 [self-host-production.md](./self-host-production.md)）。
 3. **模型**：实例已接 OpenAI 兼容端点（示例：`https://api.deepseek.com/v1`，模型 `deepseek-chat`）；密钥仅存在于服务器 `.env`，勿提交仓库。
 4. **Bot 计算机**：有 Docker socket 时可用 `SANDBOX_PROVIDER=docker`；纯 PaaS 或无 socket 时改用 `e2b`、`boat` 等（[self-host-sandbox-providers.md](./self-host-sandbox-providers.md)）。
@@ -24,14 +60,21 @@ Railway 仍适合「零 Docker 运维」场景，见 upstream [infra/railway/REA
 
 ```bash
 mkdir -p matebot && cd matebot
-curl -fsSLO https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose/install-images.sh
-# 或仍用 upstream raw URL，直到 fork 专用 install 脚本落地（P1-2）
-bash install-images.sh --prepare-only
+curl -fsSLO https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose/install-images-matebot.sh
+bash install-images-matebot.sh --prepare-only
 # 编辑 .env（见下方清单）
-bash install-images.sh
+bash install-images-matebot.sh
 ```
 
-模板文件：[infra/compose/.env.images.example](../infra/compose/.env.images.example)。
+等价手动设置：
+
+```bash
+export RAKAZO_DOWNLOAD_BASE=https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose
+export RAKAZO_ENV_IMAGES_EXAMPLE=.env.images.matebot.example
+bash install-images.sh --prepare-only
+```
+
+上游官方安装命令仍使用 [`install-images.sh`](../infra/compose/install-images.sh) 与 `elie222/rakazo` raw URL，便于与 upstream 合并。
 
 ## Secrets 与配置清单（占位符）
 
@@ -87,3 +130,5 @@ GitHub Actions 在 **elie222/rakazo** 上使用组织 Incredibuild runner（`inc
 - [MATEBOT_PLAN.md](./MATEBOT_PLAN.md) — 总计划与 backlog  
 - [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md) — Cursor Cloud Agent 改本仓库  
 - [self-host.md](./self-host.md) — 自托管总览  
+
+P1-1 / P1-2 验收勾选见 [MATEBOT_PLAN.md §6](./MATEBOT_PLAN.md#6-优先级-backlog接下来-12-轮编码)。

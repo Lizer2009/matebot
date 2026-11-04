@@ -18,7 +18,7 @@ readonly DOWNLOAD_BASE
 readonly COMPOSE_FILE="docker-compose.images.yml"
 # Optional operator overlay, layered after the base file the way Compose itself does by default.
 readonly OVERRIDE_FILE="docker-compose.override.yml"
-readonly ENV_EXAMPLE=".env.images.example"
+readonly ENV_EXAMPLE="${RAKAZO_ENV_IMAGES_EXAMPLE:-.env.images.example}"
 readonly ENV_FILE=".env"
 readonly EGRESS_SCRIPT="restrict-computer-egress.sh"
 
