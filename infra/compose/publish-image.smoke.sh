@@ -27,16 +27,25 @@ case "$3" in
   *) exit 1 ;;
 esac
 FAKE
-cat > "$scratch/bin/git" <<'FAKE'
+cat > "$scratch/bin/curl" <<'FAKE'
 #!/usr/bin/env bash
 set -euo pipefail
-[[ "$*" == 'ls-remote --exit-code origin refs/heads/main' ]] || exit 1
+# The API lookup must carry the workflow token and read the repository from the environment.
+for arg in "$@"; do
+  case "$arg" in
+    "Authorization: Bearer "*) [[ "${GH_TOKEN:-}" == "${arg##* }" ]] || exit 1 ;;
+    "https://api.github.com/repos/${GITHUB_REPOSITORY:-}/git/ref/heads/main") ;;
+  esac
+done
+[[ " $* " == *" --fail "* ]] || exit 1
 [[ "${FAIL_MAIN:-0}" != 1 ]] || exit 1
-printf '%s\trefs/heads/main\n' "$MAIN_SHA"
+printf '{"ref":"refs/heads/main","object":{"sha":"%s"}}\n' "$MAIN_SHA"
 FAKE
 chmod +x "$scratch/bin/"*
 export PATH="$scratch/bin:$PATH"
 export IMAGE=registry.example.test/project/app
+export GITHUB_REPOSITORY=example/project
+export GH_TOKEN=workflow-token
 export DIGESTS_DIRECTORY="$scratch/digests"
 export GITHUB_REF=refs/heads/main
 export GITHUB_SHA=1111111111111111111111111111111111111111

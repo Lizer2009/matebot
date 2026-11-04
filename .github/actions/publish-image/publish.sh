@@ -24,9 +24,18 @@ done
 
 # A slow or delayed older main run may still publish its exact commit for deployment.
 # It must not move edge backward. The caller holds the same image lock through this check and push.
+# Read main through the API rather than `git ls-remote`: the jobs that call this checkout with
+# `persist-credentials: false`, so git has no credential, and on a private repository the lookup
+# would fail with "could not read Username for 'https://github.com'" before any tag is written.
 current_main=""
 if [[ "${GITHUB_REF:-}" == refs/heads/main ]]; then
-  current_main="$(git ls-remote --exit-code origin refs/heads/main | cut -f1)"
+  current_main="$(
+    curl --fail --silent --show-error \
+      --header "Authorization: Bearer ${GH_TOKEN:?}" \
+      --header "Accept: application/vnd.github+json" \
+      "https://api.github.com/repos/${GITHUB_REPOSITORY:?}/git/ref/heads/main" |
+      jq -r '.object.sha'
+  )"
   [[ "$current_main" =~ ^[a-f0-9]{40}$ ]] || { echo "Could not resolve main." >&2; exit 1; }
 fi
 tag_args=()
