@@ -160,7 +160,7 @@ bash install-images.sh
 
 1. 在 `Lizer2009/matebot` 启用 GitHub Actions **`publish-server-image`**（fork 上会在 GitHub runner 构建，无 Depot 变量时仍可用）。
 2. 发布到 **`ghcr.io/lizer2009/matebot/app`**（命名示例，需与 GHCR 权限一致）或在 `.env` 用 `RAKAZO_IMAGE` 覆盖。
-3. 提供 **`infra/compose/install-images-matebot.sh`** 或文档说明将 `RAKAZO_DOWNLOAD_BASE` 设为 fork 的 raw URL。
+3. ~~提供 **`infra/compose/install-images-matebot.sh`**~~ — **已完成（2026-11-04）**：[`install-images-matebot.sh`](../infra/compose/install-images-matebot.sh) + [`MATEBOT_DEPLOY.md`](./MATEBOT_DEPLOY.md)。
 
 ### 3.5 Cursor Cloud Agent 开发环境（改代码）
 
@@ -250,8 +250,8 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 
 | ID | 项 | 验收标准 |
 | --- | --- | --- |
-| P1-1 | **自有容器镜像** | Actions 发布到 `ghcr.io/<owner>/matebot/...`；`.env.images.example` 或 README 默认指向 fork |
-| P1-2 | **install 脚本分叉** | `RAKAZO_DOWNLOAD_BASE` 默认指向 `Lizer2009/matebot` raw；smoke 仍过 |
+| P1-1 | **自有容器镜像** | ✅ **2026-11-04** — `publish-server-image` 推送到 `ghcr.io/lizer2009/matebot/{app,computer,updater}`；见 [`MATEBOT_DEPLOY.md`](./MATEBOT_DEPLOY.md) 与 `.env.images.matebot.example` |
+| P1-2 | **install 脚本分叉** | ✅ **2026-11-04** — `install-images-matebot.sh` 默认 fork raw + matebot env 模板；`install-images-matebot.smoke.sh` 与既有 compose smokes 通过 |
 | P1-3 | **Cursor 开发环境** | ✅ 2026-11-04 — [`.cursor/environment.json`](../.cursor/environment.json) + [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md) |
 | P1-4 | **启用 Cursor 集成** | 部署 env 含 `CLOUD_AGENT_PROVIDER=cursor`；Bot 成功 launch 一次 emulator 或真实 agent（staging） |
 | P1-5 | **轻量品牌** | ✅ 2026-11-04 — README / README.zh-CN 顶部（链计划/部署/Cursor/品牌）；几何 Matebot 图标与 Web/PWA/Linux·Windows favicon；`PRODUCT_DISPLAY_NAME`；**未**改 `@rakazo/*` |
