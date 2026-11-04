@@ -32,7 +32,8 @@ Do not substitute a different logo or revert to earlier mascot-style marks.
 | Exported wordmark (PNG) | `branding/matebot-wordmark.png`, `docs/assets/matebot-wordmark.png` |
 | Web favicon / PWA icons | `apps/web/public/favicon*`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` |
 | Web named copies | `apps/web/public/matebot-icon.png`, `matebot-wordmark.png` |
-| Desktop | `apps/desktop/assets/icon.png`, `icon.ico` |
+| Desktop (Linux/Windows) | `apps/desktop/assets/icon.png`, `icon.ico` |
+| Desktop (macOS bundle) | Still built from upstream `packages/ui-tokens/assets/Rakazo.icon` until a Matebot `.icon` catalog lands; Electron `productName` stays `Rakazo` so packaging/CI paths stay stable |
 | Mobile favicon | `apps/mobile/assets/favicon.png` |
 
 Regenerate web/desktop/mobile icon sizes from the sources:
