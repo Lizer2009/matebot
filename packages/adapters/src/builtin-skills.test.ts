@@ -16,7 +16,7 @@ describe("product help skill", () => {
     expect(skill.description.startsWith(`How to use or set up ${PRODUCT_DISPLAY_NAME}:`)).toBe(
       true,
     );
-    expect(skill.description).not.toContain("Matebot");
+    expect(skill.description).not.toContain("Rakazo");
   });
 
   it("links only to published docs pages", () => {

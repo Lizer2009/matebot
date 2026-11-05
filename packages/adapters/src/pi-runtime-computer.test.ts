@@ -81,7 +81,8 @@ describe("Pi computer tool dispatch", () => {
   it("introduces the bot as this product, not the upstream one", () => {
     for (const prompt of [defaultSystemPrompt(true), defaultSystemPrompt(false)]) {
       expect(prompt).toContain(`You are a ${PRODUCT_DISPLAY_NAME} bot with`);
-      expect(prompt).not.toContain("Matebot");
+      // The fork's own name must never leak into the upstream prompt build.
+      expect(prompt).not.toContain("Rakazo");
     }
     expect(defaultSystemPrompt(true)).toContain("a real computer");
     expect(defaultSystemPrompt(false)).toContain("a persistent sandbox filesystem and shell");

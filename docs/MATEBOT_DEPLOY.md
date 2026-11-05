@@ -129,6 +129,24 @@ bash install-images.sh --prepare-only
 
 `PRODUCT_DISPLAY_NAME` 不是环境变量：它是 `packages/core/src/product-brand.ts` 里的构建期常量，所以改品牌要改代码并重新出镜像，而不是改 `.env`。
 
+### 环境变量命名
+
+P2 重命名（`@rakazo/*` → `@matebot/*`）**只改 npm 包名与导入路径**，环境变量保持原样，避免已在运行的部署在拉取新镜像后读不到密钥：
+
+| 保持不变的名称 | 原因 |
+| --- | --- |
+| `RAKAZO_*`（`RAKAZO_HOST`、`RAKAZO_IMAGE`、`RAKAZO_DOCKER_BINARY`、`RAKAZO_PASSKEY_RP_ID` 等） | 已存在于各实例 `.env`；改名会让旧配置静默失效 |
+| Postgres 角色 `rakazo_app`、`POSTGRES_USER=rakazo` | 角色与已有卷一起创建，改名需要 `ALTER ROLE` 与停机 |
+| Compose 项目名 `rakazo-desktop`、卷名 `pgdata` | 改名会让已有的桌面栈与数据库变成“新栈”，看起来像数据丢失 |
+| 移动端 URL scheme `rakazo://`、bundle id `com.rakazo.app` | 需要在 App Store / Play Console 侧同步，属于商店发布工作 |
+| OpenRouter 归因 `HTTP-Referer: https://rakazo.com` | 上游归因值；改动属于归因策略变更，不是品牌改名 |
+
+**已改的品牌面**：npm 包名 `@matebot/*`、根包名 `matebot`、桌面 `productName` / `appId` / 安装包与可执行文件名、AppData 目录名、窗口与设置页文案、www 站点与 README。
+
+**桌面配置目录迁移**：旧构建把配置写在以显示名命名的目录（Windows 为 `%APPDATA%\Rakazo`，macOS 为 `~/Library/Application Support/Rakazo`）。新构建启动时若新目录不存在而旧目录存在，会整体迁移过去（同盘为 rename，跨盘为复制后删除）。若两个目录都存在，则以新目录为准，旧目录保留不动。
+
+**仍需人工确认**：Passkey 的 RP ID 默认值随部署域名变为 `test.matebot.dev`；已在旧域名注册的 passkey 在桌面应用中不再可用，需要重新注册。服务器侧 `RAKAZO_PASSKEY_RP_ID` 与 `WEB_ORIGIN` 需与前端域名一致。
+
 Cursor 集成说明：[self-host-integrations.md](./self-host-integrations.md#enable-cursor)。本 fork 的 Cloud Agent **改代码**流程见 [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md)（与服务器上 `CLOUD_AGENT_*` 互补）。
 
 ## 与 upstream 同步（Git）

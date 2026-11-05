@@ -7,7 +7,7 @@ describe("desktop sandbox path rules", () => {
     const roots = ["C:\\Users\\Owner\\Matebot\\bot"];
 
     expect(
-      isAllowedDesktopPath("c:\\users\\owner\\rakazo\\BOT\\notes.txt", roots, path.win32),
+      isAllowedDesktopPath("c:\\users\\owner\\matebot\\BOT\\notes.txt", roots, path.win32),
     ).toBe(true);
     expect(
       isAllowedDesktopPath("C:\\Users\\Owner\\Matebot\\bot-other\\notes.txt", roots, path.win32),
@@ -16,13 +16,13 @@ describe("desktop sandbox path rules", () => {
   });
 
   it("handles explicitly allowed UNC roots without accepting sibling shares", () => {
-    const roots = ["\\\\server\\share\\rakazo\\bot"];
+    const roots = ["\\\\server\\share\\matebot\\bot"];
 
     expect(
-      isAllowedDesktopPath("\\\\SERVER\\share\\rakazo\\BOT\\notes.txt", roots, path.win32),
+      isAllowedDesktopPath("\\\\SERVER\\share\\matebot\\BOT\\notes.txt", roots, path.win32),
     ).toBe(true);
     expect(
-      isAllowedDesktopPath("\\\\server\\share-other\\rakazo\\bot\\notes.txt", roots, path.win32),
+      isAllowedDesktopPath("\\\\server\\share-other\\matebot\\bot\\notes.txt", roots, path.win32),
     ).toBe(false);
   });
 

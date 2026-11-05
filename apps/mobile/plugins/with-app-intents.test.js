@@ -96,9 +96,10 @@ describe("withAppIntents prebuild", () => {
     module.exports(config);
     expect(plist.modResults.RakazoDefaultApiBase).toBe("https://api.example.test");
     expect(plist.modResults.UIBackgroundModes).toEqual(["audio"]);
+    // The Xcode project name follows expo.name, so the copied sources land under Matebot/.
     expect(copied).toContainEqual([
       join(mobile, "ios-intents/RakazoIntents.swift"),
-      "/project/ios/Rakazo/RakazoIntents.swift",
+      "/project/ios/Matebot/RakazoIntents.swift",
     ]);
     expect(added.map((input) => input.filepath)).toEqual([
       "Matebot/RakazoIntents.swift",

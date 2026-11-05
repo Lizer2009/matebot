@@ -3,7 +3,7 @@
 > **仓库**：[Lizer2009/matebot](https://github.com/Lizer2009/matebot)（fork 自 [elie222/rakazo](https://github.com/elie222/rakazo)）  
 > **目标**：把 matebot 作为**第二个 Grok Bot 实例**，在**不依赖本地电脑**的前提下，通过 Cursor Cloud Agent / 云端 VPS 完成在线迭代。  
 > **本文档性质**：规划稿（Planning pass）。实现工作按文末 P0/P1/P2 分阶段进行。  
-> **验证日期**：2026-11-04 — fork `main` 在合并部署文档 PR 后为 `5480b877`，upstream `main` 为 `d97c5fd7`（见 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#跟踪-commit2026-11-04-自本仓库观测)）。**部署路径已定为 VPS/LAN Compose（2026-11-05 起主机为 `192.168.10.5`，原 `192.168.10.12` 已迁移并清理）；Railway 暂缓。** P1-5 **轻量品牌**：几何 Matebot 图标、favicon/PWA、`PRODUCT_DISPLAY_NAME`、`docs/MATEBOT_BRAND.md`（PR #3）；包名与 GHCR 默认值仍为 upstream 形态。
+> **验证日期**：2026-11-04 — fork `main` 在合并部署文档 PR 后为 `5480b877`，upstream `main` 为 `d97c5fd7`（见 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#跟踪-commit2026-11-04-自本仓库观测)）。**部署路径已定为 VPS/LAN Compose（2026-11-05 起主机为 `192.168.10.5`，原 `192.168.10.12` 已迁移并清理）；Railway 暂缓。** P1-5 **轻量品牌** 与 **P2-4 / P2-5 / P2-6 全量品牌**（2026-11-05）均已完成：`@matebot/*` 包名、桌面 productName/AppData/安装包、www 独立站点、README 三语；`RAKAZO_*` 环境变量与 `rakazo_app` 角色刻意保留，映射见 §6.1 与 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)。
 
 ---
 
@@ -11,10 +11,10 @@
 
 | 维度 | 结论 |
 | --- | --- |
-| 与 upstream 关系 | 当前与 `elie222/rakazo` **字节级一致**；所有 `@matebot/*` 包名、GHCR 镜像、`rakazo.com` 文档链接仍指向上游。 |
+| 与 upstream 关系 | 2026-11-05 起**不再字节级一致**：包名、桌面身份、www 与 README 已品牌化；`RAKAZO_*` 环境变量、`rakazo_app` 角色、GHCR 上游镜像与本仓库镜像并存。 |
 | 推荐部署形态（无本地机） | **Matebot 当前：VPS + Compose 镜像**（`192.168.10.5`）；**Railway 暂缓**。Bot **计算机**可用 Docker（有 socket）或 **E2B / Boat / Daytona** 等远程沙箱。 |
 | Cursor 集成 | 产品已内置 **Cursor Cloud Agent** 适配器（`CLOUD_AGENT_PROVIDER=cursor`）；Bot 可通过 `cloud_agent_*` 工具在**你的 GitHub 仓库**上启动 Cursor 云端 Agent，与「在 Cursor 里改 matebot 代码」是**互补**关系。 |
-| 首轮编码重点 | 分叉标识（可选）、**自有 GHCR/安装脚本默认值**、**matebot 专用 `.env` 模板**、CI 可绿、文档与 upstream 同步策略。 |
+| 首轮编码重点 | ✅ 自有 GHCR/安装脚本默认值、matebot 专用 `.env` 模板、CI 可绿；下一轮重点是 upstream 合并成本控制与移动端商店身份。 |
 
 ---
 
@@ -23,11 +23,11 @@
 ### 2.1 Monorepo 布局
 
 ```
-matebot/                          # 根 package: rakazo@0.1.0（待品牌化）
+matebot/                          # 根 package: matebot@0.1.0
 ├── apps/
 │   ├── api/          @matebot/api      Hono + oRPC，HTTP/WebSocket，Pi agent 运行时宿主
 │   ├── worker/       @matebot/worker    Graphile Worker：定时任务、cloud agent 轮询、恢复
-│   ├── web/          @matebot/web       Vite + React 19 主 UI（自托管与 app.rakazo.com 同源代码）
+│   ├── web/          @matebot/web       Vite + React 19 主 UI（自托管与 test.matebot.dev 同源代码）
 │   ├── desktop/      @matebot/desktop   Electron 壳（托管本地 Docker 栈或连接远程实例）
 │   ├── mobile/       @matebot/mobile    Expo Router 原生客户端
 │   └── www/          @matebot/www       Astro 营销站（可单独部署，规则较松）
@@ -44,7 +44,7 @@ matebot/                          # 根 package: rakazo@0.1.0（待品牌化）
 │   ├── ui-tokens/    设计 token
 │   └── testkit/      集成/E2E/评测 CLI
 └── infra/
-    ├── compose/      Docker Compose、install-images.sh、生产 Caddy 栈
+    ├── compose/      Docker Compose、install-images-matebot.sh、生产 Caddy 栈
     ├── sandboxes/    computer / supervisor 镜像定义
     ├── railway/      Railway 模板说明
     └── updater/      桌面端「应用内更新」Compose 逻辑
@@ -116,11 +116,11 @@ Bot 工具：`cloud_agent_launch` / `status` / `reply` / `cancel`。用于把**�
 
 ### 3.1 路径对比
 
-| 路径 | 是否需要本地机 | 计算机能力 | 适合 matebot 迭代 |
+| 路径 | 是否需要本地机 | 计算机能力 | 适合 Matebot 迭代 |
 | --- | --- | --- | --- |
 | **Railway 模板** | 否 | Railway 托管 sandbox | ★★★ 个人第二实例最快 |
-| **VPS + `install-images.sh`** | 否（仅 SSH 到 VPS） | 默认 Docker；可改 E2B/Boat | ★★★ 可控、可 HTTPS |
-| **继续拉 upstream GHCR 镜像** | 否 | 同左 | ★★ 零构建，但镜像仍是 upstream |
+| **VPS + `install-images-matebot.sh`** | 否（仅 SSH 到 VPS） | 默认 Docker；可改 E2B/Boat | ★★★ 可控、可 HTTPS |
+| **继续拉 upstream GHCR 镜像** | 否 | 同左 | ★ 零构建，但镜像仍是 upstream；本仓库镜像见上两行 |
 | **Fork 自建 GHCR + 改 `RAKAZO_IMAGE`** | 否（CI 构建） | 同左 | ★★★ 长期独立发布 |
 | **`pnpm dev` 源码开发** | **是**（Node 22+、pnpm、Docker） | 本地 Docker computer | ★ 仅适合有本机时 |
 | **Electron「本机计算机」** | **是** | 宿主 OS | ✗ 不符合「无本地机」 |
@@ -136,10 +136,10 @@ Bot 工具：`cloud_agent_launch` / `status` / `reply` / `cancel`。用于把**�
 
 ```bash
 mkdir -p matebot && cd matebot
-curl -fsSLO https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose/install-images.sh
-bash install-images.sh --prepare-only
+curl -fsSLO https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose/install-images-matebot.sh
+bash install-images-matebot.sh --prepare-only
 # 编辑 .env：RAKAZO_HOST、HTTPS 三件套、模型密钥、SANDBOX_PROVIDER=boat|e2b|…
-bash install-images.sh
+bash install-images-matebot.sh
 ```
 
 **无本地电脑时的关键选择**：
@@ -219,7 +219,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 
 ### 5.1 产品定位（建议）
 
-- **实例 B**：与现有 Grok Bot / app.rakazo.com **并行**，独立 Postgres、独立模型配额、独立集成密钥。
+- **实例 B**：与现有 Grok Bot / 上游托管服务**并行**，独立 Postgres、独立模型配额、独立集成密钥。
 - **迭代方式**：Cursor Cloud Agent 对 **Lizer2009/matebot** 开 PR → CI 绿 → 部署到 Railway/VPS → 在 UI 里验证 Bot 行为。
 - **可选**：matebot 上的 Bot 配置 `cloud_agent_launch` 指回同一 GitHub org，形成「Bot 提需求 → Cursor Agent 实现」。
 
@@ -263,26 +263,56 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | P2-1 | 默认模型/审批模板（matebot 专用 `.env.matebot.example`） | 新部署复制即用 |
 | P2-2 | Railway template fork | 一键按钮指向 matebot 镜像与环境 |
 | P2-3 | 自动化 upstream sync PR（weekly workflow 可选） | 打开 PR 而非直接 push |
-| P2-4 | 独立 Astro/www 或关闭 www 构建 | 减少与 rakazo.com 混淆 |
-| P2-5 | 全包 rename `@rakazo` → `@matebot` | 仅当有商店/客户端发布需求时评估（成本高） |
+| P2-4 | 独立 Astro/www 或关闭 www 构建 | ✅ **2026-11-05** — `apps/www` 站点身份改为 Matebot：`SITE_URL=https://test.matebot.dev`、链接指向本仓库、品牌套件/OG/wordmark 换成 Matebot 资产；只描述自托管的计费与法律文案已改写，上游托管服务仍以 Rakazo 名称出现；见 §6.2 |
+| P2-5 | 全包 rename `@rakazo` → `@matebot` | ✅ **2026-11-05** — 21 个工作区包与根包全部改名，导入路径、tsconfig、Dockerfile filter、lockfile 同步；`RAKAZO_*` 环境变量、`rakazo_app` 数据库角色、`rakazo://` scheme 与移动端 bundle id **保持不变**（映射见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)） |
+| P2-6 | **统一品牌外壳 + Windows 安装包** | ✅ **2026-11-05** — 桌面 `productName`/`appId`/`NSIS`/可执行名/配置目录迁移/更新源均指向 Matebot；`pack:win` 与 `desktop-windows-installer` 工作流产出 `Matebot-Setup-<version>.exe`；见 [`desktop-release.md#windows-installer`](./desktop-release.md#windows-installer) |
 
 ---
 
-## 7. 品牌化与配置：建议「改什么、暂不改什么」
+### 6.1 P2 已完成项与遗留风险（2026-11-05）
 
-### 7.1 早期建议改
+本轮把 P1-5 的「轻量品牌」补成端到端一致的产品名，范围与结论：
 
-- GitHub repo 描述、About、Social preview
-- `README.md` / `README.zh-CN.md` 顶部 matebot 说明与**自托管 URL**
-- `.env.example` 注释中的示例域名
-- Compose 安装默认 download base（fork 专用脚本或 env）
-- GitHub Actions：GHCR `IMAGE_NAME` 前缀（workflow 内变量或 fork 文档）
+| 面 | 现状 |
+| --- | --- |
+| npm 包名 | `@rakazo/*` → `@matebot/*`（21 个工作区包 + 根包 `matebot`），lockfile 已重算 |
+| 桌面外壳 | `productName` `Matebot`、`appId` `dev.matebot.desktop`、`Matebot.exe`、`Matebot-Setup-<version>.exe`、Linux `matebot`、AppData `%APPDATA%\matebot` |
+| 桌面配置迁移 | 启动时把旧的 `Rakazo` 配置目录迁到新目录；新旧并存时以新为准 |
+| 桌面更新源 | `publish` 与 release 校验都指向 `Lizer2009/matebot`，避免 Matebot 装成上游应用 |
+| macOS/iOS 图标 | 新增 `packages/ui-tokens/assets/Matebot.icon`（全出血图层），不再使用上游 `Rakazo.icon` |
+| www | 站点域名、品牌套件、OG、wordmark、法务与计费文案按自托管事实改写 |
+| README | 三语（en / zh-CN / ja）以 Matebot 为产品名，保留上游章节与 Apache-2.0 |
+| Windows 安装包 | `pnpm --filter @matebot/desktop pack:win` 与 `desktop-windows-installer` 工作流 |
 
-### 7.2 建议暂缓
+**遗留风险（按优先级）**
 
-- npm 包名 `@matebot/*`（除非准备改 mobile bundle id、Electron `productName`、数据库角色名 `rakazo_app` 等连锁变更）
-- 删除 upstream 致谢与 Apache-2.0 归属
-- 大规模 UI 文案替换（工作量大、merge 冲突多）
+1. **Passkey 域名**：桌面默认服务器改为 `test.matebot.dev`，旧域名注册的 passkey 在桌面端失效；需重新注册，且服务器 `WEB_ORIGIN` / `RAKAZO_PASSKEY_RP_ID` 必须与之一致。macOS 分发还依赖对应的 provisioning profile，否则桌面端会隐藏 passkey。
+2. **移动端商店身份未改**：`com.rakazo.app` 与 `rakazo://` scheme 未动（改需 App Store / Play Console 侧协调），因此手机上安装后图标与显示名是 Matebot，但系统标识仍是上游。`eas.json`/`projectId` 仍属上游 Expo 项目，无法在此仓库内独立发版。
+3. **上游合并成本**：本轮改动面很大（包名、目录、品牌资产、文案），下一次 `merge upstream/main` 冲突会比 P1 阶段明显更高；包名与桌面身份的冲突应一律保留本 fork 版本。
+4. **环境变量与数据库角色仍是上游命名**（`RAKAZO_*`、`rakazo_app`、卷 `pgdata`、Compose 项目 `rakazo-desktop`）。改名需要停机与 `ALTER ROLE`，见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)。
+5. **上游归因值**：OpenRouter 的 `HTTP-Referer: https://rakazo.com` 与 web 工具 User-Agent 仍是上游值。它们不是品牌面，改动属于归因/流量策略决策。
+6. **Windows 未签名**：本 PR 产出的安装包未签名，首次运行会触发 SmartScreen；正式分发仍应走 `release-desktop` 的 Azure 签名路径。
+7. **www 内容仍是上游视角**：对比页与博客中大量第三方产品事实来自上游撰写，本轮只把产品名与自身身份改对，未重新核实这些第三方陈述。
+
+---
+
+## 7. 品牌化与配置：已改 / 仍暂缓
+
+### 7.1 已改
+
+- npm 包名、根包名、导入路径、tsconfig、Dockerfile filter、lockfile
+- Electron `productName` / `appId` / NSIS / 可执行名 / 配置目录 / 更新源
+- Web、桌面、移动、鉴权与 Bot 自述的界面文案（全部随包语言目录）
+- www 站点身份、品牌套件、OG 图、wordmark、法务与计费文案
+- README（en / zh-CN / ja）与相关文档中的产品名
+
+### 7.2 仍暂缓（有明确原因）
+
+- `RAKAZO_*` 环境变量、`rakazo_app` 数据库角色、`pgdata` 卷、`rakazo-desktop` Compose 项目：改名会破坏运行中的实例
+- 移动端 bundle id 与 `rakazo://` scheme：需商店侧协调
+- 删除 upstream 致谢与 Apache-2.0 归属：**不做**
+- OpenRouter 归因 URL 与 web 工具 User-Agent：属于归因策略，不是品牌
+- 大规模第三方事实复核（对比页/博客）：属内容工作，另开 PR
 
 ---
 

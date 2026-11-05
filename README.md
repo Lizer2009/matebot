@@ -2,35 +2,22 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
-**Matebot** is this repository’s product name: a personal second Grok-style bot and online [Cursor](https://cursor.com) coding teammate, deployable without relying on a local desktop. The codebase is a fork of **[Rakazo](https://github.com/elie222/rakazo)** (Apache-2.0). Upstream attribution, `@matebot/*` packages, and infrastructure names are preserved on purpose.
+**Matebot** is a self-hosted AI teammate you own: persistent bots that use a real computer, work on
+a schedule, and keep their memory and history across the web, desktop, and phone clients. It runs on
+your own server, with your own model credentials, and needs no local desktop to operate.
 
-- Fork plan: [docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md)
-- Deployment: [docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md)
-- Cursor Cloud Agent: [docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md)
-- Brand assets and colors: [docs/MATEBOT_BRAND.md](./docs/MATEBOT_BRAND.md)
+This repository is a fork of **[Rakazo](https://github.com/elie222/rakazo)**, the Apache-2.0 project
+it is built on. Matebot keeps that licence, its notices, and a clear attribution to upstream; the
+differences are the product name, the packaging, and the deployment this fork runs.
 
----
-
-## Rakazo (upstream codebase)
-
-The following describes the shared Matebot stack this fork builds on.
-
-[![GitHub stars](https://img.shields.io/github/stars/elie222/rakazo?labelColor=black&style=for-the-badge&color=2563EB)](https://github.com/elie222/rakazo/stargazers)
-[![Discord](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?labelColor=black&style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/RWwKa2Sn7h)
-[![Download on the App Store](https://img.shields.io/badge/App%20Store-Download%20for%20iPhone-black?labelColor=black&style=for-the-badge&logo=apple&logoColor=white)](https://apps.apple.com/app/rakazo/id6801531099)
-[![Get Android on Google Play](https://img.shields.io/badge/Google%20Play-Get%20the%20app-black?labelColor=black&style=for-the-badge&logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.rakazo.app)
-
-![Matebot — AI teammates you actually own](./docs/readme-hero.png)
-
-Matebot is an open source AI agent for persistent teammates, and a self-hosted AI assistant you
-can run on your own machine. It is available on the web, as an Electron desktop app, and on
-[iPhone](https://apps.apple.com/app/rakazo/id6801531099) and [Android](https://play.google.com/store/apps/details?id=com.rakazo.app). Bring your own model
-and computer provider, or run the complete stack locally.
-
-It is an open source, self-hosted alternative to Grok Bot, Meta Muse, OpenAI Dots, Instinct,
-OpenClaw, Hermes Agent, and Claude Duet.
-
-Matebot is in beta. Learn more at [rakazo.com](https://rakazo.com).
+| | |
+| --- | --- |
+| **This deployment** | https://test.matebot.dev |
+| **Fork plan and status** | [docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md) |
+| **Deployment notes** | [docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md) |
+| **Cursor Cloud Agent** | [docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md) |
+| **Brand assets** | [docs/MATEBOT_BRAND.md](./docs/MATEBOT_BRAND.md) |
+| **Windows installer** | [docs/desktop-release.md](./docs/desktop-release.md) |
 
 ## Features
 
@@ -43,40 +30,14 @@ Matebot is in beta. Learn more at [rakazo.com](https://rakazo.com).
 - App integrations through Composio or Pipedream Connect, plus user-installed Treg, remote MCP, and OpenAPI tool sources
 - Docker, E2B, Daytona, CreateOS, Boat, and trusted local-computer support
 
-## Demo
-
-https://github.com/user-attachments/assets/dccdeddb-2134-4a56-8eed-b2e591736b1c
-
-## Thanks
-
-- [PromptLayer](https://promptlayer.com/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [Inbox Zero](https://getinboxzero.com/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [ConnectorMap](https://connectormap.luinbytes.dev/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [CodeRabbit](https://www.coderabbit.ai/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [Greptile](https://www.greptile.com/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [Snyk](https://snyk.io/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-
-## Stack
-
-- TypeScript
-- React 19, Vite, and Tailwind CSS
-- Electron and Expo
-- Hono and oRPC
-- PostgreSQL and Prisma
-- Better Auth
-- Graphile Worker
-- Pi
-- Docker, E2B, Daytona, CreateOS, and Boat
-- Composio, Pipedream Connect, MCP, and OpenAPI integrations
-
 ## Quick start (published images)
 
 You need Docker Engine, the Compose plugin, curl, and OpenSSL. No clone or Node install.
 
 ```bash
-mkdir -p rakazo && cd rakazo &&
-curl -fsSLO https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose/install-images.sh &&
-bash install-images.sh
+mkdir -p matebot && cd matebot &&
+curl -fsSLO https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose/install-images-matebot.sh &&
+bash install-images-matebot.sh
 ```
 
 The installer downloads the Compose files, creates `.env` with random secrets, and starts Matebot.
@@ -86,8 +47,12 @@ Open [http://127.0.0.1:5173](http://127.0.0.1:5173), create an account, and conn
 Local Docker computers are on by default. Optional remote providers: `e2b`, `novita`, `daytona`, `createos`, `boat`, `boxd`, or `railway`
 with the matching API key.
 
-Default image tag is `edge` (main builds, `linux/amd64` + `linux/arm64`). Details and tags:
+Images come from this fork's registry, `ghcr.io/lizer2009/matebot/{app,computer,updater}`, tagged
+`edge` for main builds and `sha-<commit>` per commit. Details:
 [self-hosting guide](./docs/self-host.md#published-images-no-checkout).
+
+Upstream's installer (`install-images.sh`) still works and pulls upstream images; use it only when
+you deliberately want upstream's build.
 
 On restricted networks, override the installer download base (`RAKAZO_DOWNLOAD_BASE`), skip
 existing Compose files (`--local` / `RAKAZO_DOWNLOAD_SKIP_EXISTING`), or mirror the bootstrap
@@ -102,16 +67,14 @@ Bots stay on when the backend runs on a server. Use the same installer on a VPS,
 the desktop app, the mobile app, or a browser.
 
 ```bash
-bash install-images.sh --prepare-only
+bash install-images-matebot.sh --prepare-only
 # edit .env: SANDBOX_PROVIDER=boat (or e2b / daytona / createos) with its API key, RAKAZO_HOST=your.domain
-bash install-images.sh
+bash install-images-matebot.sh
 ```
 
 Put HTTPS in front of port 5173; [docs/self-host-production.md](./docs/self-host-production.md#public-single-vm-deployment)
 covers the Caddy setup and host hardening. In the desktop app choose **Existing instance** and enter
 the `https://` address.
-
-Or [deploy on Railway](https://railway.com/new/template/rakazo-template); see the [Railway setup guide](./infra/railway/README.md).
 
 ## Local development (source checkout)
 
@@ -119,8 +82,8 @@ You need Node.js 22.22.2 or newer in the 22.x line, Node.js 24.x, or Node.js 26+
 pnpm 9; and Docker. Node.js 23.x and 25.x are not supported.
 
 ```bash
-git clone https://github.com/elie222/rakazo.git
-cd rakazo
+git clone https://github.com/Lizer2009/matebot.git
+cd matebot
 cp .env.example .env
 ```
 
@@ -131,6 +94,10 @@ then put them in `DATABASE_MIGRATION_URL` and `DATABASE_URL`. The app connects a
 independent long random values. Docker sandboxes also need a dedicated
 `SANDBOX_SUPERVISOR_TOKEN`. You can also set `OPENROUTER_API_KEY`, or connect a supported
 model provider during onboarding.
+
+Environment variables keep their `RAKAZO_*` names in this release, so an existing `.env` keeps
+working unchanged. See [configuration names](./docs/MATEBOT_DEPLOY.md#环境变量命名) for the mapping
+and what a rename would touch.
 
 For host-side development with Docker Desktop, set `SANDBOX_CONTROL_VIA_LOOPBACK=true`
 in `.env`. The supervisor discovers Docker Desktop's user socket automatically;
@@ -227,6 +194,17 @@ app verifies Matebot's health endpoint before saving, and later launches go stra
 instance. The stack keeps running after the app quits; **Stop Local Stack** in the application
 menu turns it off.
 
+To build the Windows installer locally:
+
+```bash
+pnpm --filter @matebot/desktop pack:win
+```
+
+That writes `apps/desktop/out/Matebot-Setup-<version>.exe`, an unsigned per-user installer that
+installs under `%LOCALAPPDATA%\Programs\Matebot` and keeps its profile in `%APPDATA%\matebot`.
+Signing and publishing run in the release workflow. See
+[Windows installer](./docs/desktop-release.md#windows-installer).
+
 On Linux the desktop app ships as an AppImage, which needs FUSE 2 (`libfuse.so.2`). Distributions
 that only include FUSE 3, such as Fedora Silverblue or Ubuntu 24.04, show
 `dlopen(): error loading libfuse.so.2`. Install the FUSE 2 library (`fuse-libs` on Fedora,
@@ -249,6 +227,16 @@ setup again.
 
 Mobile build and release instructions live in [docs/mobile-release.md](./docs/mobile-release.md).
 
+## Upgrading from the Rakazo-named build
+
+Earlier builds shipped as Rakazo, so their desktop profile lived in a differently named folder. The
+desktop app moves that profile into its new location on first launch, so your saved server, screen
+driver setup, and local Compose stack carry over. If both folders exist, the new one wins and the old
+one is left alone.
+
+Nothing else needs to change: environment variables keep their `RAKAZO_*` names, the database role
+is still `rakazo_app`, and Compose volumes keep their existing project names.
+
 ## UI language
 
 The web (and Electron-hosted) UI supports English, Deutsch, 한국어, Türkçe, हिन्दी,
@@ -258,8 +246,7 @@ Nederlands, and 日本語 catalogs, and **Account → Language** lists all seven
 `EXPO_PUBLIC_DEFAULT_UI_LOCALE` still selects the starting catalog before a saved choice.
 The marketing
 homepage (`apps/www`) is available in en/de/ko/zh/ja via footer language links (`/`, `/de/`,
-`/ko/`, `/zh/`, `/ja/`); other marketing pages stay English. The Russian marketing homepage and
-native Electron setup/menu remain separate follow-up work.
+`/ko/`, `/zh/`, `/ja/`); other marketing pages stay English.
 
 ## Development
 
@@ -269,6 +256,9 @@ packages/   domain, contracts, persistence, adapters, UI, and test tooling
 infra/      local services and computer images
 docs/       architecture, operations, and release guides
 ```
+
+Workspace packages are `@matebot/*`; the pnpm workspace, TypeScript paths, and Docker build filters
+all use that scope.
 
 Common checks:
 
@@ -307,20 +297,41 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow and test m
 
 ## How Matebot compares
 
-- [Grok Bot](https://rakazo.com/grok-bot-alternative/)
-- [Muse](https://rakazo.com/muse-alternative/)
-- [Dots](https://rakazo.com/dots-alternative/)
-- [Instinct](https://rakazo.com/instinct-alternative/)
-- [OpenClaw](https://rakazo.com/openclaw-alternative/)
-- [Hermes Agent](https://rakazo.com/hermes-alternative/)
-- [All comparisons](https://rakazo.com/alternatives/)
+- [Grok Bot](https://test.matebot.dev/grok-bot-alternative/)
+- [Muse](https://test.matebot.dev/muse-alternative/)
+- [Dots](https://test.matebot.dev/dots-alternative/)
+- [Instinct](https://test.matebot.dev/instinct-alternative/)
+- [OpenClaw](https://test.matebot.dev/openclaw-alternative/)
+- [Hermes Agent](https://test.matebot.dev/hermes-alternative/)
+- [All comparisons](https://test.matebot.dev/alternatives/)
 
-## Contributing
+## Thanks
 
-Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull
-request. For security vulnerabilities, follow [SECURITY.md](./SECURITY.md) instead of filing a public
-issue.
+- [PromptLayer](https://promptlayer.com/)
+- [Inbox Zero](https://getinboxzero.com/)
+- [ConnectorMap](https://connectormap.luinbytes.dev/)
+- [CodeRabbit](https://www.coderabbit.ai/)
+- [Greptile](https://www.greptile.com/)
+- [Snyk](https://snyk.io/)
 
-Matebot is licensed under the [Apache License 2.0](./LICENSE).
+## Stack
 
-Questions and ideas are welcome in the [Matebot Discord community](https://discord.gg/RWwKa2Sn7h).
+- TypeScript
+- React 19, Vite, and Tailwind CSS
+- Electron and Expo
+- Hono and oRPC
+- PostgreSQL and Prisma
+- Better Auth
+- Graphile Worker
+- Pi
+- Docker, E2B, Daytona, CreateOS, and Boat
+- Composio, Pipedream Connect, MCP, and OpenAPI integrations
+
+## Upstream
+
+Matebot tracks [elie222/rakazo](https://github.com/elie222/rakazo). The upstream README, its demo,
+and its store listings describe upstream's hosted product, which this fork does not operate. To
+follow or contribute to the code Matebot builds on, start at that repository.
+
+Matebot is licensed under the [Apache License 2.0](./LICENSE), the same licence as upstream. That
+licence and the notices it requires stay in place; the Matebot name and marks are this fork's.
