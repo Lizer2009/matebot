@@ -1,12 +1,12 @@
-import type { Actor, MessageBlock } from "@rakazo/contracts";
-import { QUEUE_HOLDING_RUN_STATUSES } from "@rakazo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { Actor, MessageBlock } from "@matebot/contracts";
+import { QUEUE_HOLDING_RUN_STATUSES } from "@matebot/core";
+import type { Prisma, PrismaClient, ThreadEvents } from "@matebot/db";
 import {
   appendEventInTransaction,
   availableInSpace,
   IsolationError,
   withTransactionRetry,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { requireBotThread } from "./bot-thread.js";
 
 export type McpApprovalDeps = {

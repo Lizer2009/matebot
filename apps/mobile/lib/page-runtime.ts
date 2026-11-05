@@ -1,4 +1,4 @@
-import { PAGE_RUNTIME_PATH } from "@rakazo/core";
+import { PAGE_RUNTIME_PATH } from "@matebot/core";
 
 type Runtime = { text: string; etag: string | null };
 

@@ -1,4 +1,4 @@
-import type { RealtimeFanout } from "@rakazo/adapter-kit";
+import type { RealtimeFanout } from "@matebot/adapter-kit";
 import type { Notification } from "pg";
 import { Client } from "pg";
 

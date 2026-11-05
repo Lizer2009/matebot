@@ -1,11 +1,11 @@
+import { SandboxDamagedError } from "@matebot/adapter-kit";
+import type * as Adapters from "@matebot/adapters";
+import { ComputerBusyError } from "@matebot/adapters";
+import type { Actor } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { Prisma } from "@matebot/db";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
-import { SandboxDamagedError } from "@rakazo/adapter-kit";
-import type * as Adapters from "@rakazo/adapters";
-import { ComputerBusyError } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { Prisma } from "@rakazo/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handleRpcError } from "./app.js";
 import type { RouterDeps } from "./router.js";
@@ -18,7 +18,7 @@ const lifecycle = vi.hoisted(() => ({
   releaseComputerExecutionLease: vi.fn(),
 }));
 
-vi.mock("@rakazo/adapters", async (original) => {
+vi.mock("@matebot/adapters", async (original) => {
   const adapters = await original<typeof Adapters>();
   lifecycle.realAcquire = adapters.acquireComputerExecutionLease;
   return {

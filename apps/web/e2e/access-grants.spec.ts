@@ -1,5 +1,5 @@
+import type { AccessGrant } from "@matebot/contracts";
 import { expect, test } from "@playwright/test";
-import type { AccessGrant } from "@rakazo/contracts";
 import { captureScreenshot, completeOnboarding, makeAdmin, signup } from "./helpers";
 
 test("an admin grants free access to an email", async ({ page }, testInfo) => {

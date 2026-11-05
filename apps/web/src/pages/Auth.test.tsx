@@ -19,7 +19,7 @@ vi.mock("@lingui/react/macro", () => ({
   }),
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@matebot/ui-web", () => ({
   Button: ({
     children,
     variant,

@@ -1,5 +1,5 @@
-import { useExternalLinkOpener } from "@rakazo/chat-ui/web";
-import { pageCopyRequest, pageCopyResult, pageLinkRequest } from "@rakazo/core";
+import { useExternalLinkOpener } from "@matebot/chat-ui/web";
+import { pageCopyRequest, pageCopyResult, pageLinkRequest } from "@matebot/core";
 import type { CSSProperties } from "react";
 import { useCallback, useRef, useState } from "react";
 import { writeClipboard } from "../../lib/copy-text";

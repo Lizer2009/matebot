@@ -1,8 +1,8 @@
-import { runContinueJob } from "@rakazo/adapter-kit";
-import { BotSecretName, botSecretSubmissionSchema } from "@rakazo/contracts";
-import { createStreamingRedactor, displayName } from "@rakazo/core";
-import { runCodeKind, runLoginKind, runSecretKind } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import { runContinueJob } from "@matebot/adapter-kit";
+import { BotSecretName, botSecretSubmissionSchema } from "@matebot/contracts";
+import { createStreamingRedactor, displayName } from "@matebot/core";
+import { runCodeKind, runLoginKind, runSecretKind } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import {
   completeExternalEffect,
   replaceCompletedExternalEffectResult,

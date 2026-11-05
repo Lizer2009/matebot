@@ -3,8 +3,8 @@ import {
   CLIENT_UPDATE_REQUIRED_STATUS,
   compareBuilds,
   SERVER_BUILD_HEADER,
-} from "@rakazo/contracts";
-import { toast } from "@rakazo/ui-web";
+} from "@matebot/contracts";
+import { toast } from "@matebot/ui-web";
 import { getSnapshot as activeCall } from "./call-session";
 import { CLIENT_BUILD } from "./client-build";
 import {

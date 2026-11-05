@@ -8,8 +8,8 @@ import type {
   Me,
   Space,
   ThreadSnapshot,
-} from "@rakazo/contracts";
-import { isRetryableError, reorderBotTo } from "@rakazo/core";
+} from "@matebot/contracts";
+import { isRetryableError, reorderBotTo } from "@matebot/core";
 import { replaceEqualDeep } from "@tanstack/react-query";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";

@@ -1,5 +1,5 @@
 import { t } from "@lingui/core/macro";
-import { hostMatchesPasskeyRpId } from "@rakazo/core";
+import { hostMatchesPasskeyRpId } from "@matebot/core";
 import { WebAuthnAbortService } from "@simplewebauthn/browser";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { fetchAuthCapabilities } from "./auth-capabilities";

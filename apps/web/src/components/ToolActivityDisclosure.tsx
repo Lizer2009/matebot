@@ -1,12 +1,12 @@
 import { Plural, Trans } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import type { ThreadMessage } from "@rakazo/contracts";
-import { formatCompactDuration } from "@rakazo/core";
+import { ChatMarkdown } from "@matebot/chat-ui/web";
+import type { ThreadMessage } from "@matebot/contracts";
+import { formatCompactDuration } from "@matebot/core";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@rakazo/ui-web/components/ui/collapsible";
+} from "@matebot/ui-web/components/ui/collapsible";
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { Fragment } from "react";

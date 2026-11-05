@@ -1,13 +1,13 @@
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { createLogger, createTestSink, getLogger, installLogger } from "@matebot/logging";
 import { StreamableHTTPError } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
   InvalidClientMetadataError,
   ServerError,
   TooManyRequestsError,
 } from "@modelcontextprotocol/sdk/server/auth/errors.js";
-import { createLogger, createTestSink, getLogger, installLogger } from "@rakazo/logging";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectorRegistry } from "./composio-connector.js";
 import { InfisicalSecretStore } from "./infisical-secret-store.js";

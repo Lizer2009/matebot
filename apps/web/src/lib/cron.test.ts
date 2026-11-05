@@ -1,4 +1,4 @@
-import { formatCron } from "@rakazo/core";
+import { formatCron } from "@matebot/core";
 import { describe, expect, it } from "vitest";
 import { cronLabels } from "./cron";
 

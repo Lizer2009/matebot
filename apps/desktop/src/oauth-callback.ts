@@ -1,4 +1,4 @@
-import type { RakazoDesktopOAuthCallback } from "@rakazo/contracts";
+import type { RakazoDesktopOAuthCallback } from "@matebot/contracts";
 
 export type OAuthCallbackFromOptions = {
   /** SSO callbacks must reach the API, including a loopback API on a separate port. */

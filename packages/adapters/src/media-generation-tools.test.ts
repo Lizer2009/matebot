@@ -1,7 +1,7 @@
-import type { AdapterContext } from "@rakazo/adapter-kit";
-import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
-import { toolRequiresApproval } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import type { AdapterContext } from "@matebot/adapter-kit";
+import { ATTACHMENT_MAX_BYTES } from "@matebot/contracts";
+import { toolRequiresApproval } from "@matebot/core";
+import type { PrismaClient } from "@matebot/db";
 import { describe, expect, it, vi } from "vitest";
 import { FakeMediaGenerationProvider } from "./media-generation-provider.js";
 import { generateMediaFromTool } from "./media-generation-tools.js";

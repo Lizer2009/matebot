@@ -1,17 +1,17 @@
-import type { ConnectorRegistry } from "@rakazo/adapters";
-import type { Actor, MessageBlock } from "@rakazo/contracts";
+import type { ConnectorRegistry } from "@matebot/adapters";
+import type { Actor, MessageBlock } from "@matebot/contracts";
 import {
   appConnectCard,
   connectedAppBlocks,
   matchAppCatalog,
   matchesAppConnection,
-} from "@rakazo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@matebot/core";
+import type { Prisma, PrismaClient, ThreadEvents } from "@matebot/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
   IsolationError,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { requireBotThread } from "./bot-thread.js";
 import { resolveThreadTarget } from "./thread-target.js";
 

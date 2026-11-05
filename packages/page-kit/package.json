@@ -1,5 +1,5 @@
 {
-  "name": "@rakazo/page-kit",
+  "name": "@matebot/page-kit",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
@@ -14,8 +14,8 @@
     "test": "vitest run --root ../.. packages/page-kit/src"
   },
   "dependencies": {
-    "@rakazo/contracts": "workspace:*",
-    "@rakazo/ui-tokens": "workspace:*",
+    "@matebot/contracts": "workspace:*",
+    "@matebot/ui-tokens": "workspace:*",
     "esbuild": "0.28.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",

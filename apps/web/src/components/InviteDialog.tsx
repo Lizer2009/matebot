@@ -1,6 +1,6 @@
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { BillingStatus } from "@rakazo/contracts";
-import { BOT_COLORS, DEFAULT_NEW_BOT_AVATAR_SET, INVITED_TRIAL_WEEKS } from "@rakazo/contracts";
+import type { BillingStatus } from "@matebot/contracts";
+import { BOT_COLORS, DEFAULT_NEW_BOT_AVATAR_SET, INVITED_TRIAL_WEEKS } from "@matebot/contracts";
 import {
   BotAvatar,
   Button,
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-} from "@rakazo/ui-web";
+} from "@matebot/ui-web";
 import { CalendarPlus, Check, Copy, Gift } from "lucide-react";
 import { useCopyText } from "../lib/copy-text";
 

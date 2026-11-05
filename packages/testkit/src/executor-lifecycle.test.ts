@@ -7,16 +7,16 @@ import {
   ComputerBusyError,
   DestinationEmulator,
   releaseComputerExecutionLease,
-} from "@rakazo/adapters";
-import type { createApp } from "@rakazo/api/app";
-import { approvalEffectKey } from "@rakazo/core/node/approval-effect-key";
+} from "@matebot/adapters";
+import type { createApp } from "@matebot/api/app";
+import { approvalEffectKey } from "@matebot/core/node/approval-effect-key";
 import {
   createThreadEvents,
   createThreadMessage,
   loadRunHistoryMessages,
   runAsSystem,
   runAsTenant,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
 import { asSystem } from "./system-db.js";
@@ -36,7 +36,7 @@ describeIntegration("run executor lifecycle", () => {
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@matebot/api/app");
     handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,
@@ -120,7 +120,7 @@ describeIntegration("run executor lifecycle", () => {
   it("records an uncertain result without replaying an interrupted external effect", async () => {
     const prompt = "write this to the destination crm as a note";
     const seeded = await seedRun("uncertain-effect", prompt);
-    const args = { collection: "notes", title: "Rakazo result", body: prompt };
+    const args = { collection: "notes", title: "Matebot result", body: prompt };
     const executionId = approvalEffectKey(seeded.run.id, "destination.write", args);
     await db.externalEffect.create({
       data: {
@@ -160,7 +160,7 @@ describeIntegration("run executor lifecycle", () => {
   it("recreates the approval pause when an intended effect was interrupted before the card", async () => {
     const prompt = "write this to the destination crm as a note";
     const seeded = await seedRun("interrupted-before-approval", prompt);
-    const args = { collection: "notes", title: "Rakazo result", body: prompt };
+    const args = { collection: "notes", title: "Matebot result", body: prompt };
     const executionId = approvalEffectKey(seeded.run.id, "destination.write", args);
     const effect = await db.externalEffect.create({
       data: {

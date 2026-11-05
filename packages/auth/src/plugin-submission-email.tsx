@@ -1,5 +1,5 @@
 /** @jsxRuntime automatic */
-import type { TransactionalEmail } from "@rakazo/adapter-kit";
+import type { TransactionalEmail } from "@matebot/adapter-kit";
 import { Link, Text } from "react-email";
 import { emailText, linkStyle, message } from "./email.js";
 
@@ -12,9 +12,9 @@ export function pluginSubmissionReceivedEmail(
   return message(
     email,
     locale,
-    say("We received your Rakazo plugin"),
+    say("We received your Matebot plugin"),
     <>
-      <Text>{say("Thanks for submitting a plugin to the Rakazo marketplace.")}</Text>
+      <Text>{say("Thanks for submitting a plugin to the Matebot marketplace.")}</Text>
       <Text>{say("We review every submission and will email you when it's done.")}</Text>
       <Text>{say("If you did not submit a plugin, ignore this email.")}</Text>
     </>,
@@ -31,7 +31,7 @@ export function integrationClaimConfirmEmail(
   return message(
     email,
     locale,
-    say("Confirm your Rakazo page claim"),
+    say("Confirm your Matebot page claim"),
     <>
       <Text>
         <Link href={url} style={linkStyle}>
@@ -90,10 +90,10 @@ export function pluginSubmissionReviewedEmail(
     submission.email,
     locale,
     submission.claim
-      ? say("Your Rakazo page claim: {name}", { name })
+      ? say("Your Matebot page claim: {name}", { name })
       : approved
-        ? say("{name} is in the Rakazo marketplace", { name })
-        : say("Your Rakazo plugin submission: {name}", { name }),
+        ? say("{name} is in the Matebot marketplace", { name })
+        : say("Your Matebot plugin submission: {name}", { name }),
     <>
       <Text>
         {submission.claim
@@ -101,8 +101,8 @@ export function pluginSubmissionReviewedEmail(
             ? say("Your changes to the {name} page are approved.", { name })
             : say("We couldn't approve your changes to the {name} page.", { name })
           : approved
-            ? say("{name} is now listed in the Rakazo plugin marketplace.", { name })
-            : say("We couldn't list {name} in the Rakazo plugin marketplace.", { name })}
+            ? say("{name} is now listed in the Matebot plugin marketplace.", { name })
+            : say("We couldn't list {name} in the Matebot plugin marketplace.", { name })}
       </Text>
       {submission.reason ? <Text>{submission.reason}</Text> : null}
       <Text>{say("Have any questions? Reply to this email.")}</Text>

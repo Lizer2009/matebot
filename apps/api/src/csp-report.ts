@@ -1,5 +1,5 @@
-import { CSP_REPORT_PATH } from "@rakazo/contracts/content-security-policy";
-import { getLogger, redactSensitiveText } from "@rakazo/logging";
+import { CSP_REPORT_PATH } from "@matebot/contracts/content-security-policy";
+import { getLogger, redactSensitiveText } from "@matebot/logging";
 import type { Context } from "hono";
 import { Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";

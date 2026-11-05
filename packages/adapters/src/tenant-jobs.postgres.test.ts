@@ -4,9 +4,9 @@ import type {
   ArtifactStore,
   SandboxProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { createDb, runAsSystem, runAsTenant } from "@rakazo/db";
+} from "@matebot/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@matebot/db";
+import { createDb, runAsSystem, runAsTenant } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createBackgroundJobHandlers } from "./background-job-handlers.js";
 import type { createRunExecutor } from "./executor.js";

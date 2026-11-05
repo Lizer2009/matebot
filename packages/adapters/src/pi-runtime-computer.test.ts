@@ -1,5 +1,5 @@
-import type { ConnectorTool } from "@rakazo/adapter-kit";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import type { ConnectorTool } from "@matebot/adapter-kit";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fakeAgentState = vi.hoisted(() => ({
@@ -81,6 +81,7 @@ describe("Pi computer tool dispatch", () => {
   it("introduces the bot as this product, not the upstream one", () => {
     for (const prompt of [defaultSystemPrompt(true), defaultSystemPrompt(false)]) {
       expect(prompt).toContain(`You are a ${PRODUCT_DISPLAY_NAME} bot with`);
+      // The fork's own name must never leak into the upstream prompt build.
       expect(prompt).not.toContain("Rakazo");
     }
     expect(defaultSystemPrompt(true)).toContain("a real computer");

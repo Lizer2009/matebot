@@ -11,8 +11,8 @@ const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")) as
 const base = readFileSync(path.join(root, pkg.build.mac.entitlements), "utf8");
 
 describe("associatedPasskeyRpIds", () => {
-  const resourcesPath = "/Applications/Rakazo.app/Contents/Resources";
-  const profile = "/Applications/Rakazo.app/Contents/embedded.provisionprofile";
+  const resourcesPath = "/Applications/Matebot.app/Contents/Resources";
+  const profile = "/Applications/Matebot.app/Contents/embedded.provisionprofile";
 
   it("lists the hosted domain only for a packaged macOS app with an embedded profile", () => {
     const exists = (file: string) => file === profile;
@@ -40,8 +40,9 @@ describe("passkeyEntitlements", () => {
   it("adds the application identifier and webcredentials domain to the base entitlements", () => {
     const plist = passkeyEntitlements(base, "ABCDE12345", pkg.build.appId);
     expect(plist.startsWith(base.slice(0, base.lastIndexOf("</dict>")).trimEnd())).toBe(true);
+    // Read the bundle id from the build config so a rename cannot leave this stale.
     expect(plist).toContain(
-      "<key>com.apple.application-identifier</key>\n    <string>ABCDE12345.dev.rakazo.desktop</string>",
+      `<key>com.apple.application-identifier</key>\n    <string>ABCDE12345.${pkg.build.appId}</string>`,
     );
     expect(plist).toContain(
       `<key>com.apple.developer.associated-domains</key>\n    <array>\n      <string>webcredentials:${PASSKEY_RP_ID}</string>\n    </array>\n  </dict>\n</plist>`,
@@ -67,7 +68,7 @@ describe("passkeyEntitlements", () => {
     expect(() => passkeyEntitlements(base, "", pkg.build.appId)).toThrow();
     expect(() => passkeyEntitlements(base, "abcde12345", pkg.build.appId)).toThrow();
     expect(() => passkeyEntitlements(base, "ABCDE12345</string>", pkg.build.appId)).toThrow();
-    expect(() => passkeyEntitlements(base, "ABCDE12345", "dev rakazo")).toThrow();
+    expect(() => passkeyEntitlements(base, "ABCDE12345", "dev matebot")).toThrow();
     const derived = passkeyEntitlements(base, "ABCDE12345", pkg.build.appId);
     expect(() => passkeyEntitlements(derived, "ABCDE12345", pkg.build.appId)).toThrow();
   });
@@ -91,10 +92,10 @@ describe("self-hosted passkey domain", () => {
   });
 
   it("associates the build with RAKAZO_PASSKEY_RP_ID", async () => {
-    const passkeys = await load(" Rakazo.Example.org ");
-    expect(passkeys.PASSKEY_RP_ID).toBe("rakazo.example.org");
+    const passkeys = await load(" Matebot.Example.org ");
+    expect(passkeys.PASSKEY_RP_ID).toBe("matebot.example.org");
     expect(passkeys.passkeyEntitlements(base, "ABCDE12345", pkg.build.appId)).toContain(
-      "<string>webcredentials:rakazo.example.org</string>",
+      "<string>webcredentials:matebot.example.org</string>",
     );
   });
 

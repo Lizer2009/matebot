@@ -1,7 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
-import { StreamableHTTPError } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import type {
   AdapterContext,
   CommandRequest,
@@ -19,13 +17,15 @@ import type {
   ScreenSession,
   WorkspaceDirectoryRequest,
   WorkspaceExportLimits,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   WorkspaceTooLargeError,
-} from "@rakazo/adapter-kit";
-import { abortableDelay, boundedSandboxCommandTimeoutMs, isRetryableError } from "@rakazo/core";
+} from "@matebot/adapter-kit";
+import { abortableDelay, boundedSandboxCommandTimeoutMs, isRetryableError } from "@matebot/core";
+import { StreamableHTTPError } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { boundedComputerActions, computerObservation } from "./computer-support.js";
 import { normalizeDesktopWorkspacePath } from "./desktop-sandbox-paths.js";
 import { McpSession } from "./mcp-transport.js";

@@ -1,8 +1,8 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { truncateReplyQuote } from "@rakazo/contracts";
-import { blocksToAgentHistoryText, messageReaction } from "@rakazo/core";
-import { isPageCardMessage } from "@rakazo/core/message-quote";
-import type { PrismaClient } from "@rakazo/db";
+import type { MessageBlock } from "@matebot/contracts";
+import { truncateReplyQuote } from "@matebot/contracts";
+import { blocksToAgentHistoryText, messageReaction } from "@matebot/core";
+import { isPageCardMessage } from "@matebot/core/message-quote";
+import type { PrismaClient } from "@matebot/db";
 
 type QuotedMessage = {
   id: string;

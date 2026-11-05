@@ -62,7 +62,7 @@ describe("mobile i18n", () => {
     const { resetI18nForTests, t } = await import("./i18n");
     resetI18nForTests("zh-CN");
     expect(t("Account")).toBe("账户");
-    expect(t("Sign in to Rakazo")).toBe("登录 Rakazo");
+    expect(t("Sign in to Matebot")).toBe("登录 Matebot");
     expect(t("New bot")).toBe("新建 Bot");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3 次运行，12 个 token",
@@ -71,7 +71,7 @@ describe("mobile i18n", () => {
 
     resetI18nForTests("ru");
     expect(t("Account")).toBe("Аккаунт");
-    expect(t("Sign in to Rakazo")).toBe("Войти в Rakazo");
+    expect(t("Sign in to Matebot")).toBe("Войти в Matebot");
     expect(t("New bot")).toBe("Новый бот");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "Запусков: 3, токенов: 12",
@@ -80,7 +80,7 @@ describe("mobile i18n", () => {
 
     resetI18nForTests("nl");
     expect(t("Account")).toBe("Account");
-    expect(t("Sign in to Rakazo")).toBe("Aanmelden bij Rakazo");
+    expect(t("Sign in to Matebot")).toBe("Aanmelden bij Matebot");
     expect(t("New bot")).toBe("Nieuwe bot");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3 uitvoeringen, 12 tokens",
@@ -89,7 +89,7 @@ describe("mobile i18n", () => {
 
     resetI18nForTests("ja");
     expect(t("Account")).toBe("アカウント");
-    expect(t("Sign in to Rakazo")).toBe("Rakazoにログイン");
+    expect(t("Sign in to Matebot")).toBe("Matebotにログイン");
     expect(t("New bot")).toBe("新しいボット");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3回の実行、12トークン",
@@ -98,7 +98,7 @@ describe("mobile i18n", () => {
 
     resetI18nForTests("de");
     expect(t("Account")).toBe("Konto");
-    expect(t("Sign in to Rakazo")).toBe("Bei Rakazo anmelden");
+    expect(t("Sign in to Matebot")).toBe("Bei Matebot anmelden");
     expect(t("New bot")).toBe("Neuer Bot");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3 Ausführungen, 12 Token",
@@ -107,7 +107,7 @@ describe("mobile i18n", () => {
 
     resetI18nForTests("es");
     expect(t("Account")).toBe("Cuenta");
-    expect(t("Sign in to Rakazo")).toBe("Inicia sesión en Rakazo");
+    expect(t("Sign in to Matebot")).toBe("Inicia sesión en Matebot");
     expect(t("New bot")).toBe("Nuevo bot");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3 ejecuciones, 12 tokens",
@@ -152,10 +152,10 @@ describe("mobile i18n", () => {
     const { JA_MESSAGES } = await import("./locales/ja");
     const { ES_MESSAGES } = await import("./locales/es");
     const { EMPTY_PLUGIN_CATALOG_MESSAGE, SLASH_ACTIONS, RUN_ERROR_LIMIT_MESSAGES } = await import(
-      "@rakazo/core"
+      "@matebot/core"
     );
     const { AI_DATA_DISCLOSURES, OPENAI_COMPATIBLE_BASE_URL_HINT } = await import(
-      "@rakazo/contracts"
+      "@matebot/contracts"
     );
     const { createMenuItems } = await import("./create-chooser");
     const mobileRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -171,7 +171,7 @@ describe("mobile i18n", () => {
       "Your model provider",
       "The model provider returned an error.",
       "Connect a model in Settings before running bots.",
-      "Connect your own API key in Models or choose Rakazo credits in Billing.",
+      "Connect your own API key in Models or choose Matebot credits in Billing.",
       "{provider} is rate limiting requests. Try again shortly.",
       "{summary} Resets {date}.",
       "{provider} rejected the API key. Check your connection settings.",
@@ -237,7 +237,7 @@ describe("mobile i18n", () => {
     ["ru", "Ваш поставщик моделей не ответил вовремя. Повторите попытку."],
     ["zh-CN", "你的模型提供商响应超时。请重试。"],
   ] as const)("renders provider errors in %s", async (locale, expected) => {
-    const { normalizeRunError } = await import("@rakazo/core");
+    const { normalizeRunError } = await import("@matebot/core");
     const { resetI18nForTests, t, dateLocaleForUi } = await import("./i18n");
     resetI18nForTests(locale);
     expect(normalizeRunError("Request timed out", t, dateLocaleForUi()).summary).toBe(expected);

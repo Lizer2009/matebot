@@ -1,14 +1,14 @@
-import { EmailEmulator } from "@rakazo/adapters";
+import { EmailEmulator } from "@matebot/adapters";
 import {
   INTEGRATION_CLAIMS_PATH,
   PLUGIN_SUBMISSIONS_PATH,
   PluginSubmissionSchema,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const preview = vi.hoisted(() => vi.fn());
-vi.mock("@rakazo/adapters", async (original) => ({
-  ...(await original<typeof import("@rakazo/adapters")>()),
+vi.mock("@matebot/adapters", async (original) => ({
+  ...(await original<typeof import("@matebot/adapters")>()),
   previewPluginInstall: preview,
 }));
 
@@ -268,7 +268,7 @@ describe("reviewing submissions", () => {
       expect.objectContaining({
         name: "acme-tickets",
         displayName: "Acme Tickets",
-        registry: "Rakazo",
+        registry: "Matebot",
         source: `https://github.com/acme/plugins@${SHA}#tickets`,
         installedSource: "https://github.com/acme/plugins#tickets",
         hasConnector: false,

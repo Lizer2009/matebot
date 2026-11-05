@@ -1,5 +1,5 @@
-import type { AgentRunRequest, AgentRuntime } from "@rakazo/adapter-kit";
-import { FIND_TOOL, findTools, partitionTools } from "@rakazo/adapters";
+import type { AgentRunRequest, AgentRuntime } from "@matebot/adapter-kit";
+import { FIND_TOOL, findTools, partitionTools } from "@matebot/adapters";
 
 /**
  * A call through use_tool is recorded as the tool it ran, flagged `viaUseTool`, and `loaded`

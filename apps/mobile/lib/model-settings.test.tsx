@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { MAX_MODEL_CONTEXT_WINDOW, MAX_MODEL_MAX_TOKENS } from "@rakazo/contracts";
+import { MAX_MODEL_CONTEXT_WINDOW, MAX_MODEL_MAX_TOKENS } from "@matebot/contracts";
 import { notifyManager } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { act, createElement, useEffect } from "react";
@@ -682,11 +682,11 @@ it("keeps setup help and API key collapsible for generic compatible servers", as
   const row = (name: string) =>
     [...container.querySelectorAll("button")].find((button) => button.textContent === name)!;
   expect(field("API key")).toBeNull();
-  expect(container.textContent).not.toContain("Rakazo adds /v1");
+  expect(container.textContent).not.toContain("Matebot adds /v1");
   await act(async () => row("Setup help").click());
-  expect(container.textContent).toContain("Rakazo adds /v1");
+  expect(container.textContent).toContain("Matebot adds /v1");
   await act(async () => row("Setup help").click());
-  expect(container.textContent).not.toContain("Rakazo adds /v1");
+  expect(container.textContent).not.toContain("Matebot adds /v1");
   await act(async () => row("API key").click());
   expect(field("API key")).not.toBeNull();
   await act(async () => row("API key").click());

@@ -1,24 +1,25 @@
 # Desktop app
 
-The desktop app for Mac, Windows and Linux runs the same Rakazo as the web, and can also run
+The desktop app for Mac, Windows and Linux runs the same Matebot as the web, and can also run
 everything on your own computer.
 
 ## Install
 
-Download it from [rakazo.com](https://rakazo.com). The Linux AppImage needs FUSE 2.
+Download it from [test.matebot.dev](https://test.matebot.dev/download/). The Linux AppImage needs FUSE 2.
 
 ## Choose a server
 
 The first time it opens, the app asks which server to use:
 
-- **Rakazo Cloud**: sign in to your rakazo.com account.
-- **This computer**: run your own Rakazo locally in Docker. If Docker isn't installed, the app links
+- **Existing instance**: sign in to a Matebot server you already run, such as this deployment at
+  `https://test.matebot.dev`.
+- **This computer**: run your own Matebot locally in Docker. If Docker isn't installed, the app links
   to Docker Desktop, OrbStack and Docker Engine. Everything, including your bots' computers, then
   runs on your machine. It is yours alone: once you create your account, it accepts no other.
-- **Existing instance**: connect to a Rakazo server you or your team already run. Enter its
+- **Existing instance**: connect to a Matebot server you or your team already run. Enter its
   **Server address** and choose **Check connection**.
 
-To switch later, use **Change Rakazo Server…** in the app menu (Cmd+Shift+K, or Ctrl+Shift+K on
+To switch later, use **Change Matebot Server…** in the app menu (Cmd+Shift+K, or Ctrl+Shift+K on
 Windows and Linux).
 
 > [!NOTE]

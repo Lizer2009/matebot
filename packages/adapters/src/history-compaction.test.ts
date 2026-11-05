@@ -3,11 +3,11 @@ import type {
   AgentRuntime,
   JobPublisher,
   SemanticMemoryResponse,
-} from "@rakazo/adapter-kit";
-import { historyCompactJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger, wrapJobPayload } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import { historyCompactJob } from "@matebot/adapter-kit";
+import type { MessageBlock } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { createLogger, createTestSink, installLogger, wrapJobPayload } from "@matebot/logging";
 import { describe, expect, it, vi } from "vitest";
 import {
   COMPACTION_BATCH_SIZE,
@@ -181,7 +181,7 @@ describe("selectCompactedHistory", () => {
 describe("formatCompactedSummary", () => {
   it("labels the summary as data and records its coverage", () => {
     expect(formatCompactedSummary("facts", 49)).toContain(
-      "Rakazo-owned compacted context through message sequence 49",
+      "Matebot-owned compacted context through message sequence 49",
     );
     expect(formatCompactedSummary("facts", 49)).toContain("<compacted_thread_summary>");
   });

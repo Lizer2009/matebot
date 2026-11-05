@@ -1,5 +1,5 @@
-import { FLEET_TOOL_NAMES } from "@rakazo/contracts";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import { FLEET_TOOL_NAMES } from "@matebot/contracts";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { builtinAgentTools } from "./builtin-tools.js";
 

@@ -7,7 +7,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   Button,
-} from "@rakazo/ui-web";
+} from "@matebot/ui-web";
 import type { ComponentType, ReactNode } from "react";
 import { Component } from "react";
 import { lazyComponent } from "../lib/preload-recovery";

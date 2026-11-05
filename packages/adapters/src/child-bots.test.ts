@@ -20,11 +20,11 @@ import type {
   CommandRequest,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { SandboxDamagedError } from "@rakazo/adapter-kit";
-import { browserProfilePathForScreen } from "@rakazo/core/node/desktop-runtime";
-import type { createRepos, PrismaClient } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import { SandboxDamagedError } from "@matebot/adapter-kit";
+import { browserProfilePathForScreen } from "@matebot/core/node/desktop-runtime";
+import type { createRepos, PrismaClient } from "@matebot/db";
+import { createLogger, createTestSink, installLogger } from "@matebot/logging";
 import { describe, expect, it, vi } from "vitest";
 import {
   archiveBot,
@@ -138,7 +138,7 @@ describe("spawned bot creation", () => {
       name: "Painter",
       threadId: "thread-2",
     });
-    const createReposSpy = vi.spyOn(await import("@rakazo/db"), "createRepos").mockReturnValue({
+    const createReposSpy = vi.spyOn(await import("@matebot/db"), "createRepos").mockReturnValue({
       createBot,
     } as unknown as ReturnType<typeof createRepos>);
 

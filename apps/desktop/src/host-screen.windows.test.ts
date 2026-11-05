@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import type { HostScreen } from "@rakazo/adapters/host-screen";
+import type { HostScreen } from "@matebot/adapters/host-screen";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   createDesktopHostScreen,
@@ -54,11 +54,11 @@ describe.runIf(process.platform === "win32" && process.env.CI)("Windows screen c
     const editor = /\[(\d+)\] (?:textfield|document)/.exec(before.tree);
     expect(editor, before.tree).not.toBeNull();
     const written = await screen.act(scope, "notepad", [
-      { kind: "set", element: Number(editor![1]), value: "Hello from Rakazo" },
+      { kind: "set", element: Number(editor![1]), value: "Hello from Matebot" },
     ]);
     console.log(JSON.stringify({ ...written, observation: written.observation?.tree }));
     expect(written).toMatchObject({ completed: 1 });
-    expect(written.observation?.tree).toContain("Hello from Rakazo");
+    expect(written.observation?.tree).toContain("Hello from Matebot");
     const selected = await screen.act(scope, "notepad", [
       { kind: "menu", path: ["Edit", "Select All"] },
     ]);

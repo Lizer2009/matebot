@@ -1,14 +1,14 @@
-import type { JobPublisher } from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
+import type { JobPublisher } from "@matebot/adapter-kit";
+import { runContinueJob } from "@matebot/adapter-kit";
 import {
   ACTIVE_RUN_STATUSES,
   escapePromptData,
   ONCE_ROUTINE_CRON,
   truncatePlainText,
-} from "@rakazo/core";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import { STRATEGIC_INITIATIVE_NONCE_PREFIX, spaceHasModelAccess } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/core";
+import type { Prisma, PrismaClient } from "@matebot/db";
+import { STRATEGIC_INITIATIVE_NONCE_PREFIX, spaceHasModelAccess } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { isUniqueViolation } from "./run-messages.js";
 import { modelCreditBillingEnabled } from "./run-model.js";
 

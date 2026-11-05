@@ -2,7 +2,7 @@ import type * as NodeFsPromises from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
 import { Readable } from "node:stream";
-import { resolveSupervisorToken } from "@rakazo/core";
+import { resolveSupervisorToken } from "@matebot/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   COMPUTER_IMAGE,
@@ -2210,7 +2210,7 @@ describe("computer network reclaim", () => {
       const network = botNetwork();
       network.remove.mockRejectedValue(error);
       mocks.docker.getNetwork.mockReturnValue(network);
-      const { getLogger } = await import("@rakazo/logging");
+      const { getLogger } = await import("@matebot/logging");
       const logError = vi.spyOn(getLogger(), "error").mockImplementation(() => undefined);
 
       expect((await stop()).status).toBe(200);

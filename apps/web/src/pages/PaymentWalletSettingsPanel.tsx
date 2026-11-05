@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { PaymentWalletStatus } from "@rakazo/contracts";
-import { writeSaved } from "@rakazo/core/query";
+import type { PaymentWalletStatus } from "@matebot/contracts";
+import { writeSaved } from "@matebot/core/query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   Button,
-} from "@rakazo/ui-web";
+} from "@matebot/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";

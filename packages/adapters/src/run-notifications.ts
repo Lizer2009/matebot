@@ -1,15 +1,15 @@
-import type { NotificationMessage } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
+import type { NotificationMessage } from "@matebot/adapter-kit";
+import type { MessageBlock } from "@matebot/contracts";
 import {
   isBackgroundRunTrigger,
   plainTextFromMarkdown,
   redactSecrets,
   truncatedPlainText,
   truncatePlainText,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { countUnreadInboxChats } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/core";
+import type { PrismaClient } from "@matebot/db";
+import { countUnreadInboxChats } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { notificationIdentity } from "./notification-identity.js";
 

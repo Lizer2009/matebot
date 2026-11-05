@@ -5,11 +5,11 @@ import type {
   BackgroundJobName,
   JobPublisher,
   JobWorkerHost,
-} from "@rakazo/adapter-kit";
-import { dispatchBackgroundJob } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
-import { isPoolCheckoutTimeout, isTooManyDatabaseConnections, runAsSystem } from "@rakazo/db";
-import { getLogger, runCorrelatedJob, unwrapJobPayload, wrapJobPayload } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import { dispatchBackgroundJob } from "@matebot/adapter-kit";
+import type { PrismaClient } from "@matebot/db";
+import { isPoolCheckoutTimeout, isTooManyDatabaseConnections, runAsSystem } from "@matebot/db";
+import { getLogger, runCorrelatedJob, unwrapJobPayload, wrapJobPayload } from "@matebot/logging";
 import type { Runner, WorkerUtils } from "graphile-worker";
 import { makeWorkerUtils, run } from "graphile-worker";
 import type { Pool } from "pg";

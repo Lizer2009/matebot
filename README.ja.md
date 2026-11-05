@@ -1,23 +1,28 @@
-# Rakazo
+# Matebot
 
 [English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
-[![GitHub stars](https://img.shields.io/github/stars/elie222/rakazo?labelColor=black&style=for-the-badge&color=2563EB)](https://github.com/elie222/rakazo/stargazers)
-[![Discord コミュニティに参加](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?labelColor=black&style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/RWwKa2Sn7h)
-[![App Store で iPhone 版をダウンロード](https://img.shields.io/badge/App%20Store-Download%20for%20iPhone-black?labelColor=black&style=for-the-badge&logo=apple&logoColor=white)](https://apps.apple.com/app/rakazo/id6801531099)
-[![Google Play で Android 版をダウンロード](https://img.shields.io/badge/Google%20Play-Get%20the%20app-black?labelColor=black&style=for-the-badge&logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.rakazo.app)
+**Matebot** は、自分で所有できるセルフホスト型の AI チームメイトです。常駐型のボットが実際のコンピューターを使い、
+スケジュールで作業し、Web・デスクトップ・モバイルの各クライアントでメモリと履歴を保ちます。自分のサーバーと自分のモデル認証情報で
+動作し、ローカルにデスクトップ環境を必要としません。
 
-![Rakazo：本当に自分のものにできる AI チームメイト](./docs/readme-hero.png)
+このリポジトリは **[Rakazo](https://github.com/elie222/rakazo)** のフォークです。Matebot はその Apache-2.0 のコードの上に
+構築されており、ライセンス、その通知、上流への明確なクレジットを保持します。違いは製品名、パッケージング、
+そしてこのフォークが運用するデプロイです。
 
-Rakazo は、常駐型の AI チームメイトを持てるオープンソースの AI エージェントです。自分のマシンで動かせる
-セルフホスト型の AI アシスタントでもあります。Web 版、Electron デスクトップアプリ、
-[iPhone](https://apps.apple.com/app/rakazo/id6801531099) 版と [Android](https://play.google.com/store/apps/details?id=com.rakazo.app) 版で利用できます。
-モデルやコンピューターのプロバイダーは自分で選べるほか、スタック全体をローカルで動かすこともできます。
+| | |
+| --- | --- |
+| **このデプロイ** | https://test.matebot.dev |
+| **フォーク計画と進捗** | [docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md) |
+| **デプロイ記録** | [docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md) |
+| **Cursor Cloud Agent** | [docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md) |
+| **ブランド資産** | [docs/MATEBOT_BRAND.md](./docs/MATEBOT_BRAND.md) |
+| **Windows インストーラー** | [docs/desktop-release.md](./docs/desktop-release.md) |
+
+![Matebot：本当に自分のものにできる AI チームメイト](./docs/readme-hero.png)
 
 Grok Bot、Meta Muse、OpenAI Dots、Instinct、OpenClaw、Hermes Agent、Claude Duet の
 オープンソースかつセルフホスト可能な代替ツールです。
-
-Rakazo は現在ベータ版です。詳しくは [rakazo.com](https://rakazo.com) をご覧ください。
 
 このドキュメントは[英語版 README](./README.md) の日本語訳です。リンク先のドキュメントは現在英語のみです。
 
@@ -63,20 +68,23 @@ https://github.com/user-attachments/assets/dccdeddb-2134-4a56-8eed-b2e591736b1c
 Docker Engine、Compose プラグイン、curl、OpenSSL が必要です。リポジトリのクローンや Node のインストールは不要です。
 
 ```bash
-mkdir -p rakazo && cd rakazo &&
-curl -fsSLO https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose/install-images.sh &&
-bash install-images.sh
+mkdir -p matebot && cd matebot &&
+curl -fsSLO https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose/install-images-matebot.sh &&
+bash install-images-matebot.sh
 ```
 
-インストーラーは Compose ファイルをダウンロードし、ランダムなシークレットを含む `.env` を作成して Rakazo を起動します。
+インストーラーは Compose ファイルをダウンロードし、ランダムなシークレットを含む `.env` を作成して Matebot を起動します。
 再実行時は既存の `.env` をそのまま残します。
 
 [http://127.0.0.1:5173](http://127.0.0.1:5173) を開き、アカウントを作成してモデルを接続します。
 ローカルの Docker コンピューターはデフォルトで有効です。リモートプロバイダーとして `e2b`、`daytona`、`createos`、`boat`、`railway`
 も、対応する API キーを設定すれば利用できます。
 
-デフォルトのイメージタグは `edge`（main ブランチのビルド、`linux/amd64` と `linux/arm64`）です。詳細とタグは
+イメージはこのフォークのレジストリ `ghcr.io/lizer2009/matebot/{app,computer,updater}` から取得します。main のビルドは `edge`、
+コミットごとに `sha-<commit>` タグが付きます。詳細は
 [セルフホストガイド](./docs/self-host.md#published-images-no-checkout)を参照してください。
+
+上流のインストーラー `install-images.sh` も利用できますが、上流のイメージを取得します。意図的に上流のビルドを動かす場合にのみ使ってください。
 
 制限のあるネットワークでは、インストーラーのダウンロード元（`RAKAZO_DOWNLOAD_BASE`）を上書きする、
 既存の Compose ファイルをスキップする（`--local` / `RAKAZO_DOWNLOAD_SKIP_EXISTING`）、またはブートストラップ
@@ -91,16 +99,14 @@ bash install-images.sh
 デスクトップアプリ、モバイルアプリ、またはブラウザーから接続します。
 
 ```bash
-bash install-images.sh --prepare-only
-# edit .env: SANDBOX_PROVIDER=boat (or e2b / daytona / createos) with its API key, RAKAZO_HOST=your.domain
-bash install-images.sh
+bash install-images-matebot.sh --prepare-only
+# .env を編集: SANDBOX_PROVIDER=boat（または e2b / daytona / createos）とその API キー、RAKAZO_HOST=your.domain
+bash install-images-matebot.sh
 ```
 
 ポート 5173 の前段に HTTPS を置いてください。Caddy の設定とホストの堅牢化については
 [docs/self-host-production.md](./docs/self-host-production.md#public-single-vm-deployment) で説明しています。デスクトップアプリでは
 **Existing instance**（既存のインスタンス）を選び、`https://` のアドレスを入力します。
-
-または [Railway にデプロイ](https://railway.com/new/template/rakazo-template)することもできます。[Railway セットアップガイド](./infra/railway/README.md)を参照してください。
 
 ## ローカル開発（ソースから実行）
 
@@ -188,22 +194,32 @@ Railway のサンドボックス利用は従量課金です。
 
 ## デスクトップとモバイル
 
-Electron アプリと Expo アプリは、Web アプリと同じ Rakazo API を使うクライアントです。
+Electron アプリと Expo アプリは、Web アプリと同じ Matebot API を使うクライアントです。
 
 開発用スタックを起動した状態で、次のコマンドで Electron を起動します。
 
 ```bash
-pnpm --filter @rakazo/desktop dev
+pnpm --filter @matebot/desktop dev
 ```
 
-初回起動時、デスクトップアプリは Rakazo をこのコンピューターで動かすか、既存のサーバーに接続するかを
+Windows インストーラーをローカルでビルドするには:
+
+```bash
+pnpm --filter @matebot/desktop pack:win
+```
+
+出力は `apps/desktop/out/Matebot-Setup-<version>.exe` です。未署名のユーザー単位インストーラーで、
+`%LOCALAPPDATA%\Programs\Matebot` にインストールし、設定は `%APPDATA%\Matebot` に保存します（Electron が `productName` から決めます）。
+署名と公開はリリースワークフローが行います。[Windows インストーラー](./docs/desktop-release.md#windows-installer)を参照してください。
+
+初回起動時、デスクトップアプリは Matebot をこのコンピューターで動かすか、既存のサーバーに接続するかを
 尋ねます。**This computer**（このコンピューター）を選ぶと、アプリのデータディレクトリに Docker Compose で公開イメージを
 インストールして起動します（`infra/compose/install-images.sh` と同じファイルを使います）。そのため Docker Desktop、
 OrbStack、Docker Engine のいずれかが必要です。インストールされていない場合、アプリからそれらへのリンクを案内します。インストール済みの
 ビルドはイメージタグを自身のバージョンに固定し、パッケージ化されていないビルドは `edge` を取得します。
 `pnpm dev` を実行している開発者は、代わりに **Existing instance**（既存のインスタンス）を選び `http://127.0.0.1:5173` を指定してください。公開サーバーは
 HTTPS を使う必要があります。HTTP はループバックとプライベート LAN のアドレスでのみ受け付けます（リンクローカルは除く）。
-アプリは保存前に Rakazo のヘルスチェックエンドポイントを確認し、以降の起動ではそのインスタンスに直接接続します。
+アプリは保存前に Matebot のヘルスチェックエンドポイントを確認し、以降の起動ではそのインスタンスに直接接続します。
 アプリを終了してもスタックは動き続けます。停止するには、アプリケーションメニューの **Stop Local Stack**（ローカルスタックを停止）を使います。
 
 Linux では、デスクトップアプリは AppImage として配布されており、FUSE 2（`libfuse.so.2`）が必要です。Fedora Silverblue や
@@ -213,14 +229,14 @@ Ubuntu 24.04 では `libfuse2t64`、それ以前の Ubuntu や Debian では `li
 AppImage を実行してください。
 
 ```bash
-chmod +x Rakazo-*.AppImage
-./Rakazo-*.AppImage --appimage-extract-and-run
+chmod +x Matebot-*.AppImage
+./Matebot-*.AppImage --appimage-extract-and-run
 ```
 
 **This computer** は `docker` CLI を探し、Podman は検出しません。`compose` コマンドに対応した別の
 Docker 互換 CLI を試すには、アプリを起動する前に `RAKAZO_DOCKER_BINARY` にそのパスを設定してください。
 
-接続先を変えるには、アプリケーションメニューの **Change Rakazo Server…**（Rakazo サーバーを変更）を使います。保存せずに
+接続先を変えるには、アプリケーションメニューの **Change Matebot Server…**（Matebot サーバーを変更）を使います。保存せずに
 そのウィンドウを閉じると、以前のインスタンスに戻ります。開発の自動化では、`RAKAZO_WEB_URL` を設定すると
 保存済みのインスタンスを変えずにシェルの接続先を変更でき、`RAKAZO_FORCE_SETUP=1` を設定するとセットアップを
 再実行できます。
@@ -269,21 +285,26 @@ pnpm test:e2e
 - [パフォーマンステスト](./docs/performance.md)
 - [ボットを管理するボット](./docs/fleet-management.md)
 
-## Rakazo と他製品の比較
+## Matebot と他製品の比較
 
-- [Grok Bot](https://rakazo.com/grok-bot-alternative/)
-- [Muse](https://rakazo.com/muse-alternative/)
-- [Dots](https://rakazo.com/dots-alternative/)
-- [Instinct](https://rakazo.com/instinct-alternative/)
-- [OpenClaw](https://rakazo.com/openclaw-alternative/)
-- [Hermes Agent](https://rakazo.com/hermes-alternative/)
-- [すべての比較](https://rakazo.com/alternatives/)
+- [Grok Bot](https://test.matebot.dev/grok-bot-alternative/)
+- [Muse](https://test.matebot.dev/muse-alternative/)
+- [Dots](https://test.matebot.dev/dots-alternative/)
+- [Instinct](https://test.matebot.dev/instinct-alternative/)
+- [OpenClaw](https://test.matebot.dev/openclaw-alternative/)
+- [Hermes Agent](https://test.matebot.dev/hermes-alternative/)
+- [すべての比較](https://test.matebot.dev/alternatives/)
 
 ## コントリビュート
 
 コントリビューションを歓迎します。プルリクエストを作成する前に [CONTRIBUTING.md](./CONTRIBUTING.md) をお読みください。
 セキュリティ上の脆弱性は、公開の Issue を作成せず、[SECURITY.md](./SECURITY.md) の手順に従って報告してください。
 
-Rakazo は [Apache License 2.0](./LICENSE) のもとでライセンスされています。
+## 上流
 
-質問やアイデアは [Rakazo Discord コミュニティ](https://discord.gg/RWwKa2Sn7h)でお気軽にどうぞ。
+Matebot は [elie222/rakazo](https://github.com/elie222/rakazo) を追跡しています。上流の README、デモ、ストアの掲載は
+上流のホスト型製品についてのもので、このフォークはそのサービスを運用していません。Matebot が基づくコードを
+知りたい場合や貢献したい場合は、そのリポジトリから始めてください。
+
+Matebot は上流と同じ [Apache License 2.0](./LICENSE) で提供されています。このライセンスと必要な通知はそのまま残り、
+Matebot の名称とマークはこのフォークのものです。

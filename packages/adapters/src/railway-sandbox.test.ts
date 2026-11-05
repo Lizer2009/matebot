@@ -4,8 +4,8 @@ import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { ComputerRef, ProcessEvent } from "@rakazo/adapter-kit";
-import { screenDisplayArgv, shellQuote } from "@rakazo/core/node/desktop-runtime";
+import type { ComputerRef, ProcessEvent } from "@matebot/adapter-kit";
+import { screenDisplayArgv, shellQuote } from "@matebot/core/node/desktop-runtime";
 import type { RailwayGraphQLErrorItem, SandboxInfo } from "railway";
 import {
   RailwayGraphQLError,

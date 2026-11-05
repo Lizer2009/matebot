@@ -1,5 +1,4 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import { ORPCError } from "@orpc/server";
 import type {
   BillingByokPlan,
   BillingPrice,
@@ -7,14 +6,14 @@ import type {
   BillingSubscriptionSnapshot,
   ProductAnalytics,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   BillingCheckoutCompletedError,
   BillingCustomerNotFoundError,
   BillingNoMonthlyCreditsError,
-} from "@rakazo/adapter-kit";
-import { sandboxAllowance, sandboxHoursLeft } from "@rakazo/adapters";
-import type { Actor, BillingStatus, ByokInterval, ByokTier } from "@rakazo/contracts";
+} from "@matebot/adapter-kit";
+import { sandboxAllowance, sandboxHoursLeft } from "@matebot/adapters";
+import type { Actor, BillingStatus, ByokInterval, ByokTier } from "@matebot/contracts";
 import {
   BYOK_TIERS,
   ByokTierSchema,
@@ -22,8 +21,8 @@ import {
   INVITED_TRIAL_WEEKS,
   sandboxAllowanceHours,
   TRIAL_DAYS,
-} from "@rakazo/contracts";
-import type { BillingAccount, PrismaClient } from "@rakazo/db";
+} from "@matebot/contracts";
+import type { BillingAccount, PrismaClient } from "@matebot/db";
 import {
   billingAccountForOrganization,
   byokFreeUntil,
@@ -43,8 +42,9 @@ import {
   releaseCheckoutLease,
   replaceBillingCustomer,
   syncBillingSnapshot,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 import { applyAccessGrants } from "./access-grants.js";
 import { createReferrals } from "./referrals.js";
 

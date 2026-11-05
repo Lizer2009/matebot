@@ -1,9 +1,9 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { EmailEmulator, FakeSandboxProvider } from "@rakazo/adapters";
-import { USER_DEVICE_PAIR_PATH, USER_DEVICE_PATH } from "@rakazo/contracts";
-import { runAsSystem } from "@rakazo/db";
+import { EmailEmulator, FakeSandboxProvider } from "@matebot/adapters";
+import { USER_DEVICE_PAIR_PATH, USER_DEVICE_PATH } from "@matebot/contracts";
+import { runAsSystem } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { sessionCookieHeader } from "../../../packages/testkit/src/index.js";
 import type { AppHandles } from "./app.js";

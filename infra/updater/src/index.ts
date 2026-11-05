@@ -5,8 +5,8 @@ import { access, lstat, open, readFile, rename, unlink } from "node:fs/promises"
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
-import type { ServerUpdateRun } from "@rakazo/contracts";
-import type { ComposeUpdateStep } from "@rakazo/core";
+import type { ServerUpdateRun } from "@matebot/contracts";
+import type { ComposeUpdateStep } from "@matebot/core";
 import {
   chooseUpdateStrategy,
   commitImageTag,
@@ -33,11 +33,11 @@ import {
   selectLatestRelease,
   upsertEnvAssignments,
   validateUpdateRequest,
-} from "@rakazo/core";
-import type { Logger } from "@rakazo/logging";
-import { SERVICE_NAMES } from "@rakazo/logging";
-import { createRootLogger } from "@rakazo/logging/axiom";
-import { requestLogging } from "@rakazo/logging/hono";
+} from "@matebot/core";
+import type { Logger } from "@matebot/logging";
+import { SERVICE_NAMES } from "@matebot/logging";
+import { createRootLogger } from "@matebot/logging/axiom";
+import { requestLogging } from "@matebot/logging/hono";
 import type { Context } from "hono";
 import { Hono } from "hono";
 import type { UpdaterConfig } from "./updater-logic.js";

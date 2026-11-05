@@ -1,13 +1,13 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { EncryptedSecretStore, InMemoryRealtimeFanout } from "@rakazo/adapters";
-import type { AgentImportPlan, Bot, MemoryDocument } from "@rakazo/contracts";
-import { resolveEncryptionKey } from "@rakazo/core";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import { createDb } from "@rakazo/db";
+import { EncryptedSecretStore, InMemoryRealtimeFanout } from "@matebot/adapters";
+import type { AgentImportPlan, Bot, MemoryDocument } from "@matebot/contracts";
+import { resolveEncryptionKey } from "@matebot/core";
+import type { Prisma, PrismaClient } from "@matebot/db";
+import { createDb } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-// The app's own logger module (the API resolves `@rakazo/logging` to this file).
+// The app's own logger module (the API resolves `@matebot/logging` to this file).
 import { createLogger, createTestSink, installLogger } from "../../logging/src/index.js";
 import { sessionCookieHeader } from "./index.js";
 import { asSystem } from "./system-db.js";
@@ -115,7 +115,7 @@ describeIntegration("agent import", () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-agent-import-"));
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@matebot/api/app");
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,

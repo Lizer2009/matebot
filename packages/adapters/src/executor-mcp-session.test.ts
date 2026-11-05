@@ -1,6 +1,6 @@
-import type { AgentRunRequest, AgentRuntimeEvent } from "@rakazo/adapter-kit";
-import type { AppendEventInput, Prisma } from "@rakazo/db";
-import { appendEventInTransaction } from "@rakazo/db";
+import type { AgentRunRequest, AgentRuntimeEvent } from "@matebot/adapter-kit";
+import type { AppendEventInput, Prisma } from "@matebot/db";
+import { appendEventInTransaction } from "@matebot/db";
 import { describe, expect, it, vi } from "vitest";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { createRunExecutor } from "./executor.js";

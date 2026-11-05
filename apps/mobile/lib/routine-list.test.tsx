@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { Routine } from "@rakazo/contracts";
+import type { Routine } from "@matebot/contracts";
 import type { ReactNode } from "react";
 import { act, useEffect, useSyncExternalStore } from "react";
 import type { Root } from "react-dom/client";

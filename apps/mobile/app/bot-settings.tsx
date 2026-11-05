@@ -1,4 +1,4 @@
-import type { Bot, BotAvatarSet, ComputerMode, ThinkingLevel } from "@rakazo/contracts";
+import type { Bot, BotAvatarSet, ComputerMode, ThinkingLevel } from "@matebot/contracts";
 import {
   BOT_AVATAR_SHAPE_COUNT,
   BOT_COLORS,
@@ -6,14 +6,14 @@ import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   BOT_NAME_MAX_LENGTH,
   resolveBotAvatarSet,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import {
   credentialForModel,
   MODEL_SEARCH_THRESHOLD,
   modelOptionKey,
   parseModelOptionKey,
   resolveSelectableModelId,
-} from "@rakazo/core";
+} from "@matebot/core";
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import type { Voice } from "expo-speech";
 import type { ReactNode } from "react";
@@ -880,7 +880,7 @@ export default function BotSettingsScreen() {
               label={t("Icon set")}
               choices={[
                 { key: "organic", label: t("Original") },
-                { key: "rakazo", label: t("Rakazo") },
+                { key: "rakazo", label: t("Matebot") },
               ]}
               value={avatarSet}
               onChange={(next) => {

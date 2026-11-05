@@ -6,8 +6,8 @@ import {
   PRODUCT_DISPLAY_NAME,
   signupRequiresEmailVerification,
   suggestEmailCorrection,
-} from "@rakazo/core";
-import { Button, Input, InputOTP, InputOTPGroup, InputOTPSlot, Label } from "@rakazo/ui-web";
+} from "@matebot/core";
+import { Button, Input, InputOTP, InputOTPGroup, InputOTPSlot, Label } from "@matebot/ui-web";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PasskeySignIn } from "../components/PasskeySignIn";

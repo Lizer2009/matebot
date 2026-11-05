@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
-import { ORPCError } from "@orpc/server";
-import { runContinueJob } from "@rakazo/adapter-kit";
+import { runContinueJob } from "@matebot/adapter-kit";
 import {
   createPluginMarketplace,
   isTransientFetchError,
@@ -13,19 +12,20 @@ import {
   recordMcpServerHealth,
   sanitizeComposioError,
   verifyMcpInstall,
-} from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import { signupSurveyAsksTeamSize } from "@rakazo/contracts";
-import { comparePlugins, containsSecret, matchesPluginQuery } from "@rakazo/core";
-import type { Prisma } from "@rakazo/db";
+} from "@matebot/adapters";
+import type { Actor } from "@matebot/contracts";
+import { signupSurveyAsksTeamSize } from "@matebot/contracts";
+import { comparePlugins, containsSecret, matchesPluginQuery } from "@matebot/core";
+import type { Prisma } from "@matebot/db";
 import {
   AVAILABILITY_SELECT,
   availableInSpace,
   IsolationError,
   itemSecretIn,
   spaceAvailability,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 import { requireAdmin } from "../admins.js";
 import {
   assertNameFreeWhereAvailable,

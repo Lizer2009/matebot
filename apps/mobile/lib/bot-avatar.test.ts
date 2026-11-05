@@ -1,4 +1,4 @@
-import { shippedBotAvatarShapePath } from "@rakazo/core";
+import { shippedBotAvatarShapePath } from "@matebot/core";
 import { describe, expect, it } from "vitest";
 import { mobileBotAvatarPresentation } from "./bot-avatar.js";
 

@@ -1,9 +1,9 @@
 /** Portable plugin parsing plus a bounded, public-GitHub acquisition adapter.
  * No repository code is executed and no files are written to the host. */
 import { createHash } from "node:crypto";
-import type { PluginPreview } from "@rakazo/contracts";
-import { McpServerConfigInput } from "@rakazo/contracts";
-import { buildSkillMd, findSkillByName, parseSkillMd } from "@rakazo/core";
+import type { PluginPreview } from "@matebot/contracts";
+import { McpServerConfigInput } from "@matebot/contracts";
+import { buildSkillMd, findSkillByName, parseSkillMd } from "@matebot/core";
 import { z } from "zod";
 import { BUILTIN_AGENT_SKILLS } from "./builtin-skills.js";
 import { assertNoSensitiveQuery } from "./connector-http.js";

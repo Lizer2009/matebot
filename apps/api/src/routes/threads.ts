@@ -1,7 +1,6 @@
-import { ORPCError } from "@orpc/server";
-import { runContinueJob, runJobKey } from "@rakazo/adapter-kit";
-import { settleCallRequest } from "@rakazo/adapters";
-import type { Actor, ProductEvent } from "@rakazo/contracts";
+import { runContinueJob, runJobKey } from "@matebot/adapter-kit";
+import { settleCallRequest } from "@matebot/adapters";
+import type { Actor, ProductEvent } from "@matebot/contracts";
 import {
   AttachmentValidationError,
   CALL_CLIENT_NONCE_PREFIX,
@@ -9,8 +8,8 @@ import {
   expandSkillReferencesInPrompt,
   MODEL_REQUIRED_SEND_ERROR,
   QUEUE_HOLDING_RUN_STATUSES,
-} from "@rakazo/core";
-import type { Prisma } from "@rakazo/db";
+} from "@matebot/core";
+import type { Prisma } from "@matebot/db";
 import {
   AnswerTooLongError,
   appendEventInTransaction,
@@ -19,8 +18,9 @@ import {
   IsolationError,
   lockOwnedGroup,
   touchGroupUpdatedAt,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 import type { RouterDeps } from "../router.js";
 import { createRoutineTestRun, routineTestRunNonce, routineTestTarget } from "../routines.js";
 import { withSerializableRetry } from "../serializable-retry.js";

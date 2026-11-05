@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { darkTokens } from "@rakazo/ui-tokens";
+import { darkTokens } from "@matebot/ui-tokens";
 import mermaid from "mermaid";
 import { expect, it } from "vitest";
 import { chatMermaidConfig } from "./mermaid";

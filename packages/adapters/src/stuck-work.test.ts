@@ -1,6 +1,6 @@
-import type { JobPublisher, NotificationProvider } from "@rakazo/adapter-kit";
-import { STUCK_WORK_NOTICE, stuckWorkStatusMessage } from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { JobPublisher, NotificationProvider } from "@matebot/adapter-kit";
+import { STUCK_WORK_NOTICE, stuckWorkStatusMessage } from "@matebot/core";
+import type { PrismaClient, ThreadEvents } from "@matebot/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ExpoPushProvider } from "./expo-push.js";
 import { createJobReconciler } from "./job-reconciler.js";

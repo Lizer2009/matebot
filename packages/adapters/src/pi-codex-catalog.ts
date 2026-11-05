@@ -1,8 +1,8 @@
 import type { OAuthCredential } from "@earendil-works/pi-ai";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import type { ThinkingLevel } from "@rakazo/contracts";
-import { ThinkingLevelSchema } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { SecretStore } from "@matebot/adapter-kit";
+import type { ThinkingLevel } from "@matebot/contracts";
+import { ThinkingLevelSchema } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
 import { listAvailablePiCatalog } from "./pi-catalog-availability.js";
 import { LiveCatalogCache, liveModelCatalogEnabled } from "./pi-live-cache.js";
 import type { CatalogSpaceAuth } from "./pi-live-catalog.js";

@@ -1,8 +1,8 @@
-import { BillingEmulator } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import { BYOK_TIERS } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, billingAccountForOrganization, createDb } from "@rakazo/db";
+import { BillingEmulator } from "@matebot/adapters";
+import type { Actor } from "@matebot/contracts";
+import { BYOK_TIERS } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { asSystem, billingAccountForOrganization, createDb } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createBillingService, INVITED_TRIAL_DAYS, TRIAL_DAYS } from "./billing.js";
 

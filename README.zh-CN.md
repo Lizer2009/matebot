@@ -2,159 +2,85 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
-**Matebot** 是本仓库的产品名：个人第二个 Grok 风格 Bot，以及无需本地电脑即可在线迭代的 [Cursor](https://cursor.com) 编程队友。代码 fork 自 **[Rakazo](https://github.com/elie222/rakazo)**（Apache-2.0），刻意保留上游署名、`@rakazo/*` 包名与基础设施命名。
+**Matebot** 是一个由你自己掌控的自托管 AI 队友：持久运行的机器人可以使用真实的电脑、按计划执行任务，并在网页、桌面和手机客户端之间保留记忆与历史。它运行在你自己的服务器上，使用你自己的模型凭据，也不需要本地桌面环境。
 
-- 分叉计划：[docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md)
-- 部署记录：[docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md)
-- Cursor Cloud Agent：[docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md)
-- 品牌资源：[docs/MATEBOT_BRAND.md](./docs/MATEBOT_BRAND.md)
+本仓库是 **[Rakazo](https://github.com/elie222/rakazo)** 的分叉，Matebot 构建在它的 Apache-2.0 代码之上。Matebot 保留该许可证、其声明，以及清晰的上游署名；差异在于产品名称、打包方式和本 fork 运行的部署。
 
----
-
-## Rakazo（上游代码库）
-
-以下介绍本 fork 所基于的 Rakazo 栈。
-
-[![GitHub stars](https://img.shields.io/github/stars/elie222/rakazo?labelColor=black&style=for-the-badge&color=2563EB)](https://github.com/elie222/rakazo/stargazers)
-[![加入 Discord 社区](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?labelColor=black&style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/RWwKa2Sn7h)
-[![在 App Store 下载 iPhone 版](https://img.shields.io/badge/App%20Store-Download%20for%20iPhone-black?labelColor=black&style=for-the-badge&logo=apple&logoColor=white)](https://apps.apple.com/app/rakazo/id6801531099)
-[![在 Google Play 下载 Android 版](https://img.shields.io/badge/Google%20Play-Get%20the%20app-black?labelColor=black&style=for-the-badge&logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.rakazo.app)
-
-![Rakazo：由你掌控的 AI 队友](./docs/readme-hero.png)
-
-Rakazo 是一个开源 AI 智能体项目，让你拥有可长期协作的 AI 队友，也可以作为自托管 AI 助手在自己的电脑上运行。
-它提供网页版、Electron 桌面应用，以及 [iPhone](https://apps.apple.com/app/rakazo/id6801531099) 和
-[Android](https://play.google.com/store/apps/details?id=com.rakazo.app) 应用。
-你可以接入自己的模型和计算环境提供商，也可以在本地运行完整服务。
-
-它是 Grok Bot、Meta Muse、OpenAI Dots、Instinct、OpenClaw、Hermes Agent、Claude Duet 和 Hark Pro 的开源、自托管替代方案。
-
-Rakazo 目前处于测试阶段。详情见 [rakazo.com](https://rakazo.com)。
+| | |
+| --- | --- |
+| **当前部署** | https://test.matebot.dev |
+| **分叉计划与进度** | [docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md) |
+| **部署记录** | [docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md) |
+| **Cursor Cloud Agent** | [docs/MATEBOT_CURSOR.md](./docs/MATEBOT_CURSOR.md) |
+| **品牌资源** | [docs/MATEBOT_BRAND.md](./docs/MATEBOT_BRAND.md) |
+| **Windows 安装包** | [docs/desktop-release.md](./docs/desktop-release.md) |
 
 本文是 [英文 README](./README.md) 的简体中文译文，链接指向的其他文档目前仍为英文。
 
-## 与其他产品的比较
-
-Rakazo 启动后，你可以像使用 Grok Bot 一样，通过聊天设置和管理机器人。
-Muse、Dots、Instinct、Claude Duet 和 Hark Pro 是托管式助手；OpenClaw 和 Hermes Agent 则同样是可以自行运行的开源智能体。
-后两者的文档介绍了安装器、配置文件和网关。Hermes Desktop 无需命令行即可开始第一次聊天；消息网关则是独立进程。
-
-- [Grok Bot](https://rakazo.com/grok-bot-alternative/)
-- [Muse](https://rakazo.com/muse-alternative/)
-- [Dots](https://rakazo.com/dots-alternative/)
-- [Instinct](https://rakazo.com/instinct-alternative/)，可通过短信或电话交流的个人助手
-- [OpenClaw](https://rakazo.com/openclaw-alternative/)
-- [Hermes Agent](https://rakazo.com/hermes-alternative/)，Nous Research 的开源智能体
-- [Claude Duet](https://rakazo.com/claude-duet-alternative/)，Anthropic 的主动式个人智能体
-- [Hark Pro](https://rakazo.com/hark-alternative/)，hark.com 提供的个人智能体
-- [全部对比](https://rakazo.com/alternatives/)
-- [自托管指南](https://rakazo.com/self-hosted-ai-agent/)
-
 ## 功能
 
-- 可长期运行的机器人，各自拥有对话、记忆、例行任务和历史记录
-- 语音模式：朗读回复、语音输入和机器人通话；可接入自己的 ElevenLabs、OpenAI、Cartesia 或 Fish Audio 密钥
-- 共享的团队计算机（Team Computers）和隔离的私有计算机（Private computers）
-- 浏览器、终端、文件和图形桌面访问
-- 机器人可将任务委派给其他机器人或临时子智能体
-- 通过 Pi 接入自己的模型凭据
-- 通过 Composio 或 Pipedream Connect 集成应用，也支持用户自行安装的 Treg、远程 MCP 和 OpenAPI 工具来源
-- 支持 Docker、E2B、Daytona、CreateOS、Box，以及受信任的本机计算环境
+- 持久运行的机器人，各自拥有会话、记忆、例程和历史
+- 语音模式：朗读回复、听写、呼叫机器人。可接入自己的 ElevenLabs、OpenAI、Cartesia 或 Fish Audio 密钥，也可使用 Mac 服务器上已安装的声音
+- 共享团队计算机与相互隔离的私有计算机
+- 浏览器、终端、文件与图形桌面操作能力
+- 机器人可以委派给同侪机器人或短时子代理
+- 通过 Pi 接入你自己的模型凭据
+- 通过 Composio 或 Pipedream Connect 接入应用，也可自行安装 Treg、远程 MCP 与 OpenAPI 工具源
+- 支持 Docker、E2B、Daytona、CreateOS、Boat 以及受信任的本地计算机
 
-## 演示
+## 快速开始（使用已发布镜像）
 
-https://github.com/user-attachments/assets/dccdeddb-2134-4a56-8eed-b2e591736b1c
-
-## 技术栈
-
-- TypeScript
-- React 19、Vite 和 Tailwind CSS
-- Electron 和 Expo
-- Hono 和 oRPC
-- PostgreSQL 和 Prisma
-- Better Auth
-- Graphile Worker
-- Pi
-- Docker、E2B、Daytona、CreateOS 和 Box
-- Composio、Pipedream Connect、MCP 和 OpenAPI 集成
-
-## 部署到 Railway
-
-[![部署到 Railway](https://railway.com/button.svg)](https://railway.com/new/template/rakazo-template)
-
-部署包含 PostgreSQL、持久化存储和 Railway 计算机的私有 Rakazo 实例。
-填写邮箱和 Railway API 令牌，登录后再连接模型。
-参见[安装、安全默认设置与备份](./infra/railway/README.md)。
-
-## 快速开始（已发布镜像）
-
-需要 Docker Engine、Compose 插件、curl 和 OpenSSL。无需克隆仓库或安装 Node.js。
+需要 Docker Engine、Compose 插件、curl 与 OpenSSL，无需克隆仓库或安装 Node。
 
 ```bash
-mkdir -p rakazo && cd rakazo &&
-curl -fsSLO https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose/install-images.sh &&
-bash install-images.sh
+mkdir -p matebot && cd matebot &&
+curl -fsSLO https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose/install-images-matebot.sh &&
+bash install-images-matebot.sh
 ```
 
-安装脚本会下载 Compose 文件，生成包含随机密钥的 `.env`，并启动 Rakazo。
-再次运行时会保留已有的 `.env`。
+安装脚本会下载 Compose 文件、生成带随机密钥的 `.env` 并启动 Matebot。重复执行时会保留已有的 `.env`。
 
-打开 [http://127.0.0.1:5173](http://127.0.0.1:5173)，创建账号并连接模型。
-默认启用本地 Docker 计算机。也可以选择远程提供商 `e2b`、`daytona`、`createos`、`box` 或 `railway`，
-并配置相应的 API 密钥。
+打开 [http://127.0.0.1:5173](http://127.0.0.1:5173)，创建账号并连接模型。本地 Docker 计算机默认开启；可选远程提供方为 `e2b`、`novita`、`daytona`、`createos`、`boat`、`boxd` 或 `railway`，需配置对应的 API 密钥。
 
-默认镜像标签为 `edge`，由主分支构建，支持 `linux/amd64` 和 `linux/arm64`。
-镜像详情与标签见[自托管指南](./docs/self-host.md#published-images-no-checkout)。
+镜像来自本 fork 的仓库 `ghcr.io/lizer2009/matebot/{app,computer,updater}`：main 构建使用 `edge` 标签，每次提交另有 `sha-<commit>`。详见[自托管指南](./docs/self-host.md#published-images-no-checkout)。
 
-在受限网络中，可以覆盖安装器的下载地址前缀（`RAKAZO_DOWNLOAD_BASE`），跳过已有的 Compose 文件
-（`--local` / `RAKAZO_DOWNLOAD_SKIP_EXISTING`），或使用引导脚本的镜像地址。
-参见[受限网络与镜像下载](./docs/self-host.md#restricted-networks--mirror-downloads)。
+上游安装脚本 `install-images.sh` 仍然可用，但它拉取上游镜像；只有在你确实想运行上游构建时才使用它。
 
-如需让智能体协助安装，请使用 [SETUP_PROMPT.md](./SETUP_PROMPT.md)。
+在受限网络中，可覆盖安装脚本下载基址（`RAKAZO_DOWNLOAD_BASE`）、跳过已存在的 Compose 文件（`--local` / `RAKAZO_DOWNLOAD_SKIP_EXISTING`），或镜像引导脚本 URL，见[受限网络 / 镜像下载](./docs/self-host.md#restricted-networks--mirror-downloads)。
+
+如需代理辅助安装，请使用 [SETUP_PROMPT.md](./SETUP_PROMPT.md)。
 
 ## 在服务器上运行
 
-后端在服务器上运行时，机器人可以持续在线。在 VPS 上使用同一个安装脚本，
-然后通过桌面应用、移动应用或浏览器连接。
+后端运行在服务器上时，机器人会持续在线。在 VPS 上使用同一个安装脚本，然后通过桌面应用、手机应用或浏览器连接。
 
 ```bash
-bash install-images.sh --prepare-only
-# edit .env: SANDBOX_PROVIDER=boat (or e2b / daytona / createos) with its API key, RAKAZO_HOST=your.domain
-bash install-images.sh
+bash install-images-matebot.sh --prepare-only
+# 编辑 .env：SANDBOX_PROVIDER=boat（或 e2b / daytona / createos）及其 API 密钥，RAKAZO_HOST=your.domain
+bash install-images-matebot.sh
 ```
 
-为 5173 端口配置 HTTPS 入口。[docs/self-host-production.md](./docs/self-host-production.md#public-single-vm-deployment)
-介绍了 Caddy 配置和主机加固方法。在桌面应用中选择 **Existing instance**（已有实例），填写 `https://` 地址。
+在 5173 端口前配置 HTTPS；[docs/self-host-production.md](./docs/self-host-production.md#public-single-vm-deployment) 介绍了 Caddy 配置与主机加固。在桌面应用中选择 **Existing instance** 并填入 `https://` 地址。
 
-## 本地开发（从源码运行）
+## 本地开发（源码检出）
 
-需要 Node.js 22.x（至少 22.22.2）、Node.js 24.x 或 Node.js 26 及以上版本，以及 pnpm 9 和 Docker。
-不支持 Node.js 23.x 和 25.x。
+需要 Node.js 22.x 中 22.22.2 或更高版本、Node.js 24.x，或 Node.js 26+；pnpm 9；以及 Docker。不支持 Node.js 23.x 与 25.x。
 
 ```bash
-git clone https://github.com/elie222/rakazo.git
-cd rakazo
+git clone https://github.com/Lizer2009/matebot.git
+cd matebot
 cp .env.example .env
 ```
 
-将 `POSTGRES_PASSWORD` 和 `POSTGRES_APP_PASSWORD` 分别设置为由 `openssl rand -hex 16` 生成的两个值，再把它们填入 `DATABASE_MIGRATION_URL` 和 `DATABASE_URL`。
-应用以自己的 `rakazo_app` 登录身份连接数据库，并受行级安全策略约束；迁移则以所有者身份运行（参见 [数据库角色](docs/self-host-configuration.md#database-roles)）。
-为 `BETTER_AUTH_SECRET`、`ENCRYPTION_KEY` 和 `SCREEN_PROXY_SECRET` 分别设置独立的长随机值。
-Docker 沙箱还需要专用的 `SANDBOX_SUPERVISOR_TOKEN`。
-你也可以设置 `OPENROUTER_API_KEY`，或在首次设置时连接支持的模型提供商。
+用 `openssl rand -hex 16` 生成两个值，分别填入 `POSTGRES_PASSWORD` 与 `POSTGRES_APP_PASSWORD`，再写入 `DATABASE_MIGRATION_URL` 与 `DATABASE_URL`。应用使用自己的 `rakazo_app` 登录，行级安全策略作用于该角色；迁移以所有者身份执行（见[数据库角色](docs/self-host-configuration.md#database-roles)）。`BETTER_AUTH_SECRET`、`ENCRYPTION_KEY` 与 `SCREEN_PROXY_SECRET` 应各自使用独立的长随机值。Docker 沙箱还需要专属的 `SANDBOX_SUPERVISOR_TOKEN`。你也可以设置 `OPENROUTER_API_KEY`，或在引导过程中连接受支持的模型提供方。
 
-使用 Docker Desktop 在宿主机上开发时，在 `.env` 中设置 `SANDBOX_CONTROL_VIA_LOOPBACK=true`。
-沙箱监督服务会自动发现 Docker Desktop 的用户套接字；使用其他 Docker 运行环境时，
-可以通过 `DOCKER_HOST` 或 `DOCKER_SOCKET` 覆盖该设置。
+本版本中环境变量仍保留 `RAKAZO_*` 命名，因此已有 `.env` 无需修改即可继续使用。映射关系与改名会影响的范围见[环境变量命名](./docs/MATEBOT_DEPLOY.md#环境变量命名)。
 
-托管应用目录是可选功能。使用 Composio 时设置 `COMPOSIO_API_KEY`；
-使用 Pipedream Connect 时设置 `PIPEDREAM_CLIENT_ID`、`PIPEDREAM_CLIENT_SECRET` 和 `PIPEDREAM_PROJECT_ID`。
-即使不启用这两个托管目录，用户也可以在 **Integrations**（集成）中添加 HTTPS MCP 服务器、
-Treg 端点或 OpenAPI JSON 文档。连接器凭据在服务器上加密存储，API 不会返回这些凭据。
+使用 Docker Desktop 进行主机侧开发时，在 `.env` 中设置 `SANDBOX_CONTROL_VIA_LOOPBACK=true`。supervisor 会自动发现 Docker Desktop 的用户 socket；`DOCKER_HOST` 或 `DOCKER_SOCKET` 可覆盖为其他 Docker 运行时。
 
-Treg 按用量计费。自托管用户需提供自己的 Treg 令牌；
-将 Treg 嵌入托管产品的运营方应查阅 [Treg 集成条款](https://treg.to/integrate.md)，
-其中要求托管转售须签订书面协议。
+托管应用目录是可选的。为 Composio 设置 `COMPOSIO_API_KEY`，或为 Pipedream Connect 设置 `PIPEDREAM_CLIENT_ID`、`PIPEDREAM_CLIENT_SECRET` 与 `PIPEDREAM_PROJECT_ID`。不启用任一托管目录时，用户仍可在 **Integrations** 中添加 HTTPS MCP 服务器、Treg 端点或 OpenAPI JSON 文档。连接器凭据在服务端加密，且不会通过 API 返回。
+
+Treg 按用量计费。自托管者需自备 Treg token；把 Treg 嵌入托管产品的运营方应阅读 [Treg 集成条款](https://treg.to/integrate.md)，其中要求托管转售需另行签署书面协议。
 
 ```bash
 pnpm install
@@ -162,14 +88,9 @@ pnpm sandbox:build
 pnpm dev
 ```
 
-`pnpm dev` 会使用 `DATABASE_URL` 指向且可连接的 Postgres；否则会通过 Docker 启动本地
-`rakazo-dev-postgres` 容器，所有检出目录共用该容器。启动服务前会应用数据库迁移并生成 Prisma 客户端。
-如果当前分支新增了 `main` 尚未包含的迁移，会在同一服务器上使用独立数据库，条件允许时从共享数据库复制，
-避免未合入的数据库结构变更影响共享数据库。默认端口被占用时（例如另一个 Git worktree 正在运行），
-会选择下一个空闲端口组并打印访问地址。
+`pnpm dev` 在 `DATABASE_URL` 可连接时直接使用该 Postgres；否则用 Docker 启动本地 `rakazo-dev-postgres` 容器，所有检出共用同一个。它会在启动前应用迁移并生成 Prisma 客户端。若某分支带有 main 上不存在的迁移，它会在同一服务器上获得独立数据库，并尽量从共享库复制，避免未合并的 schema 变更混入。默认端口被占用时（例如另一个 git worktree），它会顺延到下一段空闲端口并打印 URL。也可用 `WEB_PORT` 与 `API_PORT` 自行指定端口。
 
-如需改用 Compose 中的 Postgres，可通过 `postgres-host` 叠加配置启动，将端口发布到回环地址
-`127.0.0.1:5433`，并让 `DATABASE_URL` 和 `DATABASE_MIGRATION_URL` 指向它：
+如需改用 Compose 中的 Postgres，可用 `postgres-host` 覆盖文件启动，它在回环地址 `127.0.0.1:5433` 上发布端口，再把 `DATABASE_URL` 与 `DATABASE_MIGRATION_URL` 指向它：
 
 ```bash
 docker compose --env-file .env \
@@ -178,92 +99,69 @@ docker compose --env-file .env \
   up postgres -d
 ```
 
-`POSTGRES_PASSWORD` 应使用无需 URI 转义的字符，例如通过 `openssl rand -hex 16` 生成。
-已有的 `pgdata` 数据卷会保留首次初始化时的用户、密码和数据库，
-因此应保留 `.env` 中相应的值，或使用 `ALTER ROLE`、重命名等方式在数据库中修改。
-只有在完成备份后，或确认数据可以丢弃时，才重建数据卷；`docker compose down -v` 会删除全部 Postgres 数据。
+`POSTGRES_PASSWORD` 需为 URI 安全值（`openssl rand -hex 16`）。已有的 `pgdata` 卷会保留首次初始化时的用户、密码与数据库，因此要么在 `.env` 中保留这些值，要么用 `ALTER ROLE` / 重命名就地修改。只有在备份之后（或数据可丢弃时）才重建该卷；`docker compose down -v` 会删除全部 Postgres 状态。
 
-打开终端打印的地址（默认是 [http://127.0.0.1:5173](http://127.0.0.1:5173)），创建账号、连接模型，并创建第一个机器人。
+打开打印出的 URL（默认 [http://127.0.0.1:5173](http://127.0.0.1:5173)），创建账号、连接模型，并创建第一个机器人。
 
-部署、提供商选择、备份与升级说明见[自托管指南](./docs/self-host.md)。
+部署、提供商选择、备份与升级见[自托管指南](./docs/self-host.md)、[生产部署](./docs/self-host-production.md)、[备份与恢复](./docs/self-host-backups.md) 与[升级](./docs/self-host-upgrading.md)。
 
-使用 CreateOS 时，设置 `SANDBOX_PROVIDER=createos` 和 `CREATEOS_SANDBOX_API_KEY`。
-可选配置 `CREATEOS_SANDBOX_BASE_URL`、`CREATEOS_SANDBOX_SHAPE` 和 `CREATEOS_SANDBOX_ROOTFS`
-的默认值分别为 `https://api.sb.createos.sh`、`s-2vcpu-2gb` 和 `desktop:1`。
+## 桌面与手机
 
-使用 Railway 计算机时，在 API 和 worker 上设置 `SANDBOX_PROVIDER=railway`、`RAILWAY_API_TOKEN`
-和 `RAILWAY_ENVIRONMENT_ID`。请显式选择沙箱环境；Railway 自动注入的环境 ID 对应的是托管应用所在的环境。
-使用能完成所需操作的最小权限 Railway API 令牌：若项目令牌满足沙箱操作要求且客户端认证支持，则优先使用项目令牌。
-当前提供商使用 Bearer 认证，因此应使用团队或工作区令牌，而非个人账号令牌。
+Electron 与 Expo 应用与网页端使用同一个 Matebot API。
 
-实时屏幕和桌面需要 `PRIVATE` 网络模式，才能通过 Railway 公共域名提供屏幕访问。
-计算机采用此模式，可以访问同一 Railway 项目和环境中的其他服务，也可以访问公网。
-建议为沙箱使用专用 Railway 项目，或至少使用独立环境，与应用和数据库分开。
-已有的 `ISOLATED` 计算机需要重建后再使用。
-
-桌面环境会在首次启动时安装。停止计算机会保存可迁移的主目录并销毁沙箱；下次启动时，在新沙箱中恢复该主目录。
-Railway 沙箱按用量计费。
-新建计算机使用 Railway 的默认区域。可设置 `RAILWAY_SANDBOX_REGION`（例如 `asia-southeast1-eqsg3a`），
-使其更靠近 API；已运行的计算机会在下次启动时迁移。
-工作区导出会拒绝超过 64 MiB 的文件，不会截断文件内容。可通过 `RAILWAY_MAX_WORKSPACE_FILE_BYTES` 修改此限制。
-
-## 桌面端与移动端
-
-Electron 和 Expo 应用都是 Rakazo API 的客户端，与网页版使用同一套 API。
-
-开发服务启动后，使用以下命令启动 Electron：
+开发栈运行后，用以下命令启动 Electron：
 
 ```bash
-pnpm --filter @rakazo/desktop dev
+pnpm --filter @matebot/desktop dev
 ```
 
-首次运行时，桌面应用会询问是在本机运行 Rakazo，还是连接已有服务器。
-选择 **This computer**（本机）会在应用数据目录中，通过 Docker Compose 安装并启动已发布镜像，
-使用的文件与 `infra/compose/install-images.sh` 相同。
-因此需要先安装 Docker Desktop、OrbStack 或 Docker Engine；未安装时，应用会提供相应链接。
-已安装的发行版将镜像标签固定为自身版本，未打包的开发版本则拉取 `edge`。
+首次运行时，桌面应用会询问是在本机运行 Matebot，还是连接已有服务器。**This computer** 会在应用数据目录下用 Docker Compose 安装并启动已发布镜像（与 `infra/compose/install-images.sh` 相同的文件），因此需要安装 Docker Desktop、OrbStack 或 Docker Engine，未安装时应用会给出链接。已安装构建会把镜像标签固定为自己的版本；未打包构建拉取 `edge`。使用 `pnpm dev` 的开发者应改选 **Existing instance** 并填入 `http://127.0.0.1:5173`。公网服务器必须使用 HTTPS；HTTP 仅接受回环与私有局域网地址（不含链路本地地址）。应用在保存前会校验 Matebot 的健康检查端点，之后启动会直接进入该实例。栈在应用退出后继续运行；应用菜单中的 **Stop Local Stack** 可将其关闭。
 
-运行 `pnpm dev` 的开发者应选择 **Existing instance**（已有实例），地址填写终端打印的地址（默认为 `http://127.0.0.1:5173`）。
-公共服务器必须使用 HTTPS；只有回环地址和局域网私有地址允许 HTTP，不包括链路本地地址。
-应用会在保存地址前检查 Rakazo 的健康检查端点，之后启动时直接连接该实例。
-退出应用后，服务仍会继续运行；可通过应用菜单中的 **Stop Local Stack**（停止本地服务）将其关闭。
-
-在 Linux 上，桌面应用以 AppImage 形式发布，需要 FUSE 2（`libfuse.so.2`）。只包含 FUSE 3 的发行版（例如 Fedora Silverblue 或 Ubuntu 24.04）会报错
-`dlopen(): error loading libfuse.so.2`。请安装 FUSE 2 库（Fedora 上为 `fuse-libs`，Ubuntu 24.04 上为 `libfuse2t64`，较早的 Ubuntu 和 Debian 上为 `libfuse2`），或者不借助 FUSE 运行 AppImage：
+本地构建 Windows 安装包：
 
 ```bash
-chmod +x Rakazo-*.AppImage
-./Rakazo-*.AppImage --appimage-extract-and-run
+pnpm --filter @matebot/desktop pack:win
 ```
 
-使用应用菜单中的 **Change Rakazo Server…**（更换 Rakazo 服务器）重新选择服务器。
-关闭该窗口且不保存时，会返回之前的实例。
-开发自动化中，可以设置 `RAKAZO_WEB_URL`，让桌面应用连接其他地址而不改变已保存的实例；
-也可以设置 `RAKAZO_FORCE_SETUP=1`，再次运行设置流程。
+输出为 `apps/desktop/out/Matebot-Setup-<version>.exe`：未签名的单用户安装包，安装到 `%LOCALAPPDATA%\Programs\Matebot`，配置保存在 `%APPDATA%\Matebot`（由 Electron 依据 `productName` 推导）。签名与发布由 release 工作流完成，见 [Windows 安装包](./docs/desktop-release.md#windows-installer)。
 
-移动端构建和发布说明见 [docs/mobile-release.md](./docs/mobile-release.md)。
+Linux 桌面应用以 AppImage 形式发布，需要 FUSE 2（`libfuse.so.2`）。若发行版只带 FUSE 3（如 Fedora Silverblue 或 Ubuntu 24.04），会出现 `dlopen(): error loading libfuse.so.2`。请安装 FUSE 2 库（Fedora 上为 `fuse-libs`，Ubuntu 24.04 上为 `libfuse2t64`，较旧的 Ubuntu 与 Debian 上为 `libfuse2`），或在不使用 FUSE 的情况下运行：
+
+```bash
+chmod +x Matebot-*.AppImage
+./Matebot-*.AppImage --appimage-extract-and-run
+```
+
+**This computer** 会查找 `docker` CLI，不检测 Podman。若要尝试其他支持 `compose` 子命令的 Docker 兼容 CLI，请在启动应用前把 `RAKAZO_DOCKER_BINARY` 设为其路径。
+
+用应用菜单中的 **Change Matebot Server…** 重新连接。关闭该窗口而不保存会回到原实例。开发自动化中可用 `RAKAZO_WEB_URL` 把外壳指向别处而不改动已保存实例，或用 `RAKAZO_FORCE_SETUP=1` 重新运行设置。
+
+手机端构建与发布说明见 [docs/mobile-release.md](./docs/mobile-release.md)。
+
+## 从 Rakazo 命名的旧版本升级
+
+早期构建以 Rakazo 为名发布，其桌面配置目录名称不同。桌面应用会在首次启动时把该目录迁移到新位置，因此已保存的服务器、屏幕驱动设置与本地 Compose 栈都会保留。若新旧两个目录同时存在，则以新目录为准，旧目录保持不变。
+
+除此之外无需其他改动：环境变量仍保留 `RAKAZO_*` 命名，数据库角色仍是 `rakazo_app`，Compose 卷沿用原有项目名。
 
 ## 界面语言
 
-网页版及 Electron 内嵌界面可在 **Settings → Language**（设置 → 语言）中选择英语、德语、韩语、土耳其语、
-印地语、巴西葡萄牙语、简体中文、繁体中文、西班牙语、俄语、法语、希伯来语、荷兰语和日语。
-Expo 应用包含英语、简体中文、繁体中文、俄语、德语、荷兰语和日语翻译，**Account → Language**（账号 → 语言）列出这七种语言。
-在用户保存选择之前，移动端的初始语言由设备语言或 `EXPO_PUBLIC_DEFAULT_UI_LOCALE` 决定。
+网页（以及在 Electron 中托管的）界面在 **Settings → Language** 下支持 English、Deutsch、한국어、Türkçe、हिन्दी、Português (Brasil)、简体中文、繁體中文、Español、Русский、Français、עברית、Nederlands 与 日本語。Expo 应用随包提供 English、简体中文、繁體中文、Русский、Deutsch、Nederlands 与 日本語，**Account → Language** 列出全部七种。在用户保存选择之前，设备语言或 `EXPO_PUBLIC_DEFAULT_UI_LOCALE` 仍决定起始语言。
 
-官网首页（`apps/www`）提供英语、德语、韩语、中文和日语版本，可通过页脚语言链接切换，
-对应路径为 `/`、`/de/`、`/ko/`、`/zh/` 和 `/ja/`；其他官网页面仍为英文。
-俄语官网首页，以及 Electron 原生设置窗口和菜单的本地化仍有待完成。
+营销主页（`apps/www`）通过页脚语言链接提供 en/de/ko/zh/ja（`/`、`/de/`、`/ko/`、`/zh/`、`/ja/`）；其他营销页面仍为英文。
 
 ## 开发
 
 ```text
-apps/       网页端、API、worker、桌面端、移动端和官网
-packages/   领域逻辑、契约、持久化、适配器、UI 和测试工具
-infra/      本地服务和计算机镜像
-docs/       架构、运维和发布指南
+apps/       web、api、worker、desktop、mobile 与公开网站
+packages/   领域逻辑、契约、持久化、适配器、UI 与测试工具
+infra/      本地服务与计算机镜像
+docs/       架构、运维与发布指南
 ```
 
-常用检查命令：
+工作区包统一为 `@matebot/*`；pnpm 工作区、TypeScript 路径与 Docker 构建过滤器都使用该作用域。
+
+常用检查：
 
 ```bash
 pnpm lint
@@ -273,23 +171,65 @@ pnpm test:integration
 pnpm test:e2e
 ```
 
-开发流程和测试矩阵见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
+开发流程与测试矩阵见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ## 文档
 
 - [自托管](./docs/self-host.md)
-- [自托管密钥管理](./docs/self-host-secrets.md)
+- [自托管配置](./docs/self-host-configuration.md)
+- [自托管密钥](./docs/self-host-secrets.md)
+- [登录与账号](./docs/self-host-accounts.md)
+- [模型](./docs/self-host-models.md)
+- [工具与集成](./docs/self-host-integrations.md)
+- [计算机提供商](./docs/self-host-sandbox-providers.md)
+- [Docker 计算机](./docs/self-host-docker-computers.md)
+- [存储与加密](./docs/self-host-storage.md)
+- [生产部署](./docs/self-host-production.md)
+- [备份与恢复](./docs/self-host-backups.md)
+- [升级](./docs/self-host-upgrading.md)
+- [日志与监控](./docs/self-host-observability.md)
+- [应用与客户端](./docs/self-host-clients.md)
+- [计费](./docs/self-host-billing.md)
 - [计算机运行时与隔离](./docs/computer-runtime.md)
 - [桌面端发布](./docs/desktop-release.md)
 - [移动端发布](./docs/mobile-release.md)
 - [性能测试](./docs/performance.md)
 - [管理机器人的机器人](./docs/fleet-management.md)
 
-## 参与贡献
+## 与其他产品的比较
 
-欢迎贡献。提交 PR 前，请阅读 [CONTRIBUTING.md](./CONTRIBUTING.md)。
-发现安全漏洞时，请按照 [SECURITY.md](./SECURITY.md) 的说明报告，勿提交公开 Issue。
+- [Grok Bot](https://test.matebot.dev/grok-bot-alternative/)
+- [Muse](https://test.matebot.dev/muse-alternative/)
+- [Dots](https://test.matebot.dev/dots-alternative/)
+- [Instinct](https://test.matebot.dev/instinct-alternative/)
+- [OpenClaw](https://test.matebot.dev/openclaw-alternative/)
+- [Hermes Agent](https://test.matebot.dev/hermes-alternative/)
+- [全部比较](https://test.matebot.dev/alternatives/)
 
-Rakazo 采用 [Apache License 2.0](./LICENSE) 许可证。
+## 致谢
 
-欢迎在 [Rakazo Discord 社区](https://discord.gg/RWwKa2Sn7h)交流问题与想法。
+- [PromptLayer](https://promptlayer.com/)
+- [Inbox Zero](https://getinboxzero.com/)
+- [ConnectorMap](https://connectormap.luinbytes.dev/)
+- [CodeRabbit](https://www.coderabbit.ai/)
+- [Greptile](https://www.greptile.com/)
+- [Snyk](https://snyk.io/)
+
+## 技术栈
+
+- TypeScript
+- React 19、Vite 与 Tailwind CSS
+- Electron 与 Expo
+- Hono 与 oRPC
+- PostgreSQL 与 Prisma
+- Better Auth
+- Graphile Worker
+- Pi
+- Docker、E2B、Daytona、CreateOS 与 Boat
+- Composio、Pipedream Connect、MCP 与 OpenAPI 集成
+
+## 上游
+
+Matebot 跟踪 [elie222/rakazo](https://github.com/elie222/rakazo)。上游 README、演示与商店页面介绍的是上游的托管产品，本 fork 并不运营该服务。想了解或参与 Matebot 所基于的代码，请从该仓库开始。
+
+Matebot 采用 [Apache License 2.0](./LICENSE) 许可，与上游一致。该许可证及其要求的声明保持不变；Matebot 名称与标识属于本 fork。

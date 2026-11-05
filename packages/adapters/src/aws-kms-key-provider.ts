@@ -1,5 +1,5 @@
 import type * as KmsSdk from "@aws-sdk/client-kms";
-import type { KeyProvider, KeyWrapContext, WrappedDataKey } from "@rakazo/adapter-kit";
+import type { KeyProvider, KeyWrapContext, WrappedDataKey } from "@matebot/adapter-kit";
 
 export type AwsKmsKeyProviderConfig = {
   /** Key ARN, not an alias, which can be repointed without stored keys noticing. */

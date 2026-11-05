@@ -1,16 +1,16 @@
 import { normalizeContext } from "@earendil-works/pi-ai";
-import { WorkspaceTooLargeError } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
+import { WorkspaceTooLargeError } from "@matebot/adapter-kit";
+import type { MessageBlock } from "@matebot/contracts";
 import {
   CLOUDFLARE_AI_GATEWAY_CONFIG_MESSAGE,
   CLOUDFLARE_WORKERS_AI_PROVIDER_ID,
   cloudflareModelConfigMessage,
   FLEET_TOOL_NAMES,
-} from "@rakazo/contracts";
-import { isOwnerStartedRun, ONCE_ROUTINE_CRON, PRODUCT_DISPLAY_NAME } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { RunHistoryWriteError } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@matebot/contracts";
+import { isOwnerStartedRun, ONCE_ROUTINE_CRON, PRODUCT_DISPLAY_NAME } from "@matebot/core";
+import type { PrismaClient } from "@matebot/db";
+import { RunHistoryWriteError } from "@matebot/db";
+import { createLogger, createTestSink, installLogger } from "@matebot/logging";
 import { describe, expect, it, vi } from "vitest";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { createRunExecutor as createExecutor } from "./executor.js";

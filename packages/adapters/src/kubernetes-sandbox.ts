@@ -18,8 +18,8 @@ import type {
   ScreenRequest,
   ScreenSession,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
-import { COMPUTER_CACHE_ENV } from "@rakazo/core/node/desktop-runtime";
+} from "@matebot/adapter-kit";
+import { COMPUTER_CACHE_ENV } from "@matebot/core/node/desktop-runtime";
 import type { RawExecEvent } from "./exec-computer.js";
 import { ExecComputer, COMPUTER_IMAGE_WORKSPACE as WORKSPACE } from "./exec-computer.js";
 import { LinuxDesktop, onBotScreen } from "./linux-desktop.js";
@@ -47,7 +47,7 @@ export interface KubernetesSandboxOptions {
   podLabels?: Record<string, string>;
   readyTimeoutMs?: number;
   /**
-   * Claim in the sandbox namespace that holds the Rakazo data directory. When
+   * Claim in the sandbox namespace that holds the Matebot data directory. When
    * set, each Computer mounts only its own `homes/<bot id>` directory at the
    * workspace, so the home persists in place and is never copied in or out.
    * The claim's volume is ReadWriteOnce, so the pod must also be placed with

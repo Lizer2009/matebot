@@ -1,6 +1,6 @@
-import { isTerminal } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { expireComputerExecutionLeases } from "@rakazo/db";
+import { isTerminal } from "@matebot/core";
+import type { PrismaClient } from "@matebot/db";
+import { expireComputerExecutionLeases } from "@matebot/db";
 import { EXECUTION_LEASE_MS } from "./computer-lifecycle.js";
 
 type RecoveryRun = { id: string; botId: string; bot: { computerId: string | null } };

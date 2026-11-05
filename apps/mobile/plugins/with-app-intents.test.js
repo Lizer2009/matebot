@@ -81,7 +81,7 @@ describe("withAppIntents prebuild", () => {
             withXcodeProject: (value, mod) => mod(value),
             IOSConfig: {
               XcodeUtils: {
-                getProjectName: () => "Rakazo",
+                getProjectName: () => "Matebot",
                 addBuildSourceFileToGroup: (input) => {
                   added.push(input);
                   files.add(input.filepath);
@@ -96,14 +96,15 @@ describe("withAppIntents prebuild", () => {
     module.exports(config);
     expect(plist.modResults.RakazoDefaultApiBase).toBe("https://api.example.test");
     expect(plist.modResults.UIBackgroundModes).toEqual(["audio"]);
+    // The Xcode project name follows expo.name, so the copied sources land under Matebot/.
     expect(copied).toContainEqual([
       join(mobile, "ios-intents/RakazoIntents.swift"),
-      "/project/ios/Rakazo/RakazoIntents.swift",
+      "/project/ios/Matebot/RakazoIntents.swift",
     ]);
     expect(added.map((input) => input.filepath)).toEqual([
-      "Rakazo/RakazoIntents.swift",
-      "Rakazo/VoiceMessageRecorder.swift",
-      "Rakazo/VoiceMessageActivity.swift",
+      "Matebot/RakazoIntents.swift",
+      "Matebot/VoiceMessageRecorder.swift",
+      "Matebot/VoiceMessageActivity.swift",
     ]);
     expect(widgetSettings).toMatchObject({
       CURRENT_PROJECT_VERSION: "7",

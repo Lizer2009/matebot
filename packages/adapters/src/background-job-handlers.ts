@@ -9,16 +9,16 @@ import type {
   PaymentWalletProvider,
   SandboxProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   messagingDeliverJob,
   SandboxRateLimitError,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
-} from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { runAsSystem, runAsTenant } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@matebot/db";
+import { runAsSystem, runAsTenant } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { settleCallRequest } from "./call-request.js";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import { pollCloudAgent } from "./cloud-agent-poll.js";

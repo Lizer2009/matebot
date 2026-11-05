@@ -7,13 +7,13 @@ export const cartesia: VoiceProvider = {
   does: "Speaks only",
   runs: "Hosted",
   bestFor: "Fast, natural voices on calls",
-  title: "Cartesia Sonic for AI agents: fast voices for Rakazo bots",
+  title: "Cartesia Sonic for AI agents: fast voices for Matebot bots",
   description:
-    "How Rakazo uses Cartesia Sonic so your AI agents can read replies aloud and talk on calls. How transcription works without it, cloned voices, limits and setup.",
+    "How Matebot uses Cartesia Sonic so your AI agents can read replies aloud and talk on calls. How transcription works without it, cloned voices, limits and setup.",
   h1: "Cartesia Sonic for AI agents: quick voices for real conversations",
   intro: [
     "[Cartesia](https://cartesia.ai) builds speech models for live conversation. Its Sonic text to speech is designed to start talking almost immediately, which is what a voice agent needs when someone is waiting on the other end.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and you can also talk to it by voice: hold the mic to speak, have replies read aloud, or call a bot in real time. Connect Cartesia and it gives your bots their voice. Your device listens and turns your speech into text, and Rakazo runs the bot and keeps the transcript in the chat.",
+    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and you can also talk to it by voice: hold the mic to speak, have replies read aloud, or call a bot in real time. Connect Cartesia and it gives your bots their voice. Your device listens and turns your speech into text, and Matebot runs the bot and keeps the transcript in the chat.",
   ],
   scene: {
     bot: "Sales Outbound",
@@ -33,14 +33,14 @@ export const cartesia: VoiceProvider = {
       heading: "What is Cartesia?",
       paragraphs: [
         "[Cartesia](https://cartesia.ai) is a voice AI company that makes speech models and a platform for voice agents that answer and make phone calls. Its text to speech family is called Sonic, and it is built on state space models, an architecture Cartesia uses to keep latency low.",
-        "Sonic voices sound natural in dozens of languages. You can choose from Cartesia's voice library or clone a voice from a short recording. Cartesia also sells a speech to text model, Ink, but Rakazo doesn't use it.",
+        "Sonic voices sound natural in dozens of languages. You can choose from Cartesia's voice library or clone a voice from a short recording. Cartesia also sells a speech to text model, Ink, but Matebot doesn't use it.",
       ],
       image: true,
     },
     {
-      heading: "What you can do with Cartesia in Rakazo",
+      heading: "What you can do with Cartesia in Matebot",
       paragraphs: [
-        "In Rakazo, Cartesia speaks and doesn't transcribe. Everything that needs a voice works with it, and your device handles listening. The [voice and calls guide](/docs/voice-and-calls/) shows where each control lives.",
+        "In Matebot, Cartesia speaks and doesn't transcribe. Everything that needs a voice works with it, and your device handles listening. The [voice and calls guide](/docs/voice-and-calls/) shows where each control lives.",
       ],
       bullets: [
         "Hear replies. Choose **Speak this reply** on any message, or turn on **Read replies aloud** in a bot's settings. Replies are spoken with `sonic-3`.",
@@ -63,20 +63,20 @@ export const cartesia: VoiceProvider = {
       bullets: [
         "No transcription. In a browser without on-device speech recognition, holding the mic shows an error until you switch to Chrome or the desktop app, or connect a provider that transcribes.",
         "Voice notes sent to a bot through a chat app such as Telegram arrive as audio files without a transcript.",
-        "Rakazo always speaks with `sonic-3`. You can't pick a newer Sonic model or set emotion, speed or pronunciation from Rakazo.",
+        "Matebot always speaks with `sonic-3`. You can't pick a newer Sonic model or set emotion, speed or pronunciation from Matebot.",
         "Each sentence is generated as a finished clip and played in order, rather than streamed over Cartesia's real-time connection, so a bot starts talking a little later than Sonic alone could.",
-        "Rakazo doesn't clone voices itself. Create the clone in Cartesia first. The picker loads up to 2,000 voices, and voices beyond that can't be chosen.",
+        "Matebot doesn't clone voices itself. Create the clone in Cartesia first. The picker loads up to 2,000 voices, and voices beyond that can't be chosen.",
         "Calls and hold-to-talk are a server setting. On a self-hosted server they stay off until the admin turns them on.",
       ],
     },
     {
       heading: "How to set it up",
       paragraphs: [
-        "Anyone can do this in their own settings, on Rakazo Cloud or a self-hosted server. The key belongs to your account, not the whole server.",
+        "Anyone can do this in their own settings on a self-hosted server. The key belongs to your account, not the whole server.",
       ],
       steps: [
         "Create an API key in your [Cartesia](https://cartesia.ai) account.",
-        "In Rakazo, open **Settings → Voice**, choose **Cartesia** as the **Provider**, paste the **API key** and choose **Connect**.",
+        "In Matebot, open **Settings → Voice**, choose **Cartesia** as the **Provider**, paste the **API key** and choose **Connect**.",
         "Pick a **Voice** and use **Hear a sample** to check it.",
         "Optionally, open a bot's settings, expand **Advanced**, turn on **Read replies aloud** and give it its own **Voice**.",
         "If you run your own server and want calls and hold-to-talk, set `PHONE_CALLS_ENABLED=true` on the API and worker.",
@@ -92,22 +92,22 @@ export const cartesia: VoiceProvider = {
     {
       question: "Can I build a voice agent with Cartesia Sonic?",
       answer:
-        "Yes. In Rakazo, connect Cartesia in **Settings → Voice** and your bots speak with Sonic when they read replies or take a call. Your device turns your speech into text, so you don't need a second provider.",
+        "Yes. In Matebot, connect Cartesia in **Settings → Voice** and your bots speak with Sonic when they read replies or take a call. Your device turns your speech into text, so you don't need a second provider.",
     },
     {
-      question: "Does Cartesia transcribe speech in Rakazo?",
+      question: "Does Cartesia transcribe speech in Matebot?",
       answer:
-        "No. Cartesia sells a speech to text model, but Rakazo uses Cartesia only to speak. Listening uses your browser's, computer's or phone's speech recognition. For transcription from the provider, use [ElevenLabs](/voice-providers/elevenlabs/) or [OpenAI](/voice-providers/openai/).",
+        "No. Cartesia sells a speech to text model, but Matebot uses Cartesia only to speak. Listening uses your browser's, computer's or phone's speech recognition. For transcription from the provider, use [ElevenLabs](/voice-providers/elevenlabs/) or [OpenAI](/voice-providers/openai/).",
     },
     {
-      question: "Can a Rakazo bot use my cloned Cartesia voice?",
+      question: "Can a Matebot bot use my cloned Cartesia voice?",
       answer:
-        "Yes. Clone the voice in Cartesia, and it appears in Rakazo's voice picker with the other voices your account can use. Only clone voices you have the right to use.",
+        "Yes. Clone the voice in Cartesia, and it appears in Matebot's voice picker with the other voices your account can use. Only clone voices you have the right to use.",
     },
     {
       question: "Cartesia vs ElevenLabs for AI agents?",
       answer:
-        "Both give Rakazo bots natural voices you can clone. Cartesia is built for speed in live conversation and only speaks in Rakazo. [ElevenLabs](/voice-providers/elevenlabs/) also transcribes, so the mic and chat app voice notes work everywhere with one key.",
+        "Both give Matebot bots natural voices you can clone. Cartesia is built for speed in live conversation and only speaks in Matebot. [ElevenLabs](/voice-providers/elevenlabs/) also transcribes, so the mic and chat app voice notes work everywhere with one key.",
     },
   ],
   sources: [

@@ -7,13 +7,13 @@ export const yourComputer: Sandbox = {
   runsOn: "Your Mac or PC, no isolation",
   keeps: "Everything; it's your machine",
   bestFor: "Bots that need your real apps and logins",
-  title: "Let an AI agent use your computer: Rakazo bots on your Mac or PC",
+  title: "Let an AI agent use your computer: Matebot bots on your Mac or PC",
   description:
-    "How the Rakazo desktop app lets AI agents run commands and use apps on your own Mac or PC, when they ask first, what they can reach, and how to turn it off.",
+    "How the Matebot desktop app lets AI agents run commands and use apps on your own Mac or PC, when they ask first, what they can reach, and how to turn it off.",
   h1: "Let AI agents use your own computer",
   intro: [
     "Most of the time an AI agent should work on a computer of its own, away from your files. Sometimes the work is on your machine: a document open in a desktop app, a folder only you have, a program you can't install anywhere else. For that, you can let a bot use your actual Mac or PC, with your files, apps and logins.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each one gets its own computer with a desktop, browser, terminal and files that you can watch and take over. The Rakazo [desktop app](/download/) for Mac, Windows and Linux can also open the computer it runs on to your bots. There are two ways to do that, and they behave quite differently.",
+    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each one gets its own computer with a desktop, browser, terminal and files that you can watch and take over. The Matebot [desktop app](/download/) for Mac, Windows and Linux can also open the computer it runs on to your bots. There are two ways to do that, and they behave quite differently.",
   ],
   scene: {
     bot: "Chief of Staff",
@@ -34,8 +34,8 @@ export const yourComputer: Sandbox = {
     {
       heading: "Two ways to let bots use your computer",
       paragraphs: [
-        "Let bots use this computer works when the desktop app is connected to Rakazo Cloud or another Rakazo server. The app's own local server uses Use this Mac instead. The bot keeps its own computer and gets your computer as an extra place to work. It asks you before its first command in a space and before it first uses each app, in every approval mode, and you answer Allow in this space or Deny.",
-        "Use this Mac (Use this computer on Windows and Linux) is for when the desktop app runs Rakazo itself on your machine. Your computer then replaces the bot's computer entirely, and bots run commands on it without asking.",
+        "Let bots use this computer works when the desktop app is connected to a Matebot server, including this deployment. The app's own local server uses Use this Mac instead. The bot keeps its own computer and gets your computer as an extra place to work. It asks you before its first command in a space and before it first uses each app, in every approval mode, and you answer Allow in this space or Deny.",
+        "Use this Mac (Use this computer on Windows and Linux) is for when the desktop app runs Matebot itself on your machine. Your computer then replaces the bot's computer entirely, and bots run commands on it without asking.",
       ],
       image: true,
     },
@@ -53,7 +53,7 @@ export const yourComputer: Sandbox = {
     {
       heading: "When to choose your own computer",
       paragraphs: [
-        "Choose it when the work really lives on your machine and you are there to approve it. For anything you'd leave running overnight or hand to a team, a separate computer is safer: [Docker](/sandboxes/docker/) runs bot computers on your own server, and hosted sandboxes such as [Boat](/sandboxes/boat/), which Rakazo Cloud uses, or [E2B](/sandboxes/e2b/) keep them in the cloud. With those, a mistake stays on the bot's computer and you can reset it. The [sandbox comparison](/sandboxes/) covers every option.",
+        "Choose it when the work really lives on your machine and you are there to approve it. For anything you'd leave running overnight or hand to a team, a separate computer is safer: [Docker](/sandboxes/docker/) runs bot computers on your own server, and hosted sandboxes such as [Boat](/sandboxes/boat/) or [E2B](/sandboxes/e2b/) keep them in the cloud. With those, a mistake stays on the bot's computer and you can reset it. The [sandbox comparison](/sandboxes/) covers every option.",
       ],
     },
     {
@@ -63,7 +63,7 @@ export const yourComputer: Sandbox = {
       ],
       bullets: [
         "With Let bots use this computer, a bot can reach your computer only in your own chats with your own bots. Routines, webhooks, chat-app channels and other people's messages can't use it.",
-        "With Let bots use this computer, commands, their output and screenshots pass through the Rakazo server you're connected to. Your files stay on your computer unless a bot reads them.",
+        "With Let bots use this computer, commands, their output and screenshots pass through the Matebot server you're connected to. Your files stay on your computer unless a bot reads them.",
         "Screen control works on Mac and Windows. On a Mac it needs Accessibility and Screen Recording permission in System Settings. On Linux, bots can run commands but not control the screen.",
         "Use this Mac has no screen control, and bots use it without asking, including in routines. Don't choose it for a server other people use.",
         "The desktop app has to stay open for bots to reach your computer.",
@@ -72,13 +72,13 @@ export const yourComputer: Sandbox = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "Anyone with the desktop app can do this; no server admin is needed. Install it from the [download page](/download/), then pick the mode that matches how you use Rakazo. The [desktop app guide](/docs/desktop-app/) covers both.",
+        "Anyone with the desktop app can do this; no server admin is needed. Install it from the [download page](/download/), then pick the mode that matches how you use Matebot. The [desktop app guide](/docs/desktop-app/) covers both.",
       ],
       steps: [
-        "To use Let bots use this computer, sign in to Rakazo Cloud or another server in the desktop app, open Settings → General, and turn on Let bots use this computer under Computers. Confirm when the app asks Allow bots to use this computer?",
-        "On a Mac, allow Rakazo in System Settings → Privacy & Security → Accessibility and Screen Recording if you want bots to use apps on screen, then reopen the app.",
+        "To use Let bots use this computer, sign in to your server in the desktop app, open Settings → General, and turn on Let bots use this computer under Computers. Confirm when the app asks Allow bots to use this computer?",
+        "On a Mac, allow Matebot in System Settings → Privacy & Security → Accessibility and Screen Recording if you want bots to use apps on screen, then reopen the app.",
         "Ask a bot to do something on your computer, and choose Allow in this space when it asks.",
-        "To use Use this Mac instead, choose This computer when the app asks which server to use. It runs Rakazo locally in Docker. When it asks Where should bots run?, choose Use this Mac.",
+        "To use Use this Mac instead, choose This computer when the app asks which server to use. It runs Matebot locally in Docker. When it asks Where should bots run?, choose Use this Mac.",
         "To stop, turn off Let bots use this computer in Settings, or choose Revoke Local Computer Access in the app menu for Use this Mac.",
       ],
     },
@@ -95,7 +95,7 @@ export const yourComputer: Sandbox = {
     {
       question: "Can an AI agent control my Mac?",
       answer:
-        "Yes, with the Rakazo desktop app and Let bots use this computer turned on. After you grant Accessibility and Screen Recording permission, a bot can see and use apps on your screen, and it asks before it first uses each app in a space.",
+        "Yes, with the Matebot desktop app and Let bots use this computer turned on. After you grant Accessibility and Screen Recording permission, a bot can see and use apps on your screen, and it asks before it first uses each app in a space.",
     },
     {
       question: "Is it safe to let an AI agent use my computer?",
@@ -119,11 +119,11 @@ export const yourComputer: Sandbox = {
     },
   ],
   sources: [
-    { label: "Rakazo, desktop app", href: `${GITHUB_URL}/blob/main/docs/desktop-app.md` },
+    { label: "Matebot, desktop app", href: `${GITHUB_URL}/blob/main/docs/desktop-app.md` },
     {
-      label: "Rakazo, use your own computer",
+      label: "Matebot, use your own computer",
       href: `${GITHUB_URL}/blob/main/docs/computer.md#use-your-own-computer`,
     },
-    { label: "Rakazo, approvals", href: `${GITHUB_URL}/blob/main/docs/approvals.md` },
+    { label: "Matebot, approvals", href: `${GITHUB_URL}/blob/main/docs/approvals.md` },
   ],
 };

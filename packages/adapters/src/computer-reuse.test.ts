@@ -1,8 +1,8 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import path from "node:path";
-import type { AdapterContext, JobPublisher } from "@rakazo/adapter-kit";
-import type * as Db from "@rakazo/db";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { AdapterContext, JobPublisher } from "@matebot/adapter-kit";
+import type * as Db from "@matebot/db";
+import type { PrismaClient, ThreadEvents } from "@matebot/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ComputerBusyError, provisionComputer } from "./computer-lifecycle.js";
 import { DockerSandboxProvider } from "./docker-sandbox.js";
@@ -11,7 +11,7 @@ import { LocalAgentHomeStore } from "./home.js";
 import { HostAwareSandbox } from "./host-aware-sandbox.js";
 
 // The plan's size is read from billing, which these Prisma doubles do not model.
-vi.mock("@rakazo/db", async (importOriginal) => ({
+vi.mock("@matebot/db", async (importOriginal) => ({
   ...(await importOriginal<typeof Db>()),
   planComputerSize: vi.fn(async () => "standard"),
 }));

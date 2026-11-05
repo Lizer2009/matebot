@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { copyFile, lstat, mkdir, readFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import path from "node:path";
-import type { DesktopLocalStackState } from "@rakazo/contracts";
+import type { DesktopLocalStackState } from "@matebot/contracts";
 import type { DockerFailureKind, RunDocker, RunDockerResult } from "./docker-cli.js";
 import {
   classifyDockerFailure,
@@ -301,8 +301,8 @@ export function stackFailureMessage(
       );
     case "other":
       return phase === "pulling"
-        ? t("Downloading Rakazo images failed. Check the output below, then retry.")
-        : t("Rakazo services did not start. Check the output below, then retry.");
+        ? t("Downloading Matebot images failed. Check the output below, then retry.")
+        : t("Matebot services did not start. Check the output below, then retry.");
   }
 }
 

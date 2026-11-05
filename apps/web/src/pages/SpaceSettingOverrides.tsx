@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import type { SpaceSetting } from "@rakazo/contracts";
-import { writeSaved } from "@rakazo/core/query";
+import type { SpaceSetting } from "@matebot/contracts";
+import { writeSaved } from "@matebot/core/query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   Button,
-} from "@rakazo/ui-web";
+} from "@matebot/ui-web";
 import type { QueryKey } from "@tanstack/react-query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";

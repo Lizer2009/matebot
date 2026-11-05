@@ -97,10 +97,10 @@ describe("desktop release workflow", () => {
     expect(workflow).toContain('if [[ ! -s "$image.sig" ]]; then');
   });
 
-  it("pins every platform update feed to the official GitHub owner and repo", () => {
+  it("pins every platform update feed to this fork's GitHub owner and repo", () => {
     expect(workflow).toContain('grep -Fqx "provider: github"');
-    expect(workflow).toContain('grep -Fqx "owner: elie222"');
-    expect(workflow).toContain('grep -Fqx "repo: rakazo"');
+    expect(workflow).toContain('grep -Fqx "owner: Lizer2009"');
+    expect(workflow).toContain('grep -Fqx "repo: matebot"');
     expect(workflow).toContain("Verify Linux update feed is pinned to the official GitHub channel");
     expect(workflow).toContain("Windows update config missing");
     expect(workflow).toContain("RELEASE_VERSION:");

@@ -9,19 +9,19 @@ import type {
   BillingProvider,
   BillingSubscriptionSnapshot,
   BillingSubscriptionStatus,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   BillingCheckoutCompletedError,
   BillingCustomerNotFoundError,
   BillingNoMonthlyCreditsError,
-} from "@rakazo/adapter-kit";
-import type { BillingCancellationReason, ByokTier } from "@rakazo/contracts";
+} from "@matebot/adapter-kit";
+import type { BillingCancellationReason, ByokTier } from "@matebot/contracts";
 import {
   BILLING_CANCELLATION_REASONS,
   BYOK_TIERS,
   ByokTierSchema,
   ModelCreditAmountSchema,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import { z } from "zod";
 
 export const STRIPE_API_VERSION = "2026-09-30.endive";
@@ -218,7 +218,7 @@ export class StripeBillingProvider implements BillingProvider {
                 price: await this.recurringPrice(
                   `rakazo_monthly_credits_${input.amountCents}`,
                   input.amountCents,
-                  "Rakazo monthly model credits",
+                  "Matebot monthly model credits",
                 ),
               }
             : {
@@ -226,7 +226,7 @@ export class StripeBillingProvider implements BillingProvider {
                 price_data: {
                   currency: "usd",
                   unit_amount: input.amountCents,
-                  product_data: { name: "Rakazo model credits" },
+                  product_data: { name: "Matebot model credits" },
                 },
               },
         ],
@@ -260,7 +260,7 @@ export class StripeBillingProvider implements BillingProvider {
           price: await this.recurringPrice(
             `rakazo_monthly_credits_${amountCents}`,
             amountCents,
-            "Rakazo monthly model credits",
+            "Matebot monthly model credits",
           ),
           quantity: 1,
         },
@@ -360,8 +360,8 @@ export class StripeBillingProvider implements BillingProvider {
         : `${BYOK_PRICE_KEY_PREFIX}${tier}_${period}_${amountCents}`,
       amountCents,
       tier === "standard"
-        ? "Rakazo own-key plan"
-        : `Rakazo own-key plan (${BYOK_TIERS[tier].name})`,
+        ? "Matebot own-key plan"
+        : `Matebot own-key plan (${BYOK_TIERS[tier].name})`,
       interval,
     );
   }

@@ -7,16 +7,16 @@ import type {
   MessageReaction,
   ThreadMessage,
   ThreadSnapshot,
-} from "@rakazo/contracts";
-import { attachmentMaxBytes, attachmentMaxCount, attachmentSizeLabel } from "@rakazo/contracts";
-import type { ComposerMention } from "@rakazo/core";
+} from "@matebot/contracts";
+import { attachmentMaxBytes, attachmentMaxCount, attachmentSizeLabel } from "@matebot/contracts";
+import type { ComposerMention } from "@matebot/core";
 import {
   attachmentsForThread,
   inferAttachmentMimeType,
   isImageInputConfirmation,
   newClientId,
   resolveComposerSendPlan,
-} from "@rakazo/core";
+} from "@matebot/core";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { requestBrowserNotificationPermission } from "../../lib/browser-notifications";

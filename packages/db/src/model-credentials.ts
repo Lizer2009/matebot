@@ -1,4 +1,4 @@
-import { canonicalPiProviderId, storedPiProviderIds, usableModelId } from "@rakazo/contracts";
+import { canonicalPiProviderId, storedPiProviderIds, usableModelId } from "@matebot/contracts";
 import type { PrismaClient } from "./client.js";
 
 export const newestCredentialOrder = [

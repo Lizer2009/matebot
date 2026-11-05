@@ -9,20 +9,20 @@ import type {
   PaymentWalletProvider,
   SandboxProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { routineJobKey, routineWakeupJob } from "@rakazo/adapter-kit";
-import type { RoutineWatch, RoutineWatchState } from "@rakazo/contracts";
-import { RoutineWatchSchema, RoutineWatchStateSchema } from "@rakazo/contracts";
-import type { ActionApprovalRule } from "@rakazo/core";
-import { connectorKindFromToolName, redactSecrets, watchToolRefusal } from "@rakazo/core";
-import type { ComputerMode, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@matebot/adapter-kit";
+import { routineJobKey, routineWakeupJob } from "@matebot/adapter-kit";
+import type { RoutineWatch, RoutineWatchState } from "@matebot/contracts";
+import { RoutineWatchSchema, RoutineWatchStateSchema } from "@matebot/contracts";
+import type { ActionApprovalRule } from "@matebot/core";
+import { connectorKindFromToolName, redactSecrets, watchToolRefusal } from "@matebot/core";
+import type { ComputerMode, PrismaClient, ThreadEvents } from "@matebot/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
   listApprovalRules,
   parseComputerMode,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { loadLoginPasswordRedactions, shellCommandEnvironment } from "./bot-secrets.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { ComputerBusyError, provisionComputer } from "./computer-lifecycle.js";

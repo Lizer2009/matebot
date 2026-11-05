@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@matebot/contracts";
 import {
   appendTextSegment,
   appendToolCallSegment,
@@ -9,8 +9,8 @@ import {
   noteLastToolStep,
   redactSecrets,
   redactSecretsAfter,
-} from "@rakazo/core";
-import type { Run } from "@rakazo/db";
+} from "@matebot/core";
+import type { Run } from "@matebot/db";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS } from "./model-vision.js";
 import type { ReplyState, RunContext } from "./run-context.js";

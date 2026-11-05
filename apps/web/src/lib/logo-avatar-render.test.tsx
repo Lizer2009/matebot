@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import type { ProductEvent } from "@rakazo/contracts";
-import { BotAvatar, BotAvatarActivityProvider } from "@rakazo/ui-web";
+import type { ProductEvent } from "@matebot/contracts";
+import { BotAvatar, BotAvatarActivityProvider } from "@matebot/ui-web";
 import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
@@ -67,7 +67,7 @@ async function mount(status?: string) {
   );
 }
 const live = () => container.querySelector<SVGSVGElement>('[data-testid="live"] svg')!;
-it("projects production feed events into the live avatar and subscribes only live Rakazo consumers", async () => {
+it("projects production feed events into the live avatar and subscribes only live Matebot consumers", async () => {
   const subscribe = vi.spyOn(webLogoAvatarActivity, "subscribe");
   await mount();
   expect(subscribe).toHaveBeenCalledTimes(1);

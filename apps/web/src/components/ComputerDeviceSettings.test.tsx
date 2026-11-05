@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { RakazoDesktop } from "@rakazo/contracts";
+import type { RakazoDesktop } from "@matebot/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -14,7 +14,7 @@ vi.mock("@lingui/react/macro", () => ({
   }),
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@matebot/ui-web", () => ({
   Button: ({
     variant: _variant,
     size: _size,

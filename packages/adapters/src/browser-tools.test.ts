@@ -1,6 +1,6 @@
-import type { AdapterContext, ComputerRef } from "@rakazo/adapter-kit";
-import { SandboxRequestRejectedError } from "@rakazo/adapter-kit";
-import * as Logging from "@rakazo/logging";
+import type { AdapterContext, ComputerRef } from "@matebot/adapter-kit";
+import { SandboxRequestRejectedError } from "@matebot/adapter-kit";
+import * as Logging from "@matebot/logging";
 import { describe, expect, it, vi } from "vitest";
 import {
   browserActFromTool,

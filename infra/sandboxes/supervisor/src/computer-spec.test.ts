@@ -17,7 +17,7 @@ import {
   DEFAULT_DESKTOP_ENV,
   ensureScreenCommand,
   TERMINAL_MENU_COMMAND,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@matebot/core/node/desktop-runtime";
 import type Docker from "dockerode";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {

@@ -1,4 +1,4 @@
-import { isModelRequiredSendError } from "@rakazo/core";
+import { isModelRequiredSendError } from "@matebot/core";
 import { Alert, AppState } from "react-native";
 import type { RpcArgs } from "./api";
 import {

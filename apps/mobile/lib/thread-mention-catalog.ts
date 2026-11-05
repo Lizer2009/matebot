@@ -1,6 +1,6 @@
-import type { Connection, ConnectionCatalogItem, Routine } from "@rakazo/contracts";
-import type { MentionPickerConnector } from "@rakazo/core";
-import { createRoutineMentionBatcher, mentionConnectorsFrom } from "@rakazo/core";
+import type { Connection, ConnectionCatalogItem, Routine } from "@matebot/contracts";
+import type { MentionPickerConnector } from "@matebot/core";
+import { createRoutineMentionBatcher, mentionConnectorsFrom } from "@matebot/core";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { captureApiRequestContext, currentApiBase, rpc, selectedSpaceId } from "./api";
 import { currentSessionGeneration, subscribeSessionGeneration } from "./session";

@@ -1,5 +1,5 @@
-import type { ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
-import { SandboxKind } from "@rakazo/contracts";
+import type { ComputerRef, SandboxProvider } from "@matebot/adapter-kit";
+import { SandboxKind } from "@matebot/contracts";
 import { BoatSandboxProvider } from "./boat-sandbox.js";
 import { BoxdSandboxProvider } from "./boxd-sandbox.js";
 import { CreateOSSandboxProvider } from "./createos-sandbox.js";

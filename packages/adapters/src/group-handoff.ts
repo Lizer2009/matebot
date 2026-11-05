@@ -1,5 +1,5 @@
-import { runContinueJob } from "@rakazo/adapter-kit";
-import { MessageBlock } from "@rakazo/contracts";
+import { runContinueJob } from "@matebot/adapter-kit";
+import { MessageBlock } from "@matebot/contracts";
 import {
   BOT_MESSAGE_MAX_LENGTH,
   botMessageContext,
@@ -8,16 +8,16 @@ import {
   renderBotGroupDirectory,
   renderGroupMembersContext,
   resolveBotAddress,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+} from "@matebot/core";
+import type { PrismaClient } from "@matebot/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
   IsolationError,
   lockOwnedGroup,
   touchGroupUpdatedAt,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { runLeaseFor } from "./run-messages.js";
 

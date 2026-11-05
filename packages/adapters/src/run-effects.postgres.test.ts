@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { createDb, createThreadEvents, RunHistoryWriteError, runAsSystem } from "@rakazo/db";
+import { createDb, createThreadEvents, RunHistoryWriteError, runAsSystem } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { claimEffect, recordEffect } from "./run-effects.js";
@@ -79,7 +79,7 @@ postgres("tool effects under the run lease (PostgreSQL)", () => {
       { owner, fence },
     );
   const send = vi.fn();
-  // A tool records its effect, then reaches outside Rakazo.
+  // A tool records its effect, then reaches outside Matebot.
   const sendTool = (deps: ExecutorDeps, key: string) =>
     runAsSystem("agent run tool call", async () => {
       const applied = await recordEffect(deps, run, "send_fixture", key, { to: key });

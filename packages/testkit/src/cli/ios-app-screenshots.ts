@@ -251,7 +251,7 @@ async function simulatorUdid() {
   if (booted.length === 1 && booted[0]) return booted[0].udid;
   throw new Error(
     booted.length === 0
-      ? "Boot an iPhone simulator with the Rakazo app installed, or set SIM_UDID."
+      ? "Boot an iPhone simulator with the Matebot app installed, or set SIM_UDID."
       : `Several simulators are booted; set SIM_UDID to one of: ${booted.map((device) => `${device.name} ${device.udid}`).join(", ")}`,
   );
 }
@@ -265,7 +265,7 @@ function startMetro(apiUrl: string, outDir: string) {
     name: "Metro",
     args: [
       "--filter",
-      "@rakazo/mobile",
+      "@matebot/mobile",
       "exec",
       "expo",
       "start",
@@ -289,7 +289,7 @@ function startMetro(apiUrl: string, outDir: string) {
 function startScreenRelay(apiUrl: string, outDir: string) {
   return startServer({
     name: "The screen relay",
-    args: ["--filter", "@rakazo/web", "exec", "vite"],
+    args: ["--filter", "@matebot/web", "exec", "vite"],
     port: SCREEN_RELAY_PORT,
     log: path.join(outDir, "screen-relay.log"),
     // These win over any values in the repository's .env.

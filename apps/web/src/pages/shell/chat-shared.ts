@@ -1,6 +1,6 @@
 import { t } from "@lingui/core/macro";
-import type { ThreadMessage } from "@rakazo/contracts";
-import { previewMessageText as previewText } from "@rakazo/core";
+import type { ThreadMessage } from "@matebot/contracts";
+import { previewMessageText as previewText } from "@matebot/core";
 
 export type PendingAttachment = {
   id: string;

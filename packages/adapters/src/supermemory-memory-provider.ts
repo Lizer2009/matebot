@@ -7,7 +7,7 @@ import type {
   SemanticMemoryResponse,
   SemanticMemoryResult,
   SemanticMemorySaveRequest,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   assertLocalServiceBaseUrlSync,
   LocalServiceHost,

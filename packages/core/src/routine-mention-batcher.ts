@@ -1,5 +1,5 @@
-import type { Routine } from "@rakazo/contracts";
-import { ROUTINE_MENTION_BATCH_MAX } from "@rakazo/contracts";
+import type { Routine } from "@matebot/contracts";
+import { ROUTINE_MENTION_BATCH_MAX } from "@matebot/contracts";
 
 type RoutineList = { botId: string; routines: Routine[] };
 type Pending = {

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import type { Artifact, ArtifactWithContent } from "@matebot/contracts";
 import { expect, test } from "@playwright/test";
-import type { Artifact, ArtifactWithContent } from "@rakazo/contracts";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
 test("Excel files can be attached and uploaded without losing their bytes", async ({

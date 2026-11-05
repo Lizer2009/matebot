@@ -2,16 +2,15 @@ import { randomBytes } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { createRouterClient } from "@orpc/server";
 import type {
   ArtifactStore,
   ComputerRef,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { BillingEmulator, ObjectAgentHomeStore, PrismaAgentHomeRecords } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@rakazo/db";
+} from "@matebot/adapter-kit";
+import { BillingEmulator, ObjectAgentHomeStore, PrismaAgentHomeRecords } from "@matebot/adapters";
+import type { Actor } from "@matebot/contracts";
+import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@matebot/db";
 import {
   asSystem,
   billingAccountForOrganization,
@@ -25,7 +24,8 @@ import {
   LocalKeyProvider,
   personalOrganizationIds,
   runAsSystem,
-} from "@rakazo/db";
+} from "@matebot/db";
+import { createRouterClient } from "@orpc/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryObjectStorage } from "../../../packages/adapters/src/object-storage.test-support.js";
 import { deleteAccountContent } from "./account-deletion.js";

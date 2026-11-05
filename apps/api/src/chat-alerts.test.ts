@@ -1,5 +1,5 @@
+import type { Actor, ChatAlert } from "@matebot/contracts";
 import { createRouterClient } from "@orpc/server";
-import type { Actor, ChatAlert } from "@rakazo/contracts";
 import { describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";

@@ -14,7 +14,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@rakazo/ui-web";
+} from "@matebot/ui-web";
 import { CircleUserRound } from "lucide-react";
 import { useState } from "react";
 import { authClient } from "../lib/auth";

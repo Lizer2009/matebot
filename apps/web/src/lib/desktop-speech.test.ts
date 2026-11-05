@@ -1,4 +1,4 @@
-import type { RakazoDesktopSpeechEvent } from "@rakazo/contracts";
+import type { RakazoDesktopSpeechEvent } from "@matebot/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DesktopSpeechRecognition } from "./desktop-speech.js";
 import { Dictation } from "./dictation.js";
@@ -148,7 +148,7 @@ describe("Dictation on the desktop app", () => {
     await dictation.listen({ mode: "hold", transcribe: false, onFinal: () => undefined });
     desktop.emit({ session: desktop.session(), type: "error", error: "not-allowed" });
     expect(dictation.state.error).toBe(
-      "Allow Rakazo to use Speech Recognition and the microphone in System Settings.",
+      "Allow Matebot to use Speech Recognition and the microphone in System Settings.",
     );
   });
 });

@@ -1,6 +1,6 @@
+import { PRODUCT_DISPLAY_NAME, signupRequiresEmailVerification } from "@matebot/core";
 import type { Locator, Page, Route, TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { PRODUCT_DISPLAY_NAME, signupRequiresEmailVerification } from "@rakazo/core";
 
 /** The name onboarding gives a space's first bot, so specs can find it. */
 export const FIRST_BOT_NAME = PRODUCT_DISPLAY_NAME;

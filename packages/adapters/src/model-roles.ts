@@ -1,13 +1,13 @@
-import type { AgentRunRequest, SecretStore } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, SecretStore } from "@matebot/adapter-kit";
 import type {
   ModelRole,
   ModelRoleChoice,
   ModelRoleSettings,
   SettingsScope,
-} from "@rakazo/contracts";
-import { backupChoiceKey, usableModelId } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { appliedModelRole } from "@rakazo/db";
+} from "@matebot/contracts";
+import { backupChoiceKey, usableModelId } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { appliedModelRole } from "@matebot/db";
 import { resolveAutoReviewChecker } from "./auto-review.js";
 import type { ModelChoice, ModelCredential } from "./model-selection.js";
 import { findConnectedModelCredential } from "./model-selection.js";

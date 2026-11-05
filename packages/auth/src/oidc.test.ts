@@ -1,5 +1,5 @@
 import { createHash, createHmac, generateKeyPairSync, sign } from "node:crypto";
-import type * as Db from "@rakazo/db";
+import type * as Db from "@matebot/db";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Auth, AuthEnv } from "./index.js";
@@ -9,7 +9,7 @@ import { encryptStoredOAuthTokens, openIdToken, sealIdToken } from "./token-stor
 
 const state = vi.hoisted(() => ({ db: {} as Record<string, Record<string, unknown>[]> }));
 vi.mock("better-auth/adapters/prisma", () => ({ prismaAdapter: () => memoryAdapter(state.db) }));
-vi.mock("@rakazo/db", async (original) => ({
+vi.mock("@matebot/db", async (original) => ({
   ...(await original<typeof Db>()),
   bootstrapUserSpace: vi.fn(),
 }));

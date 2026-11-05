@@ -28,8 +28,8 @@ import type {
   ScreenRequest,
   ScreenSession,
   WorkspaceDirectoryRequest,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
+} from "@matebot/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@matebot/core";
 import {
   applyPlaceholderAction,
   boundedComputerActions,

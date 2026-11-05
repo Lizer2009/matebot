@@ -1,0 +1,75 @@
+name: desktop-windows-installer
+
+# Builds the Windows installer without signing credentials, so a fork can hand out
+# `Matebot-Setup-<version>.exe` from a workflow run instead of cutting a signed
+# release. The signed, published installers still come from `release-desktop`.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: &installer-paths
+      - ".github/workflows/desktop-windows-installer.yml"
+      - "apps/desktop/package.json"
+      - "apps/desktop/assets/**"
+      - "apps/desktop/scripts/**"
+      - "apps/desktop/src/**"
+      - "packages/ui-tokens/assets/**"
+      - "pnpm-lock.yaml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-windows-installer-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  installer:
+    name: Build Matebot Setup
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate the database client for desktop compilation
+        run: pnpm db:generate
+        env:
+          DATABASE_URL: postgres://matebot:matebot@127.0.0.1:5433/matebot
+      - name: Build renderer and Electron main process
+        run: pnpm --filter @matebot/web build && pnpm --filter @matebot/desktop build
+        env:
+          RAKAZO_ALLOW_DEV_SECRETS: "1"
+      # Unpackaged, unsigned build: no certificate is configured on a fork, and
+      # `release-desktop` is the path that signs and publishes.
+      - name: Package the unsigned installer
+        run: pnpm --filter @matebot/desktop exec electron-builder --win --x64 --publish never -c.win.signExecutable=false
+      - name: Check the installer carries the Matebot name
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installers = @(Get-ChildItem "apps/desktop/out/Matebot-Setup-*.exe")
+          if ($installers.Count -ne 1) {
+            throw "Expected one Matebot-Setup-*.exe, found $($installers.Count)."
+          }
+          $application = "apps/desktop/out/win-unpacked/Matebot.exe"
+          if (-not (Test-Path $application)) { throw "The packaged application is not named Matebot.exe." }
+          foreach ($path in @($installers[0].FullName, (Resolve-Path $application).Path)) {
+            $info = (Get-Item $path).VersionInfo
+            if ($info.ProductName -ne "Matebot") { throw "$path has product name '$($info.ProductName)'." }
+            if ($info.CompanyName -ne "Matebot") { throw "$path has company name '$($info.CompanyName)'." }
+          }
+      - name: Upload the installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: matebot-windows-installer
+          path: |
+            apps/desktop/out/Matebot-Setup-*.exe
+            apps/desktop/out/Matebot-Setup-*.exe.blockmap
+            apps/desktop/out/latest.yml
+          if-no-files-found: error

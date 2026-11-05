@@ -1,6 +1,6 @@
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import type { Request } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
 import {
   captureScreenshot,
   completeOnboarding,
@@ -344,7 +344,7 @@ test("changes and recovers an email password", async ({ page }, testInfo) => {
       html: string;
     }>;
     return messages.filter(
-      (message) => message.to === email && message.subject === "Reset your Rakazo password",
+      (message) => message.to === email && message.subject === "Reset your Matebot password",
     );
   };
   await expect.poll(async () => (await sentToUser()).length).toBeGreaterThan(0);

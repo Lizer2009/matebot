@@ -64,7 +64,7 @@ vi.mock("@expo/ui/community/menu", () => ({
     return createElement("div", {}, children);
   },
 }));
-vi.mock("@rakazo/chat-ui/native", () => ({ PageIcon: () => null }));
+vi.mock("@matebot/chat-ui/native", () => ({ PageIcon: () => null }));
 vi.mock("expo-clipboard", () => ({ setStringAsync: async () => true }));
 vi.mock("expo-router", () => ({
   useLocalSearchParams: () => ({ botId: "b1" }),

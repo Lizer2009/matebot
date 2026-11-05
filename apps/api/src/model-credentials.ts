@@ -1,5 +1,4 @@
-import { ORPCError } from "@orpc/server";
-import type { CodexLiveCatalog } from "@rakazo/adapters";
+import type { CodexLiveCatalog } from "@matebot/adapters";
 import {
   buildModelConnectPlaintext,
   CHATGPT_OAUTH_PROVIDER,
@@ -14,15 +13,15 @@ import {
   validateModelAuthAvailability,
   verifyCatalogProviderApiKey,
   verifyOpenAiCompatibleApiKey,
-} from "@rakazo/adapters";
-import type { Actor, ModelConnectInput, SettingsScope, ThinkingLevel } from "@rakazo/contracts";
+} from "@matebot/adapters";
+import type { Actor, ModelConnectInput, SettingsScope, ThinkingLevel } from "@matebot/contracts";
 import {
   canonicalPiProviderId,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   storedPiProviderIds,
   usableModelId,
-} from "@rakazo/contracts";
-import { clampCatalogThinkingLevel } from "@rakazo/core";
+} from "@matebot/contracts";
+import { clampCatalogThinkingLevel } from "@matebot/core";
 import {
   deleteUnreferencedCredentialSecret,
   findNewestUserModelCredential,
@@ -32,7 +31,8 @@ import {
   Prisma,
   saveModelPreference,
   writeModelRole,
-} from "@rakazo/db";
+} from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import { mayUsePrivateEndpoint } from "./mcp-servers.js";
 import { assertNoDanglingModelPins } from "./model-pins.js";
 import type { RouterDeps } from "./router.js";

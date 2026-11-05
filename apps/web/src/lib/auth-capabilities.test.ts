@@ -3,11 +3,11 @@ import type { AuthCapabilities } from "./auth-capabilities";
 
 // Load the dependencies once; resetModules below only needs a fresh request cache.
 const loaded = await vi.hoisted(async () => ({
-  contracts: await import("@rakazo/contracts"),
-  core: await import("@rakazo/core"),
+  contracts: await import("@matebot/contracts"),
+  core: await import("@matebot/core"),
 }));
-vi.mock("@rakazo/contracts", () => loaded.contracts);
-vi.mock("@rakazo/core", () => loaded.core);
+vi.mock("@matebot/contracts", () => loaded.contracts);
+vi.mock("@matebot/core", () => loaded.core);
 
 let fetchAuthCapabilities: () => Promise<AuthCapabilities>;
 beforeEach(async () => {

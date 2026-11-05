@@ -7,8 +7,8 @@ import type {
   ThreadMessage,
   ThreadMessagePage,
   ThreadSnapshot,
-} from "@rakazo/contracts";
-import { RUN_TRIGGERS } from "@rakazo/contracts";
+} from "@matebot/contracts";
+import { RUN_TRIGGERS } from "@matebot/contracts";
 import {
   isActive,
   isBackgroundRunTrigger,
@@ -26,7 +26,7 @@ import {
   takeLiveMessage,
   updateCloudAgentMessages,
   upsertMessageById,
-} from "@rakazo/core";
+} from "@matebot/core";
 
 const runTriggers = new Set<string>(RUN_TRIGGERS);
 

@@ -1,4 +1,4 @@
-import { translate } from "@rakazo/core";
+import { translate } from "@matebot/core";
 import { useSyncExternalStore } from "react";
 import { DE_MESSAGES, PEER_MESSAGE_FORMS as DE_PEER_FORMS } from "./locales/de";
 import { ES_MESSAGES, PEER_MESSAGE_FORMS as ES_PEER_FORMS } from "./locales/es";

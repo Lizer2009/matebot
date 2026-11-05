@@ -11,11 +11,11 @@ import {
   readBoundedJsonResponse,
   resolveSupervisorToken,
   uploadSizeFromEnv,
-} from "@rakazo/core";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import { getLogger, SERVICE_NAMES } from "@rakazo/logging";
-import { createRootLogger } from "@rakazo/logging/axiom";
-import { requestLogging } from "@rakazo/logging/hono";
+} from "@matebot/core";
+import { loadRootEnv } from "@matebot/core/node/load-root-env";
+import { getLogger, SERVICE_NAMES } from "@matebot/logging";
+import { createRootLogger } from "@matebot/logging/axiom";
+import { requestLogging } from "@matebot/logging/hono";
 import Docker from "dockerode";
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";

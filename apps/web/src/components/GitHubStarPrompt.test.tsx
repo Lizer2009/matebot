@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { Toaster } from "@rakazo/ui-web";
+import { Toaster } from "@matebot/ui-web";
 import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";

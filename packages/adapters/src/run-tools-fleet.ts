@@ -1,4 +1,4 @@
-import { BotSettingsValuesSchema } from "@rakazo/contracts";
+import { BotSettingsValuesSchema } from "@matebot/contracts";
 import {
   appendEventInTransaction,
   commitBotUpdate,
@@ -8,8 +8,8 @@ import {
   runAsSystem,
   SpaceLimitError,
   writeBotInstructions,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { uncertainEffectResult } from "./approval-effect.js";
 import { archiveSpawnedBot, spawnBot } from "./child-bots.js";
 import {

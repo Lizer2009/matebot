@@ -1,13 +1,17 @@
 import { createHash } from "node:crypto";
-import type { DesktopSetup, DesktopStackProbeResponse } from "@rakazo/contracts";
-import { parseServerHeaders } from "@rakazo/contracts";
-import { isLoopbackHost, isPrivateNetworkHost } from "@rakazo/contracts/network-host";
+import type { DesktopSetup, DesktopStackProbeResponse } from "@matebot/contracts";
+import { parseServerHeaders } from "@matebot/contracts";
+import { isLoopbackHost, isPrivateNetworkHost } from "@matebot/contracts/network-host";
 import { t } from "./i18n.js";
 
 /** Managed desktop origin; development keeps its usual web/API ports. */
 export const DEFAULT_LOCAL_WEB_URL = "http://127.0.0.1:45173";
-/** Hosted Rakazo; setup saves it as an `existing` server so it opens like any other. */
-export const RAKAZO_CLOUD_URL = "https://app.rakazo.com";
+/**
+ * This fork's deployment; setup saves it as an `existing` server so it opens like
+ * any other. The constant keeps its historical name because `passkeys.ts`, the
+ * setup IPC contract, and the tests all read it.
+ */
+export const RAKAZO_CLOUD_URL = "https://test.matebot.dev";
 export const PROBE_RESPONSE_LIMIT_BYTES = 64 * 1024;
 
 export const SETUP_FILE_NAME = "setup.json";
@@ -21,7 +25,7 @@ const SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//;
 /**
  * Accepts what a person would actually type ("localhost:5173", "rakazo.example.com")
  * and returns a canonical http(s) origin, or null when the input can never
- * securely address a Rakazo server.
+ * securely address a Matebot server.
  */
 export function normalizeServerUrl(input: string): string | null {
   const trimmed = input.trim();
@@ -46,7 +50,7 @@ export function normalizeServerUrl(input: string): string | null {
   // Public login cookies and API traffic must never cross a cleartext connection.
   if (url.protocol === "http:" && !isPrivateNetworkHost(url.hostname)) return null;
 
-  // Rakazo serves its renderer, RPC, and auth routes from one origin. Keeping a
+  // Matebot serves its renderer, RPC, and auth routes from one origin. Keeping a
   // user-supplied path would make the setup probe and the loaded app disagree.
   return url.origin;
 }
@@ -176,7 +180,7 @@ export function servesBundledRenderer(targetUrl: string, managedLocalStack: bool
   }
 }
 
-/** Each Rakazo origin gets its own persistent cookie and storage partition. */
+/** Each Matebot origin gets its own persistent cookie and storage partition. */
 export function sessionPartitionForServerUrl(targetUrl: string): string | null {
   try {
     const url = new URL(targetUrl);

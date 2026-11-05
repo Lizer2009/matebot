@@ -11,8 +11,8 @@ import type {
   ScreenRequest,
   ScreenSession,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
-import type { DesktopEnvironment } from "@rakazo/core/node/desktop-runtime";
+} from "@matebot/adapter-kit";
+import type { DesktopEnvironment } from "@matebot/core/node/desktop-runtime";
 import {
   BROWSER_APPLICATIONS,
   BROWSER_STILL_RUNNING_EXIT,
@@ -27,7 +27,7 @@ import {
   screenPorts,
   shellQuote,
   stopAllDesktopBrowsersCommand,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@matebot/core/node/desktop-runtime";
 import {
   BrowserStillRunningError,
   BrowserStoppedReleaseError,
@@ -451,7 +451,7 @@ const FIND_MISSING_DESKTOP_TOOLS = [
 ];
 
 /**
- * Same as infra/sandboxes/computer/browser-policy.json. Rakazo keeps credentials itself, so
+ * Same as infra/sandboxes/computer/browser-policy.json. Matebot keeps credentials itself, so
  * the browser's save-password, address, and card prompts only cover the page. Pop-ups open: a
  * page that opens a report once it has made it is past the click's user activation, and the
  * pop-up blocker would drop it without a sign the page tools can see. Only the hosted sandboxes

@@ -1,5 +1,5 @@
-import type { BotAvatarSet } from "@rakazo/contracts";
-import type { AvatarEyes, BotColorDef, LogoAvatarActivity } from "@rakazo/core";
+import type { BotAvatarSet } from "@matebot/contracts";
+import type { AvatarEyes, BotColorDef, LogoAvatarActivity } from "@matebot/core";
 import {
   ACTIVE_RUN_STATUSES,
   avatarEyeRects,
@@ -18,7 +18,7 @@ import {
   SHIPPED_BOT_AVATAR_SHAPES,
   SHIPPED_BOT_AVATAR_VIEWBOX,
   shippedBotAvatarShapePath,
-} from "@rakazo/core";
+} from "@matebot/core";
 import type { ComponentProps, CSSProperties } from "react";
 import { memo, useEffect, useId, useMemo, useSyncExternalStore } from "react";
 import { useBotAvatarActivity } from "./bot-avatar-activity.js";
@@ -240,7 +240,7 @@ export const BotAvatar = memo(function BotAvatar({
   );
 });
 
-/** Only live Rakazo consumers subscribe to public activity updates. */
+/** Only live Matebot consumers subscribe to public activity updates. */
 function LiveLogoAvatar({
   status,
   ...props
@@ -416,7 +416,7 @@ export function Wordmark({ className }: { className?: string }) {
         <span className="h-4 w-[7px] rounded-full bg-primary" />
       </div>
       <span className="font-[Aeonik,ui-sans-serif] text-[28px] tracking-tight text-foreground">
-        Rakazo
+        Matebot
       </span>
     </div>
   );

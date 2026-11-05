@@ -1,7 +1,7 @@
-import { ChatMarkdown } from "@rakazo/chat-ui/native";
-import type { MessageBlock } from "@rakazo/contracts";
-import { cloudAgentHttpsUrl, displayName as safeDisplayName } from "@rakazo/core";
-import { typeScale } from "@rakazo/ui-tokens";
+import { ChatMarkdown } from "@matebot/chat-ui/native";
+import type { MessageBlock } from "@matebot/contracts";
+import { cloudAgentHttpsUrl, displayName as safeDisplayName } from "@matebot/core";
+import { typeScale } from "@matebot/ui-tokens";
 import { useEffect, useRef, useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
 import Animated, {

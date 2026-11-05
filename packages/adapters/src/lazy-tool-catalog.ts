@@ -3,7 +3,7 @@ import type {
   ConnectorEvent,
   ConnectorRoute,
   ConnectorTool,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import { z } from "zod";
 import { catalogIdForRoute } from "./approval-effect.js";
 

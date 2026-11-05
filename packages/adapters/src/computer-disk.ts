@@ -1,6 +1,6 @@
-import type { AdapterContext, ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { AdapterContext, ComputerRef, SandboxProvider } from "@matebot/adapter-kit";
+import type { PrismaClient } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { usesNativeShell } from "./native-shell.js";
 
 const MEASURE_TIMEOUT_MS = 5_000;

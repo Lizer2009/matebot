@@ -1,6 +1,6 @@
+import type { Bot, Routine } from "@matebot/contracts";
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import type { Bot, Routine } from "@rakazo/contracts";
 import {
   activeBotId,
   captureScreenshot,

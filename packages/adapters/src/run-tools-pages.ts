@@ -1,7 +1,7 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@rakazo/contracts";
-import { containsSecret, redactSecrets } from "@rakazo/core";
-import { checkPageSource, PAGE_KIT_GUIDE } from "@rakazo/page-kit/validate";
+import type { MessageBlock } from "@matebot/contracts";
+import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@matebot/contracts";
+import { containsSecret, redactSecrets } from "@matebot/core";
+import { checkPageSource, PAGE_KIT_GUIDE } from "@matebot/page-kit/validate";
 import type { RunContext } from "./run-context.js";
 import { isUniqueViolation, publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";

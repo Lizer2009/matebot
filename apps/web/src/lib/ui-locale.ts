@@ -1,5 +1,5 @@
-import { AppLocaleSchema } from "@rakazo/contracts";
-import { matchUiLocale } from "@rakazo/core";
+import { AppLocaleSchema } from "@matebot/contracts";
+import { matchUiLocale } from "@matebot/core";
 
 export const UI_LOCALES = AppLocaleSchema.options;
 

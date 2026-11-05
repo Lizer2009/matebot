@@ -1,6 +1,6 @@
 import { unlink, writeFile } from "node:fs/promises";
 import { getHeapStatistics } from "node:v8";
-import { getLogger, logSinkHealth } from "@rakazo/logging";
+import { getLogger, logSinkHealth } from "@matebot/logging";
 
 export const WORKER_HEALTH_FILE = "/tmp/rakazo-worker-health.json";
 

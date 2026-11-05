@@ -1,10 +1,10 @@
-import type { ComputerProviderDescriptor, ComputerProviderField } from "@rakazo/contracts";
+import type { ComputerProviderDescriptor, ComputerProviderField } from "@matebot/contracts";
 import {
   ipVersion,
   isCloudMetadataHost,
   isInternalHostname,
   isNonPublicAddress,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import type { SandboxProviderOptions } from "./sandbox-factory.js";
 import { sandboxProviderOptionsFromEnv } from "./sandbox-provider-env.js";
 

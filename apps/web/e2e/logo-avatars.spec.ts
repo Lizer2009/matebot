@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
+import { BOT_AVATAR_COLORS } from "@matebot/core";
 import { expect, test } from "@playwright/test";
-import { BOT_AVATAR_COLORS } from "@rakazo/core";
 import { captureScreenshot } from "./helpers";
 
 test.use({ viewport: { width: 1260, height: 1000 } });
@@ -10,7 +10,7 @@ test("renders the real logo in every requested pose in both themes", async ({ pa
   page.on("pageerror", (error) => errors.push(error.message));
   for (const theme of ["dark", "light"]) {
     await page.goto(`/e2e/fixtures/logo-avatars.html?theme=${theme}`);
-    await expect(page.getByRole("img", { name: "Official Rakazo logo" })).toBeVisible();
+    await expect(page.getByRole("img", { name: "Official Matebot logo" })).toBeVisible();
     const cards = page.getByRole("region", { name: "Requested expressions" });
     for (const label of ["Idle", "Reading", "Writing", "Thinking", "Computer use"]) {
       await expect(cards.getByRole("img", { name: label, exact: true })).toBeVisible();

@@ -1,5 +1,5 @@
+import type { McpServer } from "@matebot/contracts";
 import { expect, test } from "@playwright/test";
-import type { McpServer } from "@rakazo/contracts";
 import {
   captureScreenshot,
   completeOnboarding,

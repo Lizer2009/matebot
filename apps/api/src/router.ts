@@ -9,7 +9,7 @@ import type {
   SandboxProvider,
   SecretStore,
   TransactionalEmailProvider,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import type {
   CloudAgentConnection,
   CodexLiveCatalog,
@@ -29,10 +29,10 @@ import type {
   RemoteConnectorDependencies,
   TicketChangeNotifier,
   verifyModelServesAgents,
-} from "@rakazo/adapters";
-import type { Auth } from "@rakazo/auth";
-import type { NavLink } from "@rakazo/contracts";
-import type { BoardEvents, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@matebot/adapters";
+import type { Auth } from "@matebot/auth";
+import type { NavLink } from "@matebot/contracts";
+import type { BoardEvents, PrismaClient, ThreadEvents } from "@matebot/db";
 import type { BillingService } from "./billing.js";
 import { accountRoutes } from "./routes/account.js";
 import { availabilityRoutes } from "./routes/availability.js";

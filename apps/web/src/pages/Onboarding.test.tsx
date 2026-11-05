@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";

@@ -7,7 +7,7 @@ import type {
   MessagingInstallProvider,
   MessagingSendRequest,
   MessagingSurface,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import { credentialDigest } from "./credential-digest.js";
 
 type CachedSurface = {

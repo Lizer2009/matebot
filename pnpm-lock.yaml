@@ -59,36 +59,36 @@ importers:
       '@hono/node-server':
         specifier: 2.1.5
         version: 2.1.5(hono@4.13.14)
+      '@matebot/adapter-kit':
+        specifier: workspace:*
+        version: link:../../packages/adapter-kit
+      '@matebot/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
+      '@matebot/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@matebot/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@matebot/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@matebot/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@matebot/logging':
+        specifier: workspace:*
+        version: link:../../packages/logging
+      '@matebot/memory':
+        specifier: workspace:*
+        version: link:../../packages/memory
+      '@matebot/page-kit':
+        specifier: workspace:*
+        version: link:../../packages/page-kit
       '@orpc/server':
         specifier: 1.15.7
         version: 1.15.7(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.22.0)
-      '@rakazo/adapter-kit':
-        specifier: workspace:*
-        version: link:../../packages/adapter-kit
-      '@rakazo/adapters':
-        specifier: workspace:*
-        version: link:../../packages/adapters
-      '@rakazo/auth':
-        specifier: workspace:*
-        version: link:../../packages/auth
-      '@rakazo/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@rakazo/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@rakazo/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@rakazo/logging':
-        specifier: workspace:*
-        version: link:../../packages/logging
-      '@rakazo/memory':
-        specifier: workspace:*
-        version: link:../../packages/memory
-      '@rakazo/page-kit':
-        specifier: workspace:*
-        version: link:../../packages/page-kit
       fflate:
         specifier: 0.8.3
         version: 0.8.3
@@ -108,10 +108,10 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@rakazo/logging':
+      '@matebot/logging':
         specifier: workspace:*
         version: link:../../packages/logging
       '@sentry/electron':
@@ -124,18 +124,18 @@ importers:
         specifier: 3.3.4
         version: 3.3.4
     devDependencies:
+      '@matebot/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
+      '@matebot/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@matebot/ui-tokens':
+        specifier: workspace:*
+        version: link:../../packages/ui-tokens
       '@playwright/test':
         specifier: 1.64.1
         version: 1.64.1
-      '@rakazo/adapters':
-        specifier: workspace:*
-        version: link:../../packages/adapters
-      '@rakazo/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@rakazo/ui-tokens':
-        specifier: workspace:*
-        version: link:../../packages/ui-tokens
       electron:
         specifier: 45.0.0
         version: 45.0.0
@@ -163,19 +163,19 @@ importers:
       '@expo/ui':
         specifier: 57.0.26
         version: 57.0.26(@babel/core@7.29.7)(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(expo@57.0.31)(react-dom@19.2.3(react@19.2.3))(react-native-worklets@0.10.1(@babel/core@7.29.7)(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(react-native@0.86.3(@babel/core@7.29.7)(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7)(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
-      '@rakazo/chat-ui':
+      '@matebot/chat-ui':
         specifier: workspace:*
         version: link:../../packages/chat-ui
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@rakazo/core':
+      '@matebot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/logging':
+      '@matebot/logging':
         specifier: workspace:*
         version: link:../../packages/logging
-      '@rakazo/ui-tokens':
+      '@matebot/ui-tokens':
         specifier: workspace:*
         version: link:../../packages/ui-tokens
       '@react-native-vector-icons/ionicons':
@@ -341,6 +341,24 @@ importers:
       '@lingui/react':
         specifier: 6.6.0
         version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(react@19.2.3)
+      '@matebot/chat-ui':
+        specifier: workspace:*
+        version: link:../../packages/chat-ui
+      '@matebot/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@matebot/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@matebot/logging':
+        specifier: workspace:*
+        version: link:../../packages/logging
+      '@matebot/ui-tokens':
+        specifier: workspace:*
+        version: link:../../packages/ui-tokens
+      '@matebot/ui-web':
+        specifier: workspace:*
+        version: link:../../packages/ui-web
       '@orpc/client':
         specifier: 1.15.7
         version: 1.15.7(@opentelemetry/api@1.9.1)
@@ -350,24 +368,6 @@ importers:
       '@orpc/tanstack-query':
         specifier: 1.15.7
         version: 1.15.7(@opentelemetry/api@1.9.1)(@orpc/client@1.15.7(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.104.5)
-      '@rakazo/chat-ui':
-        specifier: workspace:*
-        version: link:../../packages/chat-ui
-      '@rakazo/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@rakazo/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@rakazo/logging':
-        specifier: workspace:*
-        version: link:../../packages/logging
-      '@rakazo/ui-tokens':
-        specifier: workspace:*
-        version: link:../../packages/ui-tokens
-      '@rakazo/ui-web':
-        specifier: workspace:*
-        version: link:../../packages/ui-web
       '@sentry/react':
         specifier: 11.8.0
         version: 11.8.0(react-router@7.18.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
@@ -453,22 +453,22 @@ importers:
 
   apps/worker:
     dependencies:
-      '@rakazo/adapter-kit':
+      '@matebot/adapter-kit':
         specifier: workspace:*
         version: link:../../packages/adapter-kit
-      '@rakazo/adapters':
+      '@matebot/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@rakazo/core':
+      '@matebot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/db':
+      '@matebot/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@rakazo/logging':
+      '@matebot/logging':
         specifier: workspace:*
         version: link:../../packages/logging
-      '@rakazo/memory':
+      '@matebot/memory':
         specifier: workspace:*
         version: link:../../packages/memory
     devDependencies:
@@ -490,13 +490,13 @@ importers:
       '@astrojs/sitemap':
         specifier: 3.7.4
         version: 3.7.4
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@rakazo/core':
+      '@matebot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/ui-web':
+      '@matebot/ui-web':
         specifier: workspace:*
         version: link:../../packages/ui-web
       '@vercel/functions':
@@ -548,10 +548,10 @@ importers:
       '@hono/node-server':
         specifier: 2.1.5
         version: 2.1.5(hono@4.13.14)
-      '@rakazo/core':
+      '@matebot/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@rakazo/logging':
+      '@matebot/logging':
         specifier: workspace:*
         version: link:../../../packages/logging
       dockerode:
@@ -582,13 +582,13 @@ importers:
       '@hono/node-server':
         specifier: 2.1.5
         version: 2.1.5(hono@4.13.14)
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@rakazo/core':
+      '@matebot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/logging':
+      '@matebot/logging':
         specifier: workspace:*
         version: link:../../packages/logging
       hono:
@@ -610,7 +610,7 @@ importers:
 
   packages/adapter-kit:
     dependencies:
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../contracts
       zod:
@@ -686,6 +686,24 @@ importers:
       '@larksuiteoapi/node-sdk':
         specifier: 1.73.1
         version: 1.73.1
+      '@matebot/adapter-kit':
+        specifier: workspace:*
+        version: link:../adapter-kit
+      '@matebot/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@matebot/core':
+        specifier: workspace:*
+        version: link:../core
+      '@matebot/db':
+        specifier: workspace:*
+        version: link:../db
+      '@matebot/logging':
+        specifier: workspace:*
+        version: link:../logging
+      '@matebot/page-kit':
+        specifier: workspace:*
+        version: link:../page-kit
       '@modelcontextprotocol/sdk':
         specifier: 1.32.2
         version: 1.32.2(@cfworker/json-schema@4.1.1)(zod@4.6.7)
@@ -710,24 +728,6 @@ importers:
       '@photon-ai/chat-adapter-imessage':
         specifier: 3.2.0
         version: 3.2.0(chat@4.43.0(zod@4.6.7))(typescript@7.0.2)(zod@4.6.7)
-      '@rakazo/adapter-kit':
-        specifier: workspace:*
-        version: link:../adapter-kit
-      '@rakazo/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@rakazo/core':
-        specifier: workspace:*
-        version: link:../core
-      '@rakazo/db':
-        specifier: workspace:*
-        version: link:../db
-      '@rakazo/logging':
-        specifier: workspace:*
-        version: link:../logging
-      '@rakazo/page-kit':
-        specifier: workspace:*
-        version: link:../page-kit
       '@stripe/link-sdk':
         specifier: 0.15.0
         version: 0.15.0
@@ -819,19 +819,19 @@ importers:
       '@better-auth/passkey':
         specifier: 1.7.16
         version: 1.7.16(2hz3m5qqe6wpxegtvx4k3yxebm)
-      '@rakazo/adapter-kit':
+      '@matebot/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rakazo/core':
+      '@matebot/core':
         specifier: workspace:*
         version: link:../core
-      '@rakazo/db':
+      '@matebot/db':
         specifier: workspace:*
         version: link:../db
-      '@rakazo/ui-tokens':
+      '@matebot/ui-tokens':
         specifier: workspace:*
         version: link:../ui-tokens
       better-auth:
@@ -862,16 +862,16 @@ importers:
 
   packages/chat-ui:
     dependencies:
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rakazo/core':
+      '@matebot/core':
         specifier: workspace:*
         version: link:../core
-      '@rakazo/ui-tokens':
+      '@matebot/ui-tokens':
         specifier: workspace:*
         version: link:../ui-tokens
-      '@rakazo/ui-web':
+      '@matebot/ui-web':
         specifier: workspace:*
         version: link:../ui-web
       '@ronradtke/react-native-markdown-display':
@@ -939,15 +939,15 @@ importers:
 
   packages/core:
     dependencies:
+      '@matebot/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@matebot/ui-tokens':
+        specifier: workspace:*
+        version: link:../ui-tokens
       '@observablehq/plot':
         specifier: 0.6.17
         version: 0.6.17
-      '@rakazo/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@rakazo/ui-tokens':
-        specifier: workspace:*
-        version: link:../ui-tokens
       '@tanstack/query-core':
         specifier: 5.104.5
         version: 5.104.5
@@ -1003,24 +1003,24 @@ importers:
 
   packages/db:
     dependencies:
+      '@matebot/adapter-kit':
+        specifier: workspace:*
+        version: link:../adapter-kit
+      '@matebot/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@matebot/core':
+        specifier: workspace:*
+        version: link:../core
+      '@matebot/logging':
+        specifier: workspace:*
+        version: link:../logging
       '@prisma/adapter-pg':
         specifier: 7.10.1
         version: 7.10.1
       '@prisma/client':
         specifier: 7.10.1
         version: 7.10.1(prisma@7.10.1(@types/node@26.5.0)(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(magicast@0.5.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2)
-      '@rakazo/adapter-kit':
-        specifier: workspace:*
-        version: link:../adapter-kit
-      '@rakazo/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@rakazo/core':
-        specifier: workspace:*
-        version: link:../core
-      '@rakazo/logging':
-        specifier: workspace:*
-        version: link:../logging
       dotenv:
         specifier: 17.4.2
         version: 17.4.2
@@ -1062,10 +1062,10 @@ importers:
 
   packages/memory:
     dependencies:
-      '@rakazo/adapter-kit':
+      '@matebot/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit
-      '@rakazo/db':
+      '@matebot/db':
         specifier: workspace:*
         version: link:../db
     devDependencies:
@@ -1078,10 +1078,10 @@ importers:
 
   packages/page-kit:
     dependencies:
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rakazo/ui-tokens':
+      '@matebot/ui-tokens':
         specifier: workspace:*
         version: link:../ui-tokens
       esbuild:
@@ -1115,22 +1115,22 @@ importers:
       '@hono/node-server':
         specifier: 2.1.5
         version: 2.1.5(hono@4.13.14)
-      '@rakazo/adapter-kit':
+      '@matebot/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit
-      '@rakazo/adapters':
+      '@matebot/adapters':
         specifier: workspace:*
         version: link:../adapters
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rakazo/core':
+      '@matebot/core':
         specifier: workspace:*
         version: link:../core
-      '@rakazo/db':
+      '@matebot/db':
         specifier: workspace:*
         version: link:../db
-      '@rakazo/page-kit':
+      '@matebot/page-kit':
         specifier: workspace:*
         version: link:../page-kit
       '@testcontainers/postgresql':
@@ -1146,15 +1146,15 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.1127.0
         version: 3.1127.0
+      '@matebot/api':
+        specifier: workspace:*
+        version: link:../../apps/api
+      '@matebot/sandbox-supervisor':
+        specifier: workspace:*
+        version: link:../../infra/sandboxes/supervisor
       '@playwright/test':
         specifier: 1.64.1
         version: 1.64.1
-      '@rakazo/api':
-        specifier: workspace:*
-        version: link:../../apps/api
-      '@rakazo/sandbox-supervisor':
-        specifier: workspace:*
-        version: link:../../infra/sandboxes/supervisor
       '@types/pngjs':
         specifier: 6.0.5
         version: 6.0.5
@@ -1182,13 +1182,13 @@ importers:
       '@base-ui/react':
         specifier: 1.9.0
         version: 1.9.0(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@rakazo/contracts':
+      '@matebot/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rakazo/core':
+      '@matebot/core':
         specifier: workspace:*
         version: link:../core
-      '@rakazo/ui-tokens':
+      '@matebot/ui-tokens':
         specifier: workspace:*
         version: link:../ui-tokens
       class-variance-authority:

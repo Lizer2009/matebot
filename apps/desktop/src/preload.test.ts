@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
-import type { RakazoDesktop, RakazoSetup } from "@rakazo/contracts";
+import type { RakazoDesktop, RakazoSetup } from "@matebot/contracts";
 import { describe, expect, it, vi } from "vitest";
 
 function runPreload(

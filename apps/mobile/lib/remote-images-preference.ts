@@ -1,5 +1,5 @@
-import type { RemoteImagesPreference } from "@rakazo/core";
-import { normalizeRemoteImagesPreference, REMOTE_IMAGES_STORAGE_KEY } from "@rakazo/core";
+import type { RemoteImagesPreference } from "@matebot/core";
+import { normalizeRemoteImagesPreference, REMOTE_IMAGES_STORAGE_KEY } from "@matebot/core";
 import * as SecureStore from "expo-secure-store";
 
 export type { RemoteImagesPreference };

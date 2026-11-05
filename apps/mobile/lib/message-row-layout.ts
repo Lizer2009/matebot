@@ -1,4 +1,4 @@
-import { isSecretAskBlock } from "@rakazo/core";
+import { isSecretAskBlock } from "@matebot/core";
 import type { MobileMessage } from "./api";
 import { isCenteredAgentEvent, THREAD_COLUMN_GUTTER } from "./message-presentation";
 

@@ -1,19 +1,19 @@
-import type { JobPublisher } from "@rakazo/adapter-kit";
+import type { JobPublisher } from "@matebot/adapter-kit";
 import {
   routineJobKey,
   routineRetryJob,
   routineWakeupJob,
   runContinueJob,
   TransientModelError,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   displayName,
   expandSkillReferencesInPrompt,
   isOneShotRoutineCrons,
   nextRoutineRunDateAcross,
-} from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
-import { sanitizedError } from "@rakazo/logging/monitoring";
+} from "@matebot/core";
+import { getLogger } from "@matebot/logging";
+import { sanitizedError } from "@matebot/logging/monitoring";
 import { protectedComputerLifecycleRefusal } from "./desktop-command-guard.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { routineRunModelPin } from "./model-selection.js";

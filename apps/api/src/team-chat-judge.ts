@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { AgentRunModel, AgentRuntime, SecretStore } from "@rakazo/adapter-kit";
+import type { AgentRunModel, AgentRuntime, SecretStore } from "@matebot/adapter-kit";
 import {
   deploymentModelRole,
   formatCurrentTimeInstruction,
@@ -12,11 +12,11 @@ import {
   secretValuesToRedact,
   serializeModelSecret,
   toOAuthCredential,
-} from "@rakazo/adapters";
-import { redactSecrets } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { findModelCredential, recordUsage } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/adapters";
+import { redactSecrets } from "@matebot/core";
+import type { PrismaClient } from "@matebot/db";
+import { findModelCredential, recordUsage } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 
 const MAX_RULES_CHARS = 4_000;
 const MAX_MESSAGES = 20;

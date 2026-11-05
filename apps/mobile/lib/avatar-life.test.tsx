@@ -8,7 +8,7 @@ import {
   avatarClipPose,
   avatarFrame,
   avatarPokeFrame,
-} from "@rakazo/core";
+} from "@matebot/core";
 import type { ReactNode } from "react";
 import { act, createElement, useRef } from "react";
 import type { Root } from "react-dom/client";

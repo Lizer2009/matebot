@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { pageKitPalette } from "@rakazo/ui-tokens";
+import { pageKitPalette } from "@matebot/ui-tokens";
 import type { ReactElement } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";

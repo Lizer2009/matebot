@@ -1,8 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { LinkFavicons } from "@rakazo/chat-ui/web";
-import { LinkFaviconsContext, RemoteImagesContext } from "@rakazo/chat-ui/web";
-import { analyticsScreen } from "@rakazo/core";
-import { Button } from "@rakazo/ui-web";
+import type { LinkFavicons } from "@matebot/chat-ui/web";
+import { LinkFaviconsContext, RemoteImagesContext } from "@matebot/chat-ui/web";
+import { analyticsScreen } from "@matebot/core";
+import { Button } from "@matebot/ui-web";
 import {
   Suspense,
   useEffect,

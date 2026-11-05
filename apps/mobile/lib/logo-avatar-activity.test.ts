@@ -1,4 +1,4 @@
-import type { Run } from "@rakazo/contracts";
+import type { Run } from "@matebot/contracts";
 import { afterEach, expect, it } from "vitest";
 import {
   beginMobileAvatarFeed,

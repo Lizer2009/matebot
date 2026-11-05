@@ -3,9 +3,9 @@ import type {
   BackgroundJob,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@matebot/db";
+import { createLogger, createTestSink, installLogger } from "@matebot/logging";
 import { describe, expect, it, vi } from "vitest";
 import {
   clearInactiveUserComputerControl,

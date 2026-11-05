@@ -7,7 +7,7 @@ import {
   isLocalhostOrLoopbackIp,
   isNonPublicAddress,
   normalizeHost,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import type { ResolvedAddress, ResolveHostname } from "./network-address.js";
 import { egressRefused } from "./network-address.js";
 import { createPrivateNetworkFetch, isPrivateRemoteMcpHostname } from "./remote-mcp.js";

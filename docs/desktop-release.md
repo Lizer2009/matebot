@@ -69,3 +69,40 @@ The workflow refuses tags that do not match the desktop version, have no
 matching changelog section, are not on `main`, or are not newer than the latest
 published release. The release text is that changelog section followed by the
 merged pull requests.
+
+## Windows installer
+
+The Electron app packages as `Matebot-Setup-<version>.exe`, an interactive NSIS
+installer. It installs per user under `%LOCALAPPDATA%\Programs\Matebot`, creates a
+`Matebot` Start menu shortcut, and keeps the app's profile in `%APPDATA%\Matebot`.
+That folder is named from `productName`, not from `extraMetadata.name`.
+Those names come from `productName` and `build.extraMetadata.name` in
+`apps/desktop/package.json`, so renaming the product does not rename an existing
+install's data folder.
+
+Build one locally, without signing credentials:
+
+```bash
+pnpm --filter @matebot/desktop pack:win
+```
+
+On Linux this needs Wine with 32-bit support, because NSIS is a 32-bit toolchain:
+
+```bash
+sudo dpkg --add-architecture i386
+sudo apt-get update && sudo apt-get install -y --no-install-recommends wine wine32:i386
+```
+
+Pass `-c.win.signExecutable=false` when there is no certificate, as
+`pnpm --filter @matebot/desktop exec electron-builder --win --x64 --publish never -c.win.signExecutable=false`
+does. Without a certificate Windows shows a SmartScreen warning on first launch;
+that is expected, and the release workflow's signed artifacts do not have it.
+
+The `desktop-windows-installer` workflow builds the same unsigned installer on a
+Windows runner for every pull request that touches the desktop app, and uploads
+`Matebot-Setup-<version>.exe` and `latest.yml` as the `matebot-windows-installer`
+artifact. Use it to hand someone a build without cutting a release.
+
+Publishing still runs through `release-desktop`, which signs with Azure Artifact
+Signing when it is configured and verifies that both the installed executable and
+the update feed carry the Matebot names.

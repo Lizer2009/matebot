@@ -1,9 +1,9 @@
-import { VoiceAccountError } from "@rakazo/adapter-kit";
-import * as adapters from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import * as db from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import { VoiceAccountError } from "@matebot/adapter-kit";
+import * as adapters from "@matebot/adapters";
+import type { Actor } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import * as db from "@matebot/db";
+import { createLogger, createTestSink, installLogger } from "@matebot/logging";
 import { Hono } from "hono";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { VoiceDeps } from "./voice.js";

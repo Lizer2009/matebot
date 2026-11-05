@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import { describe, expect, it } from "vitest";
 import { BUILTIN_AGENT_SKILLS, RAKAZO_DOCS_URLS } from "./builtin-skills.js";
 

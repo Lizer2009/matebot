@@ -1,26 +1,26 @@
-import type { AdapterContext, AgentHomeStore, ArtifactStore } from "@rakazo/adapter-kit";
-import { resolveBotWorkspacePath } from "@rakazo/adapters";
-import type { Auth } from "@rakazo/auth";
+import type { AdapterContext, AgentHomeStore, ArtifactStore } from "@matebot/adapter-kit";
+import { resolveBotWorkspacePath } from "@matebot/adapters";
+import type { Auth } from "@matebot/auth";
 import type {
   AccountExportExecutables,
   AccountExportManifest,
   AccountExportRecord,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import {
   ACCOUNT_EXPORT_FORMAT,
   ACCOUNT_EXPORT_MANIFEST_PATH,
   ACCOUNT_EXPORT_MAX_HOME_FILE_BYTES,
   ACCOUNT_EXPORT_VERSION,
   accountExportPaths,
-} from "@rakazo/contracts";
-import type { AccountExportSource, PrismaClient } from "@rakazo/db";
+} from "@matebot/contracts";
+import type { AccountExportSource, PrismaClient } from "@matebot/db";
 import {
   parseComputerMode,
   readAccountExport,
   runAsTenant,
   runGeneratorAsTenant,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { Zip, ZipDeflate } from "fflate";
 import type { Hono } from "hono";
 

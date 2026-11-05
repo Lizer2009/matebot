@@ -1,4 +1,4 @@
-import { buildSkillMd, PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import { buildSkillMd, PRODUCT_DISPLAY_NAME } from "@matebot/core";
 
 /** Docs index headings name the product, so a fork's skill lists its own name too. */
 const RAKAZO_DOCS: ReadonlyArray<readonly [topics: string, url: string]> = [

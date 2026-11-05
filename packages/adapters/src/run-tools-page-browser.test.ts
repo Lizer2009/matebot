@@ -1,5 +1,5 @@
-import type { AdapterContext, ComputerRef, PageBrowserCommand } from "@rakazo/adapter-kit";
-import { createStreamingRedactor } from "@rakazo/core";
+import type { AdapterContext, ComputerRef, PageBrowserCommand } from "@matebot/adapter-kit";
+import { createStreamingRedactor } from "@matebot/core";
 import { describe, expect, it, vi } from "vitest";
 import { encodeRunCode, storeBotSecret } from "./bot-secrets.js";
 import { fakeDatabase } from "./bot-secrets.test-support.js";

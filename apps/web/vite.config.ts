@@ -7,8 +7,8 @@ import net from "node:net";
 import path from "node:path";
 import tls from "node:tls";
 import { lingui } from "@lingui/vite-plugin";
-import type { DesktopStackProbeResponse } from "@rakazo/contracts";
-import { buildIdAt } from "@rakazo/contracts/client-build";
+import type { DesktopStackProbeResponse } from "@matebot/contracts";
+import { buildIdAt } from "@matebot/contracts/client-build";
 import {
   appContentSecurityPolicy,
   COMPUTER_SCREEN_PREFIX,
@@ -17,11 +17,11 @@ import {
   contentSecurityPolicyFor,
   parseContentSecuritySources,
   parseCrispWebsiteId,
-} from "@rakazo/contracts/content-security-policy";
+} from "@matebot/contracts/content-security-policy";
 import {
   safeScreenProxyResponseHeaders,
   stripSensitiveHandshakeHeaders,
-} from "@rakazo/core/node/screen-proxy-response";
+} from "@matebot/core/node/screen-proxy-response";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";

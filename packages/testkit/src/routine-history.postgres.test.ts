@@ -1,8 +1,8 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { RoutineHistory } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { RoutineHistory } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { sessionCookieHeader } from "./index.js";
 import { asSystem } from "./system-db.js";
@@ -24,7 +24,7 @@ describeHistory("routines.history late starts", () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-routine-history-"));
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@matebot/api/app");
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,

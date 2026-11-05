@@ -1,6 +1,6 @@
 import { Agent } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import { isTerminatingReplyResult, terminatingReplyText } from "./approval-effect.js";
 import { withAutomatedLabels } from "./automated-messages.js";
 import { DELEGATION_TOOL_NAMES } from "./builtin-tools.js";

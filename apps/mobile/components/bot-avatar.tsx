@@ -1,5 +1,5 @@
-import type { BotAvatarSet } from "@rakazo/contracts";
-import type { AvatarEyes, AvatarMotionMode, LogoAvatarActivity } from "@rakazo/core";
+import type { BotAvatarSet } from "@matebot/contracts";
+import type { AvatarEyes, AvatarMotionMode, LogoAvatarActivity } from "@matebot/core";
 import {
   AVATAR_LID_CLOSE,
   AVATAR_MOTION_UNITS,
@@ -24,7 +24,7 @@ import {
   SHIPPED_BOT_AVATAR_EYES,
   SHIPPED_BOT_AVATAR_VIEWBOX,
   usesLogoAvatar,
-} from "@rakazo/core";
+} from "@matebot/core";
 import { memo, useSyncExternalStore } from "react";
 import { Image, Pressable, View } from "react-native";
 import Animated, {

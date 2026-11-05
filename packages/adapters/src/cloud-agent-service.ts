@@ -1,9 +1,9 @@
-import type { AdapterContext, JobPublisher } from "@rakazo/adapter-kit";
-import { cloudAgentPollJob } from "@rakazo/adapter-kit";
-import { cloudAgentBlockFromPayload } from "@rakazo/core";
-import type { CloudAgent, PrismaClient, ThreadEvents } from "@rakazo/db";
-import { appendEventInTransaction, createThreadMessageInTransaction } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { AdapterContext, JobPublisher } from "@matebot/adapter-kit";
+import { cloudAgentPollJob } from "@matebot/adapter-kit";
+import { cloudAgentBlockFromPayload } from "@matebot/core";
+import type { CloudAgent, PrismaClient, ThreadEvents } from "@matebot/db";
+import { appendEventInTransaction, createThreadMessageInTransaction } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import { cloudAgentLaunchSchema, cloudAgentReplySchema } from "./cloud-agent-tools.js";

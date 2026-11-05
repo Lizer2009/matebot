@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, bootstrapUserSpace, createDb, createOrganizationForUser } from "@rakazo/db";
+import type { Actor } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { asSystem, bootstrapUserSpace, createDb, createOrganizationForUser } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { otherSpaceOfBot } from "./bot-space.js";
 

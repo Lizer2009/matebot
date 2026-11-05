@@ -1,8 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { ORPCError } from "@orpc/server";
-import type { AdapterContext, SandboxProvider } from "@rakazo/adapter-kit";
-import { computerControlExpireJobKey } from "@rakazo/adapter-kit";
-import type { ComputerExecutionLease } from "@rakazo/adapters";
+import type { AdapterContext, SandboxProvider } from "@matebot/adapter-kit";
+import { computerControlExpireJobKey } from "@matebot/adapter-kit";
+import type { ComputerExecutionLease } from "@matebot/adapters";
 import {
   acquireComputerExecutionLease,
   applyTeachingDesktopInput,
@@ -37,25 +36,26 @@ import {
   takeoverLeaseMs,
   toComputerRef,
   touchRunningComputer,
-} from "@rakazo/adapters";
-import type { Actor, ComputerReleaseReason, ComputerStatus } from "@rakazo/contracts";
+} from "@matebot/adapters";
+import type { Actor, ComputerReleaseReason, ComputerStatus } from "@matebot/contracts";
 import {
   attachmentMaxBytes,
   attachmentSizeLabel,
   ComputerCommandSchema,
   foldComputerCommands,
-} from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, scrollDirection } from "@rakazo/core";
-import { addScreenProxyCapability } from "@rakazo/core/node/screen-capability";
-import type { ComputerRunEnd, PrismaClient } from "@rakazo/db";
+} from "@matebot/contracts";
+import { ACTIVE_RUN_STATUSES, scrollDirection } from "@matebot/core";
+import { addScreenProxyCapability } from "@matebot/core/node/screen-capability";
+import type { ComputerRunEnd, PrismaClient } from "@matebot/db";
 import {
   createRepos,
   expireComputerExecutionLeases,
   IsolationError,
   parseComputerMode,
   recordComputerRunEnd,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 import { scrollPoint } from "../computer-input.js";
 import {
   executionBlocksUserTakeover,

@@ -4,8 +4,8 @@ import type {
   AutoReviewRequest,
   ConnectorCall,
   ToolBatch,
-} from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
+import { runContinueJob } from "@matebot/adapter-kit";
 import {
   applyJudgeDecision,
   approvalModeFromPreference,
@@ -26,12 +26,15 @@ import {
   toolRequiresApproval,
   toolRequiresExplicitApproval,
   unattendedTriggerToolRequiresApproval,
-} from "@rakazo/core";
-import { normalizedHttpUrl, urlSite } from "@rakazo/core/egress";
-import { approvalEffectKey, toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
-import type { AuditEventInput } from "@rakazo/db";
-import { recordAuditEvent, runSecretKind } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/core";
+import { normalizedHttpUrl, urlSite } from "@matebot/core/egress";
+import {
+  approvalEffectKey,
+  toolEffectIdempotencyKey,
+} from "@matebot/core/node/approval-effect-key";
+import type { AuditEventInput } from "@matebot/db";
+import { recordAuditEvent, runSecretKind } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import type { FleetCardSummary } from "./approval-ask.js";
 import { buildApprovalAskBlock, MAX_FETCH_URL_LENGTH } from "./approval-ask.js";
 import {

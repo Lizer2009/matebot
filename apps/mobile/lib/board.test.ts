@@ -1,4 +1,4 @@
-import type { Ticket, TicketStatus } from "@rakazo/contracts";
+import type { Ticket, TicketStatus } from "@matebot/contracts";
 import { describe, expect, it } from "vitest";
 import { boardSections, ticketStatusLabel } from "./board";
 

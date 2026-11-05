@@ -1,4 +1,4 @@
-import { botEyeColor } from "@rakazo/ui-tokens";
+import { botEyeColor } from "@matebot/ui-tokens";
 import type { AvatarEyes } from "./avatar-shape.js";
 import { contrastRatio } from "./bot-avatar-colors.js";
 

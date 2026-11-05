@@ -1,8 +1,8 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { hasActiveComputerControl } from "@rakazo/adapters";
-import { openScreenCapability, SCREEN_TARGET_ENDPOINT } from "@rakazo/core/node/screen-capability";
-import type { PrismaClient } from "@rakazo/db";
-import { runAsSystem } from "@rakazo/db";
+import { hasActiveComputerControl } from "@matebot/adapters";
+import { openScreenCapability, SCREEN_TARGET_ENDPOINT } from "@matebot/core/node/screen-capability";
+import type { PrismaClient } from "@matebot/db";
+import { runAsSystem } from "@matebot/db";
 import type { Hono } from "hono";
 import { requestBodyLimit } from "./request-body-limit.js";
 

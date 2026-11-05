@@ -1,4 +1,4 @@
-import type { RunActivityRow } from "@rakazo/contracts";
+import type { RunActivityRow } from "@matebot/contracts";
 import { isRunWaitingOnUser, isRunWorking } from "./run-state.js";
 import { isAgedStuckWork } from "./stuck-work.js";
 

@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { SandboxProvider } from "@rakazo/adapter-kit";
-import type { ComputerCommand } from "@rakazo/contracts";
-import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo/contracts";
-import { redactSecrets, sandboxCommandTimeoutMs } from "@rakazo/core";
-import { RunHistoryWriteError } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { SandboxProvider } from "@matebot/adapter-kit";
+import type { ComputerCommand } from "@matebot/contracts";
+import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@matebot/contracts";
+import { redactSecrets, sandboxCommandTimeoutMs } from "@matebot/core";
+import { RunHistoryWriteError } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { redactShellStreams } from "./agent-environment.js";
 import {
   resolveCodeFill,

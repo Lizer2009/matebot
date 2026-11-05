@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import type { PortableFile } from "@rakazo/adapter-kit";
-import { FakeSandboxProvider } from "@rakazo/adapters";
+import type { PortableFile } from "@matebot/adapter-kit";
+import { FakeSandboxProvider } from "@matebot/adapters";
 import { describe, expect, it } from "vitest";
 import type { ContactsRecordedStep, ContactsRecording } from "./computer-recording.js";
 import {

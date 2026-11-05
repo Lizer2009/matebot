@@ -1,6 +1,6 @@
-import type { JobPublisher, NotificationMessage, NotificationProvider } from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
-import type { StuckWorkStatus } from "@rakazo/core";
+import type { JobPublisher, NotificationMessage, NotificationProvider } from "@matebot/adapter-kit";
+import { runContinueJob } from "@matebot/adapter-kit";
+import type { StuckWorkStatus } from "@matebot/core";
 import {
   isStuckWorkStatus,
   STUCK_WORK_NOTICE,
@@ -10,10 +10,10 @@ import {
   stuckWorkDueAfterMs,
   stuckWorkReminder,
   stuckWorkStoppedNotification,
-} from "@rakazo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
-import { appendEventInTransaction, expireStuckRun, withTransactionRetry } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/core";
+import type { Prisma, PrismaClient, ThreadEvents } from "@matebot/db";
+import { appendEventInTransaction, expireStuckRun, withTransactionRetry } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { ExpoPushProvider } from "./expo-push.js";
 import { notificationIdentity } from "./notification-identity.js";
 

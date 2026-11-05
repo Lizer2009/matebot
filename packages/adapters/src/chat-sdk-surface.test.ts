@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { createSlackAdapter } from "@chat-adapter/slack";
 import { createMockAdapter, createTestMessage } from "@chat-adapter/tests";
-import type { AdapterContext, MessagingInboundEvent } from "@rakazo/adapter-kit";
+import type { AdapterContext, MessagingInboundEvent } from "@matebot/adapter-kit";
 import type { Adapter, ChatInstance } from "chat";
 import { describe, expect, it, vi } from "vitest";
 import type { MessagingPlatform } from "./chat-sdk-surface.js";
