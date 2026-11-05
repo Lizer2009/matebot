@@ -28,11 +28,11 @@ export const INTEGRATION_PLATFORMS_HUB = {
   title:
     "Best integration platforms for AI agents in 2026: Composio, Pipedream, MCP servers and API connectors",
   description:
-    "How should an AI agent get tools for Gmail, GitHub or your own API? Composio, Pipedream, MCP servers and OpenAPI or GraphQL connectors compared, from the team behind Rakazo.",
+    "How should an AI agent get tools for Gmail, GitHub or your own API? Composio, Pipedream, MCP servers and OpenAPI or GraphQL connectors compared, from the team behind Matebot.",
   h1: "Integration platforms for AI agents in 2026",
   intro: [
     "An AI agent is only as useful as the apps it can work in. To triage an inbox, update a CRM or file an issue, it needs tools for those apps and a safe way to sign in to them. There are a few ways to get there: a hosted platform that manages the logins for thousands of apps, an MCP server the app publishes itself, or a connector built straight from an API's description.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and it uses your apps on your behalf, asking before it changes anything you've told it to check with you. Rakazo supports all four ways of giving bots tools, and you can mix them. This page compares them. For the individual apps bots can use, see the [integrations catalog](/integrations/).",
+    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and it uses your apps on your behalf, asking before it changes anything you've told it to check with you. Matebot supports all four ways of giving bots tools, and you can mix them. This page compares them. For the individual apps bots can use, see the [integrations catalog](/integrations/).",
   ],
   scene: {
     bot: "Chief of Staff",
@@ -57,7 +57,7 @@ export const INTEGRATION_PLATFORMS_HUB = {
     },
     {
       heading: "The app has its own MCP server",
-      text: "If the app publishes an MCP server, [connect it directly](/integration-platforms/mcp/): paste its URL or find it with Browse MCP servers, and sign in with OAuth. Anyone can add remote servers. Admins of a [self-hosted Rakazo](/self-hosted-ai-agent/) can also run local servers and reach internal ones.",
+      text: "If the app publishes an MCP server, [connect it directly](/integration-platforms/mcp/): paste its URL or find it with Browse MCP servers, and sign in with OAuth. Anyone can add remote servers. Admins of a [self-hosted Matebot](/self-hosted-ai-agent/) can also run local servers and reach internal ones.",
     },
     {
       heading: "The app only has an API",
@@ -71,7 +71,7 @@ export const INTEGRATION_PLATFORMS_HUB = {
         "A service that gives an agent ready-made tools for other apps and handles signing in to them, so you don't build and host each integration yourself. Composio and Pipedream Connect are two examples. MCP servers and API connectors get you tools without a platform in the middle.",
     },
     {
-      question: "Do I need Composio or Pipedream to use Rakazo?",
+      question: "Do I need Composio or Pipedream to use Matebot?",
       answer:
         "No. Both are optional. Without them, bots can still use [MCP servers](/integration-platforms/mcp/), [API connectors](/integration-platforms/api-connectors/) and plugins you add. On a self-hosted server, the built-in app catalog appears once one of them is set up.",
     },

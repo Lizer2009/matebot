@@ -1,5 +1,5 @@
-import type { iMessageAdapter } from "@photon-ai/chat-adapter-imessage";
 import { getLogger } from "@matebot/logging";
+import type { iMessageAdapter } from "@photon-ai/chat-adapter-imessage";
 import type {
   Adapter,
   AdapterPostableMessage,

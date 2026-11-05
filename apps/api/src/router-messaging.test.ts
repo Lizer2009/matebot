@@ -1,7 +1,7 @@
-import type { InferRouterInitialContext } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
 import type { Actor } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
+import type { InferRouterInitialContext } from "@orpc/server";
+import { RPCHandler } from "@orpc/server/fetch";
 import { describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";

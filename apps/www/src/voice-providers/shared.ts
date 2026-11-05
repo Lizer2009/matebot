@@ -23,11 +23,11 @@ export function homepage(slug: string, provider: string, alt: string): ArticleIm
 }
 
 export const VOICE_DOC: SourceLink = {
-  label: "Rakazo, voice and calls",
+  label: "Matebot, voice and calls",
   href: `${GITHUB_URL}/blob/main/docs/voice-and-calls.md`,
 };
 
 export const VOICE_MODELS_DOC: SourceLink = {
-  label: "Rakazo, self-hosted voice settings",
+  label: "Matebot, self-hosted voice settings",
   href: `${GITHUB_URL}/blob/main/docs/self-host-models.md#voice`,
 };

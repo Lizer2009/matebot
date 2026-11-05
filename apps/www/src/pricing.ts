@@ -96,7 +96,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     action: { label: "Start free trial", href: APP_URL },
   },
   {
-    name: "Rakazo credits",
+    name: "Matebot credits",
     price: CREDITS_PRICE,
     note: "Model usage included",
     features: [
@@ -137,15 +137,15 @@ export const PRICING_COMPARISON = {
   columns: [
     { name: "Self-hosted", price: "Free" },
     ...TIERS.map((tier) => ({ name: tier.name, price: tier.price })),
-    { name: "Rakazo credits", price: CREDITS_PRICE },
+    { name: "Matebot credits", price: CREDITS_PRICE },
   ],
-  /** Most important first: what sets Rakazo apart, then the limits. */
+  /** Most important first: what sets Matebot apart, then the limits. */
   rows: [
     {
       feature: "Any model",
       cells: [
         ...included(true).slice(1),
-        { label: "Our catalog", detail: "Credits cover the models Rakazo offers" },
+        { label: "Our catalog", detail: "Credits cover the models Matebot offers" },
       ],
     },
     {
@@ -216,7 +216,7 @@ ${plan.features.map((feature) => `- ${feature}`).join("\n")}
 [${plan.action.label}](${new URL(plan.action.href, "https://rakazo.com").href})`;
 }
 
-export const PRICING_MARKDOWN = `# Rakazo pricing
+export const PRICING_MARKDOWN = `# Matebot pricing
 
 ${PRICING_PLANS.map(planMarkdown).join("\n\n")}
 

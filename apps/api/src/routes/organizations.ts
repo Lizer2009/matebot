@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import {
   CannotDeleteLastOrganizationError,
   createOrganizationForUser,
@@ -12,6 +11,7 @@ import {
   SharedOrganizationError,
   SpaceDeletionInProgressError,
 } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import { deleteOrganization } from "../account-deletion.js";
 import type { RouterContext } from "./context.js";
 

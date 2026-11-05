@@ -1,6 +1,4 @@
 import { lookup } from "node:dns/promises";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
   ipVersion,
   isCloudMetadataAddress,
@@ -8,6 +6,8 @@ import {
   isNonPublicAddress,
 } from "@matebot/contracts";
 import { cancelResponseBody } from "@matebot/core";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { Agent } from "undici";
 import {
   combineSignals,

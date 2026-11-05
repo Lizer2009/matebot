@@ -514,7 +514,7 @@ jobs:
           ' CHANGELOG.md > "$RUNNER_TEMP/release-notes.md"
           gh release create "$RELEASE_TAG" release-artifacts/* \
             --draft --notes-file "$RUNNER_TEMP/release-notes.md" --generate-notes \
-            --title "Rakazo $RELEASE_TAG" --verify-tag
+            --title "Matebot $RELEASE_TAG" --verify-tag
       - name: Publish the completed release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

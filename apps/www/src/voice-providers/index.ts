@@ -32,11 +32,11 @@ export const VOICE_PROVIDERS_HUB = {
   title:
     "Best voice providers for AI agents in 2026: ElevenLabs, OpenAI, Cartesia, Fish Audio and self-hosted",
   description:
-    "Which voice should your AI agent use? ElevenLabs, OpenAI, Cartesia, Fish Audio, a self-hosted speech server and macOS voices compared, from the team behind Rakazo.",
+    "Which voice should your AI agent use? ElevenLabs, OpenAI, Cartesia, Fish Audio, a self-hosted speech server and macOS voices compared, from the team behind Matebot.",
   h1: "Best voice providers for AI agents in 2026",
   intro: [
     "Typing isn't always the fastest way to work with an AI agent. Sometimes you want to say what you need on the way out the door, hear the answer while you cook, or have the agent call you when something can't wait. That takes two things: a voice that sounds right, and transcription that hears you correctly.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and you can also hold the mic to speak, have replies read aloud, or call a bot. A bot can call you too. The voice provider you connect does the speaking and, for most providers, the listening. This page compares every option Rakazo supports, from hosted voices to a server you run yourself.",
+    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and you can also hold the mic to speak, have replies read aloud, or call a bot. A bot can call you too. The voice provider you connect does the speaking and, for most providers, the listening. This page compares every option Matebot supports, from hosted voices to a server you run yourself.",
   ],
   scene: {
     bot: "Chief of Staff",
@@ -53,11 +53,11 @@ export const VOICE_PROVIDERS_HUB = {
   choose: [
     {
       heading: "You want the most natural voices",
-      text: "[ElevenLabs](/voice-providers/elevenlabs/) speaks and transcribes with one key, and any voice you clone in ElevenLabs shows up in Rakazo's voice picker. [Fish Audio](/voice-providers/fish-audio/) is the other pick when the voice itself matters, with expressive speech, your own cloned voice and a large public library.",
+      text: "[ElevenLabs](/voice-providers/elevenlabs/) speaks and transcribes with one key, and any voice you clone in ElevenLabs shows up in Matebot's voice picker. [Fish Audio](/voice-providers/fish-audio/) is the other pick when the voice itself matters, with expressive speech, your own cloned voice and a large public library.",
     },
     {
       heading: "You already have an OpenAI key",
-      text: "[OpenAI](/voice-providers/openai/) is quick to set up, with built-in voices and solid transcription. OpenAI is shutting down the speech model Rakazo uses on January 6, 2027, so treat it as a convenient start.",
+      text: "[OpenAI](/voice-providers/openai/) is quick to set up, with built-in voices and solid transcription. OpenAI is shutting down the speech model Matebot uses on January 6, 2027, so treat it as a convenient start.",
     },
     {
       heading: "You mostly call your bots",
@@ -65,14 +65,14 @@ export const VOICE_PROVIDERS_HUB = {
     },
     {
       heading: "You want audio to stay on your own hardware",
-      text: "[Self-hosted voice](/voice-providers/self-hosted/) works with any OpenAI-compatible speech server, such as Kokoro for speech and a Whisper server for transcription. If you run Rakazo directly on a Mac, [macOS voices](/voice-providers/macos/) speak with no key at all.",
+      text: "[Self-hosted voice](/voice-providers/self-hosted/) works with any OpenAI-compatible speech server, such as Kokoro for speech and a Whisper server for transcription. If you run Matebot directly on a Mac, [macOS voices](/voice-providers/macos/) speak with no key at all.",
     },
   ],
   faq: [
     {
       question: "Can I talk to my AI agent by voice?",
       answer:
-        "Yes. Connect a provider in **Settings → Voice**, then hold the mic to speak, have replies read aloud, or call a bot. On a [self-hosted Rakazo](/self-hosted-ai-agent/), the admin turns on calls and hold-to-talk with `PHONE_CALLS_ENABLED=true`.",
+        "Yes. Connect a provider in **Settings → Voice**, then hold the mic to speak, have replies read aloud, or call a bot. On a [self-hosted Matebot](/self-hosted-ai-agent/), the admin turns on calls and hold-to-talk with `PHONE_CALLS_ENABLED=true`.",
     },
     {
       question: "Which voice providers can transcribe?",
@@ -82,7 +82,7 @@ export const VOICE_PROVIDERS_HUB = {
     {
       question: "Can AI agents use voice without a hosted vendor?",
       answer:
-        "Yes. Point Rakazo at a [self-hosted speech server](/voice-providers/self-hosted/), or use the [built-in macOS voices](/voice-providers/macos/) when the server runs on a Mac.",
+        "Yes. Point Matebot at a [self-hosted speech server](/voice-providers/self-hosted/), or use the [built-in macOS voices](/voice-providers/macos/) when the server runs on a Mac.",
     },
     {
       question: "Can each bot have its own voice?",

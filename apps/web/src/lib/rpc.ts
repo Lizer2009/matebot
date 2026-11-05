@@ -1,10 +1,10 @@
-import { createORPCClient } from "@orpc/client";
-import { RPCLink } from "@orpc/client/fetch";
-import type { ContractRouterClient } from "@orpc/contract";
 import type { AppContract, ProductEvent } from "@matebot/contracts";
 import { CLIENT_BUILD_HEADER, formatClientBuild } from "@matebot/contracts";
 import { displayIdentityEvent, displayIdentityResult } from "@matebot/core";
 import { clientCorrelationHeaders, responseCorrelation } from "@matebot/logging/monitoring";
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import type { ContractRouterClient } from "@orpc/contract";
 import { authClient } from "./auth";
 import { CLIENT_BUILD } from "./client-build";
 import { i18n } from "./i18n";

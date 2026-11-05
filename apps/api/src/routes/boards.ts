@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { commentTicket, createTicket, updateTicket } from "@matebot/adapters";
 import type { BoardEvent } from "@matebot/contracts";
 import { parseTicketRef } from "@matebot/contracts";
@@ -14,6 +13,7 @@ import {
   toTicketCommentDto,
   toTicketDto,
 } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import type { RouterContext } from "./context.js";
 import { HEARTBEAT_MS, SESSION_RECHECK_MS } from "./shared.js";
 

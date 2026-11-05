@@ -1,6 +1,6 @@
+import type { McpServer } from "@matebot/contracts";
 import type { Route } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import type { McpServer } from "@matebot/contracts";
 import { captureScreenshot, completeOnboarding, openIntegrationsAdd, signup } from "./helpers";
 
 const credentialsTemplate = `{

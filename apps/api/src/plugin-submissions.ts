@@ -1,5 +1,4 @@
 import { createHash, randomBytes } from "node:crypto";
-import { ORPCError } from "@orpc/server";
 import type { TransactionalEmail } from "@matebot/adapter-kit";
 import { parsePluginSource, previewPluginInstall } from "@matebot/adapters";
 import {
@@ -26,6 +25,7 @@ import {
 } from "@matebot/contracts";
 import { pluginCategory } from "@matebot/core";
 import type { PluginSubmission as PluginSubmissionRow, PrismaClient } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import type { Context } from "hono";
 import { Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
@@ -33,7 +33,7 @@ import { assertMcpRemoteEndpoint } from "./mcp-servers.js";
 import type { RouterDeps } from "./router.js";
 import { throttleKey, windowCounter } from "./window-counter.js";
 
-const PLUGIN_REGISTRY = "Rakazo";
+const PLUGIN_REGISTRY = "Matebot";
 const MAX_BODY_BYTES = 32 * 1024;
 const HOUR_MS = 60 * 60_000;
 const SUBMISSIONS_PER_IP_PER_HOUR = 10;

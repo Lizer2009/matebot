@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
 import type { PluginSubmission } from "@matebot/contracts";
+import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, makeAdmin, signup } from "./helpers";
 
 const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#888"/></svg>`;

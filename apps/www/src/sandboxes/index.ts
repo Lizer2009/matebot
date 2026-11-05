@@ -33,11 +33,11 @@ export const SANDBOXES_HUB = {
   title:
     "Best sandboxes for AI agents in 2026: Boat, E2B, Daytona, Novita, Railway, Docker and Kubernetes",
   description:
-    "Where should an AI agent's computer run? A comparison of hosted sandboxes, Docker, Kubernetes and your own Mac or PC, from the team behind Rakazo.",
+    "Where should an AI agent's computer run? A comparison of hosted sandboxes, Docker, Kubernetes and your own Mac or PC, from the team behind Matebot.",
   h1: "Best sandboxes for AI agents in 2026",
   intro: [
     "An AI agent that only chats can't do much. To clean up an inbox, research a list of companies or fix a bug, it needs a computer: a browser it can sign in with, files it can keep, and a terminal to run things in. A sandbox is that computer, kept apart from yours so a mistake stays contained.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each one gets its own computer. You can watch its screen and take over at any moment. Where that computer runs is your choice: a hosted sandbox, a container on your own server, a Kubernetes cluster, or your own Mac or PC. This page compares every option Rakazo supports.",
+    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each one gets its own computer. You can watch its screen and take over at any moment. Where that computer runs is your choice: a hosted sandbox, a container on your own server, a Kubernetes cluster, or your own Mac or PC. This page compares every option Matebot supports.",
   ],
   scene: {
     bot: "Inbox Manager",
@@ -57,15 +57,15 @@ export const SANDBOXES_HUB = {
   choose: [
     {
       heading: "You want it hosted",
-      text: "[Boat](/sandboxes/boat/) is what Rakazo Cloud runs its own bot computers on: full Linux VMs where every bot keeps its own Chrome logins. [E2B](/sandboxes/e2b/) is the option Rakazo's live computer tests run on, and pauses idle computers instead of deleting them. [Novita](/sandboxes/novita/) pauses with memory, so a bot comes back to the same open programs. [Daytona](/sandboxes/daytona/) keeps each computer's disk and suits teams already using it.",
+      text: "[Boat](/sandboxes/boat/) is what Matebot Cloud runs its own bot computers on: full Linux VMs where every bot keeps its own Chrome logins. [E2B](/sandboxes/e2b/) is the option Matebot's live computer tests run on, and pauses idle computers instead of deleting them. [Novita](/sandboxes/novita/) pauses with memory, so a bot comes back to the same open programs. [Daytona](/sandboxes/daytona/) keeps each computer's disk and suits teams already using it.",
     },
     {
       heading: "You don't want a cloud account",
-      text: "[Docker](/sandboxes/docker/) is the default when you [self-host Rakazo](/self-hosted-ai-agent/): each bot gets a locked-down container with a desktop, on your own machine. [Kubernetes](/sandboxes/kubernetes/) runs one pod per computer on a cluster you already have, with gVisor or Kata if you want VM-level isolation.",
+      text: "[Docker](/sandboxes/docker/) is the default when you [self-host Matebot](/self-hosted-ai-agent/): each bot gets a locked-down container with a desktop, on your own machine. [Kubernetes](/sandboxes/kubernetes/) runs one pod per computer on a cluster you already have, with gVisor or Kata if you want VM-level isolation.",
     },
     {
       heading: "You want one bill",
-      text: "[Railway](/sandboxes/railway/) runs Rakazo, its database and the bot computers from one template. The trade-off is that computers are rebuilt from saved files after they stop, so open programs don't survive.",
+      text: "[Railway](/sandboxes/railway/) runs Matebot, its database and the bot computers from one template. The trade-off is that computers are rebuilt from saved files after they stop, so open programs don't survive.",
     },
     {
       heading: "You need Windows, or you're in mainland China",
@@ -73,24 +73,24 @@ export const SANDBOXES_HUB = {
     },
     {
       heading: "You want your bots on your real apps",
-      text: "The Rakazo desktop app can let bots use [your own computer](/sandboxes/your-computer/), with your files, apps and logins. That isn't a sandbox, so only turn it on for bots you'd trust unattended.",
+      text: "The Matebot desktop app can let bots use [your own computer](/sandboxes/your-computer/), with your files, apps and logins. That isn't a sandbox, so only turn it on for bots you'd trust unattended.",
     },
   ],
   faq: [
     {
       question: "What is an AI agent sandbox?",
       answer:
-        "An isolated computer where an agent can run commands, use a browser and change files without touching your own machine. In Rakazo it's the bot's computer, which you can watch and take over.",
+        "An isolated computer where an agent can run commands, use a browser and change files without touching your own machine. In Matebot it's the bot's computer, which you can watch and take over.",
     },
     {
-      question: "Do I need a sandbox provider to run Rakazo?",
+      question: "Do I need a sandbox provider to run Matebot?",
       answer:
         "No. When you [self-host](/self-hosted-ai-agent/), Docker computers work out of the box with no cloud account. Hosted providers are optional.",
     },
     {
       question: "Can I switch providers later?",
       answer:
-        "Yes. Rakazo keeps its own saved copy of each bot's workspace, so a new computer on another provider starts from the last saved version. Let bots finish and their computers stop before you switch, so recent changes are saved first. Software installed outside the workspace doesn't move.",
+        "Yes. Matebot keeps its own saved copy of each bot's workspace, so a new computer on another provider starts from the last saved version. Let bots finish and their computers stop before you switch, so recent changes are saved first. Software installed outside the workspace doesn't move.",
     },
     {
       question: "Which sandbox is the safest?",

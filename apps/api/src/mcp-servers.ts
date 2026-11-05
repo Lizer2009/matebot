@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import type { McpOAuthBroker, McpOAuthSummary, McpStdioPolicy } from "@matebot/adapters";
 import {
   assertNoMcpEndpointCredential,
@@ -13,6 +12,7 @@ import { mcpOAuthEnvReferences } from "@matebot/contracts";
 import type { McpServer as McpServerRow, Prisma } from "@matebot/db";
 import { itemSecretIn, spaceAvailability } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 import { isAdmin } from "./admins.js";
 import { assertNameFreeWhereAvailable, userAddedAvailability } from "./availability.js";
 import { dismissMcpServerApprovals } from "./mcp-approval.js";

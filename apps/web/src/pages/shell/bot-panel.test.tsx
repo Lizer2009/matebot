@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import { i18n } from "@lingui/core";
-import { ORPCError } from "@orpc/client";
 import type { Bot, BotAvatarSet } from "@matebot/contracts";
+import { ORPCError } from "@orpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";

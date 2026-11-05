@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import type { AdapterContext, SecretStore } from "@matebot/adapter-kit";
 import { VoiceAccountError } from "@matebot/adapter-kit";
 import {
@@ -41,6 +40,7 @@ import {
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { markExpectedFailure } from "@matebot/logging/hono";
+import { ORPCError } from "@orpc/server";
 import type { Context, Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import { withSerializableRetry } from "./serializable-retry.js";

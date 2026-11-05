@@ -1,6 +1,6 @@
-import { ORPCError } from "@orpc/server";
 import { EncryptedSecretStore } from "@matebot/adapters";
 import type { PrismaClient } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import { describe, expect, it, vi } from "vitest";
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "./agent-secrets.js";
 

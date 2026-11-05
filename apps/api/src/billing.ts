@@ -1,5 +1,4 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import { ORPCError } from "@orpc/server";
 import type {
   BillingByokPlan,
   BillingPrice,
@@ -45,6 +44,7 @@ import {
   syncBillingSnapshot,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 import { applyAccessGrants } from "./access-grants.js";
 import { createReferrals } from "./referrals.js";
 

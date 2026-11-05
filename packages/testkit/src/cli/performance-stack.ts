@@ -2,9 +2,9 @@ import type { ChildProcess } from "node:child_process";
 import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import type { CDPSession } from "@playwright/test";
 import { abortableDelay } from "@matebot/core";
 import { createPool } from "@matebot/db";
+import type { CDPSession } from "@playwright/test";
 import { disposableDatabaseEnv, startPostgres } from "./postgres.js";
 
 export const repositoryRoot = path.resolve(import.meta.dirname, "../../../..");

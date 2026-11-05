@@ -211,7 +211,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | GHCR 仍指 upstream | 运行的不是 fork 代码 | 自建镜像或明确 pin digest |
 | 双实例共用同一 Cursor Space / 同一 Bot 密钥 | 串单、越权 | matebot 独立 Space、`CLOUD_AGENT_SPACE_ID`、独立 DB |
 | Railway/Stripe/Slack 等模板默认值 | 指向 rakazo 官方 | fork 文档与 env 示例改为 matebot |
-| 许可证与商标 | README/商店仍写 Rakazo | 合规改名：保留 Apache-2.0 声明，区分**产品名**与**上游致谢** |
+| 许可证与商标 | README/商店仍写 Matebot | 合规改名：保留 Apache-2.0 声明，区分**产品名**与**上游致谢** |
 
 ---
 

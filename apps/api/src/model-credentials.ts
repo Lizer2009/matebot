@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import type { CodexLiveCatalog } from "@matebot/adapters";
 import {
   buildModelConnectPlaintext,
@@ -33,6 +32,7 @@ import {
   saveModelPreference,
   writeModelRole,
 } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import { mayUsePrivateEndpoint } from "./mcp-servers.js";
 import { assertNoDanglingModelPins } from "./model-pins.js";
 import type { RouterDeps } from "./router.js";

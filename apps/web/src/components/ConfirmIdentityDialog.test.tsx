@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { ORPCError } from "@orpc/client";
+
 import type { AccountSecurity } from "@matebot/contracts";
 import { IDENTITY_CONFIRMATION_REQUIRED } from "@matebot/contracts";
+import { ORPCError } from "@orpc/client";
 import type { ComponentProps, ReactNode } from "react";
 import { act, useState } from "react";
 import { createRoot } from "react-dom/client";

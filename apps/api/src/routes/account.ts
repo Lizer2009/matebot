@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import {
   changeUserTimezone,
   effectiveModelRole,
@@ -37,6 +36,7 @@ import {
   voicePreferenceTarget,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 import { createAccessGrant, listAccessGrants, revokeAccessGrant } from "../access-grants.js";
 import { requireAdmin } from "../admins.js";
 import { aiConsentStatus, allowAiConsent } from "../ai-consent.js";

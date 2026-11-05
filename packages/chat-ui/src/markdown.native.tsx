@@ -1,5 +1,11 @@
 import type { ColorTokens, ResolvedAppearance } from "@matebot/ui-tokens";
-import { darkTokens, fontWeight, MAX_FONT_SCALE, pageIconBars, typeScale } from "@matebot/ui-tokens";
+import {
+  darkTokens,
+  fontWeight,
+  MAX_FONT_SCALE,
+  pageIconBars,
+  typeScale,
+} from "@matebot/ui-tokens";
 import type {
   ASTNode,
   MarkdownStyleMap,

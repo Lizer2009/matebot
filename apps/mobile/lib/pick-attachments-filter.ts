@@ -1,5 +1,9 @@
 import type { AttachmentMimeType } from "@matebot/contracts";
-import { ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_COUNT, attachmentSizeLabel } from "@matebot/contracts";
+import {
+  ATTACHMENT_MAX_BYTES,
+  ATTACHMENT_MAX_COUNT,
+  attachmentSizeLabel,
+} from "@matebot/contracts";
 import { newClientId } from "@matebot/core";
 
 export type PickedAttachment = {

@@ -1,5 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotSecretMetadata, SettingsScope, VaultKind, VaultRevealed } from "@matebot/contracts";
+import type {
+  BotSecretMetadata,
+  SettingsScope,
+  VaultKind,
+  VaultRevealed,
+} from "@matebot/contracts";
 import { isIdentityConfirmationRequired, VAULT_KINDS, vaultKind } from "@matebot/contracts";
 import { fetchFresh, writeSaved } from "@matebot/core/query";
 import {

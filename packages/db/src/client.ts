@@ -1,7 +1,7 @@
-import { PrismaPg } from "@prisma/adapter-pg";
 import type { KeyProvider } from "@matebot/adapter-kit";
 import { resolveContentEncryption } from "@matebot/core";
 import { getLogger } from "@matebot/logging";
+import { PrismaPg } from "@prisma/adapter-pg";
 import type { PoolClient } from "pg";
 import { Pool } from "pg";
 import { withContentEncryption } from "./content-encryption.js";

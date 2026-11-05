@@ -1,8 +1,8 @@
-import { RPCHandler } from "@orpc/server/fetch";
 import type { PaymentWalletProvider } from "@matebot/adapter-kit";
 import { createPaymentWalletProvider } from "@matebot/adapters";
 import type { Actor } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
+import { RPCHandler } from "@orpc/server/fetch";
 import { describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";

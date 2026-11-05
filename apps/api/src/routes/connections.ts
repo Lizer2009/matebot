@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import type { AdapterContext, ConnectorCatalogItem } from "@matebot/adapter-kit";
 import { ConnectorAuthUnavailableError } from "@matebot/adapter-kit";
 import {
@@ -16,6 +15,7 @@ import {
   runProviderTransaction,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 import { connectionCreatedEvent } from "../security-audit.js";
 import type { RouterContext } from "./context.js";
 

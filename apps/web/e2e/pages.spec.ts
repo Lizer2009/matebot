@@ -1,6 +1,6 @@
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import type { Page, Route } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import {
   activeBotId,
   captureScreenshot,

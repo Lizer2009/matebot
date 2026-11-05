@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { RPCHandler } from "@orpc/server/fetch";
 import type { AgentRunRequest, JobPublisher } from "@matebot/adapter-kit";
 import { computerControlExpireJobKey, runJobKey } from "@matebot/adapter-kit";
 import {
@@ -35,6 +34,7 @@ import {
   runAsTenant,
 } from "@matebot/db";
 import { MarkdownMemoryStore } from "@matebot/memory";
+import { RPCHandler } from "@orpc/server/fetch";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";

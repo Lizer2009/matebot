@@ -1,7 +1,13 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { SecretStore } from "@matebot/adapter-kit";
 import { forgetPageShareSecrets } from "@matebot/adapters";
-import type { Actor, PageDetail, PageSummary, PageVisibility, SharedPage } from "@matebot/contracts";
+import type {
+  Actor,
+  PageDetail,
+  PageSummary,
+  PageVisibility,
+  SharedPage,
+} from "@matebot/contracts";
 import { pageShareTokenFromSlug, pageShareUrl } from "@matebot/contracts";
 import type { PageShareSecret, PrismaClient } from "@matebot/db";
 import { IsolationError, Prisma, runAsSystem } from "@matebot/db";

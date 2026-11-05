@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { ORPCError } from "@orpc/server";
 import type { AdapterContext, SandboxProvider } from "@matebot/adapter-kit";
 import { computerControlExpireJobKey } from "@matebot/adapter-kit";
 import type { ComputerExecutionLease } from "@matebot/adapters";
@@ -56,6 +55,7 @@ import {
   recordComputerRunEnd,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 import { scrollPoint } from "../computer-input.js";
 import {
   executionBlocksUserTakeover,

@@ -1,9 +1,6 @@
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { InferRouterInitialContext } from "@orpc/server";
-import { createRouterClient } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
 import type { ManagedConnectorProvider } from "@matebot/adapter-kit";
 import {
   ConnectorAuthUnavailableError,
@@ -44,6 +41,9 @@ import {
   runProviderTransaction,
 } from "@matebot/db";
 import { createLogger, createTestSink, installLogger } from "@matebot/logging";
+import type { InferRouterInitialContext } from "@orpc/server";
+import { createRouterClient } from "@orpc/server";
+import { RPCHandler } from "@orpc/server/fetch";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mainRole, withModelRoles } from "../../../packages/adapters/src/testing/model-roles.js";
 import type { RouterDeps } from "./router.js";

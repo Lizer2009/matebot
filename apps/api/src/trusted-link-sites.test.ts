@@ -1,6 +1,6 @@
-import { createRouterClient } from "@orpc/server";
 import type { Actor } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
+import { createRouterClient } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";

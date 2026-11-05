@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import type { SecretStore } from "@matebot/adapter-kit";
 import {
   forgetBotSecret,
@@ -15,6 +14,7 @@ import {
   commandVariableProblem,
 } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import { mapBotSecretInputError } from "./routes/bots.js";
 
 type AgentSecretDeps = {

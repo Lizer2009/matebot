@@ -1,4 +1,10 @@
-import type { Board, Ticket, TicketComment, TicketPriority, TicketStatus } from "@matebot/contracts";
+import type {
+  Board,
+  Ticket,
+  TicketComment,
+  TicketPriority,
+  TicketStatus,
+} from "@matebot/contracts";
 import {
   parseTicketRef,
   TicketPrioritySchema,

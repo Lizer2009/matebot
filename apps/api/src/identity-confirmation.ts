@@ -1,7 +1,7 @@
-import { ORPCError } from "@orpc/server";
 import type { Auth } from "@matebot/auth";
 import type { Actor } from "@matebot/contracts";
 import { IDENTITY_CONFIRMATION_REQUIRED } from "@matebot/contracts";
+import { ORPCError } from "@orpc/server";
 
 /**
  * Guards a procedure that reveals sensitive data: the calling session must have confirmed its

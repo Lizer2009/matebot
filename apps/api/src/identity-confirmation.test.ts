@@ -1,5 +1,5 @@
-import { ORPCError } from "@orpc/server";
 import { IDENTITY_CONFIRMATION_REQUIRED, isIdentityConfirmationRequired } from "@matebot/contracts";
+import { ORPCError } from "@orpc/server";
 import { expect, it, vi } from "vitest";
 import { requireIdentityConfirmation } from "./identity-confirmation.js";
 

@@ -1,6 +1,13 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { ComputerProviderSettings as Settings } from "@matebot/contracts";
-import { Button, Field, FieldLabel, Input, NativeSelect, NativeSelectOption } from "@matebot/ui-web";
+import {
+  Button,
+  Field,
+  FieldLabel,
+  Input,
+  NativeSelect,
+  NativeSelectOption,
+} from "@matebot/ui-web";
 import {
   Collapsible,
   CollapsibleContent,

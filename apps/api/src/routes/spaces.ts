@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import type { Actor, SpaceNavigation } from "@matebot/contracts";
 import type { createGroupRepos, createRepos, PrismaClient } from "@matebot/db";
 import {
@@ -21,6 +20,7 @@ import {
   setSpaceSettingOverride,
   spaceSettingOverrides,
 } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import { otherSpaceOfBot } from "../bot-space.js";
 import type { RouterDeps } from "../router.js";
 import { listRoutinesDto } from "../routines.js";

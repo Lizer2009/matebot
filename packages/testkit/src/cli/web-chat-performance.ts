@@ -4,13 +4,17 @@ import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { serve } from "@hono/node-server";
-import type { Browser, BrowserContext, CDPSession, Page } from "@playwright/test";
-import { chromium } from "@playwright/test";
 import type { createApp } from "@matebot/api/app";
-import { abortableDelay, PRODUCT_DISPLAY_NAME, RESPONSE_STREAMING_STORAGE_KEY } from "@matebot/core";
+import {
+  abortableDelay,
+  PRODUCT_DISPLAY_NAME,
+  RESPONSE_STREAMING_STORAGE_KEY,
+} from "@matebot/core";
 import { loadRootEnv } from "@matebot/core/node/load-root-env";
 import type { PrismaClient, ThreadEvents } from "@matebot/db";
 import { createThreadEvents, createThreadMessage, runAsSystem } from "@matebot/db";
+import type { Browser, BrowserContext, CDPSession, Page } from "@playwright/test";
+import { chromium } from "@playwright/test";
 import type { NumericSummary } from "../performance-report.js";
 import {
   parseTcpPort,

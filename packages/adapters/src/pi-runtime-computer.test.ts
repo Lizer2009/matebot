@@ -81,7 +81,7 @@ describe("Pi computer tool dispatch", () => {
   it("introduces the bot as this product, not the upstream one", () => {
     for (const prompt of [defaultSystemPrompt(true), defaultSystemPrompt(false)]) {
       expect(prompt).toContain(`You are a ${PRODUCT_DISPLAY_NAME} bot with`);
-      expect(prompt).not.toContain("Rakazo");
+      expect(prompt).not.toContain("Matebot");
     }
     expect(defaultSystemPrompt(true)).toContain("a real computer");
     expect(defaultSystemPrompt(false)).toContain("a persistent sandbox filesystem and shell");

@@ -718,7 +718,7 @@ msgid "Allow once"
 msgstr "今回のみ許可"
 
 #: src/lib/dictation.ts
-msgid "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
+msgid "Allow Matebot to use Speech Recognition and the microphone in System Settings."
 msgstr ""
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -766,8 +766,8 @@ msgid "An API key is stored for this provider, not a subscription sign-in."
 msgstr "このプロバイダーにはサブスクリプションのログインではなく、APIキーが保存されています。"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "An existing Honcho peer to read from. Rakazo never writes to it."
-msgstr "読み取り元となる既存のHonchoピアです。Rakazoが書き込むことはありません。"
+msgid "An existing Honcho peer to read from. Matebot never writes to it."
+msgstr "読み取り元となる既存のHonchoピアです。Matebotが書き込むことはありません。"
 
 #: src/lib/agent-import-errors.ts
 msgid "An imported API key could not be checked. Try again."
@@ -1405,8 +1405,8 @@ msgstr "フォルダを選択"
 
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
-msgid "Choose how to use Rakazo"
-msgstr "Rakazoの使い方を選択"
+msgid "Choose how to use Matebot"
+msgstr "Matebotの使い方を選択"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "City"
@@ -1722,8 +1722,8 @@ msgstr "先にこのモデルのプロバイダーを接続してください。
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "モデルで自分のAPIキーを接続するか、請求でRakazoクレジットを選択してください。"
+msgid "Connect your own API key in Models or choose Matebot credits in Billing."
+msgstr "モデルで自分のAPIキーを接続するか、請求でMatebotクレジットを選択してください。"
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
@@ -2958,7 +2958,7 @@ msgid "Ends {day}"
 msgstr "{day}に終了"
 
 #: src/components/GitHubStarPrompt.tsx
-msgid "Enjoying Rakazo?"
+msgid "Enjoying Matebot?"
 msgstr ""
 
 #: src/lib/user-error.ts
@@ -3435,7 +3435,7 @@ msgstr "チームの規模は？"
 
 #: src/components/SignupSurvey.tsx
 msgid "How did you hear about us?"
-msgstr "Rakazoを何で知りましたか？"
+msgstr "Matebotを何で知りましたか？"
 
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
@@ -3450,8 +3450,8 @@ msgid "How to check"
 msgstr "確認方法"
 
 #: src/components/SignupSurvey.tsx
-msgid "How will you use Rakazo?"
-msgstr "Rakazoをどのように使いますか？"
+msgid "How will you use Matebot?"
+msgstr "Matebotをどのように使いますか？"
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
@@ -4478,8 +4478,8 @@ msgid "Not imported"
 msgstr "インポートされていません"
 
 #: src/pages/shell/import-status.ts
-msgid "Not in Rakazo's catalog"
-msgstr "Rakazoのカタログにありません"
+msgid "Not in Matebot's catalog"
+msgstr "Matebotのカタログにありません"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
@@ -4492,12 +4492,12 @@ msgstr "今はしない"
 
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
-msgid "Not supported in Rakazo"
-msgstr "Rakazoでは未対応です"
+msgid "Not supported in Matebot"
+msgstr "Matebotでは未対応です"
 
 #: src/pages/shell/agent-import.tsx
-msgid "Not used by Rakazo"
-msgstr "Rakazoでは使用しません"
+msgid "Not used by Matebot"
+msgstr "Matebotでは使用しません"
 
 #: src/components/McpServerHealthLine.tsx
 msgid "Not working"
@@ -4819,8 +4819,8 @@ msgid "Paste a replacement key"
 msgstr "新しいキーを貼り付け"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "サーバーのOpenAI互換アドレスを貼り付けてください。必要に応じてRakazoが/v1を追加します。"
+msgid "Paste the OpenAI-compatible address from your server. Matebot adds /v1 if needed."
+msgstr "サーバーのOpenAI互換アドレスを貼り付けてください。必要に応じてMatebotが/v1を追加します。"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -5008,17 +5008,17 @@ msgstr "待機中"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
-msgid "Rakazo"
-msgstr "Rakazo"
+msgid "Matebot"
+msgstr "Matebot"
 
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx
-msgid "Rakazo credits"
-msgstr "Rakazoクレジット"
+msgid "Matebot credits"
+msgstr "Matebotクレジット"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
-msgstr "rakazo-sharedおよびbot-で始まるIDはRakazo用に予約されています。"
+msgid "rakazo-shared and IDs starting with bot- are reserved for Matebot."
+msgstr "rakazo-sharedおよびbot-で始まるIDはMatebot用に予約されています。"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5438,8 +5438,8 @@ msgstr "{0}との通話に戻る"
 
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
-msgid "Return to Rakazo"
-msgstr "Rakazoに戻る"
+msgid "Return to Matebot"
+msgstr "Matebotに戻る"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -6192,8 +6192,8 @@ msgid "Subscribe for {price} / month"
 msgstr "月額 {price} で登録"
 
 #: src/components/ModelCredits.tsx
-msgid "Subscribe to Rakazo credits"
-msgstr "Rakazo クレジットに申し込む"
+msgid "Subscribe to Matebot credits"
+msgstr "Matebot クレジットに申し込む"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe with your own AI"
@@ -6542,8 +6542,8 @@ msgid "This server's tool result does not fit the model. Turn off Keep tool resu
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "このサブスクリプションでのログインはRakazoではまだ利用できません。デプロイメントの認証情報を使用するか、別のプロバイダーを選択してください。"
+msgid "This subscription sign-in is not available in Matebot yet. Use a deployment credential or choose another provider."
+msgstr "このサブスクリプションでのログインはMatebotではまだ利用できません。デプロイメントの認証情報を使用するか、別のプロバイダーを選択してください。"
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -6847,8 +6847,8 @@ msgid "Use Protected input for passwords."
 msgstr "パスワードには保護された入力を使用してください。"
 
 #: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
-msgstr "Rakazoクレジットを使用"
+msgid "Use Matebot credits"
+msgstr "Matebotクレジットを使用"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
@@ -6995,8 +6995,8 @@ msgid "Weekends"
 msgstr "週末"
 
 #: src/components/SignupSurvey.tsx
-msgid "Welcome to Rakazo"
-msgstr "Rakazoへようこそ"
+msgid "Welcome to Matebot"
+msgstr "Matebotへようこそ"
 
 #: src/pages/shell/dialogs.tsx
 msgid "What about its memories?"
@@ -7007,8 +7007,8 @@ msgid "What can this space use?"
 msgstr ""
 
 #: src/components/SignupSurvey.tsx
-msgid "What do you most want Rakazo to help with?"
-msgstr "Rakazoに最も手伝ってほしいことは何ですか？"
+msgid "What do you most want Matebot to help with?"
+msgstr "Matebotに最も手伝ってほしいことは何ですか？"
 
 #: src/pages/shell/message-cards.tsx
 msgid "What do you want me on first?"

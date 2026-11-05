@@ -1,9 +1,9 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ORPCError } from "@orpc/client";
 import type { Bot } from "@matebot/contracts";
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@matebot/contracts";
 import { Button, Disclosure, Textarea } from "@matebot/ui-web";
 import { Popover, PopoverContent, PopoverTrigger } from "@matebot/ui-web/components/ui/popover";
+import { ORPCError } from "@orpc/client";
 import { History } from "lucide-react";
 import { useId, useState } from "react";
 import { rpc } from "../lib/rpc";

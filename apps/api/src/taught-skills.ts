@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { ORPCError } from "@orpc/server";
 import type { AgentHomeStore, JobPublisher, SandboxProvider } from "@matebot/adapter-kit";
 import {
   createAdapterContext,
@@ -41,6 +40,7 @@ import {
 import type { createRepos, PrismaClient, ThreadEvents } from "@matebot/db";
 import { clearEndedRunState, expireComputerExecutionLeases, IsolationError } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { ORPCError } from "@orpc/server";
 
 export interface TaughtSkillsDeps {
   prisma: PrismaClient;

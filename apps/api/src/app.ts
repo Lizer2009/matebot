@@ -1,6 +1,4 @@
 import { hostname } from "node:os";
-import { ORPCError, onError } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
 import type {
   AgentContextStrategy,
   AgentRuntime,
@@ -143,6 +141,8 @@ import {
 } from "@matebot/logging";
 import { markExpectedFailure, requestLogging } from "@matebot/logging/hono";
 import { MarkdownMemoryStore } from "@matebot/memory";
+import { ORPCError, onError } from "@orpc/server";
+import { RPCHandler } from "@orpc/server/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { deleteAccountContent } from "./account-deletion.js";

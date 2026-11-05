@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { MEMORY_REVISION_CONFLICT_ERROR } from "@matebot/adapter-kit";
 import {
   buildAgentMemoryPrompt,
@@ -9,6 +8,7 @@ import {
 } from "@matebot/adapters";
 import { isDeletableMemoryDocument } from "@matebot/contracts";
 import { findSpaceMemoryConfig, IsolationError } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import {
   disconnectMemoryProvider,
   persistMemoryProviderConfig,

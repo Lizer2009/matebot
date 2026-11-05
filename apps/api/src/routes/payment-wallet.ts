@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { PaymentWalletRequestRejected } from "@matebot/adapter-kit";
 import type { PaymentWalletDeps } from "@matebot/adapters";
 import {
@@ -7,6 +6,7 @@ import {
   paymentWalletStatus,
 } from "@matebot/adapters";
 import { recordSecurityEvent } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import { paymentWalletConnectedEvent } from "../security-audit.js";
 import type { RouterContext } from "./context.js";
 

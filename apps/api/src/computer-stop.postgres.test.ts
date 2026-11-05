@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { RPCHandler } from "@orpc/server/fetch";
 import type { AdapterContext, ComputerRef, JobPublisher, PortableFile } from "@matebot/adapter-kit";
 import { SandboxDamagedError, SandboxRateLimitError } from "@matebot/adapter-kit";
 import {
@@ -20,6 +19,7 @@ import {
   runAsSystem,
   runAsTenant,
 } from "@matebot/db";
+import { RPCHandler } from "@orpc/server/fetch";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";

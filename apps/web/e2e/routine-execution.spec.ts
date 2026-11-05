@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
 import type { Routine, RoutineHistory } from "@matebot/contracts";
+import { expect, test } from "@playwright/test";
 import {
   activeBotId,
   captureScreenshot,

@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import type { SecretStore } from "@matebot/adapter-kit";
 import type { CodexLiveCatalog } from "@matebot/adapters";
 import {
@@ -18,6 +17,7 @@ import type { Actor, MessageBlock } from "@matebot/contracts";
 import { MODEL_IMAGE_INPUT_ERROR, MODEL_IMAGE_INPUT_UNKNOWN } from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { appliedModelRole, findModelCredential, findModelCredentialById } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 
 type ModelChoice = {
   modelProvider: string | null;

@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { BUILTIN_AGENT_SKILLS } from "@matebot/adapters";
 import type { Actor, AgentSkill, AgentSkillSource } from "@matebot/contracts";
 import type { SkillSource } from "@matebot/core";
@@ -16,6 +15,7 @@ import {
   IsolationError,
   spaceAvailability,
 } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import { assertNameFreeWhereAvailable, userAddedAvailability } from "./availability.js";
 
 type AgentSkillRow = {

@@ -28,7 +28,10 @@ import {
   unattendedTriggerToolRequiresApproval,
 } from "@matebot/core";
 import { normalizedHttpUrl, urlSite } from "@matebot/core/egress";
-import { approvalEffectKey, toolEffectIdempotencyKey } from "@matebot/core/node/approval-effect-key";
+import {
+  approvalEffectKey,
+  toolEffectIdempotencyKey,
+} from "@matebot/core/node/approval-effect-key";
 import type { AuditEventInput } from "@matebot/db";
 import { recordAuditEvent, runSecretKind } from "@matebot/db";
 import { getLogger } from "@matebot/logging";

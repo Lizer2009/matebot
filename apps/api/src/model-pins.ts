@@ -1,9 +1,9 @@
-import { ORPCError } from "@orpc/server";
 import type { CodexLiveCatalog, parseModelSecret } from "@matebot/adapters";
 import { findConnectedModelCredential, validateConnectedModelChoice } from "@matebot/adapters";
 import type { Actor } from "@matebot/contracts";
 import { OPENAI_COMPATIBLE_PROVIDER_ID, usableModelId } from "@matebot/contracts";
 import { modelRoleTarget, runAsSystem } from "@matebot/db";
+import { ORPCError } from "@orpc/server";
 import type { RouterDeps } from "./router.js";
 
 /**

@@ -110,7 +110,7 @@ export const SIGN_IN_CODE_EXPIRES_IN_SECONDS = 10 * 60;
 
 /**
  * The email OTP plugin also exposes OTP email verification, password reset and
- * email change. Rakazo uses links for those, so only sign-in codes stay open.
+ * email change. Matebot uses links for those, so only sign-in codes stay open.
  */
 function isUnusedEmailCodePath(path: string, body: { type?: unknown } | undefined): boolean {
   if (path === SEND_SIGN_IN_CODE_PATH) return body?.type !== "sign-in";
@@ -215,7 +215,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
   let authContext: Promise<{ secretConfig: TokenKey }> | undefined;
   const tokenKey = async () => (await authContext!).secretConfig;
   const auth = betterAuth({
-    appName: "Rakazo",
+    appName: "Matebot",
     logger: env.logger,
     secret: env.secret,
     baseURL: env.baseURL,
@@ -529,7 +529,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
               internalAdapter: {
                 ...ctx.context.internalAdapter,
                 // Better Auth drops an unverified account's logins and sessions when a
-                // code proves the mailbox; credentials Rakazo stores elsewhere go too.
+                // code proves the mailbox; credentials Matebot stores elsewhere go too.
                 ...(ctx.path === CODE_SIGN_IN_PATH
                   ? {
                       updateUser: async (...args: Parameters<typeof updateUser>) => {

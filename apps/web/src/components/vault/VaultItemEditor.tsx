@@ -1,5 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { CardSecretValue, ContactFields, LoginFieldInput, VaultKind } from "@matebot/contracts";
+import type {
+  CardSecretValue,
+  ContactFields,
+  LoginFieldInput,
+  VaultKind,
+} from "@matebot/contracts";
 import {
   BotSecretName,
   CardSecretValue as CardSecretValueSchema,

@@ -44,5 +44,5 @@ working status while a bot runs.
 
 ## Share to a bot
 
-On Android, share text, images, audio, video, PDFs or files from another app to Rakazo and pick the
+On Android, share text, images, audio, video, PDFs or files from another app to Matebot and pick the
 bot to send them to.

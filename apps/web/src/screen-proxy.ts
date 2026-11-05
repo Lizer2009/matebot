@@ -11,7 +11,7 @@ import { SCREEN_PROBE_PARAM } from "@matebot/core/screen-reconnect";
 
 /**
  * The computer is untrusted, so only what noVNC's pages and socket need reaches it. Anything else,
- * such as credentials an access proxy in front of Rakazo expects, stays here.
+ * such as credentials an access proxy in front of Matebot expects, stays here.
  */
 const FORWARDED_HEADERS = new Set([
   "accept",

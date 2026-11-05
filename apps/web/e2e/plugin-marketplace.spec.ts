@@ -1,10 +1,10 @@
-import { expect, test } from "@playwright/test";
 import type {
   AgentSkillCatalogEntry,
   BotMcpServer,
   CapabilityInstall,
   McpServer,
 } from "@matebot/contracts";
+import { expect, test } from "@playwright/test";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
 test("Integrations installs a plugin, completes real broker OAuth against a fake provider, and removes its children", async ({

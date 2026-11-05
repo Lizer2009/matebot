@@ -81,7 +81,7 @@ describe("withAppIntents prebuild", () => {
             withXcodeProject: (value, mod) => mod(value),
             IOSConfig: {
               XcodeUtils: {
-                getProjectName: () => "Rakazo",
+                getProjectName: () => "Matebot",
                 addBuildSourceFileToGroup: (input) => {
                   added.push(input);
                   files.add(input.filepath);
@@ -101,9 +101,9 @@ describe("withAppIntents prebuild", () => {
       "/project/ios/Rakazo/RakazoIntents.swift",
     ]);
     expect(added.map((input) => input.filepath)).toEqual([
-      "Rakazo/RakazoIntents.swift",
-      "Rakazo/VoiceMessageRecorder.swift",
-      "Rakazo/VoiceMessageActivity.swift",
+      "Matebot/RakazoIntents.swift",
+      "Matebot/VoiceMessageRecorder.swift",
+      "Matebot/VoiceMessageActivity.swift",
     ]);
     expect(widgetSettings).toMatchObject({
       CURRENT_PROJECT_VERSION: "7",

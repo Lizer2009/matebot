@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/client";
 import type { ProductEvent, ThreadMessage, ThreadSnapshot } from "@matebot/contracts";
 import type * as CoreModule from "@matebot/core";
 import {
@@ -7,6 +6,7 @@ import {
   INTERIM_BARGE_IN_MS,
   runThreadSubscription,
 } from "@matebot/core";
+import { ORPCError } from "@orpc/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { pickUp } from "./call-pickup.js";
 import { ECHO_GUARD_MS, endCall, getSnapshot, startCall, toggleMute } from "./call-session";

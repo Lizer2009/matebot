@@ -1,4 +1,9 @@
-import type { VoiceCatalogEntry, VoiceCredential, VoiceInfo, VoiceStatus } from "@matebot/contracts";
+import type {
+  VoiceCatalogEntry,
+  VoiceCredential,
+  VoiceInfo,
+  VoiceStatus,
+} from "@matebot/contracts";
 import {
   DEFAULT_COMPATIBLE_STT_MODEL,
   DEFAULT_COMPATIBLE_TTS_MODEL,

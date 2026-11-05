@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { createRouterClient } from "@orpc/server";
 import {
   EncryptedSecretStore,
   previewPluginInstall,
@@ -8,6 +7,7 @@ import {
 import type { Actor } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
 import { createDb, runAsSystem, runAsTenant } from "@matebot/db";
+import { createRouterClient } from "@orpc/server";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createAgentSkillsService } from "./agent-skills.js";
 import { installPlugin } from "./plugin-installs.js";

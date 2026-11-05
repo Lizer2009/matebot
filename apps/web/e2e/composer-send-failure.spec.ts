@@ -1,6 +1,6 @@
+import type { Routine } from "@matebot/contracts";
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import type { Routine } from "@matebot/contracts";
 import {
   activeBotId,
   completeOnboarding,

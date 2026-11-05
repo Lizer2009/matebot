@@ -719,7 +719,7 @@ msgid "Allow once"
 msgstr "允許一次"
 
 #: src/lib/dictation.ts
-msgid "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
+msgid "Allow Matebot to use Speech Recognition and the microphone in System Settings."
 msgstr ""
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -767,8 +767,8 @@ msgid "An API key is stored for this provider, not a subscription sign-in."
 msgstr "此供應商儲存的是 API 金鑰，不是訂閱登入。"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "An existing Honcho peer to read from. Rakazo never writes to it."
-msgstr "用於讀取資料的現有 Honcho peer。Rakazo 絕不會向其寫入資料。"
+msgid "An existing Honcho peer to read from. Matebot never writes to it."
+msgstr "用於讀取資料的現有 Honcho peer。Matebot 絕不會向其寫入資料。"
 
 #: src/lib/agent-import-errors.ts
 msgid "An imported API key could not be checked. Try again."
@@ -1406,8 +1406,8 @@ msgstr "選擇資料夾"
 
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
-msgid "Choose how to use Rakazo"
-msgstr "選擇 Rakazo 的使用方式"
+msgid "Choose how to use Matebot"
+msgstr "選擇 Matebot 的使用方式"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "City"
@@ -1723,8 +1723,8 @@ msgstr "請先連結此模型的供應商。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "請在「模型」中連接你自己的 API 金鑰，或在「帳務」中選擇 Rakazo 點數。"
+msgid "Connect your own API key in Models or choose Matebot credits in Billing."
+msgstr "請在「模型」中連接你自己的 API 金鑰，或在「帳務」中選擇 Matebot 點數。"
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
@@ -2959,7 +2959,7 @@ msgid "Ends {day}"
 msgstr "於 {day} 結束"
 
 #: src/components/GitHubStarPrompt.tsx
-msgid "Enjoying Rakazo?"
+msgid "Enjoying Matebot?"
 msgstr ""
 
 #: src/lib/user-error.ts
@@ -3451,8 +3451,8 @@ msgid "How to check"
 msgstr "如何檢查"
 
 #: src/components/SignupSurvey.tsx
-msgid "How will you use Rakazo?"
-msgstr "你會如何使用 Rakazo？"
+msgid "How will you use Matebot?"
+msgstr "你會如何使用 Matebot？"
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
@@ -4479,8 +4479,8 @@ msgid "Not imported"
 msgstr "未匯入"
 
 #: src/pages/shell/import-status.ts
-msgid "Not in Rakazo's catalog"
-msgstr "不在 Rakazo 目錄中"
+msgid "Not in Matebot's catalog"
+msgstr "不在 Matebot 目錄中"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
@@ -4493,12 +4493,12 @@ msgstr "暫不"
 
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
-msgid "Not supported in Rakazo"
-msgstr "Rakazo 不支援"
+msgid "Not supported in Matebot"
+msgstr "Matebot 不支援"
 
 #: src/pages/shell/agent-import.tsx
-msgid "Not used by Rakazo"
-msgstr "Rakazo 不使用"
+msgid "Not used by Matebot"
+msgstr "Matebot 不使用"
 
 #: src/components/McpServerHealthLine.tsx
 msgid "Not working"
@@ -4820,8 +4820,8 @@ msgid "Paste a replacement key"
 msgstr "貼上替換金鑰"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "貼上伺服器的 OpenAI 相容地址。需要時 Rakazo 會補上 /v1。"
+msgid "Paste the OpenAI-compatible address from your server. Matebot adds /v1 if needed."
+msgstr "貼上伺服器的 OpenAI 相容地址。需要時 Matebot 會補上 /v1。"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -5009,17 +5009,17 @@ msgstr "排隊中"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
-msgid "Rakazo"
-msgstr "Rakazo"
+msgid "Matebot"
+msgstr "Matebot"
 
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx
-msgid "Rakazo credits"
-msgstr "Rakazo 額度"
+msgid "Matebot credits"
+msgstr "Matebot 額度"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
-msgstr "rakazo-shared 與以 bot- 開頭的 ID 保留給 Rakazo 使用。"
+msgid "rakazo-shared and IDs starting with bot- are reserved for Matebot."
+msgstr "rakazo-shared 與以 bot- 開頭的 ID 保留給 Matebot 使用。"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5439,8 +5439,8 @@ msgstr "返回與 {0} 的通話"
 
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
-msgid "Return to Rakazo"
-msgstr "返回 Rakazo"
+msgid "Return to Matebot"
+msgstr "返回 Matebot"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -6193,8 +6193,8 @@ msgid "Subscribe for {price} / month"
 msgstr "以每月 {price} 訂閱"
 
 #: src/components/ModelCredits.tsx
-msgid "Subscribe to Rakazo credits"
-msgstr "訂閱 Rakazo 額度"
+msgid "Subscribe to Matebot credits"
+msgstr "訂閱 Matebot 額度"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe with your own AI"
@@ -6543,8 +6543,8 @@ msgid "This server's tool result does not fit the model. Turn off Keep tool resu
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "此訂閱登入在 Rakazo 中尚不可用。請使用部署憑證或選擇其他供應商。"
+msgid "This subscription sign-in is not available in Matebot yet. Use a deployment credential or choose another provider."
+msgstr "此訂閱登入在 Matebot 中尚不可用。請使用部署憑證或選擇其他供應商。"
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -6848,8 +6848,8 @@ msgid "Use Protected input for passwords."
 msgstr "輸入密碼時，請使用受保護的輸入。"
 
 #: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
-msgstr "使用 Rakazo 額度"
+msgid "Use Matebot credits"
+msgstr "使用 Matebot 額度"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
@@ -6996,8 +6996,8 @@ msgid "Weekends"
 msgstr "週末"
 
 #: src/components/SignupSurvey.tsx
-msgid "Welcome to Rakazo"
-msgstr "歡迎使用 Rakazo"
+msgid "Welcome to Matebot"
+msgstr "歡迎使用 Matebot"
 
 #: src/pages/shell/dialogs.tsx
 msgid "What about its memories?"
@@ -7008,8 +7008,8 @@ msgid "What can this space use?"
 msgstr ""
 
 #: src/components/SignupSurvey.tsx
-msgid "What do you most want Rakazo to help with?"
-msgstr "你最希望 Rakazo 幫你做什麼？"
+msgid "What do you most want Matebot to help with?"
+msgstr "你最希望 Matebot 幫你做什麼？"
 
 #: src/pages/shell/message-cards.tsx
 msgid "What do you want me on first?"

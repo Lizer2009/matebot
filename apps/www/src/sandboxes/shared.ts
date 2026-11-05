@@ -25,11 +25,11 @@ export function homepage(slug: string, provider: string, alt: string): SandboxIm
 }
 
 export const PROVIDERS_DOC: SourceLink = {
-  label: "Rakazo, computer providers",
+  label: "Matebot, computer providers",
   href: `${GITHUB_URL}/blob/main/docs/self-host-sandbox-providers.md`,
 };
 
 export const RUNTIME_DOC: SourceLink = {
-  label: "Rakazo, computer runtime and isolation",
+  label: "Matebot, computer runtime and isolation",
   href: `${GITHUB_URL}/blob/main/docs/computer-runtime.md`,
 };

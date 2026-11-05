@@ -12,7 +12,8 @@
     "test": "vitest run --passWithNoTests",
     "generate": "tsx src/generate-css.ts",
     "export:brand": "node scripts/export-brand.ts",
-    "export:matebot": "node scripts/export-matebot-brand.ts"
+    "export:matebot": "node scripts/export-matebot-brand.ts",
+    "export:matebot-icon": "tsx scripts/export-matebot-icon.ts"
   },
   "devDependencies": {
     "sharp": "0.35.5",

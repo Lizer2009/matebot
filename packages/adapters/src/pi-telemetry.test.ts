@@ -3,13 +3,13 @@ import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import type { Api, Model } from "@earendil-works/pi-ai";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
+import { runWithLogContext } from "@matebot/logging";
 import { SpanStatusCode } from "@opentelemetry/api";
 import {
   InMemorySpanExporter,
   NodeTracerProvider,
   SimpleSpanProcessor,
 } from "@opentelemetry/sdk-trace-node";
-import { runWithLogContext } from "@matebot/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MISSING_TOOL_FINAL_RESPONSE_ERROR, PiAgentRuntime } from "./pi-runtime.js";
 import {
