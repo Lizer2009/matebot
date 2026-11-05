@@ -114,7 +114,7 @@ describe("fetchLinuxUpdateSignature", () => {
     const fetchUrl = respond("signature");
     for (const [version, name] of [
       ["1.2.3/../../x", "Matebot-1.2.3.AppImage"],
-      ["1.2.3", "../Rakazo-1.2.3.AppImage"],
+      ["1.2.3", "../Matebot-1.2.3.AppImage"],
       ["1.2.3", "Matebot-1.2.3.exe"],
     ] as const) {
       await expect(fetchLinuxUpdateSignature(version, name, fetchUrl)).rejects.toThrow();

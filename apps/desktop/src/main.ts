@@ -1585,8 +1585,8 @@ app.whenReady().then(async () => {
   if (process.platform === "darwin") {
     // Installed builds ship the helper as an extra resource; `pnpm build` compiles it for development.
     const helper = app.isPackaged
-      ? path.join(process.resourcesPath, "speech", "rakazo-speech")
-      : path.join(app.getAppPath(), "build", "speech", "rakazo-speech");
+      ? path.join(process.resourcesPath, "speech", "matebot-speech")
+      : path.join(app.getAppPath(), "build", "speech", "matebot-speech");
     const speech = createSystemSpeech(permissionTarget, (language) =>
       spawn(helper, [language], { stdio: "pipe" }),
     );

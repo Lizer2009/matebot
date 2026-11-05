@@ -58,7 +58,7 @@ export const railway: Sandbox = {
       heading: "When to choose Railway",
       paragraphs: [
         "Choose Railway when you want a personal Matebot with nothing to run yourself and only one account to manage. It suits bots that browse, research and edit files, where a restart from saved files is fine.",
-        "If bots need to come back to the same open programs, [Novita](/sandboxes/novita/) and [E2B](/sandboxes/e2b/) pause computers with their memory instead. [Boat](/sandboxes/boat/), which Rakazo Cloud uses, keeps each computer's disk and a Chrome profile per bot. If you'd rather use a server you already have, [Docker](/sandboxes/docker/) is the default when you self-host. The [sandbox comparison](/sandboxes/) covers every option.",
+        "If bots need to come back to the same open programs, [Novita](/sandboxes/novita/) and [E2B](/sandboxes/e2b/) pause computers with their memory instead. [Boat](/sandboxes/boat/) keeps each computer's disk and a Chrome profile per bot. If you'd rather use a server you already have, [Docker](/sandboxes/docker/) is the default when you self-host. The [sandbox comparison](/sandboxes/) covers every option.",
       ],
     },
     {

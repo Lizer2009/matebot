@@ -73,7 +73,7 @@ export const elevenlabs: VoiceProvider = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "Anyone can do this in their own settings, on Rakazo Cloud or a self-hosted server. The key belongs to your account, not the whole server.",
+        "Anyone can do this in their own settings on a self-hosted server. The key belongs to your account, not the whole server.",
       ],
       steps: [
         "Create an API key in your [ElevenLabs](https://elevenlabs.io) account. Give it permission for text to speech, speech to text and reading voices.",

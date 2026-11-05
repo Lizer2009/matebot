@@ -158,7 +158,7 @@ jobs:
         env:
           # Optional: without it the release still ships and hides passkeys on macOS.
           PROVISIONING_PROFILE: ${{ secrets.DESKTOP_MAC_PROVISIONING_PROFILE }}
-          PROFILE_PATH: ${{ runner.temp }}/rakazo.provisionprofile
+          PROFILE_PATH: ${{ runner.temp }}/matebot.provisionprofile
           ENTITLEMENTS_PATH: ${{ runner.temp }}/entitlements.passkeys.plist
         run: |
           set -euo pipefail
@@ -219,7 +219,7 @@ jobs:
           PASSKEY_ENTITLEMENTS: ${{ steps.passkeys.outputs.entitlements }}
         run: |
           set -euo pipefail
-          app="apps/desktop/out/mac-universal/Rakazo.app"
+          app="apps/desktop/out/mac-universal/Matebot.app"
           codesign --verify --deep --strict --verbose=2 "$app"
           # Without this entitlement the hardened runtime silences the microphone.
           # Check the app and every helper it signs, and require the value to be true.
@@ -249,28 +249,28 @@ jobs:
           xcrun stapler validate "$app"
           spctl --assess --type execute --verbose=2 "$app"
           grep -Fqx "provider: github" "$app/Contents/Resources/app-update.yml"
-          grep -Fqx "owner: elie222" "$app/Contents/Resources/app-update.yml"
-          grep -Fqx "repo: rakazo" "$app/Contents/Resources/app-update.yml"
+          grep -Fqx "owner: Lizer2009" "$app/Contents/Resources/app-update.yml"
+          grep -Fqx "repo: matebot" "$app/Contents/Resources/app-update.yml"
 
       - name: Verify packaged native dependencies
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          app="apps/desktop/out/mac-universal/Rakazo.app"
+          app="apps/desktop/out/mac-universal/Matebot.app"
           native="$app/Contents/Resources/app.asar.unpacked/node_modules"
           lipo "$native/@koromix/koffi-darwin-x64/darwin_x64/koffi.node" -verify_arch x86_64
           lipo "$native/@koromix/koffi-darwin-arm64/darwin_arm64/koffi.node" -verify_arch arm64
           lipo "$native/@oxc-parser/binding-darwin-x64/parser.darwin-x64.node" -verify_arch x86_64
           lipo "$native/@oxc-parser/binding-darwin-arm64/parser.darwin-arm64.node" -verify_arch arm64
           # Dictation's system recognizer captures audio itself, so it needs the microphone entitlement too.
-          speech="$app/Contents/Resources/speech/rakazo-speech"
+          speech="$app/Contents/Resources/speech/matebot-speech"
           lipo "$speech" -verify_arch x86_64 arm64
           entitlements="$(mktemp)"
           codesign -d --entitlements :- "$speech" > "$entitlements" 2>/dev/null
           test "$(/usr/libexec/PlistBuddy -c "Print :com.apple.security.device.audio-input" "$entitlements")" = true
           rm -f "$entitlements"
           "$speech" xx < /dev/null | grep -Fq '"language-not-supported"'
-          ELECTRON_RUN_AS_NODE=1 "$app/Contents/MacOS/Rakazo" -e '
+          ELECTRON_RUN_AS_NODE=1 "$app/Contents/MacOS/Matebot" -e '
             const { createRequire } = require("node:module");
             const appRequire = createRequire(`${process.argv[1]}/Contents/Resources/app.asar/package.json`);
             const koffi = appRequire("koffi");
@@ -339,7 +339,7 @@ jobs:
           if ($executables.Count -lt 2) { throw "Windows installer or application was not created." }
           $config = "apps/desktop/out/win-unpacked/resources/app-update.yml"
           $feed = Get-Content -Raw $config
-          foreach ($expected in @("provider: github", "owner: elie222", "repo: rakazo")) {
+          foreach ($expected in @("provider: github", "owner: Lizer2009", "repo: matebot")) {
             if ($feed -notmatch "(?m)^$([regex]::Escape($expected))\r?$") {
               throw "Windows update config missing '$expected'."
             }
@@ -377,8 +377,8 @@ jobs:
           test -n "$config"
           test -f "$config"
           grep -Fqx "provider: github" "$config"
-          grep -Fqx "owner: elie222" "$config"
-          grep -Fqx "repo: rakazo" "$config"
+          grep -Fqx "owner: Lizer2009" "$config"
+          grep -Fqx "repo: matebot" "$config"
           test -f apps/desktop/out/latest-linux.yml
           grep -Fqx "version: $RELEASE_VERSION" apps/desktop/out/latest-linux.yml
       - name: Sign Linux AppImage updates

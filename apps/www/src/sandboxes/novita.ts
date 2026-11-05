@@ -55,7 +55,7 @@ export const novita: Sandbox = {
       heading: "When to choose Novita",
       paragraphs: [
         "Choose Novita when bots run long, multi-step work in a browser and you want them to come back to exactly where they were, not to a fresh desktop rebuilt from saved files. It also fits if you already use Novita for models or GPUs and want one fewer account.",
-        "[E2B](/sandboxes/e2b/) pauses idle computers in a similar way and is what Matebot's own live computer tests run on. [Boat](/sandboxes/boat/) is what Rakazo Cloud uses, with a separate Chrome profile for each bot, but it keeps the disk, not running programs. [Railway](/sandboxes/railway/) rebuilds a computer from saved files after every stop. If you don't want a cloud account at all, [Docker](/sandboxes/docker/) runs computers on your own server. The [sandbox comparison](/sandboxes/) puts them side by side.",
+        "[E2B](/sandboxes/e2b/) pauses idle computers in a similar way and is what Matebot's own live computer tests run on. [Boat](/sandboxes/boat/) gives each bot a separate Chrome profile and keeps the disk, though not running programs. [Railway](/sandboxes/railway/) rebuilds a computer from saved files after every stop. If you don't want a cloud account at all, [Docker](/sandboxes/docker/) runs computers on your own server. The [sandbox comparison](/sandboxes/) puts them side by side.",
       ],
     },
     {
@@ -65,7 +65,7 @@ export const novita: Sandbox = {
         "You can't pick a region from Matebot.",
         "Paused computers still use storage, which Novita bills and retains on its own terms.",
         "If Matebot can't confirm that a command stopped, it pauses the computer and sets it aside. It stays paused until you choose Recover or Reset, so it is never resumed silently with a stuck command inside.",
-        "Novita computers are for self-hosted Matebot. Rakazo Cloud runs its computers on Boat.",
+        "Novita computers are for self-hosted Matebot. A deployment that hosts computers for you may choose Boat instead.",
       ],
     },
     {
@@ -112,9 +112,9 @@ export const novita: Sandbox = {
         "The `rakazo-computer` template sizes the desktop at 2 vCPU and 4 GB instead of Novita's larger stock desktop. Matebot requires it and won't start computers without it, so build it once with `pnpm sandbox:novita-template`.",
     },
     {
-      question: "Can I use Novita on Rakazo Cloud?",
+      question: "Can I use Novita on a deployment that hosts computers for me?",
       answer:
-        "No. Rakazo Cloud runs its bot computers on [Boat](/sandboxes/boat/). Novita is an option when you [self-host Matebot](/self-hosted-ai-agent/).",
+        "It depends on the server you use. A deployment that hosts bot computers for you may run them on [Boat](/sandboxes/boat/). Novita is an option when you [self-host Matebot](/self-hosted-ai-agent/).",
     },
   ],
   sources: [

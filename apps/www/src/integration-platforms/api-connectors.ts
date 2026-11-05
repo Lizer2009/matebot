@@ -14,7 +14,7 @@ export const apiConnectors: IntegrationPlatform = {
   h1: "Turn any OpenAPI or GraphQL API into tools for your AI agents",
   intro: [
     "Many apps have an API but no MCP server and no ready-made integration. An API connector closes that gap: point it at the API's [OpenAPI](https://www.openapis.org) description or GraphQL endpoint, and each operation becomes a tool an AI agent can call. [integrations.sh](https://integrations.sh) is an open source catalog that helps you find those descriptions.",
-    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, bots use tools in your apps, and each bot also has its own computer. You can use it on Rakazo Cloud or host it yourself. API connectors let your bots use apps that aren't in the [integrations catalog](/integrations/), with only an API key.",
+    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, bots use tools in your apps, and each bot also has its own computer. You can host it yourself or use a deployment someone runs for you. API connectors let your bots use apps that aren't in the [integrations catalog](/integrations/), with only an API key.",
   ],
   scene: {
     bot: "Account Manager",
@@ -68,7 +68,7 @@ export const apiConnectors: IntegrationPlatform = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "Anyone with an account can add an API connector, on Rakazo Cloud or a self-hosted server. The catalog search is an optional setting for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). See [Connect apps](/docs/integrations/) and the [tools and integrations guide](/docs/self-host-integrations/).",
+        "Anyone with an account can add an API connector on their server. The catalog search is an optional setting for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). See [Connect apps](/docs/integrations/) and the [tools and integrations guide](/docs/self-host-integrations/).",
       ],
       steps: [
         "Find the API's OpenAPI document or GraphQL endpoint in its developer docs or on [integrations.sh](https://integrations.sh).",

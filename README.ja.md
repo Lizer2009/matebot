@@ -214,7 +214,7 @@ AppImage を実行してください。
 
 ```bash
 chmod +x Matebot-*.AppImage
-./Rakazo-*.AppImage --appimage-extract-and-run
+./Matebot-*.AppImage --appimage-extract-and-run
 ```
 
 **This computer** は `docker` CLI を探し、Podman は検出しません。`compose` コマンドに対応した別の

@@ -182,7 +182,7 @@ test("setup lays out right to left in Hebrew", async () => {
   const setup = await app.firstWindow();
 
   await expect(setup.locator("html")).toHaveAttribute("dir", "rtl");
-  await expect(setup.getByRole("heading", { name: "ברוכים הבאים ל-Rakazo" })).toBeVisible();
+  await expect(setup.getByRole("heading", { name: "ברוכים הבאים ל-Matebot" })).toBeVisible();
   await expect(setup.getByRole("button", { name: "המשך" })).toBeEnabled();
   await setup.screenshot({
     path: path.join(import.meta.dirname, "screenshots", "11-setup-hebrew.png"),

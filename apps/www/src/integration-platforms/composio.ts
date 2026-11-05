@@ -70,7 +70,7 @@ export const composio: IntegrationPlatform = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). Rakazo Cloud users don't need a Composio account; they [connect apps](/docs/integrations/) from Integrations.",
+        "These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). Users of a deployment that enables the catalog don't need their own Composio account; they [connect apps](/docs/integrations/) from Integrations.",
       ],
       steps: [
         "Create an account at [composio.dev](https://composio.dev) and copy an API key.",

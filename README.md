@@ -235,7 +235,7 @@ FUSE:
 
 ```bash
 chmod +x Matebot-*.AppImage
-./Rakazo-*.AppImage --appimage-extract-and-run
+./Matebot-*.AppImage --appimage-extract-and-run
 ```
 
 **This computer** looks for the `docker` CLI and does not detect Podman. To try another

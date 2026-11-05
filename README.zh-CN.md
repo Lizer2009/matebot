@@ -233,7 +233,7 @@ pnpm --filter @matebot/desktop dev
 
 ```bash
 chmod +x Matebot-*.AppImage
-./Rakazo-*.AppImage --appimage-extract-and-run
+./Matebot-*.AppImage --appimage-extract-and-run
 ```
 
 使用应用菜单中的 **Change Matebot Server…**（更换 Matebot 服务器）重新选择服务器。

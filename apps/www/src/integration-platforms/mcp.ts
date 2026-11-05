@@ -14,7 +14,7 @@ export const mcp: IntegrationPlatform = {
   h1: "Connect MCP servers to your AI agents",
   intro: [
     "The [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is an open standard for connecting AI applications to outside tools and data. An app publishes an MCP server, and any agent that speaks MCP can list its tools and call them. Many apps now host a remote MCP server, so giving an agent their tools takes a URL and a sign-in.",
-    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, bots use tools in your apps, and each bot also has its own computer. You can use it on Rakazo Cloud or host it yourself. Every MCP server you add becomes tools your bots can use, alongside the apps in the [integrations catalog](/integrations/).",
+    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, bots use tools in your apps, and each bot also has its own computer. You can host it yourself or use a deployment someone runs for you. Every MCP server you add becomes tools your bots can use, alongside the apps in the [integrations catalog](/integrations/).",
   ],
   scene: {
     bot: "Bug Triage",
@@ -69,7 +69,7 @@ export const mcp: IntegrationPlatform = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "Anyone with an account can add a remote server, on Rakazo Cloud or a self-hosted server. Stdio servers are for admins of a [self-hosted Matebot](/self-hosted-ai-agent/). See [Connect apps](/docs/integrations/) and the [tools and integrations guide](/docs/self-host-integrations/).",
+        "Anyone with an account can add a remote server on their server. Stdio servers are for admins of a [self-hosted Matebot](/self-hosted-ai-agent/). See [Connect apps](/docs/integrations/) and the [tools and integrations guide](/docs/self-host-integrations/).",
       ],
       steps: [
         "Open **Integrations** from **Connect apps** at the bottom of the sidebar and choose **+**.",

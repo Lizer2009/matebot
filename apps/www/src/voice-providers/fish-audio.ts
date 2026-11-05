@@ -69,7 +69,7 @@ export const fishAudio: VoiceProvider = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "Each person connects their own key in the app, on Rakazo Cloud or a [self-hosted Matebot](/self-hosted-ai-agent/). A space can use different voice settings from the rest of your account.",
+        "Each person connects their own key in the app on a [self-hosted Matebot](/self-hosted-ai-agent/). A space can use different voice settings from the rest of your account.",
       ],
       steps: [
         "Create an API key in your Fish Audio account. To use your own voice, clone it in the Fish Audio app first.",

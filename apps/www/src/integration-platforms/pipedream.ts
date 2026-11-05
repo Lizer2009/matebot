@@ -70,7 +70,7 @@ export const pipedream: IntegrationPlatform = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). Rakazo Cloud users don't need a Pipedream account; they [connect apps](/docs/integrations/) from Integrations.",
+        "These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). Users of a deployment that enables the catalog don't need their own Pipedream account; they [connect apps](/docs/integrations/) from Integrations.",
       ],
       steps: [
         "In [Pipedream](https://pipedream.com), create a project and an OAuth client for its API. Copy the client ID, client secret and project ID.",
