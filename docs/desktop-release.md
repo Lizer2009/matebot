@@ -94,9 +94,12 @@ sudo apt-get update && sudo apt-get install -y --no-install-recommends wine wine
 ```
 
 Pass `-c.win.signExecutable=false` when there is no certificate, as
-`pnpm --filter @matebot/desktop exec electron-builder --win --x64 --publish never -c.win.signExecutable=false`
-does. Without a certificate Windows shows a SmartScreen warning on first launch;
-that is expected, and the release workflow's signed artifacts do not have it.
+`pnpm --filter @matebot/desktop exec electron-builder --win --x64 --publish never "-c.win.signExecutable=false"`
+does. Keep the flag quoted: PowerShell splits an unquoted
+`-c.win.signExecutable=false` at the dot and electron-builder then reads
+`.win.signExecutable=false` as a config file path. Without a certificate Windows
+shows a SmartScreen warning on first launch; that is expected, and the release
+workflow's signed artifacts do not have it.
 
 The `desktop-windows-installer` workflow builds the same unsigned installer on a
 Windows runner for every pull request that touches the desktop app, and uploads

@@ -48,7 +48,11 @@ jobs:
       # Unpackaged, unsigned build: no certificate is configured on a fork, and
       # `release-desktop` is the path that signs and publishes.
       - name: Package the unsigned installer
-        run: pnpm --filter @matebot/desktop exec electron-builder --win --x64 --publish never -c.win.signExecutable=false
+        # `pwsh` splits `-c.win.signExecutable=false` at the dot, handing electron-builder
+        # `.win.signExecutable=false`, which it reads as a config file path. Bash keeps the
+        # flag intact, as it does in `release-desktop`.
+        shell: bash
+        run: pnpm --filter @matebot/desktop exec electron-builder --win --x64 --publish never "-c.win.signExecutable=false"
       - name: Check the installer carries the Matebot name
         shell: pwsh
         run: |
