@@ -209,7 +209,7 @@ pnpm --filter @matebot/desktop pack:win
 ```
 
 出力は `apps/desktop/out/Matebot-Setup-<version>.exe` です。未署名のユーザー単位インストーラーで、
-`%LOCALAPPDATA%\Programs\Matebot` にインストールし、設定は `%APPDATA%\matebot` に保存します。
+`%LOCALAPPDATA%\Programs\Matebot` にインストールし、設定は `%APPDATA%\Matebot` に保存します（Electron が `productName` から決めます）。
 署名と公開はリリースワークフローが行います。[Windows インストーラー](./docs/desktop-release.md#windows-installer)を参照してください。
 
 初回起動時、デスクトップアプリは Matebot をこのコンピューターで動かすか、既存のサーバーに接続するかを

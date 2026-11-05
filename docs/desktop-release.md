@@ -74,7 +74,8 @@ merged pull requests.
 
 The Electron app packages as `Matebot-Setup-<version>.exe`, an interactive NSIS
 installer. It installs per user under `%LOCALAPPDATA%\Programs\Matebot`, creates a
-`Matebot` Start menu shortcut, and keeps the app's profile in `%APPDATA%\matebot`.
+`Matebot` Start menu shortcut, and keeps the app's profile in `%APPDATA%\Matebot`.
+That folder is named from `productName`, not from `extraMetadata.name`.
 Those names come from `productName` and `build.extraMetadata.name` in
 `apps/desktop/package.json`, so renaming the product does not rename an existing
 install's data folder.

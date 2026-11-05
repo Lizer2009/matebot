@@ -201,7 +201,8 @@ pnpm --filter @matebot/desktop pack:win
 ```
 
 That writes `apps/desktop/out/Matebot-Setup-<version>.exe`, an unsigned per-user installer that
-installs under `%LOCALAPPDATA%\Programs\Matebot` and keeps its profile in `%APPDATA%\matebot`.
+installs under `%LOCALAPPDATA%\Programs\Matebot` and keeps its profile in `%APPDATA%\Matebot`,
+which is what Electron derives from `productName`.
 Signing and publishing run in the release workflow. See
 [Windows installer](./docs/desktop-release.md#windows-installer).
 

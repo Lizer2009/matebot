@@ -77,13 +77,16 @@ Packaging names are set where the tooling reads them, and must stay in step:
 | npm scope | every `package.json` | `@matebot/*`, root `matebot` |
 | Electron `productName` | `apps/desktop/package.json` | `Matebot` |
 | macOS bundle id | `apps/desktop/package.json` `build.appId` | `dev.matebot.desktop` |
-| Profile folder / AppData | `apps/desktop/package.json` `build.extraMetadata.name` | `matebot` |
+| Profile folder / AppData | Electron derives it from `productName` | `Matebot` |
 | Windows installer | `build.nsis.artifactName` | `${productName}-Setup-${version}.exe` |
 | Linux executable | `build.linux.executableName` | `matebot` |
 | Expo app name | `apps/mobile/app.json` `expo.name` | `Matebot` |
 
-The desktop app migrates a profile left in the pre-rename folder on first launch, so changing
-`productName` does not strand an existing install's setup.
+Electron names the per-user profile folder after `productName` (`%APPDATA%\Matebot` on Windows,
+`~/.config/Matebot` on Linux, `~/Library/Application Support/Matebot` on macOS), not after
+`extraMetadata.name`. That is why the migration in `user-data-migration.ts` looks for the old
+`Rakazo` folder rather than the current one, and why the desktop app carries a pre-rename profile
+over on first launch instead of stranding an existing install's setup.
 
 Names that deliberately keep their upstream value are listed in
 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#环境变量命名): the `RAKAZO_*` environment variables, the

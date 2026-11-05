@@ -276,7 +276,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | 面 | 现状 |
 | --- | --- |
 | npm 包名 | `@rakazo/*` → `@matebot/*`（21 个工作区包 + 根包 `matebot`），lockfile 已重算 |
-| 桌面外壳 | `productName` `Matebot`、`appId` `dev.matebot.desktop`、`Matebot.exe`、`Matebot-Setup-<version>.exe`、Linux `matebot`、AppData `%APPDATA%\matebot` |
+| 桌面外壳 | `productName` `Matebot`、`appId` `dev.matebot.desktop`、`Matebot.exe`、`Matebot-Setup-<version>.exe`、Linux `matebot`、AppData `%APPDATA%\Matebot` |
 | 桌面配置迁移 | 启动时把旧的 `Rakazo` 配置目录迁到新目录；新旧并存时以新为准 |
 | 桌面更新源 | `publish` 与 release 校验都指向 `Lizer2009/matebot`，避免 Matebot 装成上游应用 |
 | macOS/iOS 图标 | 新增 `packages/ui-tokens/assets/Matebot.icon`（全出血图层），不再使用上游 `Rakazo.icon` |

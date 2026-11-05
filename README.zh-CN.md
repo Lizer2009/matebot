@@ -123,7 +123,7 @@ pnpm --filter @matebot/desktop dev
 pnpm --filter @matebot/desktop pack:win
 ```
 
-输出为 `apps/desktop/out/Matebot-Setup-<version>.exe`：未签名的单用户安装包，安装到 `%LOCALAPPDATA%\Programs\Matebot`，配置保存在 `%APPDATA%\matebot`。签名与发布由 release 工作流完成，见 [Windows 安装包](./docs/desktop-release.md#windows-installer)。
+输出为 `apps/desktop/out/Matebot-Setup-<version>.exe`：未签名的单用户安装包，安装到 `%LOCALAPPDATA%\Programs\Matebot`，配置保存在 `%APPDATA%\Matebot`（由 Electron 依据 `productName` 推导）。签名与发布由 release 工作流完成，见 [Windows 安装包](./docs/desktop-release.md#windows-installer)。
 
 Linux 桌面应用以 AppImage 形式发布，需要 FUSE 2（`libfuse.so.2`）。若发行版只带 FUSE 3（如 Fedora Silverblue 或 Ubuntu 24.04），会出现 `dlopen(): error loading libfuse.so.2`。请安装 FUSE 2 库（Fedora 上为 `fuse-libs`，Ubuntu 24.04 上为 `libfuse2t64`，较旧的 Ubuntu 与 Debian 上为 `libfuse2`），或在不使用 FUSE 的情况下运行：
 
