@@ -1,7 +1,7 @@
 import { constants } from "node:fs";
 import { access } from "node:fs/promises";
 import path from "node:path";
-import { getLogger } from "@rakazo/logging";
+import { getLogger } from "@matebot/logging";
 import type Docker from "dockerode";
 import { COMPUTER_IMAGE_CONTEXT_FILES, isRegistryQualifiedImage } from "./computer-spec.js";
 

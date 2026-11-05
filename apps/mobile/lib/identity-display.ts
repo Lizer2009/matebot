@@ -1,4 +1,4 @@
-import type { IdentityLabels } from "@rakazo/core";
+import type { IdentityLabels } from "@matebot/core";
 import { t } from "./i18n";
 
 export function identityLabels(): IdentityLabels {

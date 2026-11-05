@@ -1,9 +1,9 @@
-import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
-import { VoiceAccountError } from "@rakazo/adapter-kit";
-import type { Actor, BotSettingsValues, VoiceInfo } from "@rakazo/contracts";
-import { ThinkingLevelSchema } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { findDefaultVoiceCredential } from "@rakazo/db";
+import type { AdapterContext, SecretStore } from "@matebot/adapter-kit";
+import { VoiceAccountError } from "@matebot/adapter-kit";
+import type { Actor, BotSettingsValues, VoiceInfo } from "@matebot/contracts";
+import { ThinkingLevelSchema } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { findDefaultVoiceCredential } from "@matebot/db";
 import type { FleetPrepareDeps } from "./fleet-tools.js";
 import { modelLabel } from "./fleet-tools.js";
 import { connectedModelChoices, echoedQuery, resolveModelChoice, words } from "./model-choice.js";

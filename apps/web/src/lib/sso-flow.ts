@@ -1,5 +1,5 @@
 import { t } from "@lingui/core/macro";
-import { newClientId } from "@rakazo/core";
+import { newClientId } from "@matebot/core";
 import { desktopBridge } from "./desktop";
 
 type SsoResult = {

@@ -1,5 +1,5 @@
-import { MCP_OAUTH_CLIENT_REQUIRED } from "@rakazo/contracts";
-import { getLogger } from "@rakazo/logging";
+import { MCP_OAUTH_CLIENT_REQUIRED } from "@matebot/contracts";
+import { getLogger } from "@matebot/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { OAuthMaterial } from "./mcp-oauth.js";
 import {

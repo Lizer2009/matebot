@@ -1,4 +1,4 @@
-import type { LoginFieldInput, RpcInput } from "@rakazo/contracts";
+import type { LoginFieldInput, RpcInput } from "@matebot/contracts";
 import type { MobileMessage } from "./api";
 
 export type ThreadAnswerContext = {

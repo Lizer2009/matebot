@@ -3,15 +3,15 @@ import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { HostScreen } from "@rakazo/adapters/host-screen";
-import { startUserDeviceClient } from "@rakazo/adapters/user-device-client";
+import type { HostScreen } from "@matebot/adapters/host-screen";
+import { startUserDeviceClient } from "@matebot/adapters/user-device-client";
 import type {
   DesktopMenuCommand,
   DesktopReachability,
   DesktopSetup,
   RakazoDesktopDevice,
-} from "@rakazo/contracts";
-import { parseServerHeaders } from "@rakazo/contracts";
+} from "@matebot/contracts";
+import { parseServerHeaders } from "@matebot/contracts";
 import type { Session } from "electron";
 import {
   app,

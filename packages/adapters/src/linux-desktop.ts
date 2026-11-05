@@ -11,8 +11,8 @@ import type {
   ScreenRequest,
   ScreenSession,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
-import type { DesktopEnvironment } from "@rakazo/core/node/desktop-runtime";
+} from "@matebot/adapter-kit";
+import type { DesktopEnvironment } from "@matebot/core/node/desktop-runtime";
 import {
   BROWSER_APPLICATIONS,
   BROWSER_STILL_RUNNING_EXIT,
@@ -27,7 +27,7 @@ import {
   screenPorts,
   shellQuote,
   stopAllDesktopBrowsersCommand,
-} from "@rakazo/core/node/desktop-runtime";
+} from "@matebot/core/node/desktop-runtime";
 import {
   BrowserStillRunningError,
   BrowserStoppedReleaseError,

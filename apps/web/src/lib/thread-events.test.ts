@@ -3,12 +3,12 @@ import type {
   ProductEvent,
   ThreadMessage,
   ThreadSnapshot,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import {
   answerableAskMessageIds,
   dismissableAskMessageIds,
   withLiveStreamingProgress,
-} from "@rakazo/core";
+} from "@matebot/core";
 import { describe, expect, it } from "vitest";
 import {
   activeThreadRuns,

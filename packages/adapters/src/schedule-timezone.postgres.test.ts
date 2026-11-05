@@ -1,5 +1,5 @@
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, createDb, runAsSystem, runAsTenant } from "@rakazo/db";
+import type { PrismaClient } from "@matebot/db";
+import { asSystem, createDb, runAsSystem, runAsTenant } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { changeUserTimezone, createScheduleFromTool } from "./schedule-tools.js";
 

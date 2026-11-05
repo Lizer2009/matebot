@@ -1,4 +1,4 @@
-import type { AdapterContext, ManagedConnectorProvider, SecretStore } from "@rakazo/adapter-kit";
+import type { AdapterContext, ManagedConnectorProvider, SecretStore } from "@matebot/adapter-kit";
 import {
   BOT_SECRET_VALUE_MAX_LENGTH,
   encodeLoginSecret,
@@ -6,10 +6,10 @@ import {
   MessageBlock as MessageBlockSchema,
   normalizeOneTimeCode,
   SecretAskPurpose,
-} from "@rakazo/contracts";
-import { isSecretAskBlock } from "@rakazo/core";
-import type { PrismaClient, RunSecretWriter } from "@rakazo/db";
-import { runCodeKind, runLoginKind, runSecretKind, withTransactionRetry } from "@rakazo/db";
+} from "@matebot/contracts";
+import { isSecretAskBlock } from "@matebot/core";
+import type { PrismaClient, RunSecretWriter } from "@matebot/db";
+import { runCodeKind, runLoginKind, runSecretKind, withTransactionRetry } from "@matebot/db";
 import type { ApprovalPausedToolResult } from "./approval-effect.js";
 import { internalTerminatingResult, resolveDuplicateEffectGate } from "./approval-effect.js";
 import { encodeRunCode, encodeRunLogin, prepareBotSecret } from "./bot-secrets.js";

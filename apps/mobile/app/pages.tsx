@@ -1,7 +1,7 @@
 import { MenuView } from "@expo/ui/community/menu";
-import { PageIcon } from "@rakazo/chat-ui/native";
-import type { PageSummary } from "@rakazo/contracts";
-import { PAGE_TITLE_MAX_LENGTH } from "@rakazo/contracts";
+import { PageIcon } from "@matebot/chat-ui/native";
+import type { PageSummary } from "@matebot/contracts";
+import { PAGE_TITLE_MAX_LENGTH } from "@matebot/contracts";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";

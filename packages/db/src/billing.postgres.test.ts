@@ -1,4 +1,4 @@
-import type { BillingSubscriptionSnapshot } from "@rakazo/adapter-kit";
+import type { BillingSubscriptionSnapshot } from "@matebot/adapter-kit";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   billingAccountForOrganization,

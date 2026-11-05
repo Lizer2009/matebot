@@ -1,7 +1,7 @@
 import type { Api, Context, Message, Model } from "@earendil-works/pi-ai";
-import type { AgentRunRequest } from "@rakazo/adapter-kit";
-import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+import type { AgentRunRequest } from "@matebot/adapter-kit";
+import { DEFAULT_CONTEXT_STRATEGY } from "@matebot/adapter-kit";
+import { getLogger } from "@matebot/logging";
 import { describe, expect, it, vi } from "vitest";
 import { ContextBudgetError, ContextCacheTracker } from "./context-selection.js";
 import { createRuntimeContextPolicy } from "./runtime-context.js";

@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
-import type { JobPublisher, ProductAnalytics, SandboxProvider } from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
-import { cancelComputerRunWork, screenLeaseIdForRun, toComputerRef } from "@rakazo/adapters";
+import type { JobPublisher, ProductAnalytics, SandboxProvider } from "@matebot/adapter-kit";
+import { runContinueJob } from "@matebot/adapter-kit";
+import { cancelComputerRunWork, screenLeaseIdForRun, toComputerRef } from "@matebot/adapters";
 import type {
   Actor,
   GroupMember,
@@ -9,12 +9,12 @@ import type {
   MessageReaction,
   ReplyPreview,
   ThreadSnapshot,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import {
   GROUP_MEMBER_MIN,
   MessageBlock as MessageBlockSchema,
   resolveBotAvatarSet,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import {
   ACTIVE_RUN_STATUSES,
   BACKGROUND_RUN_TRIGGERS,
@@ -29,9 +29,9 @@ import {
   resolveGroupTargetBotIds,
   runFailureError,
   runReadsThreadHistory,
-} from "@rakazo/core";
-import { deriveMessageQuote, messageReplyPreview } from "@rakazo/core/message-quote";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@matebot/core";
+import { deriveMessageQuote, messageReplyPreview } from "@matebot/core/message-quote";
+import type { Prisma, PrismaClient, ThreadEvents } from "@matebot/db";
 import {
   answerWaitingRunWithTextInTransaction,
   appendEventInTransaction,
@@ -47,8 +47,8 @@ import {
   retireWaitingQuestionInTransaction,
   touchGroupUpdatedAt,
   transientRunEventsWhere,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import {
   buildSendPrompt,
   buildUserMessageBlocks,

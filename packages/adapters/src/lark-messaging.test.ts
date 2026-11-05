@@ -1,6 +1,6 @@
 import { createCipheriv, createHash } from "node:crypto";
 import type { HttpInstance } from "@larksuiteoapi/node-sdk";
-import type { AdapterContext, MessagingInboundEvent } from "@rakazo/adapter-kit";
+import type { AdapterContext, MessagingInboundEvent } from "@matebot/adapter-kit";
 import { Message } from "chat";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatSdkMessagingSurface } from "./chat-sdk-surface.js";

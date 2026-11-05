@@ -1,4 +1,4 @@
-import type { LoginFieldInput } from "@rakazo/contracts";
+import type { LoginFieldInput } from "@matebot/contracts";
 import { describe, expect, it, vi } from "vitest";
 import type { ThreadAnswerContext } from "./thread-answer";
 import { answerThreadMessage } from "./thread-answer";

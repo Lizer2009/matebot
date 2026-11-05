@@ -1,5 +1,5 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { isBackgroundRunTrigger } from "@rakazo/core";
+import type { MessageBlock } from "@matebot/contracts";
+import { isBackgroundRunTrigger } from "@matebot/core";
 import { NO_RESPONSE } from "./silent-reply.js";
 import { messageUserMaxLength } from "./user-progress.js";
 

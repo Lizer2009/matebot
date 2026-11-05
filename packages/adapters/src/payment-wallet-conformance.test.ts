@@ -3,8 +3,8 @@ import type {
   PaymentWalletCredential,
   PaymentWalletProvider,
   PurchaseRequest,
-} from "@rakazo/adapter-kit";
-import { PaymentWalletDisconnected, PaymentWalletRequestRejected } from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
+import { PaymentWalletDisconnected, PaymentWalletRequestRejected } from "@matebot/adapter-kit";
 import { Challenge, Credential } from "mppx";
 import { describe, expect, it } from "vitest";
 import { LinkWalletProvider } from "./link-wallet.js";

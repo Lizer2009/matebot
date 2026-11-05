@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
-import type { Actor, SpaceNavigation } from "@rakazo/contracts";
-import type { createGroupRepos, createRepos, PrismaClient } from "@rakazo/db";
+import type { Actor, SpaceNavigation } from "@matebot/contracts";
+import type { createGroupRepos, createRepos, PrismaClient } from "@matebot/db";
 import {
   CannotDeleteDefaultSpaceError,
   CannotDeleteLastSpaceError,
@@ -20,7 +20,7 @@ import {
   SpaceNotFoundError,
   setSpaceSettingOverride,
   spaceSettingOverrides,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { otherSpaceOfBot } from "../bot-space.js";
 import type { RouterDeps } from "../router.js";
 import { listRoutinesDto } from "../routines.js";

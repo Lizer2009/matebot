@@ -9,7 +9,7 @@
 - **`install`**：`pnpm install --frozen-lockfile`，然后 `pnpm db:generate`（与 CI 相同占位 `DATABASE_URL`）。
 - **无默认 `start`**：全栈 `pnpm dev` 需 Postgres、Docker 计算机等，一般在 Agent 会话里按需用 tmux 启动，而非每次 boot 自动拉起。
 
-Monorepo 使用 **pnpm 9**、**Node 22+**（见根 [package.json](../package.json)）。包名仍为 `@rakazo/*`。
+Monorepo 使用 **pnpm 9**、**Node 22+**（见根 [package.json](../package.json)）。包名仍为 `@matebot/*`。
 
 ## 推荐工作流
 

@@ -1,6 +1,6 @@
 import { expo } from "@better-auth/expo";
 import { passkey } from "@better-auth/passkey";
-import type { ProductAnalytics, TransactionalEmailProvider } from "@rakazo/adapter-kit";
+import type { ProductAnalytics, TransactionalEmailProvider } from "@matebot/adapter-kit";
 import {
   displayName,
   emailAllowed,
@@ -10,9 +10,9 @@ import {
   MIN_PASSWORD_LENGTH,
   PRODUCT_DISPLAY_NAME,
   signupPolicyFromEnv,
-} from "@rakazo/core";
-import type { PrismaClient, SecurityEventType } from "@rakazo/db";
-import { bootstrapUserSpace, personalOrganizationIds, recordSecurityEvent } from "@rakazo/db";
+} from "@matebot/core";
+import type { PrismaClient, SecurityEventType } from "@matebot/db";
+import { bootstrapUserSpace, personalOrganizationIds, recordSecurityEvent } from "@matebot/db";
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";

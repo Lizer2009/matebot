@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { CONNECTION_LABEL_MAX_LENGTH } from "@rakazo/contracts";
+import { CONNECTION_LABEL_MAX_LENGTH } from "@matebot/contracts";
 import {
   activeBotId,
   captureScreenshot,

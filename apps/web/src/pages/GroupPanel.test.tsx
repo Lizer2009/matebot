@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import type { Bot, Group } from "@rakazo/contracts";
-import type * as UiWeb from "@rakazo/ui-web";
+import type { Bot, Group } from "@matebot/contracts";
+import type * as UiWeb from "@matebot/ui-web";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -15,7 +15,7 @@ vi.mock("@lingui/react/macro", () => {
 });
 // The alert dialog's Cancel closes it through onOpenChange, as Base UI does.
 let dismissDialog: (() => void) | undefined;
-vi.mock("@rakazo/ui-web", async (importOriginal) => {
+vi.mock("@matebot/ui-web", async (importOriginal) => {
   const { Checkbox } = await importOriginal<typeof UiWeb>();
   return {
     Checkbox,

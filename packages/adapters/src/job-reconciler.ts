@@ -1,11 +1,11 @@
 import { setImmediate } from "node:timers/promises";
-import type { JobPublisher, NotificationProvider } from "@rakazo/adapter-kit";
-import { messagingDeliverJob, routineWakeupJob, runContinueJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { stuckWorkStatusMessages } from "@rakazo/core";
-import type { Pool, PrismaClient, ThreadEvents } from "@rakazo/db";
-import { reconcileComputerRuns } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { JobPublisher, NotificationProvider } from "@matebot/adapter-kit";
+import { messagingDeliverJob, routineWakeupJob, runContinueJob } from "@matebot/adapter-kit";
+import type { MessageBlock } from "@matebot/contracts";
+import { stuckWorkStatusMessages } from "@matebot/core";
+import type { Pool, PrismaClient, ThreadEvents } from "@matebot/db";
+import { reconcileComputerRuns } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import type { PoolClient } from "pg";
 import { returnBotMessageOutcome } from "./bot-messages.js";
 import { reconcileCallRequests } from "./call-request.js";

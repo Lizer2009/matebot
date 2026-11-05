@@ -3,11 +3,11 @@ import type {
   MessagingInboundAttachment,
   MessagingInboundMessage,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { messagingDeliverJob, runContinueJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { ATTACHMENT_MAX_COUNT, isAttachmentAudioMimeType } from "@rakazo/contracts";
-import type { MessagingCommand } from "@rakazo/core";
+} from "@matebot/adapter-kit";
+import { messagingDeliverJob, runContinueJob } from "@matebot/adapter-kit";
+import type { MessageBlock } from "@matebot/contracts";
+import { ATTACHMENT_MAX_COUNT, isAttachmentAudioMimeType } from "@matebot/contracts";
+import type { MessagingCommand } from "@matebot/core";
 import {
   displayName,
   messageBlockForArtifact,
@@ -15,7 +15,7 @@ import {
   parseMessagingCommand,
   promptTextForAttachments,
   sanitizeMessagingLabel,
-} from "@rakazo/core";
+} from "@matebot/core";
 import type {
   MessagingIdentityRequest,
   Prisma,
@@ -23,14 +23,14 @@ import type {
   ProvisionedMessagingIdentity,
   SignupPolicyEnv,
   ThreadEvents,
-} from "@rakazo/db";
+} from "@matebot/db";
 import {
   createThreadMessage,
   crossSpaceCommunicationAllowed,
   normalizeMessagingLinkCode,
   redeemMessagingLinkCode,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import type { MessagingReceipts } from "./messaging-receipts.js";
 import {
   MESSAGE_ROUTING_REARMED_REASON,

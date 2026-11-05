@@ -1,9 +1,9 @@
-import type { RunErrorKind } from "@rakazo/contracts";
+import type { RunErrorKind } from "@matebot/contracts";
 import {
   COMPUTER_ALLOWANCE_USED_ERROR,
   COMPUTER_RATE_LIMIT_ERROR,
   providerQuotaResetAt,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import { stuckWorkStatusMessages } from "./stuck-work.js";
 
 export const MISSING_TOOL_FINAL_RESPONSE_ERROR =

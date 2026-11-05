@@ -3,8 +3,8 @@ import {
   CONNECTOR_AUTH_UNAVAILABLE,
   isVoiceAccountErrorCode,
   MCP_OAUTH_CLIENT_REQUIRED,
-} from "@rakazo/contracts";
-import type { CredentialField } from "@rakazo/core";
+} from "@matebot/contracts";
+import type { CredentialField } from "@matebot/core";
 import {
   authErrorMessage,
   CALL_NOT_RINGING_ERROR,
@@ -12,7 +12,7 @@ import {
   MODEL_IMAGE_INPUT_ERROR,
   MODEL_IMAGE_INPUT_UNKNOWN,
   userErrorMessage,
-} from "@rakazo/core";
+} from "@matebot/core";
 
 /** Text for a failure: human messages pass through; network and implementation detail become copy. */
 export function errorText(error: unknown, fallback = t`Something went wrong. Try again.`): string {

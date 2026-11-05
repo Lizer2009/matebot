@@ -1,4 +1,4 @@
-import type { DesktopUpdateState } from "@rakazo/contracts";
+import type { DesktopUpdateState } from "@matebot/contracts";
 import { t } from "./i18n.js";
 import { reportDesktopError } from "./monitoring.js";
 

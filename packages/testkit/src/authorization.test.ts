@@ -6,9 +6,9 @@ import {
   ExpoPushProvider,
   FakeComposioClient,
   PrismaPushTokenStore,
-} from "@rakazo/adapters";
-import type { createApp } from "@rakazo/api/app";
-import type { appContract, Space, SpaceNavigation } from "@rakazo/contracts";
+} from "@matebot/adapters";
+import type { createApp } from "@matebot/api/app";
+import type { appContract, Space, SpaceNavigation } from "@matebot/contracts";
 import {
   claimSpaceDeletionForMember,
   deleteClaimedSpaceForMember,
@@ -19,7 +19,7 @@ import {
   runAsSystem,
   runAsTenant,
   setSpaceSettingOverride,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { BotIntroHarness } from "./discard-bot-intro.js";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
@@ -56,7 +56,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-authz-"));
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@matebot/api/app");
     handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       encryptionKey,

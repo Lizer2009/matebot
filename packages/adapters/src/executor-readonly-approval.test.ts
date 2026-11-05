@@ -4,14 +4,14 @@ import type {
   BrowserProvider,
   ConnectorCall,
   ConnectorTool,
-} from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
-import type { ModelRoleSettings } from "@rakazo/contracts";
-import type { ActionApprovalRule } from "@rakazo/core";
-import { inboundRoutineBlock } from "@rakazo/core";
-import { approvalEffectKey, toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
-import type { PrismaClient } from "@rakazo/db";
-import { createPendingSteeringRun, sendUserMessage } from "@rakazo/db";
+} from "@matebot/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@matebot/adapter-kit";
+import type { ModelRoleSettings } from "@matebot/contracts";
+import type { ActionApprovalRule } from "@matebot/core";
+import { inboundRoutineBlock } from "@matebot/core";
+import { approvalEffectKey, toolEffectIdempotencyKey } from "@matebot/core/node/approval-effect-key";
+import type { PrismaClient } from "@matebot/db";
+import { createPendingSteeringRun, sendUserMessage } from "@matebot/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DENIED_ACTION_ERROR, isApprovalPausedResult } from "./approval-effect.js";
 import { MAX_SHARED_MEMORY_CHARS } from "./builtin-tools.js";

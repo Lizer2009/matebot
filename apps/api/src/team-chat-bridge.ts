@@ -4,14 +4,14 @@ import type {
   TeamChatInboundMessage,
   TeamChatSendRequest,
   TeamChatSendResult,
-} from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { ATTACHMENT_MAX_COUNT, AutomatedSenderPoliciesSchema } from "@rakazo/contracts";
-import { botMessageMaxHops, messageBlockForArtifact, promptTextForAttachments } from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { clearEndedRunState, teamChatRunClientNonce } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import { runContinueJob } from "@matebot/adapter-kit";
+import type { MessageBlock } from "@matebot/contracts";
+import { ATTACHMENT_MAX_COUNT, AutomatedSenderPoliciesSchema } from "@matebot/contracts";
+import { botMessageMaxHops, messageBlockForArtifact, promptTextForAttachments } from "@matebot/core";
+import type { PrismaClient, ThreadEvents } from "@matebot/db";
+import { clearEndedRunState, teamChatRunClientNonce } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import type { MessagingReceipts } from "./messaging-receipts.js";
 import type { TeamChatEngagementJudge } from "./team-chat-judge.js";
 import {

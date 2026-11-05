@@ -1,6 +1,6 @@
 /**
  * Export Matebot favicons from branding/matebot-icon-source.jpg (Matebot fork).
- * Run: pnpm --filter @rakazo/ui-tokens export:matebot
+ * Run: pnpm --filter @matebot/ui-tokens export:matebot
  */
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";

@@ -14,7 +14,7 @@ import type {
   RealtimeFanout,
   SandboxProvider,
   TransactionalEmailProvider,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   SandboxAllowanceUsedError,
   SandboxDamagedError,
@@ -22,7 +22,7 @@ import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   VoiceAccountError,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import type {
   ComposioProvider,
   ConnectorRegistry,
@@ -30,7 +30,7 @@ import type {
   PluginTextReader,
   RemoteConnectorDependencies,
   UserDeviceGateway,
-} from "@rakazo/adapters";
+} from "@matebot/adapters";
 import {
   applyMessagingOutboundStatus,
   auditLogConfig,
@@ -102,16 +102,16 @@ import {
   userDeviceInternalAddress,
   verifyModelServesAgents,
   withSecretPersistence,
-} from "@rakazo/adapters";
-import { createAuth, isBlockedAuthPath, loopbackTwinOrigins } from "@rakazo/auth";
-import type { Actor, AuthCapabilities } from "@rakazo/contracts";
+} from "@matebot/adapters";
+import { createAuth, isBlockedAuthPath, loopbackTwinOrigins } from "@matebot/auth";
+import type { Actor, AuthCapabilities } from "@matebot/contracts";
 import {
   isLocalhostOrLoopbackIp,
   PLUGIN_SUBMISSIONS_PATH,
   SERVER_BUILD_HEADER,
-} from "@rakazo/contracts";
-import { encryptionKeyWarning, signupPolicyFromEnv } from "@rakazo/core";
-import type { Pool, PrismaClient } from "@rakazo/db";
+} from "@matebot/contracts";
+import { encryptionKeyWarning, signupPolicyFromEnv } from "@matebot/core";
+import type { Pool, PrismaClient } from "@matebot/db";
 import {
   configureProviderTransactionPool,
   createBoardEvents,
@@ -132,17 +132,17 @@ import {
   runAsSystem,
   securityEventRetentionDays,
   verifyContentKeys,
-} from "@rakazo/db";
-import type { Logger } from "@rakazo/logging";
+} from "@matebot/db";
+import type { Logger } from "@matebot/logging";
 import {
   createServiceLogger,
   enrichLogContext,
   getLogger,
   installLogger,
   SERVICE_NAMES,
-} from "@rakazo/logging";
-import { markExpectedFailure, requestLogging } from "@rakazo/logging/hono";
-import { MarkdownMemoryStore } from "@rakazo/memory";
+} from "@matebot/logging";
+import { markExpectedFailure, requestLogging } from "@matebot/logging/hono";
+import { MarkdownMemoryStore } from "@matebot/memory";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { deleteAccountContent } from "./account-deletion.js";

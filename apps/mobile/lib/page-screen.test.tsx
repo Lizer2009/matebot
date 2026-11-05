@@ -54,7 +54,7 @@ vi.mock("expo-router", () => ({
   }),
 }));
 vi.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ top: 0 }) }));
-vi.mock("@rakazo/chat-ui/native", () => ({
+vi.mock("@matebot/chat-ui/native", () => ({
   useNativeLinkConfirm: () => (url: string) => host.opened.push(url),
 }));
 vi.mock("../components/native-symbol", () => ({ NativeSymbol: () => null }));

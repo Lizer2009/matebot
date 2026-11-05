@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
-import { BOT_AVATAR_COLORS } from "@rakazo/core";
+import { BOT_AVATAR_COLORS } from "@matebot/core";
 import { captureScreenshot } from "./helpers";
 
 test.use({ viewport: { width: 1260, height: 1000 } });

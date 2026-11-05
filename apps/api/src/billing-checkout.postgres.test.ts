@@ -1,8 +1,8 @@
-import type { BillingCreditCheckoutRequest } from "@rakazo/adapter-kit";
-import { BillingEmulator } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, createDb } from "@rakazo/db";
+import type { BillingCreditCheckoutRequest } from "@matebot/adapter-kit";
+import { BillingEmulator } from "@matebot/adapters";
+import type { Actor } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { asSystem, createDb } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createBillingService } from "./billing.js";
 

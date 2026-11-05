@@ -1,4 +1,4 @@
-import { EmailEmulator } from "@rakazo/adapters";
+import { EmailEmulator } from "@matebot/adapters";
 import { describe, expect, it, vi } from "vitest";
 import { marketingEmailRoutes, sendWelcomeEmail, unsubscribeUrl } from "./marketing-email.js";
 

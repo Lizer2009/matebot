@@ -5,7 +5,7 @@ import type {
   ComputerRef,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   computerControlExpireJobKey,
   SandboxAllowanceUsedError,
@@ -13,24 +13,24 @@ import {
   SandboxSizeUnavailableError,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
-} from "@rakazo/adapter-kit";
-import type { ComputerSize, ComputerUpdate } from "@rakazo/contracts";
+} from "@matebot/adapter-kit";
+import type { ComputerSize, ComputerUpdate } from "@matebot/contracts";
 import {
   ACTIVE_RUN_STATUSES,
   abortableDelay,
   isRetryableError,
   parseScreenLeaseId,
   screenLeaseId,
-} from "@rakazo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@matebot/core";
+import type { Prisma, PrismaClient, ThreadEvents } from "@matebot/db";
 import {
   expireComputerExecutionLeases,
   parseComputerMode,
   planComputerSize,
   recordComputerRunEnd,
   recordComputerRunStart,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import {
   clearInactiveUserComputerControl,
   expireComputerControl,

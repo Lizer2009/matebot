@@ -1,4 +1,4 @@
-import { fontWeight, MAX_FONT_SCALE } from "@rakazo/ui-tokens";
+import { fontWeight, MAX_FONT_SCALE } from "@matebot/ui-tokens";
 import { Text, useWindowDimensions, View } from "react-native";
 import type { UserMentionTarget } from "../lib/message-mentions";
 import { BotAvatar } from "./bot-avatar";

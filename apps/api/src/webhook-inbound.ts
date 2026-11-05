@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
-import type { JobPublisher, SecretStore } from "@rakazo/adapter-kit";
-import { runContinueJob, SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import { inboundRoutineModelPin } from "@rakazo/adapters";
-import type { MessageBlock } from "@rakazo/contracts";
-import { escapePromptData, inboundRoutineBlock, messageBlockForArtifact } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { JobPublisher, SecretStore } from "@matebot/adapter-kit";
+import { runContinueJob, SecretStoreUnavailableError } from "@matebot/adapter-kit";
+import { inboundRoutineModelPin } from "@matebot/adapters";
+import type { MessageBlock } from "@matebot/contracts";
+import { escapePromptData, inboundRoutineBlock, messageBlockForArtifact } from "@matebot/core";
+import type { PrismaClient } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 
 export const WEBHOOK_MAX_BODY_BYTES = 64 * 1024;
 export const WEBHOOK_SECRET_KIND = "webhook";

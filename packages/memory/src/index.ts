@@ -10,10 +10,10 @@ import type {
   MemorySnapshot,
   MemoryStore,
   PortableFile,
-} from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
-import { Prisma, withTransactionRetry } from "@rakazo/db";
+} from "@matebot/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@matebot/adapter-kit";
+import type { PrismaClient } from "@matebot/db";
+import { Prisma, withTransactionRetry } from "@matebot/db";
 
 export class MarkdownMemoryStore implements MemoryStore {
   constructor(private readonly prisma: PrismaClient) {}

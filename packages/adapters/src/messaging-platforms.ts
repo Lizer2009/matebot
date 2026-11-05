@@ -13,8 +13,8 @@ import {
   WhatsAppApiError,
 } from "@chat-adapter/whatsapp";
 import type { HttpInstance } from "@larksuiteoapi/node-sdk";
-import type { MessagingInboundMessage, MessagingOutboundStatus } from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+import type { MessagingInboundMessage, MessagingOutboundStatus } from "@matebot/adapter-kit";
+import { getLogger } from "@matebot/logging";
 import type { Adapter } from "chat";
 import { ConsoleLogger, convertEmojiPlaceholders, markdownToPlainText } from "chat";
 import { createSendblueAdapter } from "chat-adapter-sendblue";

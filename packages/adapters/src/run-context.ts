@@ -7,13 +7,13 @@ import type {
   SandboxProvider,
   SemanticMemoryProvider,
   WebProvider,
-} from "@rakazo/adapter-kit";
-import type { ComputerMode, MessageBlock } from "@rakazo/contracts";
-import { createStreamingRedactor } from "@rakazo/core";
-import { toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
-import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@rakazo/db";
-import { dropRunTurnCheckpoint, saveRunTurnCheckpoint } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import type { ComputerMode, MessageBlock } from "@matebot/contracts";
+import { createStreamingRedactor } from "@matebot/core";
+import { toolEffectIdempotencyKey } from "@matebot/core/node/approval-effect-key";
+import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@matebot/db";
+import { dropRunTurnCheckpoint, saveRunTurnCheckpoint } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import type {
   ApprovalPausedToolResult,
   ApprovedEffectReplayQueue,

@@ -1,6 +1,6 @@
 import type { ToolkitConnectionState } from "@composio/core";
-import type { AdapterContext, ConnectorEvent, ConnectorTool } from "@rakazo/adapter-kit";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import type { AdapterContext, ConnectorEvent, ConnectorTool } from "@matebot/adapter-kit";
+import { createLogger, createTestSink, installLogger } from "@matebot/logging";
 import { describe, expect, it, vi } from "vitest";
 import { composioToolkitDirectory } from "./composio-catalog-cache.js";
 import {

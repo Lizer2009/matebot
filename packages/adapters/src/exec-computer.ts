@@ -8,9 +8,9 @@ import type {
   ComputerRef,
   PortableFile,
   ProcessEvent,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
-import { COMPUTER_CACHE_ENV } from "@rakazo/core/node/desktop-runtime";
+} from "@matebot/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@matebot/core";
+import { COMPUTER_CACHE_ENV } from "@matebot/core/node/desktop-runtime";
 import { normalizeWorkspacePath, shellQuote, workspacePath } from "./computer-support.js";
 import { sandboxCommandArgv } from "./sandbox-command-environment.js";
 import {

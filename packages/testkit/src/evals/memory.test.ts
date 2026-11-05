@@ -1,4 +1,4 @@
-import { BOT_MEMORY_MAX_BYTES } from "@rakazo/contracts";
+import { BOT_MEMORY_MAX_BYTES } from "@matebot/contracts";
 import { describe, expect, it } from "vitest";
 import type { Evidence } from "./cases.js";
 import { EMPTY_SETTINGS } from "./cases.js";

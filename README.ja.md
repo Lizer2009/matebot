@@ -193,7 +193,7 @@ Electron アプリと Expo アプリは、Web アプリと同じ Rakazo API を�
 開発用スタックを起動した状態で、次のコマンドで Electron を起動します。
 
 ```bash
-pnpm --filter @rakazo/desktop dev
+pnpm --filter @matebot/desktop dev
 ```
 
 初回起動時、デスクトップアプリは Rakazo をこのコンピューターで動かすか、既存のサーバーに接続するかを

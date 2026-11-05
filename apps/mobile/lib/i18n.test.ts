@@ -152,10 +152,10 @@ describe("mobile i18n", () => {
     const { JA_MESSAGES } = await import("./locales/ja");
     const { ES_MESSAGES } = await import("./locales/es");
     const { EMPTY_PLUGIN_CATALOG_MESSAGE, SLASH_ACTIONS, RUN_ERROR_LIMIT_MESSAGES } = await import(
-      "@rakazo/core"
+      "@matebot/core"
     );
     const { AI_DATA_DISCLOSURES, OPENAI_COMPATIBLE_BASE_URL_HINT } = await import(
-      "@rakazo/contracts"
+      "@matebot/contracts"
     );
     const { createMenuItems } = await import("./create-chooser");
     const mobileRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -237,7 +237,7 @@ describe("mobile i18n", () => {
     ["ru", "Ваш поставщик моделей не ответил вовремя. Повторите попытку."],
     ["zh-CN", "你的模型提供商响应超时。请重试。"],
   ] as const)("renders provider errors in %s", async (locale, expected) => {
-    const { normalizeRunError } = await import("@rakazo/core");
+    const { normalizeRunError } = await import("@matebot/core");
     const { resetI18nForTests, t, dateLocaleForUi } = await import("./i18n");
     resetI18nForTests(locale);
     expect(normalizeRunError("Request timed out", t, dateLocaleForUi()).summary).toBe(expected);

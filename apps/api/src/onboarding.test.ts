@@ -1,10 +1,10 @@
-import type * as db from "@rakazo/db";
-import { appendEventInTransaction } from "@rakazo/db";
+import type * as db from "@matebot/db";
+import { appendEventInTransaction } from "@matebot/db";
 import { describe, expect, it, vi } from "vitest";
 import { chooseFocus, markAppConnected, promptFocus } from "./onboarding.js";
 
 const posted = vi.hoisted(() => [] as Array<{ blocks: unknown[]; markUnread?: boolean }>);
-vi.mock("@rakazo/db", async (original) => ({
+vi.mock("@matebot/db", async (original) => ({
   ...(await original<typeof db>()),
   createThreadMessageInTransaction: vi.fn(async (_tx, input) => {
     posted.push(input);

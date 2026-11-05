@@ -1,6 +1,6 @@
 import { t } from "@lingui/core/macro";
-import { isLocalhostOrLoopbackIp } from "@rakazo/contracts";
-import { COMPUTER_SCREEN_PATH } from "@rakazo/contracts/content-security-policy";
+import { isLocalhostOrLoopbackIp } from "@matebot/contracts";
+import { COMPUTER_SCREEN_PATH } from "@matebot/contracts/content-security-policy";
 import { errorText } from "./user-error";
 
 export interface ComputerScreenResult {

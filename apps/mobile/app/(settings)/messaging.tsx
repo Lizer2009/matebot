@@ -5,8 +5,8 @@ import type {
   MessagingChannelMembership,
   MessagingInstallationsStatus,
   MessagingStatus,
-} from "@rakazo/contracts";
-import { messagingConnectOptions, messagingProviderName } from "@rakazo/core";
+} from "@matebot/contracts";
+import { messagingConnectOptions, messagingProviderName } from "@matebot/core";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { AppState, Linking, ScrollView, StyleSheet, Text, View } from "react-native";

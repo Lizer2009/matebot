@@ -2,7 +2,7 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
-**Matebot** is this repository’s product name: a personal second Grok-style bot and online [Cursor](https://cursor.com) coding teammate, deployable without relying on a local desktop. The codebase is a fork of **[Rakazo](https://github.com/elie222/rakazo)** (Apache-2.0). Upstream attribution, `@rakazo/*` packages, and infrastructure names are preserved on purpose.
+**Matebot** is this repository’s product name: a personal second Grok-style bot and online [Cursor](https://cursor.com) coding teammate, deployable without relying on a local desktop. The codebase is a fork of **[Rakazo](https://github.com/elie222/rakazo)** (Apache-2.0). Upstream attribution, `@matebot/*` packages, and infrastructure names are preserved on purpose.
 
 - Fork plan: [docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md)
 - Deployment: [docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md)
@@ -213,7 +213,7 @@ The Electron and Expo apps are clients of the same Rakazo API used by the web ap
 With the development stack running, launch Electron with:
 
 ```bash
-pnpm --filter @rakazo/desktop dev
+pnpm --filter @matebot/desktop dev
 ```
 
 On first run the desktop app asks whether to run Rakazo on this computer or connect to an existing

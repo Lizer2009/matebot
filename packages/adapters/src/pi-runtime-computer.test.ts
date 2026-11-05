@@ -1,5 +1,5 @@
-import type { ConnectorTool } from "@rakazo/adapter-kit";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import type { ConnectorTool } from "@matebot/adapter-kit";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fakeAgentState = vi.hoisted(() => ({

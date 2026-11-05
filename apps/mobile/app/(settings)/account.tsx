@@ -1,6 +1,6 @@
 import { MenuView } from "@expo/ui/community/menu";
-import type { AccountSecurity, UsageSummary } from "@rakazo/contracts";
-import { accountDisplay, displayName } from "@rakazo/core";
+import type { AccountSecurity, UsageSummary } from "@matebot/contracts";
+import { accountDisplay, displayName } from "@matebot/core";
 import * as Notifications from "expo-notifications";
 import type { Href } from "expo-router";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";

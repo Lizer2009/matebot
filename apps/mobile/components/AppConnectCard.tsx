@@ -1,6 +1,6 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { appConnectedInput, waitForConnection } from "@rakazo/core";
-import { fontWeight, typeScale } from "@rakazo/ui-tokens";
+import type { MessageBlock } from "@matebot/contracts";
+import { appConnectedInput, waitForConnection } from "@matebot/core";
+import { fontWeight, typeScale } from "@matebot/ui-tokens";
 import { useEffect, useRef, useState } from "react";
 import type { ViewProps } from "react-native";
 import { Linking, Text, View } from "react-native";

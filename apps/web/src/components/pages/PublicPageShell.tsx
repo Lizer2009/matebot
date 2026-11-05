@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
-import { Button } from "@rakazo/ui-web";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
+import { Button } from "@matebot/ui-web";
 import { Check, Link } from "lucide-react";
 import { useState } from "react";
 import { useCopyText } from "../../lib/copy-text";

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { BackgroundJob } from "@rakazo/adapter-kit";
-import { createDb, createThreadEvents, runAsSystem, runAsTenant } from "@rakazo/db";
+import type { BackgroundJob } from "@matebot/adapter-kit";
+import { createDb, createThreadEvents, runAsSystem, runAsTenant } from "@matebot/db";
 import { describe, expect, it, vi } from "vitest";
 import { reconcileCallRequests, requestUserCall, settleCallRequest } from "./call-request.js";
 

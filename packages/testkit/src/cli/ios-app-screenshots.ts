@@ -265,7 +265,7 @@ function startMetro(apiUrl: string, outDir: string) {
     name: "Metro",
     args: [
       "--filter",
-      "@rakazo/mobile",
+      "@matebot/mobile",
       "exec",
       "expo",
       "start",
@@ -289,7 +289,7 @@ function startMetro(apiUrl: string, outDir: string) {
 function startScreenRelay(apiUrl: string, outDir: string) {
   return startServer({
     name: "The screen relay",
-    args: ["--filter", "@rakazo/web", "exec", "vite"],
+    args: ["--filter", "@matebot/web", "exec", "vite"],
     port: SCREEN_RELAY_PORT,
     log: path.join(outDir, "screen-relay.log"),
     // These win over any values in the repository's .env.

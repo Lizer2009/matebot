@@ -1,14 +1,14 @@
 import { createHash } from "node:crypto";
-import type { ArtifactStore, MessagingInboundAttachment } from "@rakazo/adapter-kit";
-import { createAdapterContext } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
+import type { ArtifactStore, MessagingInboundAttachment } from "@matebot/adapter-kit";
+import { createAdapterContext } from "@matebot/adapter-kit";
+import type { Actor } from "@matebot/contracts";
 import {
   ARTIFACT_NAME_MAX_LENGTH,
   ATTACHMENT_MAX_BYTES,
   attachmentMaxCount,
   attachmentSizeLabel,
   isAttachmentAudioMimeType,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import {
   AttachmentValidationError,
   decodeAttachmentBase64,
@@ -16,9 +16,9 @@ import {
   messageBlockForArtifact,
   promptTextForAttachments,
   validateAttachmentMimeType,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { IsolationError, Prisma, withResolvedArtifactVersion } from "@rakazo/db";
+} from "@matebot/core";
+import type { PrismaClient } from "@matebot/db";
+import { IsolationError, Prisma, withResolvedArtifactVersion } from "@matebot/db";
 
 export async function createOwnedArtifact(
   deps: {

@@ -1,5 +1,5 @@
-import { isPrivateNetworkHost } from "@rakazo/contracts";
-import { cancelResponseBody, readBoundedJsonResponse, withAbort } from "@rakazo/core";
+import { isPrivateNetworkHost } from "@matebot/contracts";
+import { cancelResponseBody, readBoundedJsonResponse, withAbort } from "@matebot/core";
 import { t } from "./i18n";
 import { DEFAULT_API, LOCAL_API } from "./server-config";
 

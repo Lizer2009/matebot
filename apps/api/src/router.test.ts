@@ -4,14 +4,14 @@ import path from "node:path";
 import type { InferRouterInitialContext } from "@orpc/server";
 import { createRouterClient } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
-import type { ManagedConnectorProvider } from "@rakazo/adapter-kit";
+import type { ManagedConnectorProvider } from "@matebot/adapter-kit";
 import {
   ConnectorAuthUnavailableError,
   routineWakeupJob,
   SecretStoreUnavailableError,
-} from "@rakazo/adapter-kit";
-import type { McpOAuthSummary } from "@rakazo/adapters";
-import * as adapters from "@rakazo/adapters";
+} from "@matebot/adapter-kit";
+import type { McpOAuthSummary } from "@matebot/adapters";
+import * as adapters from "@matebot/adapters";
 import {
   COMPUTER_SCREEN_UNAVAILABLE,
   CodexCatalogCache,
@@ -28,22 +28,22 @@ import {
   parseModelSecret,
   screenLeaseIdForRun,
   serializeModelSecret,
-} from "@rakazo/adapters";
-import type { Actor, Bot, ProductEvent } from "@rakazo/contracts";
+} from "@matebot/adapters";
+import type { Actor, Bot, ProductEvent } from "@matebot/contracts";
 import {
   CONNECTOR_AUTH_UNAVAILABLE,
   MCP_OAUTH_CLIENT_REQUIRED,
   MODEL_KEY_FORMAT_ERROR,
   REPLY_QUOTE_MAX_LENGTH,
-} from "@rakazo/contracts";
-import { openScreenCapability } from "@rakazo/core/node/screen-capability";
-import type { PrismaClient } from "@rakazo/db";
+} from "@matebot/contracts";
+import { openScreenCapability } from "@matebot/core/node/screen-capability";
+import type { PrismaClient } from "@matebot/db";
 import {
   AnswerTooLongError,
   configureProviderTransactionPool,
   runProviderTransaction,
-} from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { createLogger, createTestSink, installLogger } from "@matebot/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mainRole, withModelRoles } from "../../../packages/adapters/src/testing/model-roles.js";
 import type { RouterDeps } from "./router.js";

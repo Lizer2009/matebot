@@ -4,7 +4,7 @@ import http from "node:http";
 import net from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { resolveSupervisorToken } from "@rakazo/core";
+import { resolveSupervisorToken } from "@matebot/core";
 import type Docker from "dockerode";
 import { describe, expect, it, vi } from "vitest";
 import {

@@ -11,7 +11,7 @@
 | Indigo (primary ink) | `#312E81` |
 | Teal (accent) | `#0D9488` |
 
-The app UI remains on shared semantic tokens from `@rakazo/ui-tokens`; these hex values define the **mark** and fork documentation.
+The app UI remains on shared semantic tokens from `@matebot/ui-tokens`; these hex values define the **mark** and fork documentation.
 
 ## Mark
 
@@ -39,11 +39,11 @@ Do not substitute a different logo or revert to earlier mascot-style marks.
 Regenerate web/desktop/mobile icon sizes from the sources:
 
 ```bash
-pnpm --filter @rakazo/ui-tokens export:matebot
+pnpm --filter @matebot/ui-tokens export:matebot
 ```
 
 ## Product title in code
 
-Customer-facing shell strings use `PRODUCT_DISPLAY_NAME` from `@rakazo/core` (`packages/core/src/product-brand.ts`). npm packages remain `@rakazo/*` in this fork phase.
+Customer-facing shell strings use `PRODUCT_DISPLAY_NAME` from `@matebot/core` (`packages/core/src/product-brand.ts`). npm packages remain `@matebot/*` in this fork phase.
 
 The same constant names what a bot calls itself where the model sees it: the runtime's fallback system prompt, its subagent framing, the automated-message label, the product help skill in the `/` picker, and the name onboarding gives a space's first bot. Those are the strings behind a "who are you?" answer, so a fork answers as itself instead of as upstream.

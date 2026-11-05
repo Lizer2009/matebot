@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { i18n } from "@lingui/core";
 import { formatter } from "@lingui/format-po";
-import { RUN_ERROR_LIMIT_MESSAGES } from "@rakazo/core";
+import { RUN_ERROR_LIMIT_MESSAGES } from "@matebot/core";
 import { beforeEach, describe, expect, it } from "vitest";
 import { UI_LOCALES } from "./ui-locale";
 

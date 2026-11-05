@@ -1,4 +1,4 @@
-import { newClientId } from "@rakazo/core";
+import { newClientId } from "@matebot/core";
 import Constants from "expo-constants";
 import { requireOptionalNativeModule } from "expo-modules-core";
 import * as Notifications from "expo-notifications";

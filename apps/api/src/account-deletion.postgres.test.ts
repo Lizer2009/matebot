@@ -9,14 +9,14 @@ import type {
   JobPublisher,
   PortableFile,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   checkpointAndRecordComputerWorkspace,
   ObjectAgentHomeStore,
   PrismaAgentHomeRecords,
   teamBrowserProfileName,
-} from "@rakazo/adapters";
-import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@rakazo/db";
+} from "@matebot/adapters";
+import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@matebot/db";
 import {
   asSystem,
   ContentKeyRing,
@@ -28,7 +28,7 @@ import {
   lockSpaceForContentCreation,
   runAsSystem,
   SpaceDeletionInProgressError,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryObjectStorage } from "../../../packages/adapters/src/object-storage.test-support.js";
 import { deleteAccountContent } from "./account-deletion.js";

@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button, buttonVariants, toast } from "@rakazo/ui-web";
+import { Button, buttonVariants, toast } from "@matebot/ui-web";
 import { Star } from "lucide-react";
 
 // Separate keys so a count written by another tab can never undo a dismissal.

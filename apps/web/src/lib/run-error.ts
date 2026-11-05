@@ -1,5 +1,5 @@
 import { i18n } from "@lingui/core";
-import type { RunErrorTranslator } from "@rakazo/core";
+import type { RunErrorTranslator } from "@matebot/core";
 
 /** Static descriptors keep shared run-error messages in Lingui extraction. */
 export const translateRunError: RunErrorTranslator = (message, values) => {

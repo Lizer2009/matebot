@@ -96,7 +96,7 @@ Rakazo uses two Postgres logins:
   superuser, cannot bypass row-level security, cannot create objects, and can only read and write
   the app tables.
 
-`pnpm db:migrate` (in containers, its prebuilt form `pnpm --filter @rakazo/api db:deploy`, which the
+`pnpm db:migrate` (in containers, its prebuilt form `pnpm --filter @matebot/api db:deploy`, which the
 one-shot `migrate` container runs before the API starts) applies the migrations and the job queue
 schema as the owner. Only that container gets the owner login, so code running in the API or
 worker cannot find one that bypasses row-level security. It then creates the app login named in `DATABASE_URL`, or updates its

@@ -1,4 +1,4 @@
-import { pageKitPalette, webDarkTokens, webLightTokens } from "@rakazo/ui-tokens";
+import { pageKitPalette, webDarkTokens, webLightTokens } from "@matebot/ui-tokens";
 import { useSyncExternalStore } from "react";
 import type { DiagramEdge, DiagramNode } from "./diagram.js";
 import { layoutDiagram } from "./diagram.js";

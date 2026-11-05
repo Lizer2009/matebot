@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button } from "@rakazo/ui-web";
+import { Button } from "@matebot/ui-web";
 import { Download } from "lucide-react";
 
 /**

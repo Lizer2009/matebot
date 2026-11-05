@@ -9,9 +9,9 @@ import type {
   AgentModelOAuthCredential,
   ModelCredentialFailedState,
   ModelCredentialRetireReason,
-} from "@rakazo/adapter-kit";
-import { canonicalPiProviderId } from "@rakazo/contracts";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import { canonicalPiProviderId } from "@matebot/contracts";
+import { getLogger } from "@matebot/logging";
 import {
   OAUTH_ACCOUNT_CHANGED_ERROR,
   OAUTH_RECONNECT_REQUIRED_ERROR,

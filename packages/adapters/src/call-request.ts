@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { JobPublisher, NotificationProvider } from "@rakazo/adapter-kit";
-import { callExpireJob } from "@rakazo/adapter-kit";
-import type { IncomingBotCall, MessageBlock } from "@rakazo/contracts";
-import { resolveBotAvatarSet } from "@rakazo/contracts";
-import type { CallRequestBlock } from "@rakazo/core";
+import type { JobPublisher, NotificationProvider } from "@matebot/adapter-kit";
+import { callExpireJob } from "@matebot/adapter-kit";
+import type { IncomingBotCall, MessageBlock } from "@matebot/contracts";
+import { resolveBotAvatarSet } from "@matebot/contracts";
+import type { CallRequestBlock } from "@matebot/core";
 import {
   CALL_CLIENT_NONCE_PREFIX,
   callIdFromClientNonce,
@@ -12,14 +12,14 @@ import {
   callRequestClientNonce,
   phoneCallSettings,
   ringingCall,
-} from "@rakazo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@matebot/core";
+import type { Prisma, PrismaClient, ThreadEvents } from "@matebot/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
   runAsSystem,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { isUniqueViolation, publishMessage, runLeaseFor } from "./run-messages.js";
 

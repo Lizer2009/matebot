@@ -1,4 +1,4 @@
-import { liveMessageComposing, withLiveStreamingProgress } from "@rakazo/core";
+import { liveMessageComposing, withLiveStreamingProgress } from "@matebot/core";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { MobileSnapshot } from "./api";

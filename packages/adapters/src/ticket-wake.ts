@@ -1,8 +1,8 @@
-import type { JobPublisher } from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
-import { isTicketCompletedStatus, TicketStatusSchema } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { JobPublisher } from "@matebot/adapter-kit";
+import { runContinueJob } from "@matebot/adapter-kit";
+import { isTicketCompletedStatus, TicketStatusSchema } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 
 /** Assignment wakes only its current owner, without posting a chat message. */
 export async function wakeTicketAssignee(

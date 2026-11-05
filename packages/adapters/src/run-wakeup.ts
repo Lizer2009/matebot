@@ -5,11 +5,11 @@ import type {
   JobPublisher,
   JobWorkerHost,
   RealtimeFanout,
-} from "@rakazo/adapter-kit";
-import { dispatchBackgroundJob } from "@rakazo/adapter-kit";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import { endTakeoverWaits, isTooManyDatabaseConnections, runAsSystem } from "@rakazo/db";
-import { getLogger, runCorrelatedJob } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import { dispatchBackgroundJob } from "@matebot/adapter-kit";
+import type { Prisma, PrismaClient } from "@matebot/db";
+import { endTakeoverWaits, isTooManyDatabaseConnections, runAsSystem } from "@matebot/db";
+import { getLogger, runCorrelatedJob } from "@matebot/logging";
 import type { Pool } from "pg";
 import { RunExecutionHost } from "./run-execution.js";
 import { findRunRecoveryBlockers } from "./run-recovery.js";

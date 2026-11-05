@@ -1,8 +1,8 @@
 import { Trans } from "@lingui/react/macro";
-import type { SharedPage } from "@rakazo/contracts";
-import { pageShareTokenFromSlug, SHARED_PAGE_PATH_PREFIX } from "@rakazo/contracts";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
-import { Button, buttonVariants, Spinner } from "@rakazo/ui-web";
+import type { SharedPage } from "@matebot/contracts";
+import { pageShareTokenFromSlug, SHARED_PAGE_PATH_PREFIX } from "@matebot/contracts";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
+import { Button, buttonVariants, Spinner } from "@matebot/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";

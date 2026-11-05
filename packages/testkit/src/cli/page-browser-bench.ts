@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { PageBrowserCommand, PageBrowserResult } from "@rakazo/adapter-kit";
+import type { PageBrowserCommand, PageBrowserResult } from "@matebot/adapter-kit";
 import type { DriverRun, Submission } from "../page-browser-bench/tasks.js";
 import {
   comparisonTable,

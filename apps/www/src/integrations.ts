@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import type { PluginCategory } from "@rakazo/core";
-import { PLUGIN_CATEGORIES } from "@rakazo/core";
+import type { PluginCategory } from "@matebot/core";
+import { PLUGIN_CATEGORIES } from "@matebot/core";
 import { z } from "zod";
 import { CATALOG_URL, INTEGRATION_CLAIMS_URL, SITE_URL } from "./site";
 

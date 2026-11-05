@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import type { Bot, MemoryDocument } from "@rakazo/contracts";
+import type { Bot, MemoryDocument } from "@matebot/contracts";
 import {
   activeBotId,
   captureScreenshot,

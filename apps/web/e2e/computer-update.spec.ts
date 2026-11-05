@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { ComputerUpdate } from "@rakazo/contracts";
+import type { ComputerUpdate } from "@matebot/contracts";
 import {
   activeBotId,
   captureScreenshot,

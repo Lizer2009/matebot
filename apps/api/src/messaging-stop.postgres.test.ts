@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
-import type { MessagingInboundMessage } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+import type { MessagingInboundMessage } from "@matebot/adapter-kit";
+import type { PrismaClient } from "@matebot/db";
 import {
   asSystem,
   createDb,
   createThreadEvents,
   provisionMessagingIdentity,
   runAsSystem,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMessagingInboundHandler } from "./messaging-inbound.js";
 import { STOPPED_BY_MESSAGE_NOTE } from "./thread-target.js";

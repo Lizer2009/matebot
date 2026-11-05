@@ -1,21 +1,21 @@
-import type { SandboxProvider } from "@rakazo/adapter-kit";
-import type * as Adapters from "@rakazo/adapters";
-import { BillingEmulator, sandboxAllowance } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import { BYOK_TIERS } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { SandboxProvider } from "@matebot/adapter-kit";
+import type * as Adapters from "@matebot/adapters";
+import { BillingEmulator, sandboxAllowance } from "@matebot/adapters";
+import type { Actor } from "@matebot/contracts";
+import { BYOK_TIERS } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
 import {
   asSystem,
   billingAccountForOrganization,
   createDb,
   planComputerSize,
   spaceHasModelAccess,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createBillingService } from "./billing.js";
 
 // Computer use is read from runs and deployment settings that other suites share; tests set it.
-vi.mock("@rakazo/adapters", async (importOriginal) => ({
+vi.mock("@matebot/adapters", async (importOriginal) => ({
   ...(await importOriginal<typeof Adapters>()),
   sandboxAllowance: vi.fn(async () => null),
 }));

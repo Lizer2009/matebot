@@ -1,4 +1,4 @@
-import type { AgentImportFile } from "@rakazo/contracts";
+import type { AgentImportFile } from "@matebot/contracts";
 import type { AgentImportParse, SkillFiles } from "./shared.js";
 import { byPath, fileMap, instructionItem, memoryItem, skillItems } from "./shared.js";
 import { isHermesDefault } from "./stock.js";

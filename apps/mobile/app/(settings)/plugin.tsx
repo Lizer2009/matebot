@@ -5,14 +5,14 @@ import type {
   McpServer,
   PluginPart,
   PluginPreview,
-} from "@rakazo/contracts";
-import { PluginPreviewSchema } from "@rakazo/contracts";
+} from "@matebot/contracts";
+import { PluginPreviewSchema } from "@matebot/contracts";
 import {
   catalogItemKey,
   connectCatalogItem,
   installedPluginParts,
   isCatalogItemConnected,
-} from "@rakazo/core";
+} from "@matebot/core";
 import type { NativeStackNavigationOptions } from "expo-router";
 import {
   Redirect,

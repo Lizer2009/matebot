@@ -1,6 +1,6 @@
-import type { BillingProvider } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { BillingProvider } from "@matebot/adapter-kit";
+import type { Actor } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
 import { describe, expect, it, vi } from "vitest";
 import { createBillingService } from "./billing.js";
 

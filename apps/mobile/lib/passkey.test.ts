@@ -1,4 +1,4 @@
-import { passkeyOfferDismissedKey } from "@rakazo/core";
+import { passkeyOfferDismissedKey } from "@matebot/core";
 import * as SecureStore from "expo-secure-store";
 import { Alert } from "react-native";
 import { create, get, isSupported } from "react-native-passkeys";

@@ -19,7 +19,7 @@ import type {
   SpaceNavigation,
   ThreadMessage,
   ThreadSnapshot,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import {
   accountSecuritySchema,
   authCapabilitiesSchema,
@@ -27,8 +27,8 @@ import {
   IncomingBotCallSchema,
   legacyAccountSecurity,
   legacyAuthCapabilitiesSchema,
-} from "@rakazo/contracts";
-import type { ThreadHistory } from "@rakazo/core";
+} from "@matebot/contracts";
+import type { ThreadHistory } from "@matebot/core";
 import {
   aiConsentTarget,
   aiDataUsesForProcedure,
@@ -58,8 +58,8 @@ import {
   updateCloudAgentMessages,
   upsertMessageById,
   withAbort,
-} from "@rakazo/core";
-import { clientCorrelationHeaders, responseCorrelation } from "@rakazo/logging/monitoring";
+} from "@matebot/core";
+import { clientCorrelationHeaders, responseCorrelation } from "@matebot/logging/monitoring";
 import * as SecureStore from "expo-secure-store";
 import { promptAiConsent } from "./ai-consent";
 import type { EndpointResult } from "./endpoint";

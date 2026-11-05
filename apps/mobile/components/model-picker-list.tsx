@@ -1,6 +1,6 @@
-import { withConnectionName } from "@rakazo/contracts";
-import type { ChatModelChoice } from "@rakazo/core";
-import { groupModelChoices, modelChoiceSearchText } from "@rakazo/core";
+import { withConnectionName } from "@matebot/contracts";
+import type { ChatModelChoice } from "@matebot/core";
+import { groupModelChoices, modelChoiceSearchText } from "@matebot/core";
 import { useNavigation } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import type { ViewToken } from "react-native";

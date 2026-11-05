@@ -1,5 +1,5 @@
-import type { IncomingBotCall, SpaceBot, SpaceNavigation } from "@rakazo/contracts";
-import type { ringingCall } from "@rakazo/core";
+import type { IncomingBotCall, SpaceBot, SpaceNavigation } from "@matebot/contracts";
+import type { ringingCall } from "@matebot/core";
 import {
   abortableDelay,
   callIsRinging,
@@ -7,7 +7,7 @@ import {
   nextIncomingCall,
   respondToIncomingCall,
   retryDelayMs,
-} from "@rakazo/core";
+} from "@matebot/core";
 import { requireOptionalNativeModule } from "expo-modules-core";
 import * as Notifications from "expo-notifications";
 import { AppState, Platform } from "react-native";
@@ -28,7 +28,7 @@ type Ringing = NonNullable<ReturnType<typeof ringingCall>>;
 export function usesNativeIncomingCallRingtone() {
   return Platform.OS === "ios" && native !== null;
 }
-export type { IncomingBotCall } from "@rakazo/contracts";
+export type { IncomingBotCall } from "@matebot/contracts";
 
 type NativeAction = { action: "answer" | "end"; callId: string; botId: string; expiresAt: string };
 type NativeCalls = {

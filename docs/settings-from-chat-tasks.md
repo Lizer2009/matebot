@@ -105,7 +105,7 @@ rest on demand. Every step is measured with tool-choice evals before and after.
       started the run, offered only on runs they started. Read by omitting
       fields. Voice and model preferences stay out: each is tied to a
       connection and its catalog, not a simple value.
-- Theme stays out: it is device-local (`@rakazo/ui-tokens` appearance
+- Theme stays out: it is device-local (`@matebot/ui-tokens` appearance
   preference), not an account setting.
 - [ ] Eval cases for each preference and for refused ones (email, billing).
 

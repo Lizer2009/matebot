@@ -1,4 +1,4 @@
-import { usableModelId } from "@rakazo/contracts";
+import { usableModelId } from "@matebot/contracts";
 import { vi } from "vitest";
 
 type RoleRow = {

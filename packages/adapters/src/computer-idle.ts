@@ -4,7 +4,7 @@ import type {
   ComputerRef,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import {
   computerSleepJob,
   runJobKey,
@@ -12,10 +12,10 @@ import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   WorkspaceTooLargeError,
-} from "@rakazo/adapter-kit";
-import { COMPUTER_ALLOWANCE_USED_ERROR } from "@rakazo/contracts";
-import { QUEUE_HOLDING_RUN_STATUSES, withAbort } from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@matebot/adapter-kit";
+import { COMPUTER_ALLOWANCE_USED_ERROR } from "@matebot/contracts";
+import { QUEUE_HOLDING_RUN_STATUSES, withAbort } from "@matebot/core";
+import type { PrismaClient, ThreadEvents } from "@matebot/db";
 import {
   appendEventInTransaction,
   clearEndedExecutionRunBinding,
@@ -23,8 +23,8 @@ import {
   createThreadMessageInTransaction,
   recordComputerRunEnd,
   recordComputerRunSeen,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { activeCodingAgent } from "./coding-agent-activity.js";
 import { expireComputerControl, hasActiveComputerControl } from "./computer-control.js";
 import { diskUpdate, measureComputerDisk } from "./computer-disk.js";

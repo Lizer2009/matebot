@@ -1,5 +1,5 @@
 import { t } from "@lingui/core/macro";
-import { agentImportErrorReason } from "@rakazo/contracts";
+import { agentImportErrorReason } from "@matebot/contracts";
 import { translateRunError } from "./run-error";
 
 function errorProvider(error: unknown): string {

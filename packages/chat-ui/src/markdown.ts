@@ -1,7 +1,7 @@
 /// <reference path="./linkify-it.d.ts" />
 
-import type { MessageBlock } from "@rakazo/contracts";
-import { urlSite } from "@rakazo/core/egress";
+import type { MessageBlock } from "@matebot/contracts";
+import { urlSite } from "@matebot/core/egress";
 import LinkifyIt from "linkify-it";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useSyncExternalStore } from "react";

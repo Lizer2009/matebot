@@ -8,9 +8,9 @@ import type {
   VoiceSynthesizeRequest,
   VoiceTranscribeRequest,
   VoiceVerifyResult,
-} from "@rakazo/adapter-kit";
-import { VoiceAccountError } from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import { VoiceAccountError } from "@matebot/adapter-kit";
+import { getLogger } from "@matebot/logging";
 import {
   readVoiceAudio,
   readVoiceJson,

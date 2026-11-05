@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import type { HostScreen } from "@rakazo/adapters/host-screen";
+import type { HostScreen } from "@matebot/adapters/host-screen";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   createDesktopHostScreen,

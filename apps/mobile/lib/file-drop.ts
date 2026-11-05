@@ -1,4 +1,4 @@
-import { ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_COUNT } from "@rakazo/contracts";
+import { ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_COUNT } from "@matebot/contracts";
 import { requireOptionalNativeModule } from "expo-modules-core";
 
 export type DroppedFile = { uri?: string; name: string; mimeType: string; size: number };

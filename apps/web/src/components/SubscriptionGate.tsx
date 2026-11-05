@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import type { BillingStatus, Me } from "@rakazo/contracts";
-import { Dialog, DialogContent } from "@rakazo/ui-web";
+import type { BillingStatus, Me } from "@matebot/contracts";
+import { Dialog, DialogContent } from "@matebot/ui-web";
 import type { ReactNode } from "react";
 import { createContext, Suspense, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";

@@ -1,6 +1,6 @@
 import type { Request } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import {
   captureScreenshot,
   completeOnboarding,

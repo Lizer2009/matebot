@@ -41,7 +41,7 @@ vi.mock("react-native-svg", () => ({
 vi.mock("expo-router", () => ({
   useRouter: () => ({ push: (href: unknown) => host.pressed.push(href) }),
 }));
-vi.mock("@rakazo/chat-ui/native", () => ({ PageIcon: () => null }));
+vi.mock("@matebot/chat-ui/native", () => ({ PageIcon: () => null }));
 vi.mock("../components/sandboxed-html-preview", () => ({
   SandboxedHtmlPreview: () => createElement("iframe"),
 }));

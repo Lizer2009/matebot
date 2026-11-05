@@ -1,10 +1,10 @@
-import type { ClientOperation, MonitoringConfig } from "@rakazo/logging/monitoring";
+import type { ClientOperation, MonitoringConfig } from "@matebot/logging/monitoring";
 import {
   createClientErrorReporter,
   isMonitoringUserId,
   nativeMonitoringDsn,
   sanitizeMonitoringEvent,
-} from "@rakazo/logging/monitoring";
+} from "@matebot/logging/monitoring";
 import type * as ElectronSentry from "@sentry/electron/main";
 import { configureNativeCrashReporting, disableNativeCrashReporting } from "./native-crashes.js";
 

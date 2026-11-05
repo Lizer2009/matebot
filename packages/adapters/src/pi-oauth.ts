@@ -10,7 +10,7 @@ import type {
   ModelCredentialFailedState,
   ModelCredentialRetireReason,
   SecretStore,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import type {
   ModelApiProtocol,
   ModelContextLimits,
@@ -18,7 +18,7 @@ import type {
   ModelOAuthSignInMode,
   SettingsScope,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import {
   canonicalPiProviderId,
   MAX_MODEL_CONTEXT_WINDOW,
@@ -27,10 +27,10 @@ import {
   ModelContextLimitsSchema,
   parseModelHeaders,
   ThinkingLevelSchema,
-} from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { retireModelCredential, runAsSystem, runAsTenant } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { retireModelCredential, runAsSystem, runAsTenant } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { createManualAnthropicOAuthLogin } from "./pi-anthropic-oauth.js";
 
 export const CHATGPT_OAUTH_PROVIDER = "openai-codex";

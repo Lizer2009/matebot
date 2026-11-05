@@ -3,7 +3,7 @@ import {
   APP_CONTENT_SECURITY_POLICY,
   CSP_REPORTING_ENDPOINTS,
   HTML_VIEWER_PATH,
-} from "@rakazo/contracts/content-security-policy";
+} from "@matebot/contracts/content-security-policy";
 import { describe, expect, it } from "vitest";
 import {
   bundledRendererCandidates,

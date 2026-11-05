@@ -8,7 +8,7 @@ Maestro flows in `catalog.json`, and writes PNGs plus a static `index.html` gall
 ## Run
 
 You need Maestro on `PATH`, a running Postgres server, and a booted simulator
-with a debug build of the app installed (`pnpm --filter @rakazo/mobile ios`
+with a debug build of the app installed (`pnpm --filter @matebot/mobile ios`
 builds and installs one).
 
 ```sh

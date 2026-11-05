@@ -1,5 +1,5 @@
 import { createTelegramAdapter } from "@chat-adapter/telegram";
-import type { AdapterContext, MessagingInboundEvent } from "@rakazo/adapter-kit";
+import type { AdapterContext, MessagingInboundEvent } from "@matebot/adapter-kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ChatSdkMessagingSurface } from "./chat-sdk-surface.js";
 import type { MessagingEnvironmentValues } from "./messaging-platforms.js";

@@ -22,7 +22,7 @@ import {
   savedCatalogSelections,
   scriptedCatalogEntry,
   validateConnectedModelChoice,
-} from "@rakazo/adapters";
+} from "@matebot/adapters";
 import type {
   Actor,
   ModelCatalogEntry,
@@ -30,14 +30,14 @@ import type {
   ModelRoleChoice,
   ModelRoleSettings,
   ModelRoleView,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import {
   appContract,
   canonicalPiProviderId,
   modelSupportsRole,
   OPENAI_COMPATIBLE_PROVIDER_ID,
-} from "@rakazo/contracts";
-import { createGroupRepos, createRepos, recordSecurityEvent, runAsTenant } from "@rakazo/db";
+} from "@matebot/contracts";
+import { createGroupRepos, createRepos, recordSecurityEvent, runAsTenant } from "@matebot/db";
 import { createAgentImportServices } from "../agent-import-services.js";
 import { createAgentSkillsService } from "../agent-skills.js";
 import { createBotRemoval } from "../bot-removal.js";

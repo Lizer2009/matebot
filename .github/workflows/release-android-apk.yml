@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Verify mobile project
-        run: pnpm --filter @rakazo/mobile check
+        run: pnpm --filter @matebot/mobile check
 
       # Without Firebase config the APK never registers for push, and an OTA update can't add it.
       - name: Require Firebase config

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { COMPUTER_SCREEN_RUNTIME_PATH } from "@rakazo/contracts/content-security-policy";
+import { COMPUTER_SCREEN_RUNTIME_PATH } from "@matebot/contracts/content-security-policy";
 import { describe, expect, it } from "vitest";
 
 const composeDir = path.resolve(import.meta.dirname, "../../compose");

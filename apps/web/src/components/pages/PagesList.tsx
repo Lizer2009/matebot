@@ -1,8 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { PageIcon } from "@rakazo/chat-ui/web";
-import type { PageSummary } from "@rakazo/contracts";
-import { PAGE_TITLE_MAX_LENGTH } from "@rakazo/contracts";
-import { uniquePages } from "@rakazo/core";
+import { PageIcon } from "@matebot/chat-ui/web";
+import type { PageSummary } from "@matebot/contracts";
+import { PAGE_TITLE_MAX_LENGTH } from "@matebot/contracts";
+import { uniquePages } from "@matebot/core";
 import {
   Button,
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
   SectionHeading,
   Spinner,
-} from "@rakazo/ui-web";
+} from "@matebot/ui-web";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Globe, MoreHorizontal, Search } from "lucide-react";
 import { useDeferredValue, useState } from "react";

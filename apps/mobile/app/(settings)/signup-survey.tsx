@@ -1,5 +1,5 @@
-import type { SignupSurvey as SignupSurveyAnswers } from "@rakazo/contracts";
-import { signupSurveyAsksTeamSize } from "@rakazo/contracts";
+import type { SignupSurvey as SignupSurveyAnswers } from "@matebot/contracts";
+import { signupSurveyAsksTeamSize } from "@matebot/contracts";
 
 import { useRef, useState } from "react";
 import {

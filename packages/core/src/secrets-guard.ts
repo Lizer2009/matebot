@@ -164,7 +164,7 @@ export function timingSafeStringEqual(supplied: string | undefined, expected: st
  * Constant-time bearer comparison, shared by every privileged sidecar.
  *
  * Deliberately not `node:crypto`'s `timingSafeEqual`: this module is reachable from the web bundle
- * through `@rakazo/core`, and importing `node:crypto` here fails the production Vite build. The XOR
+ * through `@matebot/core`, and importing `node:crypto` here fails the production Vite build. The XOR
  * accumulation inspects every byte no matter where the first difference falls. Length is compared
  * first because a length mismatch is already observable from the response.
  */

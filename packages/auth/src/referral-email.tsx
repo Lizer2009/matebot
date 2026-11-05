@@ -1,6 +1,6 @@
 /** @jsxRuntime automatic */
-import type { TransactionalEmail } from "@rakazo/adapter-kit";
-import { INVITED_TRIAL_WEEKS } from "@rakazo/contracts";
+import type { TransactionalEmail } from "@matebot/adapter-kit";
+import { INVITED_TRIAL_WEEKS } from "@matebot/contracts";
 import { Link, Text } from "react-email";
 import { emailText, greeting, linkStyle, message } from "./email.js";
 

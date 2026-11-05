@@ -1,8 +1,8 @@
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import type { BotAvatarSet } from "@rakazo/contracts";
-import { resolveBotAvatarSet } from "@rakazo/contracts";
-import { SHIPPED_BOT_AVATAR_SHAPE_KEYS } from "@rakazo/core";
+import type { BotAvatarSet } from "@matebot/contracts";
+import { resolveBotAvatarSet } from "@matebot/contracts";
+import { SHIPPED_BOT_AVATAR_SHAPE_KEYS } from "@matebot/core";
 import {
   BOT_AVATAR_COLORS,
   BotAvatar,
@@ -21,8 +21,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@rakazo/ui-web";
-import { Button } from "@rakazo/ui-web/components/ui/button";
+} from "@matebot/ui-web";
+import { Button } from "@matebot/ui-web/components/ui/button";
 import { Check, Pencil, Upload, X } from "lucide-react";
 import type { ClipboardEvent, DragEvent } from "react";
 import { useRef, useState } from "react";

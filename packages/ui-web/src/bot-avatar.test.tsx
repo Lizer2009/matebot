@@ -1,4 +1,4 @@
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
+import { ACTIVE_RUN_STATUSES } from "@matebot/core";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {

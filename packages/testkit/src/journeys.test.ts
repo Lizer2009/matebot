@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { runJobKey } from "@rakazo/adapter-kit";
+import { runJobKey } from "@matebot/adapter-kit";
 import {
   ComposioConnector,
   createScheduleFromTool,
@@ -13,18 +13,18 @@ import {
   listPiCatalog,
   organizeBot,
   toComputerRef,
-} from "@rakazo/adapters";
-import type { createApp } from "@rakazo/api/app";
-import type { MessageBlock } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, ONCE_ROUTINE_CRON, resolveScreenProxySecret } from "@rakazo/core";
-import { openScreenCapability } from "@rakazo/core/node/screen-capability";
+} from "@matebot/adapters";
+import type { createApp } from "@matebot/api/app";
+import type { MessageBlock } from "@matebot/contracts";
+import { ACTIVE_RUN_STATUSES, ONCE_ROUTINE_CRON, resolveScreenProxySecret } from "@matebot/core";
+import { openScreenCapability } from "@matebot/core/node/screen-capability";
 import {
   appendEvent,
   createThreadEvents,
   createThreadMessage,
   RunHistoryWriteError,
   runAsSystem,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { BotIntroHarness } from "./discard-bot-intro.js";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
@@ -127,7 +127,7 @@ describeJourneys("required product journeys", () => {
   }
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@matebot/api/app");
     const handles = await createApp({
       modelConnectionFetch: createModelConnectionFixtureFetch(listPiCatalog()),
       databaseUrl: process.env.DATABASE_URL!,

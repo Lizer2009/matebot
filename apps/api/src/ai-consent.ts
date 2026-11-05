@@ -7,15 +7,15 @@ import {
   resolveMemberMainModel,
   selectConfiguredModel,
   toStringRecord,
-} from "@rakazo/adapters";
+} from "@matebot/adapters";
 import type {
   Actor,
   AiConsentQuery,
   AiConsentStatus,
   AiRecipient,
   SettingsScope,
-} from "@rakazo/contracts";
-import { AI_DISCLOSURE_VERSION, AI_PRIVACY_URL } from "@rakazo/contracts";
+} from "@matebot/contracts";
+import { AI_DISCLOSURE_VERSION, AI_PRIVACY_URL } from "@matebot/contracts";
 import {
   findDefaultVoiceCredential,
   findModelCredential,
@@ -24,7 +24,7 @@ import {
   listVoicePreferences,
   modelRoleTarget,
   voicePreferenceTarget,
-} from "@rakazo/db";
+} from "@matebot/db";
 import type { RouterDeps } from "./router.js";
 import { resolveThreadTarget } from "./thread-target.js";
 import { voiceCredentialServer } from "./voice.js";

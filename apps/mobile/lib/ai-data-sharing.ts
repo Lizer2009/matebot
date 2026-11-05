@@ -1,4 +1,4 @@
-import type { AiConsentStatus, AiRecipient } from "@rakazo/contracts";
+import type { AiConsentStatus, AiRecipient } from "@matebot/contracts";
 
 export function aiDataSharingPlaceholder(status: AiConsentStatus | null, loadFailed: boolean) {
   if (!status) return loadFailed ? "failed" : "loading";

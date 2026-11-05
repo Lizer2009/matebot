@@ -4,7 +4,7 @@ import type {
   BotMcpServer,
   CapabilityInstall,
   McpServer,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
 test("Integrations installs a plugin, completes real broker OAuth against a fake provider, and removes its children", async ({

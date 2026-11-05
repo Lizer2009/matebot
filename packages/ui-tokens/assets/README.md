@@ -24,7 +24,7 @@ The platform exports are:
 Refresh platform exports after changing the source. Android supplies its own mask;
 never bake Mac corners, a rim, or an outer shadow into adaptive layers.
 
-Run `pnpm --filter @rakazo/ui-tokens export:brand` to refresh the web and marketing
+Run `pnpm --filter @matebot/ui-tokens export:brand` to refresh the web and marketing
 favicons, install icons, marketing mark, Windows/Linux icons, mobile splash, and
 mobile web favicon. These use the same orange foreground with the shared dark
 background, a rounded mask for small browser marks, and transparent splash padding.

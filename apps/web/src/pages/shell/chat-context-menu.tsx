@@ -1,4 +1,4 @@
-import type { Bot, BotSection, Group } from "@rakazo/contracts";
+import type { Bot, BotSection, Group } from "@matebot/contracts";
 import { lazyOverlay } from "../../components/ErrorBoundary";
 import type { createSpaceRpc } from "../../lib/rpc";
 import type { ShellDialogsState } from "./shell-dialogs";

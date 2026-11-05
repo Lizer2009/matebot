@@ -1,9 +1,9 @@
-import type { SignupSurvey } from "@rakazo/contracts";
+import type { SignupSurvey } from "@matebot/contracts";
 import {
   SIGNUP_SURVEY_TEAM_SIZES,
   signupSurveyAsksTeamSize,
   signupSurveyTeamSizeLabel,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 
 export type SignupSurveyTeamSize = (typeof SIGNUP_SURVEY_TEAM_SIZES)[number];
 

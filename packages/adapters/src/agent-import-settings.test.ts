@@ -1,4 +1,4 @@
-import { agentImportUpload, readAgentImportFolder } from "@rakazo/core";
+import { agentImportUpload, readAgentImportFolder } from "@matebot/core";
 import { describe, expect, it } from "vitest";
 import {
   intervalCron,

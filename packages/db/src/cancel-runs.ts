@@ -1,4 +1,4 @@
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
+import { ACTIVE_RUN_STATUSES } from "@matebot/core";
 import type { Prisma } from "./client.js";
 import { clearEndedRunState } from "./run-secrets.js";
 

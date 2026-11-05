@@ -5,7 +5,7 @@ import {
   recognitionLocaleTag,
   speechLocaleTag,
   withAbort,
-} from "@rakazo/core";
+} from "@matebot/core";
 import { desktopBridge } from "./desktop.js";
 import { DesktopSpeechRecognition } from "./desktop-speech.js";
 import { getActiveUiLocale } from "./i18n.js";

@@ -2,7 +2,7 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
-**Matebot** 是本仓库的产品名：个人第二个 Grok 风格 Bot，以及无需本地电脑即可在线迭代的 [Cursor](https://cursor.com) 编程队友。代码 fork 自 **[Rakazo](https://github.com/elie222/rakazo)**（Apache-2.0），刻意保留上游署名、`@rakazo/*` 包名与基础设施命名。
+**Matebot** 是本仓库的产品名：个人第二个 Grok 风格 Bot，以及无需本地电脑即可在线迭代的 [Cursor](https://cursor.com) 编程队友。代码 fork 自 **[Rakazo](https://github.com/elie222/rakazo)**（Apache-2.0），刻意保留上游署名、`@matebot/*` 包名与基础设施命名。
 
 - 分叉计划：[docs/MATEBOT_PLAN.md](./docs/MATEBOT_PLAN.md)
 - 部署记录：[docs/MATEBOT_DEPLOY.md](./docs/MATEBOT_DEPLOY.md)
@@ -214,7 +214,7 @@ Electron 和 Expo 应用都是 Rakazo API 的客户端，与网页版使用同�
 开发服务启动后，使用以下命令启动 Electron：
 
 ```bash
-pnpm --filter @rakazo/desktop dev
+pnpm --filter @matebot/desktop dev
 ```
 
 首次运行时，桌面应用会询问是在本机运行 Rakazo，还是连接已有服务器。

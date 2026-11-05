@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import type * as SlackAdapterModule from "@chat-adapter/slack";
-import type { AdapterContext, MessagingInboundMessage } from "@rakazo/adapter-kit";
+import type { AdapterContext, MessagingInboundMessage } from "@matebot/adapter-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatSdkMessagingSurface } from "./chat-sdk-surface.js";
 import { messagingPlatformsFromEnv } from "./messaging-platforms.js";

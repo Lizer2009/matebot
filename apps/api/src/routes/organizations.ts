@@ -11,7 +11,7 @@ import {
   runAsSystem,
   SharedOrganizationError,
   SpaceDeletionInProgressError,
-} from "@rakazo/db";
+} from "@matebot/db";
 import { deleteOrganization } from "../account-deletion.js";
 import type { RouterContext } from "./context.js";
 

@@ -1,8 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { TransactionalEmailProvider } from "@rakazo/adapter-kit";
-import { emailLocale, welcomeEmail } from "@rakazo/auth";
-import type { PrismaClient } from "@rakazo/db";
-import { runAsSystem } from "@rakazo/db";
+import type { TransactionalEmailProvider } from "@matebot/adapter-kit";
+import { emailLocale, welcomeEmail } from "@matebot/auth";
+import type { PrismaClient } from "@matebot/db";
+import { runAsSystem } from "@matebot/db";
 import { Hono } from "hono";
 
 export const UNSUBSCRIBE_PATH = "/api/v1/email/unsubscribe";

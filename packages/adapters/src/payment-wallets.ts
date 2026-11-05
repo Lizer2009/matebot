@@ -3,11 +3,11 @@ import type {
   PaymentWalletCredential,
   PaymentWalletProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { PaymentWalletDisconnected, SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import type { PaymentWalletStatus } from "@rakazo/contracts";
-import type { PaymentWallet, Prisma, PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@matebot/adapter-kit";
+import { PaymentWalletDisconnected, SecretStoreUnavailableError } from "@matebot/adapter-kit";
+import type { PaymentWalletStatus } from "@matebot/contracts";
+import type { PaymentWallet, Prisma, PrismaClient } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { deleteSecretBestEffort, holdSecretNotifications } from "./secret-store-factory.js";
 
 export interface PaymentWalletDeps {

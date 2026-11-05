@@ -8,4 +8,4 @@ into `Assets.car` for Tahoe and generates `icon.icns` for older macOS versions.
 `icon-macos.png` is the matching development export with Dock margins.
 
 `icon.png` and `icon.ico` are matching orange exports for Linux and Windows.
-Refresh them with `pnpm --filter @rakazo/ui-tokens export:brand`.
+Refresh them with `pnpm --filter @matebot/ui-tokens export:brand`.

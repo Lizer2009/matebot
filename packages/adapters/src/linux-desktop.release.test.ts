@@ -1,5 +1,5 @@
-import type { AdapterContext, ComputerRef } from "@rakazo/adapter-kit";
-import { BROWSER_STILL_RUNNING_EXIT } from "@rakazo/core/node/desktop-runtime";
+import type { AdapterContext, ComputerRef } from "@matebot/adapter-kit";
+import { BROWSER_STILL_RUNNING_EXIT } from "@matebot/core/node/desktop-runtime";
 import { describe, expect, it } from "vitest";
 import { BrowserStillRunningError, BrowserStoppedReleaseError } from "./computer-screens.js";
 import { LinuxDesktop } from "./linux-desktop.js";

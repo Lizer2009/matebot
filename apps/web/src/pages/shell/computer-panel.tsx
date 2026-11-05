@@ -1,7 +1,7 @@
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import type { Bot, ComputerStatus } from "@rakazo/contracts";
-import { BotAvatar, Button } from "@rakazo/ui-web";
+import type { Bot, ComputerStatus } from "@matebot/contracts";
+import { BotAvatar, Button } from "@matebot/ui-web";
 import { HardDrive, Maximize2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { ComputersUnavailableHint } from "../../components/ComputersUnavailableHint";

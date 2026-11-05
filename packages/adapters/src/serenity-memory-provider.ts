@@ -8,7 +8,7 @@ import type {
   SemanticMemoryResponse,
   SemanticMemoryResult,
   SemanticMemorySaveRequest,
-} from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
 import { egressRefused } from "./network-address.js";
 import type { SerenityConnectionConfig, SerenityNetworkDependencies } from "./serenity-client.js";
 import {

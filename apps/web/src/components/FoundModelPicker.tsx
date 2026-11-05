@@ -9,7 +9,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@rakazo/ui-web";
+} from "@matebot/ui-web";
 import { useRef, useState } from "react";
 import { useListSearch } from "../lib/use-list-search";
 

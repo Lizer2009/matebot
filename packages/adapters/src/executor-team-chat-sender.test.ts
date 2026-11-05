@@ -1,5 +1,5 @@
-import type { AgentRunRequest, MemoryReadRequest } from "@rakazo/adapter-kit";
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import type { AgentRunRequest, MemoryReadRequest } from "@matebot/adapter-kit";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 import { describe, expect, it, vi } from "vitest";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { createRunExecutor } from "./executor.js";

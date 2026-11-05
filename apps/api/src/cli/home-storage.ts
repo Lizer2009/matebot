@@ -4,9 +4,9 @@ import {
   createAgentHomeStore,
   ObjectAgentHomeStore,
   unwrapEnvFromKeyManager,
-} from "@rakazo/adapters";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import { createDb } from "@rakazo/db";
+} from "@matebot/adapters";
+import { loadRootEnv } from "@matebot/core/node/load-root-env";
+import { createDb } from "@matebot/db";
 
 loadRootEnv();
 await unwrapEnvFromKeyManager();

@@ -6,8 +6,8 @@ import type {
   AutoReviewRequest,
   AutoReviewResult,
   DecisionProvider,
-} from "@rakazo/adapter-kit";
-import { DecisionProviderError } from "@rakazo/adapter-kit";
+} from "@matebot/adapter-kit";
+import { DecisionProviderError } from "@matebot/adapter-kit";
 import {
   AUTO_REVIEW_ASK,
   AUTO_REVIEW_PASS,

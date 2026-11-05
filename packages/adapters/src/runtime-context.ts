@@ -1,8 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { Api, Context, Message, Model } from "@earendil-works/pi-ai";
-import type { AdapterContext, AgentRunRequest, AgentUsage } from "@rakazo/adapter-kit";
-import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+import type { AdapterContext, AgentRunRequest, AgentUsage } from "@matebot/adapter-kit";
+import { DEFAULT_CONTEXT_STRATEGY } from "@matebot/adapter-kit";
+import { getLogger } from "@matebot/logging";
 import { imagePartCount, normalizedImageLimit, pruneForRebuild } from "./context-pruning.js";
 import type { CacheRequest, ContextBudget } from "./context-selection.js";
 import {

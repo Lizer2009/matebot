@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { expect, test } from "@playwright/test";
-import { contentSecurityPolicyFor } from "@rakazo/contracts/content-security-policy";
+import { contentSecurityPolicyFor } from "@matebot/contracts/content-security-policy";
 
 test("an isolated embedded runtime loads its decoder and connects to a TLS gateway", async ({
   page,

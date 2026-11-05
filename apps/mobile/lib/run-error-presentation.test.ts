@@ -1,4 +1,4 @@
-import { normalizeRunError } from "@rakazo/core";
+import { normalizeRunError } from "@matebot/core";
 import { describe, expect, it } from "vitest";
 import { parseRunDiagnostic, runErrorActionLabel } from "./run-error-presentation";
 

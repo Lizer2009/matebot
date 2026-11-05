@@ -1,7 +1,7 @@
-import { BillingEmulator } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, createDb } from "@rakazo/db";
+import { BillingEmulator } from "@matebot/adapters";
+import type { Actor } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { asSystem, createDb } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createAccessGrant, revokeAccessGrant } from "./access-grants.js";
 import { createBillingService } from "./billing.js";

@@ -1,4 +1,4 @@
-import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
+import { PRODUCT_DISPLAY_NAME } from "@matebot/core";
 
 /**
  * Messages that the product, or its model library, adds to a conversation in the user's role

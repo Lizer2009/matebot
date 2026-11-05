@@ -3,9 +3,9 @@ import type {
   PaymentWalletCredential,
   PaymentWalletProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { PaymentWalletDisconnected } from "@rakazo/adapter-kit";
-import type { PaymentWallet, PrismaClient } from "@rakazo/db";
+} from "@matebot/adapter-kit";
+import { PaymentWalletDisconnected } from "@matebot/adapter-kit";
+import type { PaymentWallet, PrismaClient } from "@matebot/db";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PaymentWalletDeps } from "./payment-wallets.js";
 import {

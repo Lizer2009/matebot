@@ -1,4 +1,4 @@
-import type { RakazoDesktopSpeechEvent } from "@rakazo/contracts";
+import type { RakazoDesktopSpeechEvent } from "@matebot/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DesktopSpeechRecognition } from "./desktop-speech.js";
 import { Dictation } from "./dictation.js";

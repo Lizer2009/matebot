@@ -1,6 +1,6 @@
-import type { PageSummary } from "@rakazo/contracts";
-import { PAGE_LIST_MAX_LIMIT } from "@rakazo/contracts";
-import { uniquePages } from "@rakazo/core";
+import type { PageSummary } from "@matebot/contracts";
+import { PAGE_LIST_MAX_LIMIT } from "@matebot/contracts";
+import { uniquePages } from "@matebot/core";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { rpc } from "./api";

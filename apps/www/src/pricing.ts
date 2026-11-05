@@ -1,4 +1,4 @@
-import type { ByokTier, ComputerSize, SandboxKind } from "@rakazo/contracts";
+import type { ByokTier, ComputerSize, SandboxKind } from "@matebot/contracts";
 import {
   BYOK_TIERS,
   byokTierPriceCents,
@@ -9,7 +9,7 @@ import {
   sandboxAllowanceHours,
   TRIAL_DAYS,
   TRIAL_SANDBOX_ALLOWANCE_CENTS,
-} from "@rakazo/contracts";
+} from "@matebot/contracts";
 import { APP_URL, SELF_HOST_GUIDE_PATH } from "./site";
 
 /** Whole dollars when the amount is round ("$15"), otherwise cents ("$12.50"). */

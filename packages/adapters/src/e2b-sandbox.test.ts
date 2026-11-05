@@ -11,7 +11,7 @@ import {
   SandboxNotFoundError,
   TimeoutError,
 } from "@e2b/desktop";
-import type { CommandRequest, ComputerRef, ProcessEvent } from "@rakazo/adapter-kit";
+import type { CommandRequest, ComputerRef, ProcessEvent } from "@matebot/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { sandboxIdleMs } from "./computer-idle.js";
 import { shouldSkipPortableWorkspaceFile } from "./computer-workspace.js";

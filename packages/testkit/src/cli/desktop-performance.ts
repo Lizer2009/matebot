@@ -8,11 +8,11 @@ import { brotliCompressSync, gzipSync } from "node:zlib";
 import { serve } from "@hono/node-server";
 import type { ElectronApplication, Page } from "@playwright/test";
 import { _electron as electron, expect } from "@playwright/test";
-import type { createApp } from "@rakazo/api/app";
-import { abortableDelay, PRODUCT_DISPLAY_NAME } from "@rakazo/core";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import type { PrismaClient } from "@rakazo/db";
-import { createThreadMessage } from "@rakazo/db";
+import type { createApp } from "@matebot/api/app";
+import { abortableDelay, PRODUCT_DISPLAY_NAME } from "@matebot/core";
+import { loadRootEnv } from "@matebot/core/node/load-root-env";
+import type { PrismaClient } from "@matebot/db";
+import { createThreadMessage } from "@matebot/db";
 import type { PerformanceReport } from "../performance-report.js";
 import {
   PERFORMANCE_REPORT_SCHEMA_VERSION,
@@ -73,7 +73,7 @@ try {
   if (!skipBuild) buildProductionArtifacts(benchmarkEnv);
   migrateDatabase(benchmarkEnv);
 
-  const { createApp } = await import("@rakazo/api/app");
+  const { createApp } = await import("@matebot/api/app");
   handles = await createApp({ databaseUrl, prisma: undefined });
   server = serve({
     fetch: (request) => handles!.app.fetch(request),
@@ -172,7 +172,7 @@ function performanceEnvironment(databaseUrl: string): NodeJS.ProcessEnv {
 }
 
 function buildProductionArtifacts(env: NodeJS.ProcessEnv) {
-  run("pnpm", ["--filter", "@rakazo/desktop", "pack:dir"], env);
+  run("pnpm", ["--filter", "@matebot/desktop", "pack:dir"], env);
 }
 
 async function packagedExecutable() {

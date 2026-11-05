@@ -1,5 +1,5 @@
-import type { ComputerUpdate } from "@rakazo/contracts";
-import { COMPUTER_UPDATE_STAGES } from "@rakazo/contracts";
+import type { ComputerUpdate } from "@matebot/contracts";
+import { COMPUTER_UPDATE_STAGES } from "@matebot/contracts";
 import { isRetryableError, retryDelayMs } from "./retry-policy.js";
 
 /** Shared polling and local presentation state; the server owns operation lifetime. */

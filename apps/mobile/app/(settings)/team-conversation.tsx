@@ -3,8 +3,8 @@ import type {
   AutomatedSenderPolicyMode,
   Bot,
   ExternalConversation,
-} from "@rakazo/contracts";
-import type { ListenMode } from "@rakazo/core";
+} from "@matebot/contracts";
+import type { ListenMode } from "@matebot/core";
 import {
   AUTOMATED_SENDER_MODES,
   ambientValue,
@@ -13,7 +13,7 @@ import {
   senderPolicy,
   withRollupHours,
   withSenderMode,
-} from "@rakazo/core";
+} from "@matebot/core";
 import type { NativeStackNavigationOptions } from "expo-router";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";

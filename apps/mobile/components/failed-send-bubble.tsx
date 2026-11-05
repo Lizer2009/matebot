@@ -1,5 +1,5 @@
-import { isModelRequiredSendError } from "@rakazo/core";
-import { typeScale } from "@rakazo/ui-tokens";
+import { isModelRequiredSendError } from "@matebot/core";
+import { typeScale } from "@matebot/ui-tokens";
 import { ActionSheetIOS, Alert, Image, Platform, Pressable, Text, View } from "react-native";
 import { useI18n } from "../lib/i18n";
 import { openModelSettings } from "../lib/model-settings";

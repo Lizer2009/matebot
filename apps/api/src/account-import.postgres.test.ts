@@ -7,12 +7,12 @@ import type {
   ArtifactStore,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { LocalAgentHomeStore } from "@rakazo/adapters";
-import type { AccountExportRecord, Actor } from "@rakazo/contracts";
-import { PAGE_SOURCE_MAX_BYTES } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, createDb, createOrganizationForUser } from "@rakazo/db";
+} from "@matebot/adapter-kit";
+import { LocalAgentHomeStore } from "@matebot/adapters";
+import type { AccountExportRecord, Actor } from "@matebot/contracts";
+import { PAGE_SOURCE_MAX_BYTES } from "@matebot/contracts";
+import type { PrismaClient } from "@matebot/db";
+import { asSystem, createDb, createOrganizationForUser } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AccountImportError, importAccount } from "./account-import.js";
 import { buildArchive, chunked, exportFiles, manifestFor } from "./account-import.test-support.js";

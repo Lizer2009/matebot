@@ -1,4 +1,4 @@
-import type { BillingStatus } from "@rakazo/contracts";
+import type { BillingStatus } from "@matebot/contracts";
 import { rpc } from "./rpc";
 
 const STORAGE_KEY = "rakazo:referral";

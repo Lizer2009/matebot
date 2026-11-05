@@ -11,7 +11,7 @@
 
 | 维度 | 结论 |
 | --- | --- |
-| 与 upstream 关系 | 当前与 `elie222/rakazo` **字节级一致**；所有 `@rakazo/*` 包名、GHCR 镜像、`rakazo.com` 文档链接仍指向上游。 |
+| 与 upstream 关系 | 当前与 `elie222/rakazo` **字节级一致**；所有 `@matebot/*` 包名、GHCR 镜像、`rakazo.com` 文档链接仍指向上游。 |
 | 推荐部署形态（无本地机） | **Matebot 当前：VPS + Compose 镜像**（`192.168.10.5`）；**Railway 暂缓**。Bot **计算机**可用 Docker（有 socket）或 **E2B / Boat / Daytona** 等远程沙箱。 |
 | Cursor 集成 | 产品已内置 **Cursor Cloud Agent** 适配器（`CLOUD_AGENT_PROVIDER=cursor`）；Bot 可通过 `cloud_agent_*` 工具在**你的 GitHub 仓库**上启动 Cursor 云端 Agent，与「在 Cursor 里改 matebot 代码」是**互补**关系。 |
 | 首轮编码重点 | 分叉标识（可选）、**自有 GHCR/安装脚本默认值**、**matebot 专用 `.env` 模板**、CI 可绿、文档与 upstream 同步策略。 |
@@ -25,12 +25,12 @@
 ```
 matebot/                          # 根 package: rakazo@0.1.0（待品牌化）
 ├── apps/
-│   ├── api/          @rakazo/api      Hono + oRPC，HTTP/WebSocket，Pi agent 运行时宿主
-│   ├── worker/       @rakazo/worker    Graphile Worker：定时任务、cloud agent 轮询、恢复
-│   ├── web/          @rakazo/web       Vite + React 19 主 UI（自托管与 app.rakazo.com 同源代码）
-│   ├── desktop/      @rakazo/desktop   Electron 壳（托管本地 Docker 栈或连接远程实例）
-│   ├── mobile/       @rakazo/mobile    Expo Router 原生客户端
-│   └── www/          @rakazo/www       Astro 营销站（可单独部署，规则较松）
+│   ├── api/          @matebot/api      Hono + oRPC，HTTP/WebSocket，Pi agent 运行时宿主
+│   ├── worker/       @matebot/worker    Graphile Worker：定时任务、cloud agent 轮询、恢复
+│   ├── web/          @matebot/web       Vite + React 19 主 UI（自托管与 app.rakazo.com 同源代码）
+│   ├── desktop/      @matebot/desktop   Electron 壳（托管本地 Docker 栈或连接远程实例）
+│   ├── mobile/       @matebot/mobile    Expo Router 原生客户端
+│   └── www/          @matebot/www       Astro 营销站（可单独部署，规则较松）
 ├── packages/
 │   ├── core/         共享领域逻辑、工具
 │   ├── contracts/    API/事件类型契约
@@ -201,7 +201,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 
 - **跟踪分支**：`main` 跟踪 `origin/main`，定期 merge upstream。
 - **冲突热点**：`pnpm-lock.yaml`、Prisma migrations、`infra/compose/*`、`.github/workflows/*`。
-- **不要**在未协调的情况下改 `@rakazo/*` 包名（牵涉全 monorepo + 移动客户端 bundle id）。
+- **不要**在未协调的情况下改 `@matebot/*` 包名（牵涉全 monorepo + 移动客户端 bundle id）。
 
 ### 4.3 风险
 
@@ -254,7 +254,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | P1-2 | **install 脚本分叉** | ✅ **2026-11-04** — `install-images-matebot.sh` 默认 fork raw + matebot env 模板；`install-images-matebot.smoke.sh` 与既有 compose smokes 通过 |
 | P1-3 | **Cursor 开发环境** | ✅ 2026-11-04 — [`.cursor/environment.json`](../.cursor/environment.json) + [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md) |
 | P1-4 | **启用 Cursor 集成** | 部署 env 含 `CLOUD_AGENT_PROVIDER=cursor`；Bot 成功 launch 一次 emulator 或真实 agent（staging） |
-| P1-5 | **轻量品牌** | ✅ 2026-11-04 — README / README.zh-CN 顶部（链计划/部署/Cursor/品牌）；几何 Matebot 图标与 Web/PWA/Linux·Windows favicon；`PRODUCT_DISPLAY_NAME`；**未**改 `@rakazo/*` |
+| P1-5 | **轻量品牌** | ✅ 2026-11-04 — README / README.zh-CN 顶部（链计划/部署/Cursor/品牌）；几何 Matebot 图标与 Web/PWA/Linux·Windows favicon；`PRODUCT_DISPLAY_NAME`；**未**改 `@matebot/*` |
 
 ### P2 — 后续
 
@@ -280,7 +280,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 
 ### 7.2 建议暂缓
 
-- npm 包名 `@rakazo/*`（除非准备改 mobile bundle id、Electron `productName`、数据库角色名 `rakazo_app` 等连锁变更）
+- npm 包名 `@matebot/*`（除非准备改 mobile bundle id、Electron `productName`、数据库角色名 `rakazo_app` 等连锁变更）
 - 删除 upstream 致谢与 Apache-2.0 归属
 - 大规模 UI 文案替换（工作量大、merge 冲突多）
 

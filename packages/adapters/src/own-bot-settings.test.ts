@@ -1,5 +1,5 @@
-import { VoiceAccountError } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+import { VoiceAccountError } from "@matebot/adapter-kit";
+import type { PrismaClient } from "@matebot/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FleetPrepareDeps } from "./fleet-tools.js";
 import { updateOwnBotFromTool } from "./fleet-tools.js";

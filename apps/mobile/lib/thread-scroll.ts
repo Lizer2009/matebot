@@ -1,7 +1,7 @@
-import type { ThreadMessage } from "@rakazo/contracts";
-import type { ThreadScrollState } from "@rakazo/core";
+import type { ThreadMessage } from "@matebot/contracts";
+import type { ThreadScrollState } from "@matebot/core";
 
-export type { ThreadScrollState } from "@rakazo/core";
+export type { ThreadScrollState } from "@matebot/core";
 
 export type ThreadScrollAction = "jump" | "smooth" | null;
 

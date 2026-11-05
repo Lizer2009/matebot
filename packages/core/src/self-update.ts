@@ -215,19 +215,19 @@ export function updateSteps(input: UpdatePlanInput): UpdateStep[] {
       id: "generate",
       label: "Regenerate the database client",
       command: "pnpm",
-      args: ["--filter", "@rakazo/db", "run", "generate"],
+      args: ["--filter", "@matebot/db", "run", "generate"],
     },
     {
       id: "build",
       label: "Build the web app",
       command: "pnpm",
-      args: ["--filter", "@rakazo/web", "run", "build"],
+      args: ["--filter", "@matebot/web", "run", "build"],
     },
     {
       id: "migrate",
       label: "Apply database migrations",
       command: "pnpm",
-      args: ["--filter", "@rakazo/db", "run", "migrate"],
+      args: ["--filter", "@matebot/db", "run", "migrate"],
     },
   );
   return steps;

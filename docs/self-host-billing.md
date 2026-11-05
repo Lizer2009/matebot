@@ -10,7 +10,7 @@ monthly model credits in USD: $10, $20, $50, $100, $200, or $500. One-time top-u
 amounts. Monthly credits expire at the end of their service period; one-time top-ups do not expire.
 The hosted computer is included in both paths, and monthly credits include the own-key plan.
 
-`BYOK_TIERS` in `@rakazo/contracts` sets the own-key plan's tiers: Standard, Pro and Max, each with
+`BYOK_TIERS` in `@matebot/contracts` sets the own-key plan's tiers: Standard, Pro and Max, each with
 a monthly and yearly price, a monthly computer allowance and a computer size. New organizations
 start on Standard; existing subscribers keep the price they signed up at. A `null` Standard monthly
 price makes the plan free, hides the other tiers, and ends paid own-key subscriptions at their

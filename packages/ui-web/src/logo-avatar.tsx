@@ -1,13 +1,13 @@
-import { parseBotAvatarValue } from "@rakazo/contracts";
-import type { LogoAvatarActivity } from "@rakazo/core";
+import { parseBotAvatarValue } from "@matebot/contracts";
+import type { LogoAvatarActivity } from "@matebot/core";
 import {
   LOGO_AVATAR_BODY_Y,
   LOGO_AVATAR_EYES,
   LOGO_AVATAR_VIEWBOX,
   logoAvatarEyeInk,
   logoAvatarTraits,
-} from "@rakazo/core";
-import { botEyeColor, tokens } from "@rakazo/ui-tokens";
+} from "@matebot/core";
+import { botEyeColor, tokens } from "@matebot/ui-tokens";
 import type { CSSProperties } from "react";
 import { memo, useId, useMemo } from "react";
 import { useAvatarMotionVisibility } from "./hooks/use-avatar-motion-visibility.js";

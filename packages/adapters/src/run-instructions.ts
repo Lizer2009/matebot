@@ -1,9 +1,9 @@
-import { FLEET_WRITE_TOOL_NAMES } from "@rakazo/contracts";
+import { FLEET_WRITE_TOOL_NAMES } from "@matebot/contracts";
 import {
   PRODUCT_DISPLAY_NAME,
   runReadsThreadHistory,
   toolRequiresExplicitApproval,
-} from "@rakazo/core";
+} from "@matebot/core";
 import { MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import { replyGuidanceForOfferedTools } from "./run-replies.js";
 import type { UserComputerState } from "./run-tools-user-computer.js";

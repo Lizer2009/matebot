@@ -1,4 +1,4 @@
-import type { ConnectionCatalogItem } from "@rakazo/contracts";
+import type { ConnectionCatalogItem } from "@matebot/contracts";
 import { expect, it } from "vitest";
 import { connectedAppMarks } from "./connected-apps";
 

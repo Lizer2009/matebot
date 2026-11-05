@@ -1,4 +1,4 @@
-import { withSandboxedArtifactCsp } from "@rakazo/core";
+import { withSandboxedArtifactCsp } from "@matebot/core";
 import { useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
