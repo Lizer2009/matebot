@@ -1,5 +1,6 @@
 import type { Request } from "@playwright/test";
 import { expect, test } from "@playwright/test";
+import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
 import {
   captureScreenshot,
   completeOnboarding,
@@ -44,7 +45,9 @@ test(
     await captureScreenshot(page, testInfo, "signup-options-pending");
 
     releaseCapabilities();
-    await expect(page.getByRole("heading", { name: "Create your Rakazo" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: `Create your ${PRODUCT_DISPLAY_NAME}` }),
+    ).toBeVisible();
     await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
     await captureScreenshot(page, testInfo, "signup-ready");
   },
@@ -122,7 +125,9 @@ test(
     await page.setViewportSize({ width: 320, height: 640 });
     await page.goto("/");
     await expect(page).toHaveURL(/\/sign-up$/);
-    await expect(page.getByRole("heading", { name: "Create your Rakazo" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: `Create your ${PRODUCT_DISPLAY_NAME}` }),
+    ).toBeVisible();
     await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 320);
     await captureScreenshot(page, testInfo, "logged-out-sign-up-phone");
     await page.getByRole("link", { name: "Sign in", exact: true }).click();
