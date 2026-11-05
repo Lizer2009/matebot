@@ -1,5 +1,9 @@
 import { FLEET_WRITE_TOOL_NAMES } from "@rakazo/contracts";
-import { runReadsThreadHistory, toolRequiresExplicitApproval } from "@rakazo/core";
+import {
+  PRODUCT_DISPLAY_NAME,
+  runReadsThreadHistory,
+  toolRequiresExplicitApproval,
+} from "@rakazo/core";
 import { MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import { replyGuidanceForOfferedTools } from "./run-replies.js";
 import type { UserComputerState } from "./run-tools-user-computer.js";
@@ -380,7 +384,7 @@ export function userTurnInstructions(parts: {
       offeredBuiltinClause(
         parts.disabledBuiltinTools,
         "skill_read",
-        "When asked how Rakazo or you work, or how to set something up (apps, the user's own computer, billing), read the Rakazo skill before answering or acting.",
+        `When asked how ${PRODUCT_DISPLAY_NAME} or you work, or how to set something up (apps, the user's own computer, billing), read the ${PRODUCT_DISPLAY_NAME} skill before answering or acting.`,
       ),
     parts.taughtSkillsLine,
     offeredBuiltinClause(

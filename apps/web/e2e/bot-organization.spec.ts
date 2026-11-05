@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
+import {
+  activeBotId,
+  captureScreenshot,
+  completeOnboarding,
+  FIRST_BOT_NAME,
+  rpc,
+  signup,
+} from "./helpers";
 
 test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
   const stamp = Date.now();
@@ -9,11 +16,11 @@ test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
   await page.waitForURL(/\/app\/[^/]+$/);
 
   const sidebar = page.locator("aside").first();
-  const bot = sidebar.getByRole("button", { name: /^Chief/ });
+  const bot = sidebar.getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) });
 
   await bot.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Pin", exact: true }).click();
-  await expect(sidebar.locator('[data-sidebar-group="pinned"]')).toContainText("Chief");
+  await expect(sidebar.locator('[data-sidebar-group="pinned"]')).toContainText(FIRST_BOT_NAME);
   await captureScreenshot(page, testInfo, "pinned-bots");
 
   await bot.click({ button: "right" });
@@ -32,12 +39,12 @@ test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
 
   const projects = sidebar.locator('[data-sidebar-group^="section:"]');
   await expect(projects).toContainText("Projects");
-  await expect(projects).toContainText("Chief");
+  await expect(projects).toContainText(FIRST_BOT_NAME);
   await captureScreenshot(page, testInfo, "bot-sections");
 
   await page.reload();
   await expect(projects).toContainText("Projects");
-  await expect(projects).toContainText("Chief");
+  await expect(projects).toContainText(FIRST_BOT_NAME);
 
   await bot.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Move to", exact: true }).hover();
@@ -58,7 +65,7 @@ test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
     .getByRole("menu", { name: "Move to", exact: true })
     .getByRole("menuitem", { name: "Unassigned", exact: true })
     .click();
-  await expect(sidebar.locator('[data-sidebar-group="unassigned"]')).toContainText("Chief");
+  await expect(sidebar.locator('[data-sidebar-group="unassigned"]')).toContainText(FIRST_BOT_NAME);
 });
 
 test("deleting a section keeps its bots and groups", async ({ page }, testInfo) => {
@@ -221,9 +228,9 @@ test("chat composer controls are vertically centered", async ({ page }, testInfo
   await completeOnboarding(page);
 
   const bar = page.getByTestId("composer-bar");
-  const composer = page.getByRole("combobox", { name: "Message Chief" });
+  const composer = page.getByRole("combobox", { name: `Message ${FIRST_BOT_NAME}` });
   const centers = await bar.evaluate((composerBar) =>
-    ["Attach file", "Message Chief", "Hold to talk", "Send"].map((label) => {
+    ["Attach file", `Message ${FIRST_BOT_NAME}`, "Hold to talk", "Send"].map((label) => {
       const element = composerBar.querySelector<HTMLElement>(`[aria-label="${label}"]`);
       if (!element) throw new Error(`Missing composer control: ${label}`);
       const box = element.getBoundingClientRect();

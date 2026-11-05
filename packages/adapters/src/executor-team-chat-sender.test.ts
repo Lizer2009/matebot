@@ -1,4 +1,5 @@
 import type { AgentRunRequest, MemoryReadRequest } from "@rakazo/adapter-kit";
+import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
 import { describe, expect, it, vi } from "vitest";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { createRunExecutor } from "./executor.js";
@@ -105,7 +106,7 @@ async function teamChatRun(input: {
     task: {
       findUniqueOrThrow: vi.fn(async () => ({
         id: run.taskId,
-        prompt: "Use @Private recipe and @Rakazo and @Interrogate",
+        prompt: `Use @Private recipe and @${PRODUCT_DISPLAY_NAME} and @Interrogate`,
       })),
     },
     connection: { findMany: vi.fn(async () => []) },
@@ -310,7 +311,7 @@ describe("private skills in shared-channel prompts", () => {
     const result = await teamChatRun({ senders: [{ senderId: "member" }], sharedChannel: true });
     expect(result.context).not.toContain("PRIVATE_SKILL");
     expect(result.context).not.toContain("PRIVATE_TAUGHT");
-    expect(result.context).toContain("Use skill: Rakazo");
+    expect(result.context).toContain(`Use skill: ${PRODUCT_DISPLAY_NAME}`);
     expect(result.context).toContain("Use skill: Interrogate");
   });
 

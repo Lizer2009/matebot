@@ -24,6 +24,7 @@ import {
   clampCatalogThinkingLevel,
   createModelProbe,
   initialModelProbeState,
+  PRODUCT_DISPLAY_NAME,
   pickCatalogModelId,
   popularModelProvidersFirst,
 } from "@rakazo/core";
@@ -85,7 +86,10 @@ const MAIN_PROVIDER_OPTIONS: ReadonlyArray<{ provider: string; auth?: ProviderAu
 function providerOptionValue(provider: string, auth?: ProviderAuth): string {
   return auth ? `${provider}:${auth}` : provider;
 }
-const FIRST_BOT_NAME = "Chief";
+/** The name the first bot in a new space gets; a fork's product name, not the upstream one. */
+const FIRST_BOT_NAME = PRODUCT_DISPLAY_NAME;
+/** Names an earlier first bot may already carry, so an existing space still finds its own. */
+const LEGACY_FIRST_BOT_NAMES = [FIRST_BOT_NAME, "Chief"];
 const FIRST_BOT_SPAWN_KEY = "onboarding:first";
 const FIRST_BOT_LOCK = "rakazo:onboarding-first-bot";
 
@@ -97,8 +101,8 @@ function findFirstBot(
 ): { id: string } | undefined {
   const bySpawnKey = bots.find((bot) => bot.spawnKey === FIRST_BOT_SPAWN_KEY);
   if (bySpawnKey) return { id: bySpawnKey.id };
-  // Legacy first-run Chief created before spawnKey was set.
-  const byName = bots.find((bot) => bot.name === FIRST_BOT_NAME);
+  // Legacy first-run bots created before spawnKey was set, under an earlier default name.
+  const byName = bots.find((bot) => LEGACY_FIRST_BOT_NAMES.includes(bot.name));
   return byName ? { id: byName.id } : undefined;
 }
 

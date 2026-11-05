@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { captureScreenshot, completeOnboarding, signup } from "./helpers";
+import { captureScreenshot, completeOnboarding, FIRST_BOT_NAME, signup } from "./helpers";
 
 test.afterEach(async ({ page }) => {
   // Polling can leave a route.fetch response in use when the assertions finish.
@@ -48,7 +48,7 @@ test("messaging settings show linked chat apps, channels, connections, and team 
               provider: "sendblue",
               address: "+15551230001",
               botId: "bot-1",
-              botName: "Chief",
+              botName: FIRST_BOT_NAME,
             },
             {
               id: "mi-2",
@@ -196,7 +196,7 @@ test("messaging settings show linked chat apps, channels, connections, and team 
   await settings.getByTestId("settings-nav-messaging").click();
 
   await expect(messagingSettings).toBeVisible();
-  await expect(messagingSettings.getByText("+15551230001, Chief")).toBeVisible();
+  await expect(messagingSettings.getByText(`+15551230001, ${FIRST_BOT_NAME}`)).toBeVisible();
   await expect(messagingSettings.getByText("424242, Lead")).toBeVisible();
   await expect(messagingSettings.getByText("Family")).toBeVisible();
   await expect(messagingSettings.getByText("Dana's Assistant")).toBeVisible();

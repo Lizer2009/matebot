@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { captureScreenshot, completeOnboarding, openNewSpace, rpc, signup } from "./helpers";
+import {
+  captureScreenshot,
+  completeOnboarding,
+  FIRST_BOT_NAME,
+  openNewSpace,
+  rpc,
+  signup,
+} from "./helpers";
 
 test("a new space chooses what it can use, and a skill can be limited to some spaces", async ({
   page,
@@ -37,12 +44,12 @@ test("a new space chooses what it can use, and a skill can be limited to some sp
   const chiefs = page
     .locator("aside")
     .first()
-    .getByRole("button", { name: /^Chief/ });
+    .getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) });
   await expect(chiefs.nth(1)).toHaveAttribute("aria-current", "page");
   const personalChief = chiefs.first();
   await personalChief.click();
   await expect(personalChief).toHaveAttribute("aria-current", "page");
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByPlaceholder(`Message ${FIRST_BOT_NAME}`)).toBeVisible();
   await page.getByTestId("user-menu-trigger").click();
   await page.getByRole("button", { name: "Skills", exact: true }).click();
   const skills = page.getByRole("dialog", { name: "Skills", exact: true });

@@ -1,12 +1,18 @@
 // @vitest-environment jsdom
 
+import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
 import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const account = vi.hoisted(() => ({ load: (_me: unknown) => {} }));
+const account = vi.hoisted(() => ({
+  load: (_me: unknown) => {},
+  bots: [] as Array<{ id: string; name: string; spawnKey: string | null }>,
+  created: [] as Array<{ name: string; spawnKey?: string }>,
+  navigate: (_to: string) => {},
+}));
 
 vi.mock("../lib/rpc", () => ({
   selectedSpaceId: () => null,
@@ -17,6 +23,19 @@ vi.mock("../lib/rpc", () => ({
           account.load = resolve;
         }),
     ),
+    bots: {
+      list: vi.fn(async () => account.bots),
+      create: vi.fn(async (input: { name: string; spawnKey?: string }) => {
+        account.created.push(input);
+        const bot = { id: "bot-first", name: input.name, spawnKey: input.spawnKey ?? null };
+        account.bots = [...account.bots, bot];
+        return { id: bot.id };
+      }),
+    },
+    onboarding: {
+      start: vi.fn(async () => undefined),
+      promptFocus: vi.fn(async () => undefined),
+    },
     models: {
       list: vi.fn(async () => [
         {
@@ -47,6 +66,8 @@ import { OnboardingPage } from "./Onboarding";
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  account.bots = [];
+  account.created = [];
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -130,4 +151,24 @@ it("finds and searches a long custom endpoint list during onboarding", async () 
   await act(async () => document.querySelector<HTMLElement>("[cmdk-item]")!.click());
   expect(document.querySelector('[aria-label="Models from server"]')?.textContent).toBe("found-10");
   await act(async () => root.unmount());
+});
+
+it("names a new space's first bot after the product, and reuses an earlier default", async () => {
+  const root = createRoot(document.body.appendChild(document.createElement("div")));
+  await act(async () =>
+    root.render(
+      <MemoryRouter initialEntries={["/onboarding"]}>
+        <Routes>
+          <Route path="/onboarding/:step?" element={<OnboardingPage />} />
+        </Routes>
+      </MemoryRouter>,
+    ),
+  );
+  await act(async () =>
+    account.load({ needsModel: false, needsSignupSurvey: false, billingEnabled: false }),
+  );
+  expect(account.created).toMatchObject([
+    { name: PRODUCT_DISPLAY_NAME, spawnKey: "onboarding:first" },
+  ]);
+  act(() => root.unmount());
 });

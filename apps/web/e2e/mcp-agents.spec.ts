@@ -1,6 +1,13 @@
 import { expect, test } from "@playwright/test";
 import type { McpServer } from "@rakazo/contracts";
-import { captureScreenshot, completeOnboarding, openIntegrationsAdd, rpc, signup } from "./helpers";
+import {
+  captureScreenshot,
+  completeOnboarding,
+  FIRST_BOT_NAME,
+  openIntegrationsAdd,
+  rpc,
+  signup,
+} from "./helpers";
 
 const server: McpServer = {
   id: "mcp-agents-server",
@@ -81,7 +88,7 @@ test("a server the user adds reaches every bot until they pick some", async ({
   await captureScreenshot(page, testInfo, "mcp-agents");
 
   await access.getByRole("button").click();
-  const chief = page.getByRole("menuitemcheckbox", { name: "Chief", exact: true });
+  const chief = page.getByRole("menuitemcheckbox", { name: FIRST_BOT_NAME, exact: true });
   await expect(chief).toBeVisible();
   await captureScreenshot(page, testInfo, "mcp-agents-menu");
   await chief.click();

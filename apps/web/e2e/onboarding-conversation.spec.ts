@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
+import { captureScreenshot, completeOnboarding, FIRST_BOT_NAME, rpc, signup } from "./helpers";
 
 function slackCard(page: Page) {
   return page.getByRole("group", { name: "Slack connection" });
@@ -22,10 +22,10 @@ test("focus choice suggests apps and preserves a completed connection", async ({
   await captureScreenshot(page, testInfo, "choice-card-onboarding");
 
   await page.getByRole("button", { name: /Day-to-day work/ }).click();
-  // The focus step suggests apps but must not rename the bot: the name the
-  // user chose during creation ("Chief") is preserved.
-  await expect(page.locator("main").getByText("Chief", { exact: true })).toBeVisible();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  // The focus step suggests apps but must not rename the bot: the name
+  // onboarding gave it is preserved.
+  await expect(page.locator("main").getByText(FIRST_BOT_NAME, { exact: true })).toBeVisible();
+  await expect(page.getByPlaceholder(`Message ${FIRST_BOT_NAME}`)).toBeVisible();
   await expect(page.getByText("Slack", { exact: true })).toBeVisible();
   await expect(page.getByText("Gmail", { exact: true })).toBeVisible();
   const connectionCards = page.getByRole("group", { name: / connection$/ });

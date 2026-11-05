@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { captureScreenshot, completeOnboarding, signup } from "./helpers";
+import { captureScreenshot, completeOnboarding, FIRST_BOT_NAME, signup } from "./helpers";
 
 function rosterRow(page: Page, name: RegExp) {
   return page.locator("[data-sidebar-group] [data-roster-bot-id]").filter({
@@ -20,11 +20,13 @@ test("created bots appear as regular bots and reorder across their creator", asy
   await page.keyboard.press("Enter");
 
   const scout = rosterRow(page, /Scout/);
-  const chief = rosterRow(page, /^Chief/);
+  const chief = rosterRow(page, new RegExp(`^${FIRST_BOT_NAME}`));
   await expect(scout).toBeVisible({ timeout: 30_000 });
   await expect(chief).toBeVisible();
   const sidebar = page.locator("aside").first();
-  await expect(sidebar.getByRole("button", { name: /^(Collapse|Expand) Chief$/ })).toHaveCount(0);
+  await expect(
+    sidebar.getByRole("button", { name: new RegExp(`^(Collapse|Expand) ${FIRST_BOT_NAME}$`) }),
+  ).toHaveCount(0);
   // Both rows use the same inset; creation provenance must not indent a bot.
   const inset = (row: ReturnType<typeof rosterRow>) =>
     row.evaluate((element) => getComputedStyle(element).paddingInlineStart);

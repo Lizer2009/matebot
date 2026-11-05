@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { captureScreenshot, signup } from "./helpers";
+import { captureScreenshot, FIRST_BOT_NAME, signup } from "./helpers";
 
 test.afterEach(async ({ page }) => {
   // Finish intercepted responses before the browser context is disposed.
@@ -32,7 +32,7 @@ test("onboarding cannot continue with an empty or failed model catalog", async (
     await expect(page.getByRole("heading", { name: "Connect a model" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Continue", exact: true })).toBeDisabled();
     await expect(page.getByRole("heading", { name: "Create your first bot" })).toHaveCount(0);
-    await expect(page.getByRole("combobox", { name: "Message Chief" })).toHaveCount(0);
+    await expect(page.getByRole("combobox", { name: `Message ${FIRST_BOT_NAME}` })).toHaveCount(0);
   }
 });
 

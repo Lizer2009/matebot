@@ -7,7 +7,7 @@ import {
   cloudflareModelConfigMessage,
   FLEET_TOOL_NAMES,
 } from "@rakazo/contracts";
-import { isOwnerStartedRun, ONCE_ROUTINE_CRON } from "@rakazo/core";
+import { isOwnerStartedRun, ONCE_ROUTINE_CRON, PRODUCT_DISPLAY_NAME } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { RunHistoryWriteError } from "@rakazo/db";
 import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
@@ -1492,7 +1492,7 @@ describe("userTurnInstructions", () => {
       archiveBot,
       "Connected plugins: none",
       "Agent skills",
-      expect.stringContaining("read the Rakazo skill"),
+      expect.stringContaining(`read the ${PRODUCT_DISPLAY_NAME} skill`),
       "Taught skills",
       ...stableTail,
       "Group context",

@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { captureScreenshot, completeOnboarding, openNewSpace, rpc, signup } from "./helpers";
+import {
+  captureScreenshot,
+  completeOnboarding,
+  FIRST_BOT_NAME,
+  openNewSpace,
+  rpc,
+  signup,
+} from "./helpers";
 
 test("a new space auto-completes onboarding, is renamed in its settings, and is deleted with its bots", async ({
   page,
@@ -34,8 +41,12 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
   const occupied = sidebar
     .locator('[data-sidebar-group^="space:"]')
     .filter({ hasText: "Typo space" });
-  await expect(occupied.getByRole("button", { name: /^Chief/ })).toBeVisible();
-  await expect(sidebar.getByRole("button", { name: /^Chief/ })).toHaveCount(2);
+  await expect(
+    occupied.getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) }),
+  ).toBeVisible();
+  await expect(sidebar.getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) })).toHaveCount(
+    2,
+  );
   await captureScreenshot(page, testInfo, "new-space-after-onboarding");
 
   // The space menu's Settings opens the Space section, where it is renamed in place.
@@ -63,7 +74,9 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
   await deleteSpaceDialog.getByRole("button", { name: "Delete", exact: true }).click();
   await expect(sidebar.getByText("Temporary", { exact: true })).toHaveCount(0);
   await expect(page).not.toHaveURL(/\/onboarding/);
-  await expect(sidebar.getByRole("button", { name: /^Chief/ })).toHaveCount(1);
+  await expect(sidebar.getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) })).toHaveCount(
+    1,
+  );
   await page.reload();
   await expect(sidebar.getByText("Temporary", { exact: true })).toHaveCount(0);
 
@@ -71,7 +84,9 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
   await page.goto("/onboarding");
   await page.waitForURL(/\/app/);
   await expect(page).not.toHaveURL(/\/onboarding/);
-  await expect(sidebar.getByRole("button", { name: /^Chief/ })).toHaveCount(1);
+  await expect(sidebar.getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) })).toHaveCount(
+    1,
+  );
 });
 
 test("deleting the last bot in a space stays in the app after first use", {
@@ -100,10 +115,12 @@ test("deleting the last bot in a space stays in the app after first use", {
   const sideBot = sidebar
     .locator('[data-sidebar-group^="space:"]')
     .filter({ hasText: "Side" })
-    .getByRole("button", { name: /^Chief/ });
+    .getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) });
   await sideBot.click({ button: "right" });
   await page.getByRole("menuitem", { name: "Delete" }).click();
-  const deleteDialog = page.getByRole("alertdialog", { name: /Delete Chief/ });
+  const deleteDialog = page.getByRole("alertdialog", {
+    name: new RegExp(`Delete ${FIRST_BOT_NAME}`),
+  });
   await expect(deleteDialog).toBeVisible();
   await deleteDialog.getByRole("button", { name: "Delete", exact: true }).click();
   await expect(sideBot).toHaveCount(0);
@@ -123,5 +140,5 @@ test("deleting the last bot in a space stays in the app after first use", {
     .click();
   await expect(sidebar.getByText("Side", { exact: true })).toHaveCount(0);
   await sidebar.getByRole("button", { name: /^Archived/ }).click();
-  await expect(sidebar.getByText("Chief", { exact: true })).toBeVisible();
+  await expect(sidebar.getByText(FIRST_BOT_NAME, { exact: true })).toBeVisible();
 });

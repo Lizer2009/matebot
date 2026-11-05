@@ -1,12 +1,19 @@
 import { expect, test } from "@playwright/test";
-import { captureScreenshot, completeOnboarding, createBotFromPicker, rpc, signup } from "./helpers";
+import {
+  captureScreenshot,
+  completeOnboarding,
+  createBotFromPicker,
+  FIRST_BOT_NAME,
+  rpc,
+  signup,
+} from "./helpers";
 
 test("a stale roster refresh started before creation keeps the new bot selected", async ({
   page,
 }, testInfo) => {
   await signup(page, `stale-create-${Date.now()}@rakazo.test`, "password12", "Stale Create");
   await completeOnboarding(page);
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByPlaceholder(`Message ${FIRST_BOT_NAME}`)).toBeVisible();
 
   let markReady!: () => void;
   let releaseList!: () => void;

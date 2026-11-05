@@ -9,7 +9,7 @@ import { serve } from "@hono/node-server";
 import type { ElectronApplication, Page } from "@playwright/test";
 import { _electron as electron, expect } from "@playwright/test";
 import type { createApp } from "@rakazo/api/app";
-import { abortableDelay } from "@rakazo/core";
+import { abortableDelay, PRODUCT_DISPLAY_NAME } from "@rakazo/core";
 import { loadRootEnv } from "@rakazo/core/node/load-root-env";
 import type { PrismaClient } from "@rakazo/db";
 import { createThreadMessage } from "@rakazo/db";
@@ -234,7 +234,7 @@ async function prepareAuthenticatedProfile(benchmark: BenchmarkContext, profile:
         );
       });
     const connectHeading = page.getByRole("heading", { name: "Connect a model" });
-    const composer = page.getByRole("combobox", { name: "Message Chief" });
+    const composer = page.getByRole("combobox", { name: `Message ${PRODUCT_DISPLAY_NAME}` });
     await connectHeading.or(composer).waitFor({ timeout: 20_000 });
     if (await connectHeading.isVisible().catch(() => false)) {
       throw new Error(
@@ -250,7 +250,7 @@ async function prepareAuthenticatedProfile(benchmark: BenchmarkContext, profile:
 
 async function seedBenchmarkThread(prisma: PrismaClient) {
   const bot = await prisma.bot.findFirst({
-    where: { name: "Chief" },
+    where: { name: PRODUCT_DISPLAY_NAME },
     select: { thread: { select: { id: true } } },
   });
   const threadId = bot?.thread?.id;
@@ -465,7 +465,7 @@ async function measureInteractions(app: ElectronApplication, page: Page) {
   await page.waitForTimeout(200);
 
   const typingBefore = await cdpMetrics(session);
-  const composer = page.getByPlaceholder(/Message Chief/);
+  const composer = page.getByPlaceholder(new RegExp(`Message ${PRODUCT_DISPLAY_NAME}`));
   await composer.fill("");
   await composer.focus();
   const characterCount = 40;

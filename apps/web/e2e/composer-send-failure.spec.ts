@@ -1,7 +1,14 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import type { Routine } from "@rakazo/contracts";
-import { activeBotId, completeOnboarding, createNamedBot, rpc, signup } from "./helpers";
+import {
+  activeBotId,
+  completeOnboarding,
+  createNamedBot,
+  FIRST_BOT_NAME,
+  rpc,
+  signup,
+} from "./helpers";
 
 async function openComposer(page: Page, prefix: string) {
   await signup(page, `${prefix}-${Date.now()}@rakazo.test`, "password12", "Draft Keeper");
@@ -111,8 +118,8 @@ test("an accepted send clears recovered text after returning to the thread", {
   await openComposer(page, "pending-return");
   await createNamedBot(page, "Other thread");
   const sidebar = page.locator("aside").first();
-  await sidebar.getByRole("button", { name: /^Chief/ }).click();
-  const composer = page.getByRole("combobox", { name: "Message Chief", exact: true });
+  await sidebar.getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) }).click();
+  const composer = page.getByRole("combobox", { name: `Message ${FIRST_BOT_NAME}`, exact: true });
   let releaseSend = () => {};
   const released = new Promise<void>((resolve) => {
     releaseSend = resolve;
@@ -127,7 +134,7 @@ test("an accepted send clears recovered text after returning to the thread", {
   await request;
   await expect(composer).toHaveValue("");
   await sidebar.getByRole("button", { name: /^Other thread/ }).click();
-  await sidebar.getByRole("button", { name: /^Chief/ }).click();
+  await sidebar.getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) }).click();
   await expect(composer).toHaveValue("pending accepted message");
   releaseSend();
   await expect(composer).toHaveValue("");
