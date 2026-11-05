@@ -35,10 +35,14 @@ export async function githubStarsLabel(): Promise<string> {
   return formatStarCount(await githubStars);
 }
 
-/** Desktop platforms to offer: macOS always, Windows and Linux once a release ships them. */
+/**
+ * Desktop builds the site offers: Windows and macOS always (the Windows installer
+ * is the launch download, served from `/api/download`), Linux once a release
+ * ships one.
+ */
 export function availableDesktopPlatforms(downloads: DesktopDownloads) {
-  return (["mac", "windows", "linux"] as const).filter(
-    (platform) => platform === "mac" || Boolean(downloads[platform]),
+  return (["windows", "mac", "linux"] as const).filter(
+    (platform) => platform !== "linux" || Boolean(downloads[platform]),
   );
 }
 

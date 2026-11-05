@@ -42,7 +42,9 @@ async function captureScreenshot(page: Page, testInfo: TestInfo, name: string) {
   }
 }
 
+/** The demo's onboarding labels are English, and `/` is the Chinese homepage. */
 async function openAnsweredOnboarding(page: Page) {
+  await openHomepage(page, "/en/");
   await page.locator('.product-demo[data-product-demo-ready="true"]').waitFor();
   const demo = page.locator(".product-demo");
   const showBots = demo.getByRole("button", { name: "Show bots", exact: true });
@@ -56,12 +58,12 @@ async function openAnsweredOnboarding(page: Page) {
 }
 
 test("homepage screenshots", async ({ page }, testInfo) => {
+  // The unprefixed homepage is the Chinese one.
   await openHomepage(page);
   await captureScreenshot(page, testInfo, "01-marketing-homepage");
 
-
-  await openHomepage(page, "/zh/");
-  await captureScreenshot(page, testInfo, "03-marketing-homepage-zh");
+  await openHomepage(page, "/en/");
+  await captureScreenshot(page, testInfo, "01-marketing-homepage-en");
 
   await openHomepage(page, "/ja/");
   await captureScreenshot(page, testInfo, "03-marketing-homepage-ja");

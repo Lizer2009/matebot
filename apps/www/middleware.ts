@@ -6,10 +6,12 @@ import {
   markdownResponse,
   negotiateRepresentation,
 } from "./src/agent-content.js";
+import { marketingOrigin } from "./src/origins.js";
 
 const VARY_HEADER = "Accept, Accept-Encoding";
-const APEX_ORIGIN = "https://test.matebot.dev";
-const WWW_HOST = "www.matebot.dev";
+const APEX_ORIGIN = marketingOrigin(process.env);
+// The `www.` alias of whichever origin this build serves, so a domain move needs no code change.
+const WWW_HOST = `www.${new URL(APEX_ORIGIN).hostname}`;
 
 export const config = {
   matcher: ["/((?!api|_astro|.*\\..*).*)", "/sitemap.xml"],

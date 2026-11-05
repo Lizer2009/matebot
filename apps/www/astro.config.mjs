@@ -5,16 +5,19 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { isIndexedPath } from "./src/blog/indexability.ts";
 import { docsCallouts } from "./src/docs-callouts.ts";
-import { LOCALE_HREFLANG, LOCALES } from "./src/i18n/locales.ts";
+import { HOME_LOCALE, LOCALE_HREFLANG, LOCALES } from "./src/i18n/locales.ts";
+import { marketingOrigin } from "./src/origins.ts";
 import { resolveWwwPort } from "./www-port.mjs";
 
 const wwwPort = resolveWwwPort();
 
 export default defineConfig({
-  site: "https://test.matebot.dev",
+  site: marketingOrigin(process.env),
   output: "static",
   i18n: {
-    defaultLocale: "en",
+    // The homepage language is unprefixed, so it is also the routing default; other locales keep
+    // their prefix. `DEFAULT_LOCALE` stays the content language of docs and other English pages.
+    defaultLocale: HOME_LOCALE,
     locales: [...LOCALES],
     routing: {
       prefixDefaultLocale: false,
@@ -25,7 +28,7 @@ export default defineConfig({
     sitemap({
       filter: (page) => isIndexedPath(new URL(page).pathname),
       i18n: {
-        defaultLocale: "en",
+        defaultLocale: HOME_LOCALE,
         locales: LOCALE_HREFLANG,
       },
     }),

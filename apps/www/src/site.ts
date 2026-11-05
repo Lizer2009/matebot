@@ -6,8 +6,11 @@
  * text and in the GitHub repository link, which is where Apache-2.0 attribution
  * belongs.
  */
+import { appOrigin, marketingOrigin } from "./origins";
+
 export const SITE_NAME = "Matebot";
-export const SITE_URL = "https://test.matebot.dev";
+/** Where this marketing site is served (canonicals, hreflang, structured data). */
+export const SITE_URL = marketingOrigin(process.env);
 export const SITE_DESCRIPTION =
   "Matebot is an open source Grok Bot alternative for persistent AI teammates that do real work. Your keys, your model, your machine.";
 
@@ -16,10 +19,15 @@ export const GITHUB_URL = "https://github.com/Lizer2009/matebot";
 export const UPSTREAM_URL = "https://github.com/elie222/rakazo";
 export const GITHUB_API_REPO = "https://api.github.com/repos/Lizer2009/matebot";
 
-/** This fork's own deployment; the site's calls to action open it. */
-export const APP_URL = "https://test.matebot.dev";
+/** Where the web app is served. Sign-in and account links open it, never the marketing root. */
+export const APP_URL = appOrigin(process.env);
 export const PLUGIN_SUBMISSIONS_URL = `${APP_URL}/api/v1/plugin-submissions`;
 export const INTEGRATION_CLAIMS_URL = `${APP_URL}/api/v1/integration-claims`;
+
+/** True for a link this site serves, so it keeps its own target instead of opening a new tab. */
+export function isSiteUrl(href: string): boolean {
+  return href === SITE_URL || href.startsWith(`${SITE_URL}/`);
+}
 
 /**
  * The integration catalog is published by the upstream sync job. A self-hosted

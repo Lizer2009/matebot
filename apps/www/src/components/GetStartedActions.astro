@@ -7,7 +7,7 @@ import { APP_URL, GITHUB_URL } from "../site";
 type Props = {
   class: string;
   copy: HomeCopy["hero"];
-  /** Omitted where the GitHub link should stay on every platform. */
+  /** Desktop builds to offer. Windows is always offered: it is the launch download. */
   downloads?: DesktopDownloads;
   /** PostHog `data-attr` prefix that tells this placement apart from others. */
   placement: string;
@@ -18,36 +18,52 @@ const { class: className, copy, downloads, placement, githubLabel = copy.viewOnG
   Astro.props;
 
 // `data-show` lists the platforms (set on <html> by the HomePage script) that see each action.
-// Matebot ships no App Store or Play Store listing yet, so phone visitors get the web app.
-const desktopDownloads = (downloads ? availableDesktopPlatforms(downloads) : []).map((platform) => ({
-  platform,
-  label: copy.download[platform],
-  href: desktopDownloadHref(platform),
-}));
-const githubPlatforms = ["web", "mac", "windows", "linux"]
-  .filter((platform) => !desktopDownloads.some((download) => download.platform === platform))
-  .join(" ");
+// Exactly one primary action shows per platform: the Windows installer on computers, the web app
+// on phones, which have no desktop build. Matebot has no App Store listing yet.
+const desktopPlatforms = downloads ? availableDesktopPlatforms(downloads) : [];
+const otherDownloads = desktopPlatforms
+  .filter((platform) => platform !== "windows")
+  .map((platform) => ({ platform, href: desktopDownloadHref(platform), label: copy.download[platform] }));
+// Linux keeps the GitHub link until a release ships an AppImage.
+const githubPlatforms = desktopPlatforms.includes("linux") ? "" : "linux";
 ---
 
 <div class={className}>
-  <a class="button button--primary" href={APP_URL} data-show="ios android mac windows linux web">
+  <a
+    class="button button--primary"
+    href={desktopDownloadHref("windows")}
+    data-show="mac windows linux"
+    data-attr={`${placement}-windows`}
+  >
+    {copy.download.windows}
+  </a>
+  <a
+    class="button button--secondary"
+    href={APP_URL}
+    data-show="ios android mac windows linux web"
+    data-attr={`${placement}-web`}
+  >
     {copy.getStarted}
   </a>
   {
-    desktopDownloads.map((download) => (
+    otherDownloads.map((download) => (
       <a class="button button--secondary" href={download.href} data-show={download.platform}>
         {download.label}
       </a>
     ))
   }
-  <a
-    class="button button--secondary"
-    href={GITHUB_URL}
-    target="_blank"
-    rel="noopener"
-    data-show={githubPlatforms}
-    data-attr={`${placement}-github`}
-  >
-    {githubLabel}
-  </a>
+  {
+    githubPlatforms && (
+      <a
+        class="button button--secondary"
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener"
+        data-show={githubPlatforms}
+        data-attr={`${placement}-github`}
+      >
+        {githubLabel}
+      </a>
+    )
+  }
 </div>

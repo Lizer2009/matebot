@@ -17,7 +17,14 @@ export const LOCALES = [
 
 export type Locale = (typeof LOCALES)[number];
 
+/** The content language of pages outside the localised homepages (docs, pricing, blog). */
 export const DEFAULT_LOCALE: Locale = "en";
+
+/**
+ * The marketing homepage's language. It has no path prefix, so the English
+ * homepage moves to `/en/` and every other language keeps `/<locale>/`.
+ */
+export const HOME_LOCALE: Locale = "zh";
 
 export const RTL_LOCALES: ReadonlySet<Locale> = new Set(["he"]);
 
@@ -95,7 +102,17 @@ export function isLocale(value: string | undefined): value is Locale {
 }
 
 export function localeHomePath(locale: Locale): string {
-  return locale === DEFAULT_LOCALE ? "/" : `/${locale}/`;
+  return locale === HOME_LOCALE ? "/" : `/${locale}/`;
+}
+
+/**
+ * The locale of any page, from its URL: a `/<locale>/` prefix, else the default
+ * content language. The unprefixed homepage is the exception and passes its
+ * locale explicitly.
+ */
+export function localeFromPathname(pathname: string): Locale {
+  const [first] = pathname.split("/").filter(Boolean);
+  return isLocale(first) ? first : DEFAULT_LOCALE;
 }
 
 export function localeHashPath(locale: Locale, hash: string): string {

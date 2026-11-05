@@ -1,5 +1,22 @@
 ---
-import HomePage from "../../components/HomePage.astro";
+// Chinese is the unprefixed homepage, so /zh/ is only a legacy alias. This static
+// redirect keeps old links working; the sitemap and canonicals point at "/".
+import { HOME_LOCALE, LOCALE_HTML_LANG, localeHomePath } from "../../i18n/locales";
+import { SITE_URL } from "../../site";
+
+const target = new URL(localeHomePath(HOME_LOCALE), SITE_URL).toString();
 ---
 
-<HomePage />
+<!doctype html>
+<html lang={LOCALE_HTML_LANG[HOME_LOCALE]}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={target} />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <title>Matebot</title>
+  </head>
+  <body>
+    <p><a href={target}>继续访问 Matebot 首页</a></p>
+  </body>
+</html>

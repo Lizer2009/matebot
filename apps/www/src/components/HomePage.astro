@@ -30,6 +30,7 @@ import {
 } from "../i18n/home";
 import {
   DEFAULT_LOCALE,
+  HOME_LOCALE,
   LOCALES,
   LOCALE_HTML_LANG,
   isLocale,
@@ -52,13 +53,16 @@ import {
   SITE_URL,
 } from "../site";
 
+type Props = {
+  /** The homepage's language. Defaults to the unprefixed homepage, which is Chinese. */
+  locale?: Locale;
+};
 
-const locale: Locale = isLocale(Astro.currentLocale)
-  ? Astro.currentLocale
-  : DEFAULT_LOCALE;
+const { locale: localeProp } = Astro.props;
+const locale: Locale = isLocale(localeProp) ? localeProp : HOME_LOCALE;
 
 const copy = getHomeCopy(locale);
-const enCopy = getHomeCopy(DEFAULT_LOCALE);
+const defaultCopy = getHomeCopy(DEFAULT_LOCALE);
 const availableLanguages = LOCALES.map((supportedLocale) =>
   getHomeCopy(supportedLocale).availableLanguage
 );
@@ -92,9 +96,9 @@ const structuredData = homeStructuredData({
   pageUrl,
   title: copy.title,
   description: copy.description,
-  siteDescription: enCopy.description,
+  siteDescription: defaultCopy.description,
   inLanguage: LOCALE_HTML_LANG[locale],
-  defaultInLanguage: LOCALE_HTML_LANG[DEFAULT_LOCALE],
+  defaultInLanguage: LOCALE_HTML_LANG[HOME_LOCALE],
   availableLanguages,
   faq: copy.faq.items,
 });
@@ -148,6 +152,7 @@ const structuredData = homeStructuredData({
         <GetStartedActions
           class="hero__actions"
           copy={copy.hero}
+          downloads={desktopDownloads}
           placement="hero"
           githubLabel={copy.openSource.starOnGithub}
         />

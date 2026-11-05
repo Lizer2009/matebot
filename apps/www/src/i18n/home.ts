@@ -1350,10 +1350,10 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     },
   },
   zh: {
-    title: "Matebot | 开源 Grok Bot 替代品",
+    title: "Matebot | 真正属于你的 AI 队友",
     description:
-      "Matebot 是一个开源 Grok Bot 替代品，用于运行真正干活的持久化 AI 队友。密钥、模型、机器，都归你所有。",
-    ogImageAlt: "Matebot：真正属于你的 AI 队友。密钥、模型、机器，都归你所有。",
+      "Matebot 是开源的 AI 队友，在你的电脑上收发消息、操作应用、按计划干活。下载 Windows 桌面版即可开始，密钥、模型、机器都归你所有。",
+    ogImageAlt: "Matebot：真正属于你的 AI 队友。下载 Windows 桌面版即可开始。",
     availableLanguage: "Chinese",
     skipToContent: "跳到主要内容",
     nav: {
@@ -1371,13 +1371,13 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       brandKit: "品牌资源",
     },
     hero: {
-      eyebrow: "开源",
-      heading: "真正属于你的开源 Grok Bot 替代品",
-      lead: "把工作交给 Bot，随时用任意设备查看。",
-      getStarted: "开始使用",
+      eyebrow: "开源 · Apache-2.0",
+      heading: "给你的电脑配一个 AI 队友",
+      lead: "Matebot 在你的电脑上收发消息、操作应用、按计划干活。下载桌面版，十分钟内让它接手第一件工作。",
+      getStarted: "在浏览器里打开",
       download: {
         mac: "下载 macOS 版",
-        windows: "下载 Windows 版",
+        windows: "免费下载 Windows 版",
         linux: "下载 Linux 版",
         ios: "下载 iOS 版",
         android: "下载 Android 版",
@@ -1409,8 +1409,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       heading: "给每个 Bot 分配工作",
       copy: "选个模板，按你的需求调整。",
       bots: ZH_ROSTER,
-    },
-    channels: {
+    },    channels: {
       heading: "随时随地发消息",
       copy: "在 Slack 里 @ 一个机器人，或用手机给它发短信。",
       mock: { ask: "今天该跟进谁？", reply: "本周有三个潜在客户没回音了。草稿已放在线程里。" },
@@ -1473,7 +1472,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     },
     cta: {
       heading: "认识你的第一个 Bot",
-      copy: "把下一项任务交给 Bot。",
+      copy: "下载 Windows 版，把下一项任务交给它。",
       openSourceValue: "开源",
       selfHostValue: "自托管",
       stats: [

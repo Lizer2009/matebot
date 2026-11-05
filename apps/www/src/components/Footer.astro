@@ -1,11 +1,11 @@
 ---
 import {
-  DEFAULT_LOCALE,
   LOCALE_HREFLANG,
   LOCALE_HTML_LANG,
   LOCALE_LABELS,
   LOCALES,
   isLocale,
+  localeFromPathname,
   localeHomePath,
   type Locale,
 } from "../i18n/locales";
@@ -33,9 +33,9 @@ type Props = {
   linkLabels?: HomeCopy["footer"]["links"];
 };
 
-const currentLocale: Locale = isLocale(Astro.currentLocale)
-  ? Astro.currentLocale
-  : (Astro.props.locale ?? DEFAULT_LOCALE);
+const currentLocale: Locale = isLocale(Astro.props.locale)
+  ? Astro.props.locale
+  : localeFromPathname(Astro.url.pathname);
 const localeCopy = getHomeCopy(currentLocale);
 
 const {
