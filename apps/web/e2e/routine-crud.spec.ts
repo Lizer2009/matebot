@@ -5,6 +5,7 @@ import {
   activeBotId,
   captureScreenshot,
   completeOnboarding,
+  FIRST_BOT_NAME,
   openBotPanelTab,
   rpc,
   signup,
@@ -184,7 +185,7 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
     expect(renamePatch).not.toHaveProperty(column);
 
   await page.reload();
-  await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
+  await expect(page.getByPlaceholder(`Message ${FIRST_BOT_NAME}`)).toBeVisible();
   expect((await rpc<Routine[]>(page, "routines/list", { botId })).map((r) => r.name)).toEqual([
     "Renamed model check",
   ]);
@@ -332,7 +333,7 @@ test("switching bots while a routine save is pending does not reopen stale state
   );
 
   const botList = page.locator("aside").first();
-  await botList.getByRole("button", { name: /^Chief/ }).click();
+  await botList.getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) }).click();
   await staleListIntercepted;
   await botList.getByRole("button", { name: /^Second/ }).click();
   await page.waitForURL(new RegExp(`/app/${secondBot.id}$`));

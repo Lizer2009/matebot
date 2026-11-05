@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
+import {
+  activeBotId,
+  captureScreenshot,
+  completeOnboarding,
+  FIRST_BOT_NAME,
+  rpc,
+  signup,
+} from "./helpers";
 
 test("command palette switches bots and runs actions", async ({ page }, testInfo) => {
   const stamp = Date.now();
@@ -30,14 +37,14 @@ test("command palette switches bots and runs actions", async ({ page }, testInfo
   const dialog = page.getByRole("dialog", { name: "Command menu" });
   await expect(dialog).toBeVisible();
   await expect(palette).toBeVisible();
-  await expect(page.getByRole("option", { name: /Chief/ })).toBeVisible();
+  await expect(page.getByRole("option", { name: new RegExp(`^${FIRST_BOT_NAME}`) })).toBeVisible();
   await expect(page.getByRole("option", { name: /Researcher/ })).toBeVisible();
   await captureScreenshot(page, testInfo, "command-palette-bots");
 
   const search = page.getByTestId("command-palette-search");
   await search.fill("Research");
   await expect(page.getByRole("option", { name: /Researcher/ })).toBeVisible();
-  await expect(page.getByRole("option", { name: /Chief/ })).toHaveCount(0);
+  await expect(page.getByRole("option", { name: new RegExp(`^${FIRST_BOT_NAME}`) })).toHaveCount(0);
   await captureScreenshot(page, testInfo, "command-palette-filtered");
 
   await page.getByRole("option", { name: /Researcher/ }).click();
@@ -64,7 +71,7 @@ test("command palette switches bots and runs actions", async ({ page }, testInfo
   await page.keyboard.press("ControlOrMeta+K");
   await search.fill("models");
   await expect(page.getByRole("option", { name: "Settings: Models" })).toBeVisible();
-  await expect(page.getByRole("option", { name: /Chief/ })).toHaveCount(0);
+  await expect(page.getByRole("option", { name: new RegExp(`^${FIRST_BOT_NAME}`) })).toHaveCount(0);
   await page.getByRole("option", { name: "Settings: Models" }).click();
   await page.waitForURL(/[?&]settings=models/);
 });

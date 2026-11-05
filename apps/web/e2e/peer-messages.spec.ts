@@ -1,6 +1,13 @@
 import type { Page, TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
+import {
+  activeBotId,
+  captureScreenshot,
+  completeOnboarding,
+  FIRST_BOT_NAME,
+  rpc,
+  signup,
+} from "./helpers";
 
 test("shows peer lines in transcript and opens view-only peer chat", async ({ page }, testInfo) => {
   const stamp = Date.now();
@@ -17,9 +24,9 @@ test("shows peer lines in transcript and opens view-only peer chat", async ({ pa
     notifyOnFinish: true,
   });
   await page.reload();
-  await expect(page.getByRole("combobox", { name: "Message Chief" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: `Message ${FIRST_BOT_NAME}` })).toBeVisible();
 
-  const composer = page.getByRole("combobox", { name: "Message Chief" });
+  const composer = page.getByRole("combobox", { name: `Message ${FIRST_BOT_NAME}` });
   await composer.fill("message the bot named Researcher saying peer-exchange-alpha");
   await composer.press("Enter");
 
@@ -91,7 +98,9 @@ test("shows peer lines in transcript and opens view-only peer chat", async ({ pa
   await chip.press("Enter");
   const view = page.getByTestId("peer-conversation-view");
   await expect(view).toBeVisible();
-  await expect(view.getByRole("heading", { name: /Chief\s*Researcher/ })).toBeVisible();
+  await expect(
+    view.getByRole("heading", { name: new RegExp(`${FIRST_BOT_NAME}\\s*Researcher`) }),
+  ).toBeVisible();
   await expect(transcript.getByTestId("peer-replies-toggle")).toHaveCount(0);
   const close = view.getByRole("button", { name: "Close", exact: true });
   await expect(close).toHaveCount(1);
@@ -232,7 +241,7 @@ async function openFoldedPeerReply(page: Page, name: string, testInfo: TestInfo)
     notifyOnFinish: true,
   });
   await page.reload();
-  const chiefComposer = page.getByRole("combobox", { name: "Message Chief" });
+  const chiefComposer = page.getByRole("combobox", { name: `Message ${FIRST_BOT_NAME}` });
   await chiefComposer.fill("message the bot named Researcher saying peer-fold-alpha");
   await chiefComposer.press("Enter");
 
@@ -255,9 +264,9 @@ async function openFoldedPeerReply(page: Page, name: string, testInfo: TestInfo)
   // Researcher's reply to Chief's request is bot-to-bot work: it folds in Researcher's chat.
   await page.goto(`/app/${researcher.id}`);
   await expect(
-    transcript
-      .getByTestId("peer-receipt-chip")
-      .filter({ hasText: /Message from Chief|messages with Chief/ }),
+    transcript.getByTestId("peer-receipt-chip").filter({
+      hasText: new RegExp(`Message from ${FIRST_BOT_NAME}|messages with ${FIRST_BOT_NAME}`),
+    }),
   ).toBeVisible({ timeout: 60_000 });
   const reply = transcript.getByText(foldedReplyText);
   await expect(reply).toHaveCount(0);
@@ -274,7 +283,10 @@ test(
       testInfo,
     );
 
-    const line = transcript.getByTestId("peer-receipt-chip").filter({ hasText: "Chief" }).first();
+    const line = transcript
+      .getByTestId("peer-receipt-chip")
+      .filter({ hasText: FIRST_BOT_NAME })
+      .first();
     await expect(transcript.getByTestId("peer-replies-toggle")).toHaveCount(0);
     await captureScreenshot(page, testInfo, "peer-line-folded");
     await line.click();
@@ -313,9 +325,9 @@ test(
       researcherTranscript.locator("p").filter({ hasText: /^Which city should I use\?$/ }),
     ).toBeVisible({ timeout: 60_000 });
     await expect(
-      researcherTranscript
-        .getByTestId("peer-receipt-chip")
-        .filter({ hasText: /Message from Chief|messages with Chief/ }),
+      researcherTranscript.getByTestId("peer-receipt-chip").filter({
+        hasText: new RegExp(`Message from ${FIRST_BOT_NAME}|messages with ${FIRST_BOT_NAME}`),
+      }),
     ).toHaveCount(2);
     await expect(
       researcherTranscript.getByText("i need a decision before i continue."),
@@ -346,7 +358,7 @@ test("answers a message sent while the bot works on another bot's request", asyn
     notifyOnFinish: true,
   });
   await page.reload();
-  const chief = page.getByRole("combobox", { name: "Message Chief" });
+  const chief = page.getByRole("combobox", { name: `Message ${FIRST_BOT_NAME}` });
   await chief.fill("message the bot named Researcher saying work for 8 seconds");
   await chief.press("Enter");
 

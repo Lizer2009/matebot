@@ -1,5 +1,6 @@
 import { Agent } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
+import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
 import { isTerminatingReplyResult, terminatingReplyText } from "./approval-effect.js";
 import { withAutomatedLabels } from "./automated-messages.js";
 import { DELEGATION_TOOL_NAMES } from "./builtin-tools.js";
@@ -261,11 +262,11 @@ export async function executeSubagent(
         : selectedModel.apiKey,
     initialState: {
       systemPrompt: [
-        `You are a Rakazo subagent named "${name}".`,
+        `You are a ${PRODUCT_DISPLAY_NAME} subagent named "${name}".`,
         "You run inside the parent bot's turn — you are not a separate bot chat.",
         "Complete the task and return a concise result. Do not spawn bots or further subagents.",
         "Your task comes from the parent bot, not from the human user, and you cannot talk to the user: report your result back to the parent bot.",
-        "Messages marked as automated come from Rakazo, not from the user.",
+        `Messages marked as automated come from ${PRODUCT_DISPLAY_NAME}, not from the user.`,
         extra,
       ]
         .filter(Boolean)

@@ -1,4 +1,5 @@
 import type { ConnectorTool } from "@rakazo/adapter-kit";
+import { PRODUCT_DISPLAY_NAME } from "@rakazo/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fakeAgentState = vi.hoisted(() => ({
@@ -63,7 +64,7 @@ vi.mock("./pi-openai-compatible-provider.js", () => ({
 }));
 
 import { COMPUTER_SCREEN_UNAVAILABLE } from "./computer-screens.js";
-import { PiAgentRuntime } from "./pi-runtime.js";
+import { defaultSystemPrompt, PiAgentRuntime } from "./pi-runtime.js";
 
 const computerObserve: ConnectorTool = {
   name: "computer_observe",
@@ -75,6 +76,15 @@ describe("Pi computer tool dispatch", () => {
   beforeEach(() => {
     fakeAgentState.result = undefined;
     fakeAgentState.systemPrompt = "";
+  });
+
+  it("introduces the bot as this product, not the upstream one", () => {
+    for (const prompt of [defaultSystemPrompt(true), defaultSystemPrompt(false)]) {
+      expect(prompt).toContain(`You are a bot on ${PRODUCT_DISPLAY_NAME} with`);
+      expect(prompt).not.toContain("Rakazo");
+    }
+    expect(defaultSystemPrompt(true)).toContain("a real computer");
+    expect(defaultSystemPrompt(false)).toContain("a persistent sandbox filesystem and shell");
   });
 
   it("forwards screenshots as image content for any Pi model provider", async () => {

@@ -6,6 +6,7 @@ import {
   captureScreenshot,
   completeOnboarding,
   expectCardWidth,
+  FIRST_BOT_NAME,
   openBotPanelTab,
   realSandboxTimeout,
   rpc,
@@ -326,18 +327,25 @@ test("takeover, routine, plugins, and export are reachable", async ({ page }, te
 
   await page.getByRole("button", { name: "Close integrations" }).click();
 
-  await page.getByText("Chief").first().click();
+  await page.getByText(FIRST_BOT_NAME).first().click();
   await openBotPanelTab(page, "Advanced");
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export" }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/chief-export\.json/i);
+  expect(download.suggestedFilename()).toMatch(
+    new RegExp(`${FIRST_BOT_NAME.toLowerCase()}-export\\.json`, "i"),
+  );
   await page.getByRole("button", { name: "Close panel" }).click();
 
-  await page.locator("aside").first().getByRole("button", { name: /Chief/ }).first().click({
-    button: "right",
-  });
-  const botMenu = page.getByRole("menu", { name: "Actions for Chief" });
+  await page
+    .locator("aside")
+    .first()
+    .getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) })
+    .first()
+    .click({
+      button: "right",
+    });
+  const botMenu = page.getByRole("menu", { name: `Actions for ${FIRST_BOT_NAME}` });
   await expect(botMenu.getByRole("menuitem", { name: "Archive" })).toBeVisible();
   await botMenu.getByRole("menuitem", { name: "Delete" }).click();
   await expect(page.getByRole("radio", { name: /Keep memories/ })).toBeChecked();
@@ -382,14 +390,14 @@ test("sign-in, spawn, and stop work in the shell", async ({ page }, testInfo) =>
 
   await page
     .locator("[data-sidebar-group]")
-    .getByRole("button", { name: /^Chief/ })
+    .getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) })
     .click();
   await composer.fill("keep working until I stop you");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible({
     timeout: 30_000,
   });
-  await expect(composer).toHaveAttribute("placeholder", "Message Chief");
+  await expect(composer).toHaveAttribute("placeholder", `Message ${FIRST_BOT_NAME}`);
   await expect(page.getByRole("button", { name: "Send", exact: true })).toBeVisible();
   const holdToTalk = page
     .getByTestId("composer-bar")
@@ -411,7 +419,7 @@ test("sign-in, spawn, and stop work in the shell", async ({ page }, testInfo) =>
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("button", { name: "Send", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
-  await expect(composer).toHaveAttribute("placeholder", "Message Chief");
+  await expect(composer).toHaveAttribute("placeholder", `Message ${FIRST_BOT_NAME}`);
   await captureScreenshot(page, testInfo, "14-active-bot-work-mobile");
   await page.setViewportSize({ width: 1280, height: 720 });
   expect(browserErrors).toEqual([]);
@@ -445,7 +453,7 @@ test("sign-in, spawn, and stop work in the shell", async ({ page }, testInfo) =>
   await page.getByPlaceholder("Password").fill("password12");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL(/\/app/, { timeout: 20_000 });
-  await expect(sidebarBotButton(page, /^Chief/)).toBeVisible();
+  await expect(sidebarBotButton(page, new RegExp(`^${FIRST_BOT_NAME}`))).toBeVisible();
   await expect(sidebarBotButton(page, /Scout/)).toBeVisible();
   await captureScreenshot(page, testInfo, "15-restored-session");
 });

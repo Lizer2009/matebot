@@ -4,6 +4,7 @@ import {
   activeBotId,
   captureScreenshot,
   completeOnboarding,
+  FIRST_BOT_NAME,
   openBotPanelTab,
   signup,
 } from "./helpers";
@@ -19,7 +20,7 @@ test("computer maintenance shows durable background progress and failure recover
   const updating: ComputerUpdate = {
     id: "update-example",
     botId,
-    name: "Chief",
+    name: FIRST_BOT_NAME,
     mode: "team",
     action: "update",
     status: "running",

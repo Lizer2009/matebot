@@ -1,6 +1,9 @@
 import type { Locator, Page, Route, TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { signupRequiresEmailVerification } from "@rakazo/core";
+import { PRODUCT_DISPLAY_NAME, signupRequiresEmailVerification } from "@rakazo/core";
+
+/** The name onboarding gives a space's first bot, so specs can find it. */
+export const FIRST_BOT_NAME = PRODUCT_DISPLAY_NAME;
 
 export function isRealSandboxProvider(provider = process.env.SANDBOX_PROVIDER) {
   return (
@@ -35,11 +38,11 @@ export async function rpc<T>(page: Page, procedure: string, body: unknown): Prom
 export async function completeOnboarding(page: Page, testInfo?: TestInfo) {
   await page.waitForURL(/\/(onboarding|app)/, { timeout: 20_000 });
   // Optional Server integrations step (needsSetup). Skip when shown, then the
-  // first bot is created automatically — land in Chief's chat with no form.
+  // first bot is created automatically — land in its chat with no form.
   const integrations = page.getByRole("heading", { name: "Server integrations", exact: true });
-  const chief = page.getByText("Chief").first();
-  await integrations.or(chief).waitFor({ timeout: 20_000 });
-  if ((await chief.isVisible().catch(() => false)) && page.url().includes("/app")) {
+  const firstBot = page.getByText(FIRST_BOT_NAME).first();
+  await integrations.or(firstBot).waitFor({ timeout: 20_000 });
+  if ((await firstBot.isVisible().catch(() => false)) && page.url().includes("/app")) {
     if (testInfo) {
       await captureScreenshot(page, testInfo, "03-create-first-bot");
       await captureScreenshot(page, testInfo, "06-onboarding-complete");
@@ -51,7 +54,7 @@ export async function completeOnboarding(page: Page, testInfo?: TestInfo) {
     await page.getByRole("button", { name: "Skip", exact: true }).click();
   }
   await page.waitForURL(/\/app\//, { timeout: 20_000 });
-  await expect(page.getByText("Chief").first()).toBeVisible();
+  await expect(page.getByText(FIRST_BOT_NAME).first()).toBeVisible();
   if (testInfo) {
     await captureScreenshot(page, testInfo, "03-create-first-bot");
     await captureScreenshot(page, testInfo, "06-onboarding-complete");

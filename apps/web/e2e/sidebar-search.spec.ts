@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { captureScreenshot, completeOnboarding, signup } from "./helpers";
+import { captureScreenshot, completeOnboarding, FIRST_BOT_NAME, signup } from "./helpers";
 
 test("sidebar search opens from its icon and closes without moving chats mid-click", async ({
   page,
@@ -18,7 +18,7 @@ test("sidebar search opens from its icon and closes without moving chats mid-cli
   await captureScreenshot(page, testInfo, "sidebar-search-open");
 
   // Leaving an empty field keeps the roster still, so a chat click lands.
-  const chief = sidebar.getByRole("button", { name: /^Chief/ }).first();
+  const chief = sidebar.getByRole("button", { name: new RegExp(`^${FIRST_BOT_NAME}`) }).first();
   const before = await chief.boundingBox();
   await chief.click();
   await expect(search).toBeVisible();
