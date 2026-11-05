@@ -148,7 +148,7 @@ chmod +x Matebot-*.AppImage
 
 网页（以及在 Electron 中托管的）界面在 **Settings → Language** 下支持 English、Deutsch、한국어、Türkçe、हिन्दी、Português (Brasil)、简体中文、繁體中文、Español、Русский、Français、עברית、Nederlands 与 日本語。Expo 应用随包提供 English、简体中文、繁體中文、Русский、Deutsch、Nederlands 与 日本語，**Account → Language** 列出全部七种。在用户保存选择之前，设备语言或 `EXPO_PUBLIC_DEFAULT_UI_LOCALE` 仍决定起始语言。
 
-营销主页（`apps/www`）通过页脚语言链接提供 en/de/ko/zh/ja（`/`、`/de/`、`/ko/`、`/zh/`、`/ja/`）；其他营销页面仍为英文。
+营销主页（`apps/www`）在 `/` 提供简体中文版，其他语言通过页脚语言菜单访问（`/en/`、`/de/`、`/ko/`、`/ja/` 等）；其他营销页面仍为英文。
 
 ## 开发
 

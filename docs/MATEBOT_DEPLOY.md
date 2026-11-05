@@ -129,6 +129,30 @@ bash install-images.sh --prepare-only
 
 `PRODUCT_DISPLAY_NAME` 不是环境变量：它是 `packages/core/src/product-brand.ts` 里的构建期常量，所以改品牌要改代码并重新出镜像，而不是改 `.env`。
 
+### 营销站与下载（`apps/www`）
+
+营销站与产品是**两个独立域名**：营销站 `test.matebot.dev`，应用（登录/注册）`app.test.matebot.dev`。营销站构建期读取两个环境变量，改域名不需要改代码：
+
+| 变量 | 默认值 | 作用 |
+| --- | --- | --- |
+| `RAKAZO_MARKETING_URL` | `https://test.matebot.dev` | canonical、hreflang、sitemap、结构化数据、站内绝对链接 |
+| `RAKAZO_APP_URL` | `https://app.test.matebot.dev` | 所有「开始使用 / 在浏览器里打开 / 登录」链接、插件 API 与集成认领地址 |
+
+两者都接受 absolute origin（含协议与端口）；无效值会回退到默认值。迁移到主域 `matebot.dev` 时，把这两个变量改成 `https://matebot.dev` 与 `https://app.matebot.dev` 后重新构建即可；Cloudflare Tunnel、`BETTER_AUTH_URL`、`WEB_ORIGIN`、`API_URL`、`RAKAZO_HOST` 需在同一次切换中一并更新。
+
+Windows 安装包下载由 `/api/download?platform=windows` 解析，顺序是：
+
+1. 最新 GitHub Release 里名为 `*.exe` 的资产（`Matebot-Setup-<version>.exe`）；
+2. 若都没有，读 `RAKAZO_WINDOWS_INSTALLER`：可以是站内路径（如 `/downloads/Matebot-Setup-0.6.0.exe`）或 `https://` 绝对地址；
+3. 仍未配置则跳到 Releases 页面，而不是给出死链。
+
+因此上线前需要**二选一**：
+
+- **推荐**：用 `release-desktop` 走一次带签名的正式发布（`v*` tag），资产上传后站点自动指向它；
+- 或把 `desktop-windows-installer` 工作流产出的 artifact 解压，把 `Matebot-Setup-0.6.0.exe` 放到营销站的 `apps/www/public/downloads/`，并在营销站环境里设 `RAKAZO_WINDOWS_INSTALLER=/downloads/Matebot-Setup-0.6.0.exe`。
+
+二进制不进 git：`apps/www/public/downloads/` 由运维在部署机上放置，路径必须与 `RAKAZO_WINDOWS_INSTALLER` 一致。
+
 ### 环境变量命名
 
 P2 重命名（`@rakazo/*` → `@matebot/*`）**只改 npm 包名与导入路径**，环境变量保持原样，避免已在运行的部署在拉取新镜像后读不到密钥：

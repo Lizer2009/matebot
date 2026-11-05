@@ -47,6 +47,11 @@ apps/web/src/locales/**/*.js
 apps/web/scripts/msgids.json
 playwright-report-www
 
+# Desktop installers placed for the marketing site's download link (see docs/MATEBOT_DEPLOY.md).
+# They are large binaries, not source: the site serves them from the deploy host.
+apps/www/public/downloads/*
+!apps/www/public/downloads/.gitkeep
+
 # Downloaded embedded computer screen SDK files
 apps/web/public/computer-screen/*.js
 apps/web/public/computer-screen/sdk/

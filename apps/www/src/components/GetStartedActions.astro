@@ -12,42 +12,80 @@ type Props = {
   /** PostHog `data-attr` prefix that tells this placement apart from others. */
   placement: string;
   githubLabel?: string;
+  /**
+   * Leads with the Windows installer instead of the web app. `/api/download`
+   * resolves the newest installer per request and falls back to the releases
+   * page, so the button works before the first release publishes an asset.
+   */
+  leadWithWindows?: boolean;
 };
 
-const { class: className, copy, downloads, placement, githubLabel = copy.viewOnGithub } =
-  Astro.props;
+const {
+  class: className,
+  copy,
+  downloads,
+  placement,
+  githubLabel = copy.viewOnGithub,
+  leadWithWindows = false,
+} = Astro.props;
 
 // `data-show` lists the platforms (set on <html> by the HomePage script) that see each action.
 // Matebot ships no App Store or Play Store listing yet, so phone visitors get the web app.
-const desktopDownloads = (downloads ? availableDesktopPlatforms(downloads) : []).map((platform) => ({
-  platform,
-  label: copy.download[platform],
-  href: desktopDownloadHref(platform),
-}));
-const githubPlatforms = ["web", "mac", "windows", "linux"]
-  .filter((platform) => !desktopDownloads.some((download) => download.platform === platform))
+const desktopPlatforms = downloads ? availableDesktopPlatforms(downloads) : [];
+// One primary action per platform: the installer on computers, the web app on phones.
+const primary = leadWithWindows
+  ? { href: desktopDownloadHref("windows"), label: copy.download.windows, show: "mac windows linux" }
+  : { href: APP_URL, label: copy.getStarted, show: "ios android mac windows linux web" };
+const webSecondary = leadWithWindows ? { show: "ios android mac windows linux web" } : null;
+const otherDownloads = desktopPlatforms
+  .filter((platform) => !leadWithWindows || platform !== "windows")
+  .map((platform) => ({ platform, href: desktopDownloadHref(platform), label: copy.download[platform] }));
+// Platforms with no installer keep the GitHub link, so the row is never empty.
+const githubPlatforms = ["mac", "windows", "linux"]
+  .filter((platform) => !desktopPlatforms.includes(platform as "mac" | "windows" | "linux"))
   .join(" ");
 ---
 
 <div class={className}>
-  <a class="button button--primary" href={APP_URL} data-show="ios android mac windows linux web">
-    {copy.getStarted}
+  <a
+    class="button button--primary"
+    href={primary.href}
+    data-show={primary.show}
+    data-attr={`${placement}-primary`}
+  >
+    {primary.label}
   </a>
   {
-    desktopDownloads.map((download) => (
+    webSecondary && (
+      <a
+        class="button button--secondary"
+        href={APP_URL}
+        data-show={webSecondary.show}
+        data-attr={`${placement}-web`}
+      >
+        {copy.getStarted}
+      </a>
+    )
+  }
+  {
+    otherDownloads.map((download) => (
       <a class="button button--secondary" href={download.href} data-show={download.platform}>
         {download.label}
       </a>
     ))
   }
-  <a
-    class="button button--secondary"
-    href={GITHUB_URL}
-    target="_blank"
-    rel="noopener"
-    data-show={githubPlatforms}
-    data-attr={`${placement}-github`}
-  >
-    {githubLabel}
-  </a>
+  {
+    githubPlatforms && (
+      <a
+        class="button button--secondary"
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener"
+        data-show={githubPlatforms}
+        data-attr={`${placement}-github`}
+      >
+        {githubLabel}
+      </a>
+    )
+  }
 </div>

@@ -246,8 +246,8 @@ Português (Brasil), 简体中文, 繁體中文, Español, Русский, Fran�
 Nederlands, and 日本語 catalogs, and **Account → Language** lists all seven. A device language or
 `EXPO_PUBLIC_DEFAULT_UI_LOCALE` still selects the starting catalog before a saved choice.
 The marketing
-homepage (`apps/www`) is available in en/de/ko/zh/ja via footer language links (`/`, `/de/`,
-`/ko/`, `/zh/`, `/ja/`); other marketing pages stay English.
+homepage (`apps/www`) is served in Simplified Chinese at `/`, with every other language in the
+footer's language menu (`/en/`, `/de/`, `/ko/`, `/ja/`, ...); other marketing pages stay English.
 
 ## Development
 

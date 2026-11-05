@@ -2,6 +2,7 @@
 import type { RichPart } from "../grok-alternative";
 import { richParts } from "../grok-alternative";
 import { splitInlineCode } from "../inline-code";
+import { isSiteUrl } from "../site";
 
 /** Renders `code` spans, **bold** text and [label](href) links inside a sentence. */
 type Props = {
@@ -22,7 +23,7 @@ const parts: Part[] = splitInlineCode(text).flatMap((part): Part[] => {
 });
 
 function external(href: string): boolean {
-  return href.startsWith("http") && !href.startsWith("https://test.matebot.dev");
+  return href.startsWith("http") && !isSiteUrl(href);
 }
 ---
 

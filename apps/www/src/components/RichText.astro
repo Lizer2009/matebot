@@ -1,5 +1,6 @@
 ---
 import { richParts } from "../grok-alternative";
+import { isSiteUrl } from "../site";
 
 type Props = {
   text: string;
@@ -14,7 +15,7 @@ const parts = richParts(text);
     part.kind === "link" ? (
       <a
         href={part.href}
-        {...(part.href.startsWith("http") && !part.href.startsWith("https://test.matebot.dev")
+        {...(part.href.startsWith("http") && !isSiteUrl(part.href)
           ? { target: "_blank", rel: "nofollow noopener noreferrer" }
           : {})}
       >
