@@ -3,7 +3,7 @@
 > **仓库**：[Lizer2009/matebot](https://github.com/Lizer2009/matebot)（fork 自 [elie222/rakazo](https://github.com/elie222/rakazo)）  
 > **目标**：把 matebot 作为**第二个 Grok Bot 实例**，在**不依赖本地电脑**的前提下，通过 Cursor Cloud Agent / 云端 VPS 完成在线迭代。  
 > **本文档性质**：规划稿（Planning pass）。实现工作按文末 P0/P1/P2 分阶段进行。  
-> **验证日期**：2026-11-04 — fork `main` 在合并部署文档 PR 后为 `5480b877`，upstream `main` 为 `d97c5fd7`（见 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#跟踪-commit2026-11-04-自本仓库观测)）。**部署路径已定为 VPS/LAN Compose（192.168.10.12）；Railway 暂缓。** P1-5 **轻量品牌**：几何 Matebot 图标、favicon/PWA、`PRODUCT_DISPLAY_NAME`、`docs/MATEBOT_BRAND.md`（PR #3）；包名与 GHCR 默认值仍为 upstream 形态。
+> **验证日期**：2026-11-04 — fork `main` 在合并部署文档 PR 后为 `5480b877`，upstream `main` 为 `d97c5fd7`（见 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#跟踪-commit2026-11-04-自本仓库观测)）。**部署路径已定为 VPS/LAN Compose（2026-11-05 起主机为 `192.168.10.5`，原 `192.168.10.12` 已迁移并清理）；Railway 暂缓。** P1-5 **轻量品牌**：几何 Matebot 图标、favicon/PWA、`PRODUCT_DISPLAY_NAME`、`docs/MATEBOT_BRAND.md`（PR #3）；包名与 GHCR 默认值仍为 upstream 形态。
 
 ---
 
@@ -12,7 +12,7 @@
 | 维度 | 结论 |
 | --- | --- |
 | 与 upstream 关系 | 当前与 `elie222/rakazo` **字节级一致**；所有 `@rakazo/*` 包名、GHCR 镜像、`rakazo.com` 文档链接仍指向上游。 |
-| 推荐部署形态（无本地机） | **Matebot 当前：VPS + Compose 镜像**（`192.168.10.12`）；**Railway 暂缓**。Bot **计算机**可用 Docker（有 socket）或 **E2B / Boat / Daytona** 等远程沙箱。 |
+| 推荐部署形态（无本地机） | **Matebot 当前：VPS + Compose 镜像**（`192.168.10.5`）；**Railway 暂缓**。Bot **计算机**可用 Docker（有 socket）或 **E2B / Boat / Daytona** 等远程沙箱。 |
 | Cursor 集成 | 产品已内置 **Cursor Cloud Agent** 适配器（`CLOUD_AGENT_PROVIDER=cursor`）；Bot 可通过 `cloud_agent_*` 工具在**你的 GitHub 仓库**上启动 Cursor 云端 Agent，与「在 Cursor 里改 matebot 代码」是**互补**关系。 |
 | 首轮编码重点 | 分叉标识（可选）、**自有 GHCR/安装脚本默认值**、**matebot 专用 `.env` 模板**、CI 可绿、文档与 upstream 同步策略。 |
 

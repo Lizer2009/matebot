@@ -1,17 +1,27 @@
 # Matebot 部署记录
 
 > 对应计划：[MATEBOT_PLAN.md §3 在线运行与部署](./MATEBOT_PLAN.md#3-在线运行与部署无本地电脑)  
-> **最后更新**：2026-11-04
+> **最后更新**：2026-11-05
 
 ## 已选路径
 
 | 决策 | 说明 |
 | --- | --- |
 | **当前采用** | **VPS / 局域网 Compose**（`infra/compose/install-images-matebot.sh` + `docker-compose.images.yml`） |
-| **运行位置（今日）** | 局域网主机 `192.168.10.12`（HTTPS / 域名以该机 `.env` 为准，本文不记录真实密钥） |
+| **运行位置（今日）** | 局域网主机 `192.168.10.5`（HTTPS / 域名以该机 `.env` 为准，本文不记录真实密钥） |
 | **暂缓** | **[Railway 一键模板](../infra/railway/README.md)** — 个人第二实例先走可控 VPS；待 fork 镜像与模板默认值分叉后再评估 Railway |
 
 Railway 仍适合「零 Docker 运维」场景，见 upstream [infra/railway/README.md](../infra/railway/README.md)。Matebot **不在本阶段**维护 Railway 部署或改模板按钮。
+
+### 2026-11-05 主机迁移（`.12` → `.5`）
+
+原 `192.168.10.12` 上的 Matebot 已整体迁移到 `192.168.10.5`：数据库与 appdata 从旧机恢复，容器、卷与镜像在旧机清理，旧机安装目录只留 `MIGRATED_TO_05.txt` 标记。**后续部署与验收目标改为 `192.168.10.5`**，不要再用 `.12` 验证。
+
+- Web：`http://192.168.10.5:5173`
+- 镜像不变：`ghcr.io/lizer2009/matebot/{app,computer}:edge`
+- 服务器 `.env` 沿用迁移前的内容（含 `CLOUD_AGENT_*`、MCP 私有端点允许列表、模型私有 host、`PRODUCT_DISPLAY_NAME=Matebot`），密钥仍只存在于该机 `.env`。
+- 迁移期间曾为让自助问答与 `/` 技能选择器立即显示 Matebot 而在运行层做过临时改动；这些改动只存在于该机，重启或换镜像即丢失。以本仓库（`PRODUCT_DISPLAY_NAME` + 内建技能）构建的 `edge` 镜像才是它们的正式来源，重新拉取镜像并重启后不再需要手工补丁。
+
 
 ## 容器镜像（P1-1）
 
@@ -114,6 +124,10 @@ bash install-images.sh --prepare-only
 | `CLOUD_AGENT_SPACE_ID` | Cursor Space（与 upstream 实例 **分开**） |
 | `CURSOR_API_KEY` | 仅服务器 env；启用 `cursor` 时必填 |
 | `CLOUD_AGENT_MODEL` | 可选。Cursor 云端 Agent 的模型 id（如 `deepseek-v41-flash-1017`）；不设则保持提供方默认 |
+| `MCP_ALLOW_PRIVATE_ENDPOINT` | 允许 MCP 连接内网地址（仅在你信任该网络时设为 `true`） |
+| `RAKAZO_OPENAI_COMPAT_PRIVATE_HOSTS` | 以逗号分隔的私有/自定义模型 host 允许列表（如 `api.deepseek.com`） |
+
+`PRODUCT_DISPLAY_NAME` 不是环境变量：它是 `packages/core/src/product-brand.ts` 里的构建期常量，所以改品牌要改代码并重新出镜像，而不是改 `.env`。
 
 Cursor 集成说明：[self-host-integrations.md](./self-host-integrations.md#enable-cursor)。本 fork 的 Cloud Agent **改代码**流程见 [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md)（与服务器上 `CLOUD_AGENT_*` 互补）。
 
