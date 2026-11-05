@@ -714,13 +714,13 @@ msgstr "允許跨空間機器人通訊"
 msgid "Allow in this space"
 msgstr ""
 
-#: src/components/AskCard.tsx
-msgid "Allow once"
-msgstr "允許一次"
-
 #: src/lib/dictation.ts
 msgid "Allow Matebot to use Speech Recognition and the microphone in System Settings."
 msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Allow once"
+msgstr "允許一次"
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -3889,6 +3889,16 @@ msgstr "Markdown 表格"
 msgid "Marketing"
 msgstr ""
 
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Matebot"
+msgstr "Matebot"
+
+#: src/components/ModelCredits.tsx
+#: src/pages/Onboarding.tsx
+msgid "Matebot credits"
+msgstr "Matebot 額度"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Max"
@@ -5006,16 +5016,6 @@ msgstr "Pull request"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "排隊中"
-
-#: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Matebot"
-msgstr "Matebot"
-
-#: src/components/ModelCredits.tsx
-#: src/pages/Onboarding.tsx
-msgid "Matebot credits"
-msgstr "Matebot 額度"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for Matebot."
@@ -6840,16 +6840,16 @@ msgid "Use in this bot"
 msgstr ""
 
 #: src/components/ModelCredits.tsx
+msgid "Use Matebot credits"
+msgstr "使用 Matebot 額度"
+
+#: src/components/ModelCredits.tsx
 msgid "Use my subscription or API key"
 msgstr "使用我的訂閱或 API 金鑰"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
 msgstr "輸入密碼時，請使用受保護的輸入。"
-
-#: src/components/ModelCredits.tsx
-msgid "Use Matebot credits"
-msgstr "使用 Matebot 額度"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"

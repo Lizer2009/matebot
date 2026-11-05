@@ -713,13 +713,13 @@ msgstr "Allow cross-space bot communication"
 msgid "Allow in this space"
 msgstr "Allow in this space"
 
-#: src/components/AskCard.tsx
-msgid "Allow once"
-msgstr "Allow once"
-
 #: src/lib/dictation.ts
 msgid "Allow Matebot to use Speech Recognition and the microphone in System Settings."
 msgstr "Allow Matebot to use Speech Recognition and the microphone in System Settings."
+
+#: src/components/AskCard.tsx
+msgid "Allow once"
+msgstr "Allow once"
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -3888,6 +3888,16 @@ msgstr "Markdown table"
 msgid "Marketing"
 msgstr "Marketing"
 
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Matebot"
+msgstr "Matebot"
+
+#: src/components/ModelCredits.tsx
+#: src/pages/Onboarding.tsx
+msgid "Matebot credits"
+msgstr "Matebot credits"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Max"
@@ -5005,16 +5015,6 @@ msgstr "Pull request"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "Queued"
-
-#: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Matebot"
-msgstr "Matebot"
-
-#: src/components/ModelCredits.tsx
-#: src/pages/Onboarding.tsx
-msgid "Matebot credits"
-msgstr "Matebot credits"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for Matebot."
@@ -6839,16 +6839,16 @@ msgid "Use in this bot"
 msgstr "Use in this bot"
 
 #: src/components/ModelCredits.tsx
+msgid "Use Matebot credits"
+msgstr "Use Matebot credits"
+
+#: src/components/ModelCredits.tsx
 msgid "Use my subscription or API key"
 msgstr "Use my subscription or API key"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
 msgstr "Use Protected input for passwords."
-
-#: src/components/ModelCredits.tsx
-msgid "Use Matebot credits"
-msgstr "Use Matebot credits"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"

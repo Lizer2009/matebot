@@ -713,13 +713,13 @@ msgstr "スペース間のボット通信を許可"
 msgid "Allow in this space"
 msgstr ""
 
-#: src/components/AskCard.tsx
-msgid "Allow once"
-msgstr "今回のみ許可"
-
 #: src/lib/dictation.ts
 msgid "Allow Matebot to use Speech Recognition and the microphone in System Settings."
 msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Allow once"
+msgstr "今回のみ許可"
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -3888,6 +3888,16 @@ msgstr "Markdown テーブル"
 msgid "Marketing"
 msgstr ""
 
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Matebot"
+msgstr "Matebot"
+
+#: src/components/ModelCredits.tsx
+#: src/pages/Onboarding.tsx
+msgid "Matebot credits"
+msgstr "Matebotクレジット"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Max"
@@ -5005,16 +5015,6 @@ msgstr "プルリクエスト"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "待機中"
-
-#: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Matebot"
-msgstr "Matebot"
-
-#: src/components/ModelCredits.tsx
-#: src/pages/Onboarding.tsx
-msgid "Matebot credits"
-msgstr "Matebotクレジット"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for Matebot."
@@ -6839,16 +6839,16 @@ msgid "Use in this bot"
 msgstr ""
 
 #: src/components/ModelCredits.tsx
+msgid "Use Matebot credits"
+msgstr "Matebotクレジットを使用"
+
+#: src/components/ModelCredits.tsx
 msgid "Use my subscription or API key"
 msgstr "自分のサブスクリプションまたはAPIキーを使用"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
 msgstr "パスワードには保護された入力を使用してください。"
-
-#: src/components/ModelCredits.tsx
-msgid "Use Matebot credits"
-msgstr "Matebotクレジットを使用"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"

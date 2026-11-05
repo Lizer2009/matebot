@@ -713,13 +713,13 @@ msgstr ""
 msgid "Allow in this space"
 msgstr ""
 
-#: src/components/AskCard.tsx
-msgid "Allow once"
-msgstr "한 번 허용"
-
 #: src/lib/dictation.ts
 msgid "Allow Matebot to use Speech Recognition and the microphone in System Settings."
 msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Allow once"
+msgstr "한 번 허용"
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -3888,6 +3888,16 @@ msgstr "Markdown 표"
 msgid "Marketing"
 msgstr ""
 
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Matebot"
+msgstr "Matebot"
+
+#: src/components/ModelCredits.tsx
+#: src/pages/Onboarding.tsx
+msgid "Matebot credits"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Max"
@@ -5005,16 +5015,6 @@ msgstr "풀 리퀘스트"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "대기 중"
-
-#: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Matebot"
-msgstr "Matebot"
-
-#: src/components/ModelCredits.tsx
-#: src/pages/Onboarding.tsx
-msgid "Matebot credits"
-msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for Matebot."
@@ -6839,15 +6839,15 @@ msgid "Use in this bot"
 msgstr ""
 
 #: src/components/ModelCredits.tsx
+msgid "Use Matebot credits"
+msgstr ""
+
+#: src/components/ModelCredits.tsx
 msgid "Use my subscription or API key"
 msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
-msgstr ""
-
-#: src/components/ModelCredits.tsx
-msgid "Use Matebot credits"
 msgstr ""
 
 #: src/pages/model-settings/space-bots-model.tsx

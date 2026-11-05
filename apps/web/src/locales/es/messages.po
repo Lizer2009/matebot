@@ -713,13 +713,13 @@ msgstr "Permitir la comunicación entre bots de distintos espacios"
 msgid "Allow in this space"
 msgstr ""
 
-#: src/components/AskCard.tsx
-msgid "Allow once"
-msgstr "Permitir una vez"
-
 #: src/lib/dictation.ts
 msgid "Allow Matebot to use Speech Recognition and the microphone in System Settings."
 msgstr "Permite que Matebot use el reconocimiento de voz y el micrófono en Ajustes del Sistema."
+
+#: src/components/AskCard.tsx
+msgid "Allow once"
+msgstr "Permitir una vez"
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -3888,6 +3888,16 @@ msgstr "Tabla Markdown"
 msgid "Marketing"
 msgstr "Marketing"
 
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Matebot"
+msgstr "Matebot"
+
+#: src/components/ModelCredits.tsx
+#: src/pages/Onboarding.tsx
+msgid "Matebot credits"
+msgstr "Créditos de Matebot"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Max"
@@ -5005,16 +5015,6 @@ msgstr "Solicitud de incorporación"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "En cola"
-
-#: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Matebot"
-msgstr "Matebot"
-
-#: src/components/ModelCredits.tsx
-#: src/pages/Onboarding.tsx
-msgid "Matebot credits"
-msgstr "Créditos de Matebot"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for Matebot."
@@ -6839,16 +6839,16 @@ msgid "Use in this bot"
 msgstr "Usar en este bot"
 
 #: src/components/ModelCredits.tsx
+msgid "Use Matebot credits"
+msgstr "Usar créditos de Matebot"
+
+#: src/components/ModelCredits.tsx
 msgid "Use my subscription or API key"
 msgstr "Usar mi suscripción o clave de API"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
 msgstr "Usa Entrada protegida para las contraseñas."
-
-#: src/components/ModelCredits.tsx
-msgid "Use Matebot credits"
-msgstr "Usar créditos de Matebot"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"

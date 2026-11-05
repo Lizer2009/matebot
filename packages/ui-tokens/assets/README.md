@@ -1,46 +1,45 @@
-# App icon source
+# App icon sources
 
-`Matebot.icon` is the shared editable source for macOS and iOS. Open it in Apple's
-Icon Composer with Xcode 26 or newer. The orange foreground keeps its original
-lighting, sits 90 points below center, and uses the system dark background.
+Two Icon Composer catalogs live here:
 
-macOS packaging compiles the source into a Tahoe asset catalog and generates the
-legacy ICNS fallback. Expo copies the same source into the iOS project.
+- `Matebot.icon` is this fork's product icon. It is the one macOS and iOS packaging use,
+  set by `build.mac.icon` in `apps/desktop/package.json` and `expo.ios.icon` in
+  `apps/mobile/app.json`.
+- `Rakazo.icon` is the upstream artwork. It is kept because a few specs still measure the
+  animated avatar against its silhouette, and because it is part of the Apache-2.0 history.
+  Nothing packages it.
 
-The platform exports are:
+Open either in Apple's Icon Composer with Xcode 26 or newer. macOS packaging compiles the
+catalog into a Tahoe asset catalog and generates the legacy ICNS fallback; Expo copies it
+into the iOS project.
 
-- `apps/desktop/assets/icon-macos.png`: Icon Composer's default appearance,
-  1024-pixel macOS pre-Tahoe export, including Dock margins for development launches.
-- `apps/mobile/assets/icon.png`: opaque 1024-pixel square for the generic/legacy icon,
-  with no rounded mask or Dock margins.
-- `apps/mobile/assets/adaptive-icon.png`: transparent 1024-pixel Android foreground;
-  the bot is 820 pixels wide, centered horizontally and offset 179 pixels from the top.
-  Its face stays inside the launcher's safe area and the body extends below the mask.
-- `apps/mobile/assets/icon-background.png`: opaque Android background using the
-  shared dark background token.
-- `apps/mobile/assets/monochrome-icon.png`: matching Android alpha silhouette with
-  transparent eyes for themed launchers.
+## Exports
 
-Refresh platform exports after changing the source. Android supplies its own mask;
-never bake Mac corners, a rim, or an outer shadow into adaptive layers.
+`pnpm --filter @matebot/ui-tokens export:matebot` regenerates every Matebot raster export
+from `branding/matebot-icon-source.jpg`:
 
-Run `pnpm --filter @matebot/ui-tokens export:brand` to refresh the web and marketing
-favicons, install icons, marketing mark, Windows/Linux icons, mobile splash, and
-mobile web favicon. These use the same orange foreground with the shared dark
-background, a rounded mask for small browser marks, and transparent splash padding.
-The notification export uses the Android monochrome silhouette so its eyes remain
-transparent. Apple Icon Composer and Android launcher exports remain separate
-because their system masks and safe areas differ.
+- `apps/web/public/favicon*`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`
+- `apps/web/public/matebot-icon.png`, `matebot-wordmark.png`
+- `apps/desktop/assets/icon.png`, `icon.ico` for Linux and Windows
+- `apps/mobile/assets/favicon.png`
+- `branding/` and `docs/assets/` PNGs
 
-After exporting, run `pnpm exec tsx apps/www/scripts/render-og.mjs` to refresh the
-marketing page social cards; set `CHROME_PATH` to a headless Chrome executable when
-it is not available at the script's default location.
+`pnpm --filter @matebot/ui-tokens export:matebot-icon` writes the full-bleed layer that
+`Matebot.icon` composites, and `export:matebot-wordmark` traces the marketing wordmark into
+an SVG. See [MATEBOT_BRAND.md](../../docs/MATEBOT_BRAND.md) for which surface reads which
+file.
+
+Android supplies its own mask; never bake Mac corners, a rim, or an outer shadow into
+adaptive layers. `apps/mobile/assets/adaptive-icon.png`, `icon-background.png`, and
+`monochrome-icon.png` are hand-maintained and not covered by the export scripts.
+
+After exporting, run `pnpm exec tsx apps/www/scripts/render-og.mjs` to refresh the marketing
+social cards; set `CHROME_PATH` to a headless Chrome executable when it is not available at
+the script's default location.
 
 ## Animated vector avatars
 
-The animated Matebot avatar uses SVG paths and gradients in the shared
-`logo-avatar-art.ts` definition. Its contour is sampled from this canonical
-source's alpha silhouette. The hands and lighting are simplified vector shapes;
-the original photographic skin grain is intentionally not reproduced. No raster
-body is embedded or loaded by the vector renderer. The canonical icon and its
-platform exports remain unchanged.
+The animated avatar uses SVG paths and gradients in the shared `logo-avatar-art.ts`
+definition. Its contour was sampled from the upstream icon's alpha silhouette. The hands and
+lighting are simplified vector shapes; the original photographic skin grain is intentionally
+not reproduced. No raster body is embedded or loaded by the vector renderer.
