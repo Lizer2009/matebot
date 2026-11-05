@@ -56,7 +56,7 @@ export const e2b: Sandbox = {
       heading: "When to choose E2B",
       paragraphs: [
         "Choose E2B when you self-host Matebot for other people, such as a team or a public instance, and you don't want bots running on the same server as Matebot. Matebot's own setup docs suggest it for that case, and Matebot's live computer acceptance test runs on E2B.",
-        "[Boat](/sandboxes/boat/) is what Matebot Cloud runs on: long-lived VMs that keep their disk when stopped. [Novita](/sandboxes/novita/) uses a similar sandbox model and keeps open programs in memory when it pauses. [Daytona](/sandboxes/daytona/) suits teams already on it. For no cloud account at all, use [Docker](/sandboxes/docker/) on your own machine, or [Kubernetes](/sandboxes/kubernetes/) on a cluster you run. The [sandbox comparison](/sandboxes/) has them all side by side.",
+        "[Boat](/sandboxes/boat/) is what Rakazo Cloud runs on: long-lived VMs that keep their disk when stopped. [Novita](/sandboxes/novita/) uses a similar sandbox model and keeps open programs in memory when it pauses. [Daytona](/sandboxes/daytona/) suits teams already on it. For no cloud account at all, use [Docker](/sandboxes/docker/) on your own machine, or [Kubernetes](/sandboxes/kubernetes/) on a cluster you run. The [sandbox comparison](/sandboxes/) has them all side by side.",
       ],
     },
     {
@@ -71,7 +71,7 @@ export const e2b: Sandbox = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). Matebot Cloud users don't need an E2B account.",
+        "These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). Rakazo Cloud users don't need an E2B account.",
       ],
       steps: [
         "Create an account at [e2b.dev](https://e2b.dev) and copy an API key.",

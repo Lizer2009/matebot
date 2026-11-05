@@ -1,5 +1,4 @@
 ---
-import { ANDROID_APP_STORE_URL } from "@matebot/contracts/client-build";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import {
@@ -9,11 +8,12 @@ import {
   githubStarsLabel,
 } from "../github";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { APP_URL, IOS_APP_URL, SELF_HOST_GUIDE_PATH } from "../site";
+import { APP_URL, SELF_HOST_GUIDE_PATH } from "../site";
 
 const [starsLabel, downloads] = await Promise.all([githubStarsLabel(), fetchDesktopDownloads()]);
 
 const DESKTOP_NAMES = { mac: "macOS", windows: "Windows", linux: "Linux" } as const;
+// The phone apps are not published under this name yet, so the web app stands in for them.
 const platforms = [
   ...availableDesktopPlatforms(downloads).map((platform) => ({
     name: DESKTOP_NAMES[platform],
@@ -21,13 +21,11 @@ const platforms = [
     href: desktopDownloadHref(platform),
     attr: platform,
   })),
-  { name: "iPhone", action: "App Store", href: IOS_APP_URL, attr: "ios" },
-  { name: "Android", action: "Google Play", href: ANDROID_APP_STORE_URL, attr: "android" },
-  { name: "Web", action: "Open", href: APP_URL, attr: "web" },
+  { name: "iPhone and Android", action: "Open the web app", href: APP_URL, attr: "web" },
 ];
 ---
 
-<BaseLayout title="Download · Matebot" description="Get Matebot for macOS, Windows, Linux, iPhone, Android, and the web.">
+<BaseLayout title="Download · Matebot" description="Get Matebot for macOS, Windows, Linux, or in your browser.">
   <div class="container">
     <Header starsLabel={starsLabel} />
     <main id="main" class="privacy-copy">

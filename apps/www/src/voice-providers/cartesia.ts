@@ -72,7 +72,7 @@ export const cartesia: VoiceProvider = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "Anyone can do this in their own settings, on Matebot Cloud or a self-hosted server. The key belongs to your account, not the whole server.",
+        "Anyone can do this in their own settings, on Rakazo Cloud or a self-hosted server. The key belongs to your account, not the whole server.",
       ],
       steps: [
         "Create an API key in your [Cartesia](https://cartesia.ai) account.",

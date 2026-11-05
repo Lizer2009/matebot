@@ -6,7 +6,7 @@ export const ROUNDUP_UPDATED = "October 24, 2026";
 
 export const GET_STARTED = {
   heading: "Get started",
-  copy: "Start on Matebot Cloud, in beta, or self-host.",
+  copy: "Self-host it, or run the published images.",
   docsLabel: "Self-hosting guide",
   githubLabel: "View on GitHub",
 } as const;
@@ -189,14 +189,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates. Matebot is in beta.",
+        rakazo: "Open source platform for persistent AI teammates.",
         other:
           "Meta's personal AI agent. Meta says it takes on tasks and longer-term goals, rather than only answering questions.",
       },
       {
         topic: "Who runs it",
         rakazo:
-          "You do when you self-host with Docker or point the desktop and mobile apps at a server you operate. Matebot Cloud, in beta, runs it for you.",
+          "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other:
           "Meta. Muse runs on Muse Secure VM, a dedicated cloud virtual machine for the agent and for data from services you connect. Meta's September 29, 2026 post describes Muse as available in the US and Canada.",
       },
@@ -256,7 +256,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         question: "Can I self-host Matebot?",
         answer:
-          "Yes. Self-hosting is available now with published Docker images or a source checkout. Hosted Matebot Cloud is in beta.",
+          "Yes. Published Docker images and a source checkout are available now.",
       },
       {
         question: "Does Matebot include Muse on WhatsApp, shopping checkout, or AI glasses?",
@@ -288,14 +288,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates. Matebot is in beta.",
+        rakazo: "Open source platform for persistent AI teammates.",
         other:
           "Always-on agents from OpenAI. OpenAI says a dot learns from feedback and can work toward your goals continuously.",
       },
       {
         topic: "Who runs it",
         rakazo:
-          "You do when you self-host with Docker or point the desktop and mobile apps at a server you operate. Matebot Cloud, in beta, runs it for you.",
+          "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other: "OpenAI. The announcement says each dot has its own cloud computer.",
       },
       {
@@ -367,14 +367,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates. Matebot is in beta.",
+        rakazo: "Open source platform for persistent AI teammates.",
         other:
           "A personal assistant. The privacy policy, revised August 26, 2026, calls it an autonomous assistant that thinks, plans, and acts on everyday tasks.",
       },
       {
         topic: "Who runs it",
         rakazo:
-          "You do when you self-host with Docker or point the desktop and mobile apps at a server you operate. Matebot Cloud, in beta, runs it for you.",
+          "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other:
           "Spear Street Technology, Inc., under the Instinct name. The privacy policy describes a hosted service, including third-party hosting. It does not describe installing Instinct on a server you operate.",
       },
@@ -435,7 +435,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         question: "Can I self-host Matebot?",
         answer:
-          "Yes. Self-hosting is available now with published Docker images or a source checkout. Hosted Matebot Cloud is in beta.",
+          "Yes. Published Docker images and a source checkout are available now.",
       },
       {
         question: "Does Matebot text, call, or buy things the way Instinct describes?",
@@ -499,7 +499,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       },
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates. Matebot is in beta.",
+        rakazo: "Open source platform for persistent AI teammates.",
         other:
           "Nous Research describes a self-improving agent: it creates skills from experience, keeps memory across sessions, and can run scheduled jobs. The README also documents a terminal UI and a messaging gateway.",
       },
@@ -592,14 +592,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates. Matebot is in beta.",
+        rakazo: "Open source platform for persistent AI teammates.",
         other:
           "A standalone Anthropic app with one ongoing thread, by text or voice. Anthropic says it is for professionals and small business owners.",
       },
       {
         topic: "Who runs it",
         rakazo:
-          "You do when you self-host with Docker or point the desktop and mobile apps at a server you operate. Matebot Cloud, in beta, runs it for you.",
+          "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other:
           "Anthropic. Duet works on its own cloud virtual machine with a browser. The help center says you cannot watch or take over that browser.",
       },
@@ -673,14 +673,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates. Matebot is in beta.",
+        rakazo: "Open source platform for persistent AI teammates.",
         other:
           "Hark Pro, a hosted personal agent launched October 6, 2026, on the web, iOS, and Android. Hark says it remembers what you tell it and can act on the web.",
       },
       {
         topic: "Who runs it",
         rakazo:
-          "You do when you self-host with Docker or point the desktop and mobile apps at a server you operate. Matebot Cloud, in beta, runs it for you.",
+          "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other:
           "The terms name Hark Labs, Inc. as the operator of the hosted service. They do not describe a self-host install, and they restrict reverse engineering the service.",
       },
@@ -750,7 +750,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         question: "Can I self-host Matebot?",
         answer:
-          "Yes. Self-hosting is available now with published Docker images or a source checkout. Hosted Matebot Cloud is in beta.",
+          "Yes. Published Docker images and a source checkout are available now.",
       },
       {
         question: "How do you manage each one day to day?",

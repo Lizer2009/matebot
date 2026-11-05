@@ -18,7 +18,7 @@ import type { HomeCopy } from "../i18n/home";
 import {
   CHANGELOG_URL,
   GITHUB_URL,
-  INBOX_ZERO_URL,
+  UPSTREAM_URL,
   PLUGIN_SUBMIT_PATH,
   SELF_HOST_GUIDE_PATH,
 } from "../site";
@@ -118,8 +118,10 @@ const columns: Array<{ heading: string; links: FooterLink[] }> = [
       </details>
     </nav>
     <span class="site-footer__legal">
-      <span>© 2026 <a href={INBOX_ZERO_URL} target="_blank" rel="noopener">Inbox Zero Inc.</a></span>
-      <span>Apache-2.0</span>
+      <span>
+        Apache-2.0 · a fork of
+        <a href={UPSTREAM_URL} target="_blank" rel="noopener">Rakazo</a>
+      </span>
     </span>
   </div>
   <nav class="site-footer__columns" aria-label={navLabel}>

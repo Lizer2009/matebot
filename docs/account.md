@@ -38,14 +38,14 @@ You can add one, replace its value, or remove it. See [Reusable credentials](./b
 In **Settings → General**:
 
 - **Export data** downloads a zip of your account: every space's chats, files and bot workspaces.
-- **Import data** loads an export, for example to move between rakazo.com and your own server.
+- **Import data** loads an export, for example to move between two Matebot servers.
 - **Import an agent** brings in an OpenClaw, Hermes or ChatGPT assistant. See
   [Import an agent](./import-an-agent.md).
 - **Delete account** emails you a code, then permanently deletes your account and data.
 
-## Billing on rakazo.com
+## Billing on a hosted deployment
 
-rakazo.com is free to try; the sidebar shows when your free period ends. To keep going, choose a
+A hosted deployment may include a free trial; the sidebar shows when your free period ends. To keep going, choose a
 plan:
 
 - **Use my subscription or API key**: works with your ChatGPT or Claude plan, or any

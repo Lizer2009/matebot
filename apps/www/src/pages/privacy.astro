@@ -3,13 +3,14 @@ import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import { githubStarsLabel } from "../github";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { UPSTREAM_URL } from "../site";
 
 const starsLabel = await githubStarsLabel();
 ---
 
 <BaseLayout
   title="Privacy · Matebot"
-  description="How Inbox Zero Inc. collects, uses, and protects information when you use Matebot."
+  description="How Matebot handles information, and what a self-hosted deployment changes about it."
 >
   <div class="container">
     <Header starsLabel={starsLabel} />
@@ -17,9 +18,9 @@ const starsLabel = await githubStarsLabel();
       <h1>Privacy</h1>
       <p><strong>Last updated: September 14, 2026</strong></p>
       <p>
-        This policy explains how Inbox Zero Inc. (“Inbox Zero,” “we,” or “us”) handles personal information
-        when you use the Matebot mobile app, a Matebot service that we host, or rakazo.com. A third party that
-        operates a self-hosted Matebot deployment is responsible for its own privacy practices.
+        This page describes the upstream Matebot project's hosted service and apps. This Matebot
+        deployment is self-hosted: the operator of the server you connect to controls the information
+        described here, and questions about it go to that operator rather than to the upstream project.
       </p>
 
       <h2>Information we collect</h2>
@@ -122,9 +123,9 @@ const starsLabel = await githubStarsLabel();
 
       <h2>Self-hosted deployments</h2>
       <p>
-        The Matebot mobile app can connect to a server that you or another organization operates. In that case,
-        the server operator, not Inbox Zero, controls the information sent to that deployment. The app stores the
-        selected server address and session token securely on your device.
+        The Matebot apps connect to a server that you or another organization operates. In that case, the
+        server operator, not the upstream project, controls the information sent to that deployment. The
+        app stores the selected server address and session token securely on your device.
       </p>
 
       <h2>Retention and deletion</h2>
@@ -157,10 +158,8 @@ const starsLabel = await githubStarsLabel();
 
       <h2>Contact us</h2>
       <p>
-        Inbox Zero Inc.<br />
-        131 Continental Dr, Suite 305<br />
-        Newark, Delaware 19713, United States<br />
-        <a href="mailto:hello@rakazo.com">hello@rakazo.com</a>
+        Contact the operator of the Matebot deployment you use. For the upstream project, see
+        <a href={UPSTREAM_URL}>the upstream repository</a>.
       </p>
     </main>
     <Footer />

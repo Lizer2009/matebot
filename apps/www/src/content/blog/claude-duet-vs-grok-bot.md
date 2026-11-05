@@ -64,7 +64,7 @@ comparison:
       cells:
         - "Anthropic, on a cloud computer"
         - "xAI, on a shared cloud computer"
-        - "You, or Matebot Cloud in beta"
+        - "You, on your own server"
     - topic: "Model"
       cells:
         - "Claude Opus 5.5. No choice."
@@ -79,7 +79,7 @@ comparison:
       cells:
         - "US only, from a waitlist"
         - "Paid plans listed on the pricing page"
-        - "Self-host now. Cloud in beta."
+        - "Self-host now"
     - topic: "Source"
       cells:
         - "Hosted only"
@@ -113,7 +113,7 @@ Price follows a plan in both cases. Duet comes with Claude Pro at $20 a month an
 
 ## Where Matebot fits
 
-Matebot is the open source version of this shape. It is Apache-2.0, and it is in beta. You run it with the published Docker images or the desktop app, or use Matebot Cloud, in beta. The clients are the web app, the Electron desktop app, and the Expo mobile app.
+Matebot is the open source version of this shape. It is Apache-2.0. You run it with the published Docker images or the desktop app. The clients are the web app, the Electron desktop app, and the Expo mobile app.
 
 Like Grok Bot, it is just chat once it is running. You create named bots and manage each one from its conversation. Each bot keeps memory, routines, and history. Routines are readable Markdown and can run on a schedule, so a morning brief is a routine you write, not a fixed feature. A bot can pause for approval at a boundary you set, and actions are recorded in an audit log.
 

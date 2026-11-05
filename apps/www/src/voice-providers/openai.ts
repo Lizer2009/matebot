@@ -72,7 +72,7 @@ export const openai: VoiceProvider = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "Anyone can do this in their own settings, on Matebot Cloud or a self-hosted server. The key belongs to your account, and it is stored separately from any OpenAI key you use for models, so paste it here even if you already added it elsewhere.",
+        "Anyone can do this in their own settings, on Rakazo Cloud or a self-hosted server. The key belongs to your account, and it is stored separately from any OpenAI key you use for models, so paste it here even if you already added it elsewhere.",
       ],
       steps: [
         "Create an API key in the [OpenAI platform](https://platform.openai.com) for a project with audio access.",

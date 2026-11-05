@@ -10,7 +10,7 @@ sources:
   - label: "Matebot self-hosting guide"
     href: "https://github.com/elie222/rakazo/blob/main/docs/self-host.md"
   - label: "Self-hosted AI agent"
-    href: "https://rakazo.com/self-hosted-ai-agent/"
+    href: "https://test.matebot.dev/self-hosted-ai-agent/"
   - label: "Self-host secrets checklist"
     href: "https://github.com/elie222/rakazo/blob/main/docs/self-host-secrets.md"
 related:
@@ -36,8 +36,8 @@ faq:
     answer: "No. The published-image path needs Docker Engine 26 or newer, the Compose plugin, curl, and OpenSSL. Node.js is for a source checkout."
   - question: "Where does the data live?"
     answer: "Postgres, bot files, browser profiles, and the audit log stay on the deployment you run. Prompts you send to a model provider are processed by that provider."
-  - question: "Is hosted Matebot Cloud required?"
-    answer: "No. Self-hosting runs the same product. Matebot Cloud is in beta if you would rather not run it."
+  - question: "Do I need a hosted service?"
+    answer: "No. Matebot is self-hosted software: run the published Docker images or a source checkout on a machine you control."
 comparison:
   caption: "The short local install, and the longer production path."
   columns:
@@ -78,7 +78,7 @@ Postgres, bot files, browser profiles, and the audit log stay on the machine you
   <figcaption>A Matebot deployment. Postgres, bot files, and the audit log stay on the machine you run. Prompts still go to the model provider you choose.</figcaption>
 </figure>
 
-The software is Apache-2.0. This install runs the same product as Matebot Cloud, which is in beta.
+The software is Apache-2.0.
 
 ## What the machine needs
 

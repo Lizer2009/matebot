@@ -130,7 +130,7 @@ Compose bot homes mount only their own subdirectory of the application volume us
 
 ## Reporting a problem
 
-Attach a diagnostics report to a [self-host issue](https://github.com/elie222/rakazo/issues/new?template=self-host.yml):
+Attach a diagnostics report to a [self-host issue](https://github.com/Lizer2009/matebot/issues/new):
 
 ```bash
 docker compose -f docker-compose.images.yml exec api node dist/cli/diagnostics.js

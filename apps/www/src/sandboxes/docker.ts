@@ -58,7 +58,7 @@ export const docker: Sandbox = {
       heading: "When to choose Docker",
       paragraphs: [
         "Choose Docker when you want everything on hardware you own, with no sandbox account and no bot computers in anyone else's cloud. It is the quickest way to try a self-hosted Matebot, and it suits a person or a team on a machine they trust.",
-        "If you'd rather keep bots off your own server, a hosted sandbox puts their computers in someone else's cloud. [Boat](/sandboxes/boat/) is what Matebot Cloud uses, and [E2B](/sandboxes/e2b/) pauses idle computers instead of deleting them. If you already run a cluster, [Kubernetes](/sandboxes/kubernetes/) gives you one pod per computer and lets you add gVisor or Kata for a stronger boundary. For a bot that needs your real apps and logins, see [your own computer](/sandboxes/your-computer/). The [sandbox comparison](/sandboxes/) puts every option side by side.",
+        "If you'd rather keep bots off your own server, a hosted sandbox puts their computers in someone else's cloud. [Boat](/sandboxes/boat/) is what Rakazo Cloud uses, and [E2B](/sandboxes/e2b/) pauses idle computers instead of deleting them. If you already run a cluster, [Kubernetes](/sandboxes/kubernetes/) gives you one pod per computer and lets you add gVisor or Kata for a stronger boundary. For a bot that needs your real apps and logins, see [your own computer](/sandboxes/your-computer/). The [sandbox comparison](/sandboxes/) puts every option side by side.",
       ],
     },
     {

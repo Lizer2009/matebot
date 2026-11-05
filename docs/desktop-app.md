@@ -5,13 +5,14 @@ everything on your own computer.
 
 ## Install
 
-Download it from [rakazo.com](https://rakazo.com). The Linux AppImage needs FUSE 2.
+Download it from [test.matebot.dev](https://test.matebot.dev/download/). The Linux AppImage needs FUSE 2.
 
 ## Choose a server
 
 The first time it opens, the app asks which server to use:
 
-- **Matebot Cloud**: sign in to your rakazo.com account.
+- **Existing instance**: sign in to a Matebot server you already run, such as this deployment at
+  `https://test.matebot.dev`.
 - **This computer**: run your own Matebot locally in Docker. If Docker isn't installed, the app links
   to Docker Desktop, OrbStack and Docker Engine. Everything, including your bots' computers, then
   runs on your machine. It is yours alone: once you create your account, it accepts no other.

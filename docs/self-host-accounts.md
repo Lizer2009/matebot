@@ -218,11 +218,13 @@ relying party is that origin's host, so existing passkeys keep working only whil
 stays on the same domain. They are off when password sign-in is disabled for SSO-only
 deployments. On web, a browser offers them where it has a platform authenticator. The macOS
 desktop app uses the system passkey sheet, which only serves the domain the release is
-associated with (`app.rakazo.com`), so it hides passkeys for other servers.
+associated with, so it hides passkeys for other servers. This fork's build sets that default to
+its own deployment.
 
 Native apps can use a domain's passkeys only when the domain vouches for them and the app was
 built for that domain. The iOS app's associated domain comes from `EXPO_PUBLIC_API_URL` at build
-time. A macOS desktop build takes it from `RAKAZO_PASSKEY_RP_ID` (default `app.rakazo.com`): set
+time. A macOS desktop build takes it from `RAKAZO_PASSKEY_RP_ID` (default: the deployment set in
+`apps/desktop/src/setup-config.ts`): set
 it to the same domain for `pnpm build` and for `scripts/passkey-entitlements.ts`, then package with
 electron-builder's `-c.mac.entitlements` set to that script's output and `-c.mac.provisioningProfile`
 set to a profile for your App ID with the Associated Domains capability, as the release workflow

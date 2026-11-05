@@ -111,7 +111,7 @@ test("first run offers Matebot Cloud first, with local and existing instances", 
   await expect(setup.locator(".card")).toHaveCount(0);
 
   // Cloud is the default: one click opens the hosted app, with nothing to fill in.
-  await expect(setup.getByRole("radio", { name: /Rakazo Cloud/ })).toBeChecked();
+  await expect(setup.getByRole("radio", { name: /Matebot Cloud/ })).toBeChecked();
   await expect(setup.locator("#panel-new")).toBeHidden();
   await expect(setup.locator("#panel-existing")).toBeHidden();
   await expect(setup.getByRole("button", { name: "Check connection" })).toBeHidden();
@@ -192,7 +192,7 @@ test("setup lays out right to left in Hebrew", async () => {
 test("Matebot Cloud saves the hosted address and is reselected when saved", async () => {
   app = await launch();
   const setup = await app.firstWindow();
-  await expect(setup.getByRole("radio", { name: /Rakazo Cloud/ })).toBeChecked();
+  await expect(setup.getByRole("radio", { name: /Matebot Cloud/ })).toBeChecked();
   await expect(setup.getByRole("button", { name: "Continue" })).toBeEnabled();
 
   // Capture the request instead of reaching the hosted server, so CI stays offline.
@@ -230,7 +230,7 @@ test("Matebot Cloud saves the hosted address and is reselected when saved", asyn
     }));
   }, cloudUrl);
   await setup.reload();
-  await expect(setup.getByRole("radio", { name: /Rakazo Cloud/ })).toBeChecked();
+  await expect(setup.getByRole("radio", { name: /Matebot Cloud/ })).toBeChecked();
   await expect(setup.locator("#panel-existing")).toBeHidden();
 });
 

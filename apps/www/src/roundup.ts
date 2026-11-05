@@ -164,7 +164,7 @@ const DEDICATED_CARDS: readonly RoundupCard[] = [
     href: SELF_HOST_GUIDE_PATH,
     heading: "Open source AI agent you run yourself",
     paragraphs: [
-      "Matebot is an open source AI agent for persistent teammates. It is in beta. The clients are the web app, the Electron desktop app, and the Expo mobile app. You bring a model key, including a local server, and each bot can use a different model. The default computer is local Docker. Optional computers include E2B, Daytona, CreateOS, Boat, and a trusted local computer. Like Grok Bot, Matebot is just chat once it is running: a new bot interviews you, and you manage schedules, memory, and approvals from that chat. Routines are readable Markdown. There is no seat fee. Hosted Matebot Cloud is in beta.",
+      "Matebot is an open source AI agent for persistent teammates. It is in beta. The clients are the web app, the Electron desktop app, and the Expo mobile app. You bring a model key, including a local server, and each bot can use a different model. The default computer is local Docker. Optional computers include E2B, Daytona, CreateOS, Boat, and a trusted local computer. Like Grok Bot, Matebot is just chat once it is running: a new bot interviews you, and you manage schedules, memory, and approvals from that chat. Routines are readable Markdown. There is no seat fee. This is a self-hosted deployment.",
     ],
   },
   {
@@ -280,7 +280,7 @@ export const ROUNDUP_FAQ: readonly FaqItem[] = [
   {
     question: "Which of these can I self-host?",
     answer:
-      "Matebot, OpenClaw, and Hermes Agent. Matebot publishes Docker images and a source checkout. OpenClaw's guide has you run the Gateway. Hermes installs on your machine, and the desktop app can start its own local backend. Grok Bot, Muse, Dots, Instinct, Claude Duet, and Hark Pro are hosted. Their pages do not describe installing the service yourself. Matebot also offers a hosted beta, Matebot Cloud.",
+      "Matebot, OpenClaw, and Hermes Agent. Matebot publishes Docker images and a source checkout. OpenClaw's guide has you run the Gateway. Hermes installs on your machine, and the desktop app can start its own local backend. Grok Bot, Muse, Dots, Instinct, Claude Duet, and Hark Pro are hosted. Their pages do not describe installing the service yourself.",
   },
   {
     question: "Which let me bring my own model?",

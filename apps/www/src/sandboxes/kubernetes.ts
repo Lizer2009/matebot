@@ -56,7 +56,7 @@ export const kubernetes: Sandbox = {
       heading: "When to choose Kubernetes",
       paragraphs: [
         "Choose Kubernetes when you already run Matebot or other services on a cluster and want bot computers under the same scheduling, quotas and network policy. It is also the self-hosted way to get a VM-like boundary: set a runtime class such as gVisor or Kata and every computer pod uses it.",
-        "If you have one server and no cluster, [Docker](/sandboxes/docker/) is simpler and is Matebot's default. If you don't want to run the computers at all, a hosted sandbox such as [Boat](/sandboxes/boat/), which Matebot Cloud uses, or [E2B](/sandboxes/e2b/) does it for you. The [sandbox comparison](/sandboxes/) covers every option.",
+        "If you have one server and no cluster, [Docker](/sandboxes/docker/) is simpler and is Matebot's default. If you don't want to run the computers at all, a hosted sandbox such as [Boat](/sandboxes/boat/), which Rakazo Cloud uses, or [E2B](/sandboxes/e2b/) does it for you. The [sandbox comparison](/sandboxes/) covers every option.",
       ],
     },
     {

@@ -1,5 +1,4 @@
 ---
-import { ANDROID_APP_STORE_URL } from "@matebot/contracts/client-build";
 import Button from "./Button.astro";
 import Footer from "./Footer.astro";
 import GetStartedActions from "./GetStartedActions.astro";
@@ -48,7 +47,6 @@ import { homeStructuredData } from "../structured-data";
 import {
   APP_URL,
   GITHUB_URL,
-  IOS_APP_URL,
   SELF_HOST_GUIDE_PATH,
   SETUP_PROMPT_URL,
   SITE_URL,
@@ -379,8 +377,7 @@ const structuredData = homeStructuredData({
               </svg>
               <h3>{copy.platforms.mobile}</h3>
               <div class="platform-card__links">
-                <a href={IOS_APP_URL}>iOS</a>
-                <a href={ANDROID_APP_STORE_URL}>Android</a>
+                <a href={APP_URL}>iOS and Android</a>
               </div>
             </article>
           </div>

@@ -57,7 +57,7 @@ export const SANDBOXES_HUB = {
   choose: [
     {
       heading: "You want it hosted",
-      text: "[Boat](/sandboxes/boat/) is what Matebot Cloud runs its own bot computers on: full Linux VMs where every bot keeps its own Chrome logins. [E2B](/sandboxes/e2b/) is the option Matebot's live computer tests run on, and pauses idle computers instead of deleting them. [Novita](/sandboxes/novita/) pauses with memory, so a bot comes back to the same open programs. [Daytona](/sandboxes/daytona/) keeps each computer's disk and suits teams already using it.",
+      text: "[Boat](/sandboxes/boat/) is what Rakazo Cloud runs its own bot computers on: full Linux VMs where every bot keeps its own Chrome logins. [E2B](/sandboxes/e2b/) is the option Matebot's live computer tests run on, and pauses idle computers instead of deleting them. [Novita](/sandboxes/novita/) pauses with memory, so a bot comes back to the same open programs. [Daytona](/sandboxes/daytona/) keeps each computer's disk and suits teams already using it.",
     },
     {
       heading: "You don't want a cloud account",

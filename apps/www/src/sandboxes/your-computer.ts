@@ -34,7 +34,7 @@ export const yourComputer: Sandbox = {
     {
       heading: "Two ways to let bots use your computer",
       paragraphs: [
-        "Let bots use this computer works when the desktop app is connected to Matebot Cloud or another Matebot server. The app's own local server uses Use this Mac instead. The bot keeps its own computer and gets your computer as an extra place to work. It asks you before its first command in a space and before it first uses each app, in every approval mode, and you answer Allow in this space or Deny.",
+        "Let bots use this computer works when the desktop app is connected to Rakazo Cloud or another Matebot server. The app's own local server uses Use this Mac instead. The bot keeps its own computer and gets your computer as an extra place to work. It asks you before its first command in a space and before it first uses each app, in every approval mode, and you answer Allow in this space or Deny.",
         "Use this Mac (Use this computer on Windows and Linux) is for when the desktop app runs Matebot itself on your machine. Your computer then replaces the bot's computer entirely, and bots run commands on it without asking.",
       ],
       image: true,
@@ -53,7 +53,7 @@ export const yourComputer: Sandbox = {
     {
       heading: "When to choose your own computer",
       paragraphs: [
-        "Choose it when the work really lives on your machine and you are there to approve it. For anything you'd leave running overnight or hand to a team, a separate computer is safer: [Docker](/sandboxes/docker/) runs bot computers on your own server, and hosted sandboxes such as [Boat](/sandboxes/boat/), which Matebot Cloud uses, or [E2B](/sandboxes/e2b/) keep them in the cloud. With those, a mistake stays on the bot's computer and you can reset it. The [sandbox comparison](/sandboxes/) covers every option.",
+        "Choose it when the work really lives on your machine and you are there to approve it. For anything you'd leave running overnight or hand to a team, a separate computer is safer: [Docker](/sandboxes/docker/) runs bot computers on your own server, and hosted sandboxes such as [Boat](/sandboxes/boat/), which Rakazo Cloud uses, or [E2B](/sandboxes/e2b/) keep them in the cloud. With those, a mistake stays on the bot's computer and you can reset it. The [sandbox comparison](/sandboxes/) covers every option.",
       ],
     },
     {
@@ -75,7 +75,7 @@ export const yourComputer: Sandbox = {
         "Anyone with the desktop app can do this; no server admin is needed. Install it from the [download page](/download/), then pick the mode that matches how you use Matebot. The [desktop app guide](/docs/desktop-app/) covers both.",
       ],
       steps: [
-        "To use Let bots use this computer, sign in to Matebot Cloud or another server in the desktop app, open Settings → General, and turn on Let bots use this computer under Computers. Confirm when the app asks Allow bots to use this computer?",
+        "To use Let bots use this computer, sign in to Rakazo Cloud or another server in the desktop app, open Settings → General, and turn on Let bots use this computer under Computers. Confirm when the app asks Allow bots to use this computer?",
         "On a Mac, allow Matebot in System Settings → Privacy & Security → Accessibility and Screen Recording if you want bots to use apps on screen, then reopen the app.",
         "Ask a bot to do something on your computer, and choose Allow in this space when it asks.",
         "To use Use this Mac instead, choose This computer when the app asks which server to use. It runs Matebot locally in Docker. When it asks Where should bots run?, choose Use this Mac.",

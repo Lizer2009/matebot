@@ -55,7 +55,7 @@ export const daytona: Sandbox = {
       heading: "When to choose Daytona",
       paragraphs: [
         "Choose Daytona when your team already has a Daytona account, billing or targets you want to reuse. Matebot turns off Daytona's own auto-stop and auto-delete and stops computers with its own idle timer, so a computer doesn't disappear while a bot still needs it.",
-        "If you are picking a hosted provider from scratch, [E2B](/sandboxes/e2b/) starts from a ready desktop template and pauses idle computers, and [Boat](/sandboxes/boat/) is what Matebot Cloud runs on. [Novita](/sandboxes/novita/) keeps open programs in memory when it pauses. To avoid a cloud account, use [Docker](/sandboxes/docker/) or [Kubernetes](/sandboxes/kubernetes/). The [sandbox comparison](/sandboxes/) has them all side by side.",
+        "If you are picking a hosted provider from scratch, [E2B](/sandboxes/e2b/) starts from a ready desktop template and pauses idle computers, and [Boat](/sandboxes/boat/) is what Rakazo Cloud runs on. [Novita](/sandboxes/novita/) keeps open programs in memory when it pauses. To avoid a cloud account, use [Docker](/sandboxes/docker/) or [Kubernetes](/sandboxes/kubernetes/). The [sandbox comparison](/sandboxes/) has them all side by side.",
       ],
     },
     {
@@ -71,7 +71,7 @@ export const daytona: Sandbox = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). Matebot Cloud users don't need a Daytona account.",
+        "These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/). Rakazo Cloud users don't need a Daytona account.",
       ],
       steps: [
         "Create an API key in your Daytona account.",

@@ -6,8 +6,12 @@ import { t } from "./i18n.js";
 
 /** Managed desktop origin; development keeps its usual web/API ports. */
 export const DEFAULT_LOCAL_WEB_URL = "http://127.0.0.1:45173";
-/** Hosted Matebot; setup saves it as an `existing` server so it opens like any other. */
-export const RAKAZO_CLOUD_URL = "https://app.rakazo.com";
+/**
+ * This fork's deployment; setup saves it as an `existing` server so it opens like
+ * any other. The constant keeps its historical name because `passkeys.ts`, the
+ * setup IPC contract, and the tests all read it.
+ */
+export const RAKAZO_CLOUD_URL = "https://test.matebot.dev";
 export const PROBE_RESPONSE_LIMIT_BYTES = 64 * 1024;
 
 export const SETUP_FILE_NAME = "setup.json";

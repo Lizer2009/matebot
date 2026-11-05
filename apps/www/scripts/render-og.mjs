@@ -8,7 +8,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "public/og");
 const chrome = process.env.CHROME_PATH ?? "/usr/bin/google-chrome";
 
-const mark = readFileSync(join(root, "public/brand/rakazo-mark.png")).toString("base64");
+const mark = readFileSync(join(root, "public/brand/matebot-mark.png")).toString("base64");
 
 function pageHtml(kicker, title) {
   const fontSize = title.length > 72 ? 40 : 68;

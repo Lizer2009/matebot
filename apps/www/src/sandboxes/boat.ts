@@ -13,7 +13,7 @@ export const boat: Sandbox = {
   h1: "Boat for AI agents: a cloud computer for every bot",
   intro: [
     "[Boat](https://boat.dev) rents out persistent Ubuntu virtual machines built for AI agents. Each one is a full Linux computer in the cloud that keeps its disk when it stops, so an agent can come back to the same files and installed tools later.",
-    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each one gets its own computer with a desktop, browser, terminal and files that you can watch and take over. Matebot Cloud runs those computers on Boat, and if you host Matebot yourself you can point it at your own Boat account. Boat supplies the machine. Matebot puts the desktop on it, gives each bot its own screen and browser, and decides when to start and stop it.",
+    "[Matebot](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each one gets its own computer with a desktop, browser, terminal and files that you can watch and take over. Rakazo Cloud runs those computers on Boat, and if you host Matebot yourself you can point it at your own Boat account. Boat supplies the machine. Matebot puts the desktop on it, gives each bot its own screen and browser, and decides when to start and stop it.",
   ],
   scene: {
     bot: "Sales Outbound",
@@ -55,7 +55,7 @@ export const boat: Sandbox = {
     {
       heading: "When to choose Boat",
       paragraphs: [
-        "Choose Boat when you want hosted computers that behave like long-lived machines, and your bots sign in to many different sites. It is what Matebot Cloud uses, so it is the most exercised path for that kind of work.",
+        "Choose Boat when you want hosted computers that behave like long-lived machines, and your bots sign in to many different sites. It is what Rakazo Cloud uses, so it is the most exercised path for that kind of work.",
         "[E2B](/sandboxes/e2b/) is the other well-tested hosted option. It pauses idle computers, and Matebot's live computer test runs on it. [Novita](/sandboxes/novita/) pauses with memory, so open programs survive a stop. [Daytona](/sandboxes/daytona/) suits teams that already have an account there. If you don't want a cloud account at all, [Docker](/sandboxes/docker/) runs computers on your own server. The [sandbox comparison](/sandboxes/) puts them all side by side.",
       ],
     },
@@ -72,7 +72,7 @@ export const boat: Sandbox = {
     {
       heading: "How to set it up",
       paragraphs: [
-        "On Matebot Cloud there is nothing to set up: bot computers already run on Boat. These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/).",
+        "On Rakazo Cloud there is nothing to set up: bot computers already run on Boat. These steps are for the admin of a [self-hosted Matebot](/self-hosted-ai-agent/).",
       ],
       steps: [
         "Create a Boat account at [boat.dev](https://boat.dev) and make an API key.",
@@ -106,7 +106,7 @@ export const boat: Sandbox = {
     {
       question: "Boat vs E2B for AI agents?",
       answer:
-        "Both give Matebot bots a Linux desktop, terminal and files. Boat machines are long-lived VMs that keep their disk when stopped, and Matebot Cloud runs on them. [E2B](/sandboxes/e2b/) pauses idle sandboxes and is open source. Matebot keeps its own copy of each bot's workspace on both.",
+        "Both give Matebot bots a Linux desktop, terminal and files. Boat machines are long-lived VMs that keep their disk when stopped, and Rakazo Cloud runs on them. [E2B](/sandboxes/e2b/) pauses idle sandboxes and is open source. Matebot keeps its own copy of each bot's workspace on both.",
     },
     {
       question: "Do I need Boat to self-host Matebot?",
