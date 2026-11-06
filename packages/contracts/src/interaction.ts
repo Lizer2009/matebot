@@ -216,7 +216,7 @@ export const ThreadsExecuteInteractionOutput = z.object({
   idempotencyKey: z.string().min(1),
   /** True when a completed effect was returned instead of running again. */
   duplicate: z.boolean(),
-  /** False until a sender for this effect kind runs (email send lands later). */
+  /** True once the effect's sender finished. False for kinds with no sender yet. */
   executed: z.boolean(),
 });
 export type ThreadsExecuteInteractionOutput = z.infer<typeof ThreadsExecuteInteractionOutput>;

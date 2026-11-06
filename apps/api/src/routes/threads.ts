@@ -31,6 +31,7 @@ import {
   confirmInteractionService,
   executeConfirmedInteractionService,
   InteractionEffectRunMissingError,
+  InteractionEmailDeliveryError,
   InteractionSendRejectedError,
   updateInteractionFieldService,
 } from "../interaction-service.js";
@@ -823,10 +824,12 @@ export function threadsRoutes(ctx: RouterContext) {
       executeInteraction: authed.threads.executeInteraction.handler(async ({ context, input }) => {
         assertA2uiEnabled();
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
         try {
           const result = await executeConfirmedInteractionService(deps.prisma, {
             spaceId: context.actor.spaceId,
             threadId: target.threadId,
+            botId,
             interactionId: input.interactionId,
           });
           return { ok: true as const, ...result };
@@ -834,7 +837,10 @@ export function threadsRoutes(ctx: RouterContext) {
           if (error instanceof InteractionNotFoundError) {
             throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
           }
-          if (error instanceof InteractionSendRejectedError) {
+          if (
+            error instanceof InteractionSendRejectedError ||
+            error instanceof InteractionEmailDeliveryError
+          ) {
             throw new ORPCError("BAD_REQUEST", { message: error.message });
           }
           throw error;
