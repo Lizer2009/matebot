@@ -1356,6 +1356,12 @@ export const DE_MESSAGES: Record<string, string> = {
   Organization: "Organisation",
   "Delete organization": "Organisation löschen",
   "Type {name} to confirm": "Gib {name} zur Bestätigung ein",
+  To: "An",
+  Subject: "Betreff",
+  Confirm: "Bestätigen",
+  "Send email": "E-Mail senden",
+  "Could not update the draft": "Der Entwurf konnte nicht aktualisiert werden",
+  "Confirm this draft before sending.": "Bestätige diesen Entwurf vor dem Senden.",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

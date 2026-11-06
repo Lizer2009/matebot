@@ -1356,6 +1356,12 @@ export const ZH_MESSAGES: Record<string, string> = {
   Organization: "组织",
   "Delete organization": "删除组织",
   "Type {name} to confirm": "输入 {name} 以确认",
+  To: "收件人",
+  Subject: "主题",
+  Confirm: "确认",
+  "Send email": "发送邮件",
+  "Could not update the draft": "无法更新草稿",
+  "Confirm this draft before sending.": "发送前请确认此草稿。",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

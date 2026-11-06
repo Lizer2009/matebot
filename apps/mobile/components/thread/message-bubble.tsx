@@ -13,8 +13,9 @@ import type { ComponentProps } from "react";
 import { memo, useContext, useMemo, useState } from "react";
 import type { TextProps } from "react-native";
 import { Alert, Pressable, Text, View } from "react-native";
+import { isA2uiEnabled } from "../../lib/a2ui-flag";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/api";
-import { blockText, messagingProviderLabel } from "../../lib/api";
+import { blockText, messagingProviderLabel, rpc } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
 import type { MobileArtifactTarget } from "../../lib/artifact-open";
 import { openMobileArtifact } from "../../lib/artifact-open";
@@ -48,6 +49,7 @@ import { MessageCaption } from "../message-caption";
 import { NativeSymbol } from "../native-symbol";
 import { PageCard } from "../pages/page-card";
 import { PeerReceiptLine } from "../peer-receipt-line";
+import { A2uiNativeSurface } from "./a2ui-native-surface";
 import { AskBlock } from "./ask-block";
 import type { MessageRowActions } from "./message-row";
 import { isSpecialMessageBlock, SpecialMessageCard } from "./special-message-card";
@@ -675,6 +677,12 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   const computerBlocks = message.blocks.filter(
     (block): block is Extract<MessageBlock, { kind: "computer" }> => block.kind === "computer",
   );
+  const a2uiBlocks = isA2uiEnabled()
+    ? message.blocks.filter(
+        (block): block is Extract<MessageBlock, { kind: "a2ui_surface" }> =>
+          block.kind === "a2ui_surface",
+      )
+    : [];
   return (
     <View style={{ gap: 8, width: "100%" }}>
       {segments.map((segment, index) => (
@@ -698,6 +706,46 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
           onAccessibilityAction={actionProps.onAccessibilityAction}
         />
       ))}
+      {a2uiBlocks.map((block) => {
+        const target = groupId ? { groupId } : { botId: cardBotId };
+        return (
+          <A2uiNativeSurface
+            key={block.surfaceId}
+            block={block}
+            fetchDocument={
+              block.documentRef
+                ? async (documentRef) => {
+                    const result = await rpc("threads/getA2uiSurface", { ...target, documentRef });
+                    return result.messages;
+                  }
+                : undefined
+            }
+            onFieldChange={async (name, value, expectedDraftVersion) => {
+              const result = await rpc("threads/updateInteractionField", {
+                ...target,
+                interactionId: block.interactionId,
+                expectedDraftVersion,
+                name,
+                value,
+              });
+              return { draftVersion: result.draftVersion };
+            }}
+            onConfirm={async (draftVersion) => {
+              await rpc("threads/confirmInteraction", {
+                ...target,
+                interactionId: block.interactionId,
+                draftVersion,
+              });
+            }}
+            onSend={async () => {
+              await rpc("threads/executeInteraction", {
+                ...target,
+                interactionId: block.interactionId,
+              });
+            }}
+          />
+        );
+      })}
       {computerBlocks.map((block, index) => (
         <ComputerCard
           key={`computer-${index}`}

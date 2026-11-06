@@ -1348,6 +1348,12 @@ export const NL_MESSAGES: Record<string, string> = {
   Organization: "Organisatie",
   "Delete organization": "Organisatie verwijderen",
   "Type {name} to confirm": "Typ {name} om te bevestigen",
+  To: "Aan",
+  Subject: "Onderwerp",
+  Confirm: "Bevestigen",
+  "Send email": "E-mail verzenden",
+  "Could not update the draft": "Het concept kon niet worden bijgewerkt",
+  "Confirm this draft before sending.": "Bevestig dit concept voordat je het verzendt.",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

@@ -1,5 +1,5 @@
 import type { MessageBlock } from "@matebot/contracts";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   applyLocalChoiceDismissals,
   choiceCardOptions,
@@ -244,6 +244,37 @@ describe("quotableMessageSegments", () => {
     expect(quotableMessageSegments("user", blocks)).not.toBe(
       quotableMessageSegments("bot", blocks),
     );
+  });
+});
+
+const surface = {
+  kind: "a2ui_surface",
+  interactionId: "ix-1",
+  surfaceId: "surf-1",
+  protocolFamily: "v0_9",
+  draftVersion: 1,
+} as MessageBlock;
+
+describe("a2ui surface presentation", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("hides the block while the flag is off", () => {
+    vi.stubEnv("EXPO_PUBLIC_FEATURE_A2UI", "");
+    expect(hasVisibleMessagePresentation([surface])).toBe(false);
+    expect(messagePresentationSegments([surface])).toEqual([]);
+    expect(messageHasInlineControls([surface])).toBe(false);
+  });
+
+  it("shows the block as its own card when the flag is on", () => {
+    vi.stubEnv("EXPO_PUBLIC_FEATURE_A2UI", "1");
+    expect(hasVisibleMessagePresentation([surface])).toBe(true);
+    expect(messagePresentationSegments([surface])).toEqual([]);
+    expect(messagePresentationSegments([{ kind: "text", text: "Draft" }, surface])).toEqual([
+      { kind: "content", blocks: [{ kind: "text", text: "Draft" }] },
+    ]);
+    expect(messageHasInlineControls([surface])).toBe(true);
   });
 });
 

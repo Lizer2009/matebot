@@ -1,6 +1,7 @@
 import type { MessageBlock } from "@matebot/contracts";
 import { isToolActivityBlock } from "@matebot/core";
 import { MAX_QUOTABLE_SOURCE_LENGTH, visibleTextFromMarkdown } from "@matebot/core/message-quote";
+import { isA2uiEnabled } from "./a2ui-flag";
 
 export function isCenteredAgentEvent(blocks: readonly MessageBlock[]): boolean {
   return blocks.some(
@@ -16,7 +17,10 @@ export function isCenteredAgentEvent(blocks: readonly MessageBlock[]): boolean {
 export function messageHasInlineControls(blocks: readonly MessageBlock[]): boolean {
   return blocks.some(
     (block) =>
-      block.kind === "ask" || block.kind === "app_connect" || block.kind === "mcp_approval",
+      block.kind === "ask" ||
+      block.kind === "app_connect" ||
+      block.kind === "mcp_approval" ||
+      (block.kind === "a2ui_surface" && isA2uiEnabled()),
   );
 }
 
@@ -27,7 +31,16 @@ export type MessagePresentationSegment = {
 
 /** Blocks the thread draws as their own native card instead of inside the text bubble. */
 function isCardBlock(block: MessageBlock): boolean {
-  return block.kind === "app_connect" || block.kind === "choice" || block.kind === "computer";
+  return (
+    block.kind === "app_connect" ||
+    block.kind === "choice" ||
+    block.kind === "computer" ||
+    (block.kind === "a2ui_surface" && isA2uiEnabled())
+  );
+}
+
+function isHiddenA2ui(block: MessageBlock): boolean {
+  return block.kind === "a2ui_surface" && !isA2uiEnabled();
 }
 
 /** The import setup checklist links to web settings, so mobile leaves it out. */
@@ -39,14 +52,22 @@ export function messagePresentationSegments(
   blocks: readonly MessageBlock[],
 ): MessagePresentationSegment[] {
   const content = blocks.filter(
-    (block) => !isCardBlock(block) && !isToolActivityBlock(block) && !isWebOnlyBlock(block),
+    (block) =>
+      !isCardBlock(block) &&
+      !isToolActivityBlock(block) &&
+      !isWebOnlyBlock(block) &&
+      !isHiddenA2ui(block),
   );
   return content.length > 0 ? [{ kind: "content", blocks: content }] : [];
 }
 
 export function hasVisibleMessagePresentation(blocks: readonly MessageBlock[]): boolean {
   return blocks.some(
-    (block) => !isToolActivityBlock(block) && !isDismissedChoice(block) && !isWebOnlyBlock(block),
+    (block) =>
+      !isToolActivityBlock(block) &&
+      !isDismissedChoice(block) &&
+      !isWebOnlyBlock(block) &&
+      !isHiddenA2ui(block),
   );
 }
 

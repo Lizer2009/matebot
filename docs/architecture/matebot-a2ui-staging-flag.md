@@ -35,6 +35,16 @@ location.reload();
 
 Storage key: `matebot.feature.a2ui`. Env wins over storage when set.
 
+### Mobile (Expo)
+
+Set this before the mobile bundle starts. It is off when unset.
+
+```bash
+EXPO_PUBLIC_FEATURE_A2UI=1
+```
+
+Accepted values match the API: `1`, `true`, `on`. Restart the Expo process after changing it. The timeline hides `a2ui_surface` blocks while the flag is off.
+
 ### Database
 
 Apply the additive `interactions` / `interaction_surfaces` migration with the normal migrate path before exercising persisted surfaces. Older API releases ignore these tables.
