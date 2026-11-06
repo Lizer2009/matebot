@@ -30,10 +30,7 @@ export type FieldChangeResult =
     }
   | { ok: false; error: "version_conflict" | "terminal" | "unknown_field"; message: string };
 
-const TERMINAL: ReadonlySet<InteractionLifecycleStatus> = new Set([
-  "succeeded",
-  "cancelled",
-]);
+const TERMINAL: ReadonlySet<InteractionLifecycleStatus> = new Set(["succeeded", "cancelled"]);
 
 export function interactionSlotsFromPlan(plan: InteractionPlan): Record<string, unknown> {
   const slots: Record<string, unknown> = {};
@@ -115,9 +112,7 @@ export function applyInteractionFieldChange(
 
 function withFieldValue(field: InteractionField, value: unknown): InteractionField {
   const empty =
-    value === undefined ||
-    value === null ||
-    (typeof value === "string" && value.trim() === "");
+    value === undefined || value === null || (typeof value === "string" && value.trim() === "");
   let status = field.status;
   if (empty) {
     status = field.required ? "missing" : field.status === "invalid" ? "invalid" : "resolved";
@@ -169,10 +164,7 @@ export function canExecuteConfirmedInteraction(state: {
   if (TERMINAL.has(state.status)) {
     return { ok: false, error: "terminal", message: `Interaction is ${state.status}` };
   }
-  if (
-    state.confirmedVersion === null ||
-    state.confirmedVersion !== state.draftVersion
-  ) {
+  if (state.confirmedVersion === null || state.confirmedVersion !== state.draftVersion) {
     return {
       ok: false,
       error: "unconfirmed",

@@ -488,6 +488,8 @@ services:
       RAKAZO_NAV_LINKS:
       RAKAZO_ADMIN_EMAILS:
       VOICE_SUMMARY_MIN_CHARS:
+      # Optional A2UI gate (default off). API-only; worker does not read it.
+      FEATURE_A2UI:
     expose:
       - "3100"
     volumes:

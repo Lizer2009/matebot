@@ -79,9 +79,13 @@ export async function createInteraction(
   input: CreateInteractionInput,
 ): Promise<InteractionRow> {
   const plan = InteractionPlanSchema.parse(input.plan);
-  const slots = input.slots ?? Object.fromEntries(
-    plan.fields.filter((field) => field.value !== undefined).map((field) => [field.name, field.value]),
-  );
+  const slots =
+    input.slots ??
+    Object.fromEntries(
+      plan.fields
+        .filter((field) => field.value !== undefined)
+        .map((field) => [field.name, field.value]),
+    );
   return prisma.interaction.create({
     data: {
       spaceId: input.spaceId,
@@ -158,7 +162,12 @@ export async function getInteractionSurface(
 export async function resolveA2uiSurfaceDocument(
   prisma: PrismaClient | Prisma.TransactionClient,
   documentRef: string,
-): Promise<{ interactionId: string; surfaceId: string; document: unknown; draftVersion: number } | null> {
+): Promise<{
+  interactionId: string;
+  surfaceId: string;
+  document: unknown;
+  draftVersion: number;
+} | null> {
   const parsed = parseA2uiSurfaceDocumentRef(documentRef);
   if (!parsed) return null;
   const surface = await getInteractionSurface(prisma, parsed);
