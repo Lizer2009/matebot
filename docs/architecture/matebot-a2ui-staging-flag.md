@@ -8,15 +8,15 @@ This document is enablement and image-pull guidance only. **Do not** push Docker
 
 ### API / Worker
 
-Set on the API (and Worker if it ever reads the same gate) process environment:
+Set on both the API and Worker process environment (Compose passes `FEATURE_A2UI` through the shared app allowlist):
 
 ```bash
 FEATURE_A2UI=1
 ```
 
-Accepted values: `1`, `true`, `on` (case-insensitive). Omit or set `0`/`false`/`off` to keep A2UI RPC gated.
+Accepted values: `1`, `true`, `on` (case-insensitive). Omit or set `0`/`false`/`off` to keep A2UI RPC gated and hide `present_interaction` from agent tool selection.
 
-Restart the API container/process after changing env. No `RAKAZO_*` renames.
+Restart the API and Worker containers/processes after changing env. No `RAKAZO_*` renames.
 
 ### Web (Vite)
 
