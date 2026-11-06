@@ -27,14 +27,16 @@ test("email surface stays hidden when the flag is off", async ({ page }) => {
   await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(0);
 });
 
-test("unbound email card shows connect and no Send", async ({ page }) => {
+test("unbound email card shows connect and no Send", async ({ page }, testInfo) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?capability=not_connected");
   await expect(page.getByTestId("a2ui-email-connect")).toBeVisible();
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-email-connect");
 });
 
-test("expired email card shows reauth and no Send", async ({ page }) => {
+test("expired email card shows reauth and no Send", async ({ page }, testInfo) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?capability=requires_reauth");
   await expect(page.getByTestId("a2ui-email-reauth")).toBeVisible();
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-email-reauth");
 });
