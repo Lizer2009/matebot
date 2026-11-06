@@ -30,9 +30,11 @@ export type ProjectInteractionEmailSurfaceInput = {
     summary: string | null;
   };
   plan: InteractionPlan;
-  confirmedVersion: number;
+  /** Absent means this draft has never been confirmed; never guessed. */
+  confirmedVersion?: number | null;
   draftVersion: number;
-  runId: string;
+  /** The run that owns this surface, when one is still bound. */
+  runId?: string;
   spaceId: string;
   threadId: string;
   botId: string;
@@ -41,6 +43,8 @@ export type ProjectInteractionEmailSurfaceInput = {
   providerMessageId?: string | null;
   error?: string | null;
   approvalEffectId?: string;
+  /** Mailbox three-state; refreshed on a reauth failure so the card stays actionable. */
+  capability?: EmailSurfaceCapability;
   actionEvent?:
     | "thread.interaction.action_started"
     | "thread.interaction.action_progress"
@@ -62,7 +66,7 @@ export async function projectInteractionEmailSurface(
     ? await tx.message.findUnique({ where: { id: input.interaction.messageId } })
     : null;
   const existing = Array.isArray(message?.blocks) ? (message.blocks as MessageBlock[]) : [];
-  const capability = capabilityFromBlocks(existing, surfaceRow?.surfaceId);
+  const capability = input.capability ?? capabilityFromBlocks(existing, surfaceRow?.surfaceId);
   const stamps = emailSurfaceBlockFields({
     intent: input.plan.intent,
     capability,
@@ -83,7 +87,7 @@ export async function projectInteractionEmailSurface(
       surfaceId: surfaceRow.surfaceId,
       protocolFamily,
       draftVersion: input.draftVersion,
-      confirmedVersion: input.confirmedVersion,
+      ...(input.confirmedVersion ? { confirmedVersion: input.confirmedVersion } : {}),
       intent: input.plan.intent,
       title: input.interaction.title ?? input.plan.title,
       ...(input.interaction.summary || input.plan.summary
@@ -122,7 +126,7 @@ export async function projectInteractionEmailSurface(
         surfaceId: surfaceRow.surfaceId,
         protocolFamily,
         draftVersion: input.draftVersion,
-        confirmedVersion: input.confirmedVersion,
+        ...(input.confirmedVersion ? { confirmedVersion: input.confirmedVersion } : {}),
         intent: input.plan.intent,
         title: block.title,
         summary: block.summary,
@@ -142,7 +146,7 @@ export async function projectInteractionEmailSurface(
       interactionId: input.interaction.id,
       intent: input.plan.intent,
       draftVersion: input.draftVersion,
-      confirmedVersion: input.confirmedVersion,
+      ...(input.confirmedVersion ? { confirmedVersion: input.confirmedVersion } : {}),
       progress: input.progress ?? stamps.lifecycle,
       error: stamps.error,
       template: stamps.template,
@@ -162,7 +166,7 @@ export async function projectInteractionEmailSurface(
       payload: {
         interactionId: input.interaction.id,
         draftVersion: input.draftVersion,
-        confirmedVersion: input.confirmedVersion,
+        ...(input.confirmedVersion ? { confirmedVersion: input.confirmedVersion } : {}),
         progress: input.progress ?? stamps.lifecycle,
         error: stamps.error,
         template: stamps.template,
@@ -192,6 +196,8 @@ export type FinishInteractionEmailSendInput = {
   effectStatus: "completed" | "reconciled" | "failed" | "ambiguous";
   interactionStatus: "succeeded" | "failed" | "unknown";
   result: Record<string, unknown>;
+  /** Refreshed mailbox three-state, so a revoked account turns the card into reconnect. */
+  capability?: EmailSurfaceCapability;
   /** When set, a concurrent writer that already left `ambiguous` wins once. */
   expectedEffectStatus?: string;
 };
@@ -245,6 +251,7 @@ export async function finishInteractionEmailSend(
         providerMessageId,
         error,
         approvalEffectId: input.effectId,
+        ...(input.capability ? { capability: input.capability } : {}),
         actionEvent,
         progress: input.interactionStatus,
       });

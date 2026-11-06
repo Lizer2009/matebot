@@ -7,7 +7,12 @@ vi.mock("./interaction-publish.js", () => ({
   publishInteractionSurface: (...args: unknown[]) => publishInteractionSurface(...args),
 }));
 
-const { interactionTools, normalizeEmailComposePlan } = await import("./run-tools-interaction.js");
+const {
+  interactionTools,
+  normalizeCalendarPlan,
+  normalizeEmailComposePlan,
+  normalizeInteractionPlan,
+} = await import("./run-tools-interaction.js");
 const { isEmailShellEscape, preferredToolForEmailIntent, selectBuiltinToolsForRun } = await import(
   "./run-tool-selection.js"
 );
@@ -73,6 +78,41 @@ describe("normalizeEmailComposePlan", () => {
   });
 });
 
+describe("normalizeCalendarPlan", () => {
+  const calendarPlan: InteractionPlan = {
+    intent: "calendar.create",
+    title: "Create calendar",
+    fields: [{ name: "name", value: "Trips", required: true, status: "resolved" }],
+    nextStep: "ask",
+    riskLevel: "medium",
+  };
+
+  it("adds the optional events field so the surface can collect entries", () => {
+    const normalized = normalizeCalendarPlan(calendarPlan);
+    expect(normalized.fields.map((field) => field.name)).toEqual(["name", "events"]);
+    expect(normalized.fields.find((field) => field.name === "events")).toMatchObject({
+      required: false,
+      status: "missing",
+    });
+  });
+
+  it("keeps a resolved name and leaves other intents untouched", () => {
+    expect(normalizeCalendarPlan(calendarPlan).fields[0]).toMatchObject({
+      value: "Trips",
+      status: "resolved",
+    });
+    expect(normalizeCalendarPlan(emailPlan)).toBe(emailPlan);
+  });
+
+  it("normalizes either app through one entry point", () => {
+    expect(normalizeInteractionPlan(emailPlan).fields.map((field) => field.name)).toContain("to");
+    expect(normalizeInteractionPlan(calendarPlan).fields.map((field) => field.name)).toEqual([
+      "name",
+      "events",
+    ]);
+  });
+});
+
 describe("present_interaction", () => {
   beforeEach(() => {
     publishInteractionSurface.mockReset();
@@ -91,6 +131,7 @@ describe("present_interaction", () => {
       documentRef: "a2ui:interaction:ix-1:surface:surface-1",
       draftVersion: 1,
       eventSeq: 9,
+      capability: "not_connected",
     });
     const ctx = context();
     const result = (await interactionTools.present_interaction!(
@@ -114,8 +155,69 @@ describe("present_interaction", () => {
       surfaceId: "surface-1",
       messageId: "msg-1",
       intent: "email.compose",
+      // The turn's only words: the card already shows the fields.
+      reply: "授权完成后点卡片继续。",
     });
     expect(ctx.notify).toHaveBeenCalledWith("thread-1", 9);
+  });
+
+  it("says nothing when the surface was published without a capability stamp", async () => {
+    publishInteractionSurface.mockResolvedValueOnce({
+      interactionId: "ix-2",
+      surfaceId: "surface-2",
+      messageId: "msg-2",
+      documentRef: "a2ui:interaction:ix-2:surface:surface-2",
+      draftVersion: 1,
+      eventSeq: 10,
+    });
+    const result = (await interactionTools.present_interaction!(
+      context() as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(result).not.toHaveProperty("capability");
+    expect(result.reply).toBe("请在卡片上确认或编辑。");
+  });
+
+  it("answers a calendar request with a calendar surface, not prose", async () => {
+    publishInteractionSurface.mockResolvedValueOnce({
+      interactionId: "ix-cal",
+      surfaceId: "surface-cal",
+      messageId: "msg-cal",
+      documentRef: "a2ui:interaction:ix-cal:surface:surface-cal",
+      draftVersion: 1,
+      eventSeq: 12,
+      capability: "ready",
+    });
+    const ctx = context();
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({
+        plan: {
+          intent: "calendar.create",
+          title: "Create calendar",
+          fields: [{ name: "name", required: true, status: "missing" }],
+          nextStep: "ask",
+          riskLevel: "medium",
+        },
+      }),
+    )) as Record<string, unknown>;
+    expect(publishInteractionSurface).toHaveBeenCalledWith(
+      ctx.deps.prisma,
+      expect.objectContaining({
+        plan: expect.objectContaining({
+          intent: "calendar.create",
+          fields: expect.arrayContaining([
+            expect.objectContaining({ name: "name" }),
+            expect.objectContaining({ name: "events" }),
+          ]),
+        }),
+      }),
+    );
+    expect(result).toMatchObject({
+      intent: "calendar.create",
+      capability: "ready",
+      reply: "请在卡片上确认或编辑。",
+    });
   });
 
   it("refuses when FEATURE_A2UI is off", async () => {
@@ -161,12 +263,18 @@ describe("selectBuiltinToolsForRun a2ui gate", () => {
 
   it("does not teach SMTP or request_secret as the mail fallback", () => {
     const tool = builtinAgentTools.find((entry) => entry.name === "present_interaction");
-    expect(tool?.description).toMatch(/any language/);
+    expect(tool?.description).toMatch(/natural language/);
     expect(tool?.description).toContain("email.compose");
-    expect(tool?.description).toMatch(
-      /Never send mail with shell, python, smtplib, or request_secret/,
-    );
+    expect(tool?.description).toContain("calendar.create");
+    expect(tool?.description).toMatch(/Never send mail .* request_secret/);
     expect(tool?.description).not.toMatch(/SMTP/);
     expect(tool?.description).not.toMatch(/request_secret as usual/);
+  });
+
+  it("keeps the reply after a published surface to one short sentence", () => {
+    const tool = builtinAgentTools.find((entry) => entry.name === "present_interaction");
+    expect(tool?.description).toMatch(/one short sentence/);
+    expect(tool?.description).toMatch(/do not restate fields/);
+    expect(tool?.description).toMatch(/explain credentials/);
   });
 });

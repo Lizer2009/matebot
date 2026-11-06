@@ -1405,6 +1405,8 @@ export const RU_MESSAGES: Record<string, string> = {
   "Could not send": "Не удалось отправить",
   "Check status": "Проверить статус",
   "Don't send again": "Не отправляйте снова",
+  "Authorization expired": "Авторизация истекла",
+  "Not connected": "Не подключено",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

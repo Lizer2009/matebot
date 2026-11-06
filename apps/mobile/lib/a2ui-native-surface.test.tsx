@@ -250,6 +250,39 @@ describe("native A2UI surface", () => {
     );
     expect(document.querySelector('[data-testid="a2ui-email-reauth"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    expect(text("a2ui-email-status")).toBe("Authorization expired");
+  });
+
+  // The live failure: the send died on a revoked authorization, so the card has
+  // to offer reconnect rather than a Retry that would fail the same way.
+  it("offers reconnect after a send failed on a dead authorization", () => {
+    render(
+      <A2uiNativeSurface
+        block={{
+          ...block,
+          capability: "requires_reauth",
+          template: "email-reauth-card",
+          lifecycle: "failed",
+          error: "The gmail connection is no longer active. Ask the user to reconnect gmail.",
+        }}
+        onConnect={vi.fn(async () => undefined)}
+        onSend={vi.fn(async () => undefined)}
+      />,
+    );
+    expect(document.querySelector('[data-testid="a2ui-email-reauth"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="a2ui-email-retry"]')).toBeNull();
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+  });
+
+  it("labels an unconnected surface as not connected", () => {
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, capability: "not_connected" }}
+        onConnect={vi.fn(async () => undefined)}
+        onSend={vi.fn(async () => undefined)}
+      />,
+    );
+    expect(text("a2ui-email-status")).toBe("Not connected");
   });
 
   it("shows progress without Send", () => {

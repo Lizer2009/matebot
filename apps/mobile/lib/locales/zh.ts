@@ -1372,6 +1372,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Could not send": "无法发送",
   "Check status": "检查状态",
   "Don't send again": "请勿再次发送",
+  "Authorization expired": "授权已失效",
+  "Not connected": "未连接",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

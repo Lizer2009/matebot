@@ -1,12 +1,14 @@
 import type { InteractionPlan } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
+import { A2UI_SURFACE_NUDGE, interactionRequiredApp, surfaceNudgeFor } from "@matebot/core";
 import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import {
-  emailCapabilityFromRows,
+  interactionCapabilityFromRows,
   loadEmailReconnectRefs,
   loadOwnerEmailConnections,
+  loadProviderReadiness,
 } from "./interaction-email-capability.js";
 import { publishInteractionSurface } from "./interaction-publish.js";
 import type { RunContext } from "./run-context.js";
@@ -15,6 +17,12 @@ import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 
 const EMAIL_REQUIRED_FIELDS = ["to", "subject", "body"] as const;
 const EMAIL_OPTIONAL_FIELDS = ["from", "cc"] as const;
+
+/** A calendar draft needs a name; its entries are optional in the first pass. */
+const CALENDAR_FIELDS: { name: string; required: boolean }[] = [
+  { name: "name", required: true },
+  { name: "events", required: false },
+];
 
 /** Fill missing email.compose slots so the surface always has the draft fields. */
 export function normalizeEmailComposePlan(plan: InteractionPlan): InteractionPlan {
@@ -39,6 +47,32 @@ export function normalizeEmailComposePlan(plan: InteractionPlan): InteractionPla
   return { ...plan, fields };
 }
 
+/** Fill the calendar slots so the resumed surface always has the name and entries. */
+export function normalizeCalendarPlan(plan: InteractionPlan): InteractionPlan {
+  if (plan.intent !== "calendar.create" && plan.intent !== "calendar.compose") return plan;
+  const byName = new Map(plan.fields.map((field) => [field.name, field]));
+  const known = new Set(CALENDAR_FIELDS.map((field) => field.name));
+  const fields = CALENDAR_FIELDS.map((field) => {
+    const existing = byName.get(field.name);
+    if (existing) return existing;
+    return { name: field.name, required: field.required, status: "missing" as const };
+  });
+  for (const field of plan.fields) {
+    if (!known.has(field.name)) fields.push(field);
+  }
+  return { ...plan, fields };
+}
+
+export function normalizeInteractionPlan(plan: InteractionPlan): InteractionPlan {
+  return normalizeCalendarPlan(normalizeEmailComposePlan(plan));
+}
+
+/** The one line the turn should say after publishing; nothing else belongs in prose. */
+function surfaceNudgeReply(capability: EmailSurfaceCapability | undefined): string | undefined {
+  const state = surfaceNudgeFor({ capability, lifecycle: "draft" });
+  return state ? A2UI_SURFACE_NUDGE[state] : undefined;
+}
+
 async function presentInteraction(ctx: RunContext, call: ToolCall) {
   if (!isA2uiFeatureEnabled()) {
     return { error: "Interactive drafts are not enabled on this server." };
@@ -50,7 +84,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       details: parsed.error.issues.map((issue) => issue.message),
     };
   }
-  const plan = normalizeEmailComposePlan(parsed.data);
+  const plan = normalizeInteractionPlan(parsed.data);
   const { deps, run } = ctx;
   try {
     const published = await publishInteractionSurface(deps.prisma, {
@@ -60,7 +94,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       runId: run.id,
       plan,
       lease: runLeaseFor(deps, run.id),
-      ...(await emailPublishCapability(ctx, plan)),
+      ...(await interactionPublishCapability(ctx, plan)),
     });
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
@@ -72,6 +106,9 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       draftVersion: published.draftVersion,
       intent: plan.intent,
       title: plan.title,
+      ...(published.capability ? { capability: published.capability } : {}),
+      /** The only words the turn should add; the card holds everything else. */
+      reply: surfaceNudgeReply(published.capability),
     };
   } catch (error) {
     return {
@@ -80,28 +117,35 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
   }
 }
 
-async function emailPublishCapability(
+/** Stamp the app's three-state so the card knows whether it can act yet. */
+async function interactionPublishCapability(
   ctx: RunContext,
   plan: InteractionPlan,
 ): Promise<{ capability?: EmailSurfaceCapability; status?: InteractionLifecycleStatus }> {
-  if (plan.intent !== "email.compose" && plan.intent !== "email.send") return {};
+  const app = interactionRequiredApp(plan.intent);
+  if (!app) return {};
   const userId = ctx.context?.userId;
   if (!userId) {
     return { capability: "not_connected", status: "needs_connection" };
   }
   const owner = { spaceId: ctx.run.spaceId, userId };
   const connections = await loadOwnerEmailConnections(ctx.deps.prisma, owner);
-  const reconnectRefs = await loadEmailReconnectRefs(
-    ctx.deps.connectors?.managed?.("composio")?.listReconnectRefs,
-    {
-      operationId: "interaction.email.preflight",
-      traceId: "interaction.email.preflight",
-      spaceId: owner.spaceId,
-      userId,
-      signal: ctx.context.signal ?? new AbortController().signal,
-    },
+  const managed = ctx.deps.connectors?.managed?.("composio");
+  const context = {
+    operationId: "interaction.preflight",
+    traceId: "interaction.preflight",
+    spaceId: owner.spaceId,
+    userId,
+    signal: ctx.context.signal ?? new AbortController().signal,
+  };
+  const reconnectRefs = await loadEmailReconnectRefs(managed?.listReconnectRefs, context);
+  const providerReady = await loadProviderReadiness(managed, context, connections);
+  const snapshot = interactionCapabilityFromRows(
+    plan.intent,
+    connections,
+    reconnectRefs,
+    providerReady,
   );
-  const snapshot = emailCapabilityFromRows(connections, reconnectRefs);
   return {
     capability: snapshot.surfaceCapability,
     ...(snapshot.interactionNeedsConnection ? { status: "needs_connection" as const } : {}),

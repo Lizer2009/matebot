@@ -17,6 +17,7 @@ import {
   finishInteractionEmailSend,
   loadEmailReconnectRefs,
   loadOwnerEmailConnections,
+  loadProviderReadiness,
   projectInteractionEmailSurface,
   reconcileAmbiguousEmailEffect,
 } from "@matebot/adapters";
@@ -28,6 +29,7 @@ import {
   canExecuteConfirmedInteraction,
   confirmedEffectMatchesDraft,
   confirmInteractionDraftState,
+  deliveryNeedsReconnect,
   emailCapabilityAllowsSend,
   emailDeliveryOutcome,
   emailSurfaceBlockFields,
@@ -309,12 +311,18 @@ export type InteractionMailboxDeps = {
   userId: string;
   emailConnections?: EmailCapabilityRow[];
   reconnectRefs?: string[];
+  /** Provider health per slug; the connector's own view wins over a stale local row. */
+  providerReady?: Record<string, boolean>;
   jobs?: Pick<JobPublisher, "enqueue">;
   connector?: Pick<ConnectorProvider, "execute"> & {
     listReconnectRefs?: ManagedConnectorProvider["listReconnectRefs"];
-    managed?(
-      id: string,
-    ): { listReconnectRefs?: ManagedConnectorProvider["listReconnectRefs"] } | undefined;
+    connectionReady?: ManagedConnectorProvider["connectionReady"];
+    managed?(id: string):
+      | {
+          listReconnectRefs?: ManagedConnectorProvider["listReconnectRefs"];
+          connectionReady?: ManagedConnectorProvider["connectionReady"];
+        }
+      | undefined;
   };
 };
 
@@ -357,25 +365,33 @@ export class InteractionSendRejectedError extends Error {
 
 async function resolveMailboxCapability(
   prisma: PrismaClient,
-  input: InteractionMailboxDeps & { spaceId: string },
+  input: InteractionMailboxDeps & { spaceId: string; intent?: string },
 ) {
   const connections =
     input.emailConnections ??
     (await loadOwnerEmailConnections(prisma, { spaceId: input.spaceId, userId: input.userId }));
+  const managed = input.connector?.managed?.("composio") ?? input.connector;
+  const context = {
+    operationId: "interaction.email.preflight",
+    traceId: "interaction.email.preflight",
+    spaceId: input.spaceId,
+    userId: input.userId,
+    signal: new AbortController().signal,
+  };
   const reconnectRefs =
     input.reconnectRefs ??
     (await loadEmailReconnectRefs(
-      input.connector?.listReconnectRefs ??
-        input.connector?.managed?.("composio")?.listReconnectRefs,
-      {
-        operationId: "interaction.email.preflight",
-        traceId: "interaction.email.preflight",
-        spaceId: input.spaceId,
-        userId: input.userId,
-        signal: new AbortController().signal,
-      },
+      input.connector?.listReconnectRefs ?? managed?.listReconnectRefs,
+      context,
     ));
-  return emailCapabilityFromRows(connections, reconnectRefs);
+  const providerReady =
+    input.providerReady ??
+    (await loadProviderReadiness(
+      input.connector?.connectionReady ? input.connector : managed,
+      context,
+      connections,
+    ));
+  return emailCapabilityFromRows(connections, reconnectRefs, providerReady);
 }
 
 function rejectUnlessMailboxReady(
@@ -390,6 +406,60 @@ function rejectUnlessMailboxReady(
       ? "Reconnect the mailbox before sending"
       : "Connect a mailbox before sending",
   );
+}
+
+/**
+ * A preflight miss must land on the card, not in prose: refresh the same surface
+ * into its connection/reconnect template so the user has a button to press.
+ */
+async function projectMailboxGate(
+  prisma: PrismaClient,
+  input: { spaceId: string; threadId: string; botId: string; interactionId: string },
+  snapshot: ReturnType<typeof emailCapabilityFromRows>,
+): Promise<void> {
+  const current = await getInteraction(prisma, input.interactionId);
+  if (!current) return;
+  await withTransactionRetry(() =>
+    prisma.$transaction(async (tx) => {
+      await tx.interaction.updateMany({
+        where: { id: current.id, draftVersion: current.draftVersion },
+        data: { status: "needs_connection" },
+      });
+      await projectInteractionEmailSurface(tx, {
+        interaction: {
+          id: current.id,
+          messageId: current.messageId,
+          title: current.title,
+          summary: current.summary,
+        },
+        plan: current.plan as InteractionPlan,
+        confirmedVersion: current.confirmedVersion,
+        draftVersion: current.draftVersion,
+        runId: current.runId ?? undefined,
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: input.botId,
+        interactionStatus: "needs_connection",
+        capability: snapshot.surfaceCapability,
+      });
+    }),
+  );
+}
+
+/** Gate Send on a usable mailbox, and refresh the card when it is not usable. */
+async function requireReadyMailbox(
+  prisma: PrismaClient,
+  input: InteractionMailboxDeps & { spaceId: string; threadId: string; botId: string },
+  interactionId: string,
+): Promise<ReturnType<typeof emailCapabilityFromRows>> {
+  const snapshot: ReturnType<typeof emailCapabilityFromRows> = await resolveMailboxCapability(
+    prisma,
+    input,
+  );
+  if (emailCapabilityAllowsSend(snapshot.status)) return snapshot;
+  await projectMailboxGate(prisma, { ...input, interactionId }, snapshot).catch(() => undefined);
+  rejectUnlessMailboxReady(snapshot);
+  return snapshot;
 }
 
 function interactionSlots(value: unknown): Record<string, unknown> {
@@ -421,7 +491,7 @@ export async function confirmInteractionService(
   if (!current || current.threadId !== input.threadId) {
     throw new InteractionNotFoundError(input.interactionId);
   }
-  rejectUnlessMailboxReady(await resolveMailboxCapability(prisma, input));
+  await requireReadyMailbox(prisma, input, current.id);
   const plan = current.plan as InteractionPlan;
   const slots = interactionSlots(current.slots);
   const confirmed = confirmInteractionDraftState(
@@ -614,8 +684,7 @@ export async function executeConfirmedInteractionService(
     };
   }
 
-  const mailbox = await resolveMailboxCapability(prisma, input);
-  rejectUnlessMailboxReady(mailbox);
+  const mailbox = await requireReadyMailbox(prisma, input, current.id);
   const connection = mailbox.connection;
   if (!connection || !input.connector) {
     throw new InteractionSendRejectedError("needs_connection", "Connect a mailbox before sending");
@@ -654,6 +723,7 @@ export async function executeConfirmedInteractionService(
     effectStatus: "completed" | "reconciled" | "failed" | "ambiguous";
     interactionStatus: "succeeded" | "failed" | "unknown";
     result: Record<string, unknown>;
+    capability?: EmailSurfaceCapability;
   }) =>
     finishInteractionEmailSend(prisma, {
       spaceId: input.spaceId,
@@ -741,6 +811,8 @@ export async function executeConfirmedInteractionService(
         effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
         interactionStatus: outcome,
         result: { error: message },
+        // A dead authorization keeps the same card actionable as reconnect.
+        ...(deliveryNeedsReconnect(message) ? { capability: "requires_reauth" as const } : {}),
       });
       if (outcome === "unknown") await scheduleReconcile();
       throw new InteractionEmailDeliveryError("Could not send the email", outcome);
@@ -751,6 +823,9 @@ export async function executeConfirmedInteractionService(
         effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
         interactionStatus: outcome,
         result: { error: delivery.error },
+        ...(deliveryNeedsReconnect(delivery.error)
+          ? { capability: "requires_reauth" as const }
+          : {}),
       });
       if (outcome === "unknown") await scheduleReconcile();
       throw new InteractionEmailDeliveryError(delivery.error, outcome);

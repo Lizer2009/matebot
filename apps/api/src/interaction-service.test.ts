@@ -973,3 +973,117 @@ describe("executeConfirmedInteractionService", () => {
     expect(deliverInteractionEmail).not.toHaveBeenCalled();
   });
 });
+
+/** The live failure: the local row still said connected after the provider revoked it. */
+const staleMailbox = {
+  ...readyMailbox,
+  reconnectRefs: ["ca_1"],
+  providerReady: { gmail: false },
+};
+
+function surfaceDraft() {
+  return confirmedDraft({
+    surface: { surfaceId: "surf-1", protocolFamily: "v0_9" },
+    message: {
+      id: "msg-surface",
+      blocks: [
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 2,
+          capability: "ready",
+        },
+      ],
+    },
+  });
+}
+
+describe("inactive mailbox", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("refuses Send and turns the same card into reconnect when the provider says dead", async () => {
+    const db = surfaceDraft();
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...staleMailbox,
+      }),
+    ).rejects.toMatchObject({ code: "needs_connection" });
+    expect(deliverInteractionEmail).not.toHaveBeenCalled();
+    expect(lastSurfacePayload()).toMatchObject({
+      template: "email-reauth-card",
+      capability: "requires_reauth",
+    });
+    expect(db.interactions.get("ix-1")?.status).toBe("needs_connection");
+  });
+
+  it("refuses Connect-time confirm the same way, without creating an effect", async () => {
+    const db = memoryPrisma(readyInteraction());
+    await expect(
+      confirmInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        draftVersion: 2,
+        ...staleMailbox,
+      }),
+    ).rejects.toMatchObject({ code: "needs_connection" });
+    expect(db.effects.size).toBe(0);
+  });
+
+  // The card must stay actionable: a dead Connector account is a reconnect, not a
+  // failure the user can only read about while the model explains SMTP.
+  it("maps the connector's dead-account error onto reconnect, not retry", async () => {
+    vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({
+      ok: false,
+      error: "The gmail connection is no longer active. Ask the user to reconnect gmail.",
+    });
+    const db = surfaceDraft();
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+      }),
+    ).rejects.toBeInstanceOf(InteractionEmailDeliveryError);
+    expect(lastSurfacePayload()).toMatchObject({
+      template: "email-reauth-card",
+      capability: "requires_reauth",
+      lifecycle: "failed",
+    });
+  });
+
+  it("retries a failed send after the mailbox is usable again", async () => {
+    vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({
+      ok: false,
+      error: "The gmail connection is no longer active. Ask the user to reconnect gmail.",
+    });
+    const db = surfaceDraft();
+    const input = {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      ...readyMailbox,
+    };
+    await expect(executeConfirmedInteractionService(db.prisma, input)).rejects.toBeInstanceOf(
+      InteractionEmailDeliveryError,
+    );
+    vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({ ok: true, deliveryId: "msg-2" });
+    // The user reconnected; Retry preflights again and succeeds on the same effect.
+    await expect(executeConfirmedInteractionService(db.prisma, input)).resolves.toMatchObject({
+      providerMessageId: "msg-2",
+    });
+    expect(lastSurfacePayload()).toMatchObject({ template: "action-result-success" });
+  });
+});

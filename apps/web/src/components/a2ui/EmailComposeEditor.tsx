@@ -101,6 +101,7 @@ export function EmailComposeEditor({
     lifecycle,
     capability: mailbox,
     intent: "email.compose",
+    error: surfaceError,
   });
   const phase =
     busy &&
@@ -459,6 +460,17 @@ function StatusLine({
         aria-live="polite"
       >
         {t`Don't send again`}
+      </div>
+    );
+  }
+  if (phase === "email-connection-card" || phase === "email-reauth-card") {
+    return (
+      <div
+        data-testid="a2ui-email-status"
+        className="text-[13px] text-muted-foreground"
+        aria-live="polite"
+      >
+        {phase === "email-reauth-card" ? t`Authorization expired` : t`Not connected`}
       </div>
     );
   }

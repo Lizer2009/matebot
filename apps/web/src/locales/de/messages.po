@@ -966,6 +966,10 @@ msgstr "Authentifizierung fehlgeschlagen."
 msgid "Authorization code"
 msgstr "Autorisierungscode"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Authorization expired"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Authorization parameters (optional)"
 msgstr "Autorisierungsparameter (optional)"
@@ -1342,6 +1346,10 @@ msgstr ""
 msgid "Check in."
 msgstr "Melde dich."
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Check status"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "Prüfe den API-Schlüssel oder die Anmeldung und teste erneut."
@@ -1668,26 +1676,6 @@ msgstr "Prüfe, ob die URL aus dieser Browsersitzung erreichbar ist, und teste e
 msgid "Confirm this draft before sending."
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Connect email"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Could not send"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Check status"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Don't send again"
-msgstr ""
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1727,6 +1715,10 @@ msgstr "API-Schlüssel verbinden"
 #: src/pages/Shell.tsx
 msgid "Connect apps"
 msgstr "Apps verbinden"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
@@ -2349,6 +2341,10 @@ msgstr "Diese Auswahl konnte nicht gespeichert werden"
 msgid "Could not search catalog"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Could not send"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not send reset email"
 msgstr "E-Mail zum Zurücksetzen konnte nicht gesendet werden"
@@ -2889,6 +2885,10 @@ msgstr "Das Dokument wurde geändert. Öffne es erneut, um die neueste Version z
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
 msgstr "Du hast noch kein Konto?"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Don't send again"
+msgstr ""
 
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
@@ -4530,6 +4530,10 @@ msgstr ""
 msgid "Not checked yet"
 msgstr "Noch nicht geprüft"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Not connected"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "Nicht importiert"
@@ -5112,13 +5116,13 @@ msgstr "Kürzlich"
 msgid "Recommended"
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgctxt "mailbox"
+#: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
 msgstr ""
 
-#: src/components/integrations/plugin-marketplace.tsx
-#: src/pages/VoiceSettingsOverlay.tsx
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
 msgid "Reconnect"
 msgstr ""
 
@@ -5461,6 +5465,7 @@ msgstr "Wiederhergestellt"
 msgid "Restoring your workspace"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5802,6 +5807,10 @@ msgstr "Link zum Zurücksetzen senden"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
 msgstr "Mit Enter senden"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Sending"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx

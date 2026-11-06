@@ -485,6 +485,64 @@ describe("A2uiSurfaceCard", () => {
     expect(onCheckStatus).toHaveBeenCalled();
     expect(onSend).not.toHaveBeenCalled();
   });
+
+  // The live failure: a dead Connector account made Send fail. The card has to
+  // offer reauthorization instead of a Retry that would fail the same way.
+  it("offers Reconnect instead of Retry when a send failed on a dead authorization", async () => {
+    const onConnect = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "requires_reauth",
+      template: "email-reauth-card",
+      lifecycle: "failed",
+      error: "The gmail connection is no longer active. Ask the user to reconnect gmail.",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onConnect={onConnect}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const form = container.querySelector('[data-testid="a2ui-email-compose"]') as HTMLElement;
+    expect(form.getAttribute("data-template")).toBe("email-reauth-card");
+    expect(container.querySelector('[data-testid="a2ui-email-retry"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-status"]')?.textContent).toMatch(
+      /Authorization expired/,
+    );
+    const reauth = container.querySelector(
+      '[data-testid="a2ui-email-reauth"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      reauth.click();
+    });
+    expect(onConnect).toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it("labels an unconnected surface as not connected rather than needing approval", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "not_connected",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={vi.fn()} />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-status"]')?.textContent).toMatch(
+      /Not connected/,
+    );
+  });
 });
 
 function emailSurfaceMessages(): unknown[] {
