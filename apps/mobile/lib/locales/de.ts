@@ -1367,6 +1367,7 @@ export const DE_MESSAGES: Record<string, string> = {
   From: "Von",
   CC: "CC",
   "Confirm this draft before sending.": "Bestätige diesen Entwurf vor dem Senden.",
+  "Connect email": "E-Mail verbinden",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

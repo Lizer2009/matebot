@@ -15,6 +15,12 @@ type EmailFieldName = keyof EmailFields;
 
 const EMAIL_FIELD_NAMES = ["from", "to", "cc", "subject", "body"] as const;
 
+function mailboxNeedsConnect(
+  capability: A2uiSurfaceBlock["capability"],
+): capability is "not_connected" | "requires_reauth" {
+  return capability === "not_connected" || capability === "requires_reauth";
+}
+
 export function A2uiNativeSurface({
   block,
   messages,
@@ -22,6 +28,7 @@ export function A2uiNativeSurface({
   onFieldChange,
   onConfirm,
   onSend,
+  onConnect,
   onDiscard,
 }: {
   block: A2uiSurfaceBlock;
@@ -34,6 +41,7 @@ export function A2uiNativeSurface({
   ) => Promise<{ draftVersion: number } | undefined>;
   onConfirm?: (draftVersion: number) => Promise<void>;
   onSend?: (draftVersion: number) => Promise<void>;
+  onConnect?: () => Promise<void>;
   onDiscard?: () => void | Promise<void>;
 }) {
   const { t } = useI18n();
@@ -43,6 +51,7 @@ export function A2uiNativeSurface({
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [discarded, setDiscarded] = useState(false);
+  const [mailbox, setMailbox] = useState(block.capability);
   const [localConfirmedVersion, setLocalConfirmedVersion] = useState<number | undefined>(
     block.confirmedVersion,
   );
@@ -65,6 +74,10 @@ export function A2uiNativeSurface({
   useEffect(() => {
     setLocalConfirmedVersion(block.confirmedVersion);
   }, [block.confirmedVersion]);
+
+  useEffect(() => {
+    setMailbox(block.capability);
+  }, [block.capability]);
 
   useEffect(() => {
     if (messages || !block.documentRef) return;
@@ -166,27 +179,41 @@ export function A2uiNativeSurface({
                 .catch((err: unknown) => setError(messageOf(err)));
             }}
           />
-          <A2uiButton
-            label={t("Send")}
-            testID="a2ui-email-send"
-            onPress={() => {
-              setError(null);
-              void flush()
-                .then(async (next) => {
-                  if (effectiveConfirmed !== next) {
-                    if (!onConfirm) {
-                      setError(t("Confirm this draft before sending."));
-                      return;
+          {mailboxNeedsConnect(mailbox) ? (
+            <A2uiButton
+              label={mailbox === "requires_reauth" ? t("Reconnect") : t("Connect email")}
+              testID={mailbox === "requires_reauth" ? "a2ui-email-reauth" : "a2ui-email-connect"}
+              onPress={() => {
+                if (!onConnect) return;
+                setError(null);
+                void onConnect()
+                  .then(() => setMailbox("ready"))
+                  .catch((err: unknown) => setError(messageOf(err)));
+              }}
+            />
+          ) : (
+            <A2uiButton
+              label={t("Send")}
+              testID="a2ui-email-send"
+              onPress={() => {
+                setError(null);
+                void flush()
+                  .then(async (next) => {
+                    if (effectiveConfirmed !== next) {
+                      if (!onConfirm) {
+                        setError(t("Confirm this draft before sending."));
+                        return;
+                      }
+                      await onConfirm(next);
+                      setLocalConfirmedVersion(next);
                     }
-                    await onConfirm(next);
-                    setLocalConfirmedVersion(next);
-                  }
-                  await onSend?.(next);
-                  setSent(true);
-                })
-                .catch((err: unknown) => setError(messageOf(err)));
-            }}
-          />
+                    await onSend?.(next);
+                    setSent(true);
+                  })
+                  .catch((err: unknown) => setError(messageOf(err)));
+              }}
+            />
+          )}
         </A2uiSheet>
         {error ? <Text testID="a2ui-email-error">{error}</Text> : null}
         {sent ? <Text testID="a2ui-email-sent">{t("Sent")}</Text> : null}

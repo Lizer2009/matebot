@@ -10,9 +10,13 @@ vi.mock("@matebot/db", async () => {
   };
 });
 
-vi.mock("@matebot/adapters", () => ({
-  deliverInteractionEmail: vi.fn(async () => ({ ok: true, deliveryId: "msg-1" })),
-}));
+vi.mock("@matebot/adapters", async () => {
+  const actual = await vi.importActual<typeof import("@matebot/adapters")>("@matebot/adapters");
+  return {
+    ...actual,
+    deliverInteractionEmail: vi.fn(async () => ({ ok: true, deliveryId: "msg-1" })),
+  };
+});
 
 import { deliverInteractionEmail } from "@matebot/adapters";
 import {
@@ -141,6 +145,26 @@ function memoryPrisma(interaction: InteractionRecord) {
   return { prisma: prisma as unknown as PrismaClient, interactions, effects };
 }
 
+const readyMailbox = {
+  userId: "user-1",
+  emailConnections: [
+    {
+      id: "conn-gmail",
+      connectorId: "composio",
+      provider: "gmail",
+      displayName: "Mail",
+      status: "connected",
+      providerRef: "ca_1",
+    },
+  ],
+  reconnectRefs: [] as string[],
+  connector: {
+    async *execute() {
+      yield { type: "result" as const, data: { data: { messageId: "msg-1" } } };
+    },
+  },
+};
+
 function readyInteraction(overrides: Partial<InteractionRecord> = {}): InteractionRecord {
   return {
     id: "ix-1",
@@ -174,6 +198,7 @@ describe("confirmInteractionService", () => {
       botId: "bot-1",
       interactionId: "ix-1",
       draftVersion: 2,
+      ...readyMailbox,
     });
     expect(result).toEqual({
       confirmedVersion: 2,
@@ -208,6 +233,7 @@ describe("confirmInteractionService", () => {
       botId: "bot-1",
       interactionId: "ix-1",
       draftVersion: 2,
+      ...readyMailbox,
     };
     const first = await confirmInteractionService(db.prisma, input);
     const second = await confirmInteractionService(db.prisma, input);
@@ -224,6 +250,7 @@ describe("confirmInteractionService", () => {
         botId: "bot-1",
         interactionId: "ix-1",
         draftVersion: 2,
+        ...readyMailbox,
       }),
     ).rejects.toBeInstanceOf(InteractionEffectRunMissingError);
     expect(db.effects.size).toBe(0);
@@ -240,12 +267,33 @@ describe("confirmInteractionService", () => {
         botId: "bot-1",
         interactionId: "ix-1",
         draftVersion: 2,
+        ...readyMailbox,
       }),
     ).rejects.toThrow(/cannot be confirmed/);
+  });
+
+  it("refuses to confirm when no mailbox is connected", async () => {
+    const db = memoryPrisma(readyInteraction());
+    await expect(
+      confirmInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        draftVersion: 2,
+        ...readyMailbox,
+        emailConnections: [],
+      }),
+    ).rejects.toMatchObject({ code: "needs_connection" });
+    expect(db.effects.size).toBe(0);
   });
 });
 
 describe("executeConfirmedInteractionService", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("rejects send before the draft is confirmed", async () => {
     const db = memoryPrisma(readyInteraction());
     await expect(
@@ -254,6 +302,7 @@ describe("executeConfirmedInteractionService", () => {
         threadId: "thread-1",
         botId: "bot-1",
         interactionId: "ix-1",
+        ...readyMailbox,
       }),
     ).rejects.toBeInstanceOf(InteractionSendRejectedError);
   });
@@ -284,6 +333,7 @@ describe("executeConfirmedInteractionService", () => {
         threadId: "thread-1",
         botId: "bot-1",
         interactionId: "ix-1",
+        ...readyMailbox,
       }),
     ).rejects.toMatchObject({ code: "unconfirmed" });
   });
@@ -319,6 +369,7 @@ describe("executeConfirmedInteractionService", () => {
         threadId: "thread-1",
         botId: "bot-1",
         interactionId: "ix-1",
+        ...readyMailbox,
       }),
     ).resolves.toEqual({
       effectId: "effect-1",
@@ -326,12 +377,19 @@ describe("executeConfirmedInteractionService", () => {
       duplicate: false,
       executed: true,
     });
-    expect(deliverInteractionEmail).toHaveBeenCalledWith({
-      to: "a@example.com",
-      subject: "Hi",
-      body: "Hello",
-      idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
-    });
+    expect(deliverInteractionEmail).toHaveBeenCalledWith(
+      {
+        to: "a@example.com",
+        subject: "Hi",
+        body: "Hello",
+        idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
+      },
+      expect.objectContaining({
+        kind: "connector",
+        connectionId: "conn-gmail",
+        context: expect.objectContaining({ userId: "user-1", spaceId: "space-1" }),
+      }),
+    );
     expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")).toMatchObject({
       status: "completed",
       result: { deliveryId: "msg-1" },
@@ -372,6 +430,7 @@ describe("executeConfirmedInteractionService", () => {
         threadId: "thread-1",
         botId: "bot-1",
         interactionId: "ix-1",
+        ...readyMailbox,
       }),
     ).rejects.toBeInstanceOf(InteractionEmailDeliveryError);
     expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("failed");
@@ -407,6 +466,7 @@ describe("executeConfirmedInteractionService", () => {
         threadId: "thread-1",
         botId: "bot-1",
         interactionId: "ix-1",
+        ...readyMailbox,
       }),
     ).resolves.toMatchObject({ executed: true, duplicate: false });
     expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("reconciled");
@@ -437,7 +497,82 @@ describe("executeConfirmedInteractionService", () => {
         threadId: "thread-1",
         botId: "bot-1",
         interactionId: "ix-1",
+        ...readyMailbox,
       }),
     ).resolves.toMatchObject({ duplicate: true, executed: true, effectId: "effect-1" });
+    expect(deliverInteractionEmail).not.toHaveBeenCalled();
+  });
+
+  it("rejects send when no mailbox is connected", async () => {
+    const db = memoryPrisma(
+      readyInteraction({
+        status: "awaiting_approval",
+        confirmedVersion: 2,
+        approvalEffectId: "effect-1",
+      }),
+    );
+    db.effects.set("a2ui:interaction:ix-1:confirm:2", {
+      id: "effect-1",
+      spaceId: "space-1",
+      runId: "run-1",
+      kind: "email.send",
+      idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
+      status: "intended",
+      request: { draftVersion: 2, confirmedVersion: 2 },
+      reviewDecision: "allow",
+      reviewReason: "user confirmed draft",
+    });
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+        emailConnections: [],
+      }),
+    ).rejects.toMatchObject({ code: "needs_connection" });
+    expect(deliverInteractionEmail).not.toHaveBeenCalled();
+  });
+
+  it("rejects send when the mailbox requires reauth", async () => {
+    const db = memoryPrisma(
+      readyInteraction({
+        status: "awaiting_approval",
+        confirmedVersion: 2,
+        approvalEffectId: "effect-1",
+      }),
+    );
+    db.effects.set("a2ui:interaction:ix-1:confirm:2", {
+      id: "effect-1",
+      spaceId: "space-1",
+      runId: "run-1",
+      kind: "email.send",
+      idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
+      status: "intended",
+      request: { draftVersion: 2, confirmedVersion: 2 },
+      reviewDecision: "allow",
+      reviewReason: "user confirmed draft",
+    });
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+        emailConnections: [
+          {
+            id: "conn-gmail",
+            connectorId: "composio",
+            provider: "gmail",
+            displayName: "Mail",
+            status: "error",
+            providerRef: "ca_expired",
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: "needs_connection" });
+    expect(deliverInteractionEmail).not.toHaveBeenCalled();
   });
 });

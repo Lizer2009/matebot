@@ -1392,6 +1392,7 @@ export const JA_MESSAGES: Record<string, string> = {
   From: "差出人",
   CC: "CC",
   "Confirm this draft before sending.": "送信する前にこの下書きを確認してください。",
+  "Connect email": "メールを接続",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "{peer}とのメッセージ{count}件" };

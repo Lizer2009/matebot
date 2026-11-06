@@ -1367,6 +1367,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   From: "发件人",
   CC: "抄送",
   "Confirm this draft before sending.": "发送前请确认此草稿。",
+  "Connect email": "连接邮箱",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

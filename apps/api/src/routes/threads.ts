@@ -796,6 +796,8 @@ export function threadsRoutes(ctx: RouterContext) {
             botId,
             interactionId: input.interactionId,
             draftVersion: input.draftVersion,
+            userId: context.actor.userId,
+            connector: deps.connectors,
           });
           return {
             ok: true as const,
@@ -812,7 +814,10 @@ export function threadsRoutes(ctx: RouterContext) {
               message: "Interaction draft was updated elsewhere; reload and retry",
             });
           }
-          if (error instanceof InteractionEffectRunMissingError) {
+          if (
+            error instanceof InteractionEffectRunMissingError ||
+            error instanceof InteractionSendRejectedError
+          ) {
             throw new ORPCError("BAD_REQUEST", { message: error.message });
           }
           if (
@@ -836,6 +841,8 @@ export function threadsRoutes(ctx: RouterContext) {
             threadId: target.threadId,
             botId,
             interactionId: input.interactionId,
+            userId: context.actor.userId,
+            connector: deps.connectors,
           });
           return { ok: true as const, ...result };
         } catch (error) {

@@ -1,24 +1,35 @@
 import { useLingui } from "@lingui/react/macro";
+import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import { Button, Input, Textarea } from "@matebot/ui-web";
 import { useEffect, useId, useRef, useState } from "react";
 import type { EmailDraftFields, EmailFieldName } from "./email-fields";
 import { EMAIL_DRAFT_FIELD_NAMES } from "./email-fields";
 
+function mailboxNeedsConnect(
+  capability: A2uiSurfaceBlock["capability"],
+): capability is "not_connected" | "requires_reauth" {
+  return capability === "not_connected" || capability === "requires_reauth";
+}
+
 /**
  * Review-card email draft: edit fields, then one Send gesture.
  * Server still requires confirm-before-send; Send runs confirm then execute.
+ * Unbound / expired mailboxes show connect or reauth instead of Send.
  */
 export function EmailComposeEditor({
   draftVersion,
   confirmedVersion,
+  capability,
   fields,
   onFieldChange,
   onConfirm,
   onSend,
+  onConnect,
   onDiscard,
 }: {
   draftVersion: number;
   confirmedVersion?: number;
+  capability?: A2uiSurfaceBlock["capability"];
   fields: EmailDraftFields;
   onFieldChange?: (
     name: EmailFieldName,
@@ -27,6 +38,7 @@ export function EmailComposeEditor({
   ) => Promise<{ draftVersion: number } | undefined>;
   onConfirm?: (draftVersion: number) => Promise<void>;
   onSend?: (draftVersion: number) => Promise<void>;
+  onConnect?: () => Promise<void>;
   onDiscard?: () => void | Promise<void>;
 }) {
   const { t } = useLingui();
@@ -45,6 +57,7 @@ export function EmailComposeEditor({
   const [sent, setSent] = useState(false);
   const [discarded, setDiscarded] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [mailbox, setMailbox] = useState(capability);
   const committed = useRef(fields);
   const versionRef = useRef(draftVersion);
   const valuesRef = useRef(fields);
@@ -61,6 +74,10 @@ export function EmailComposeEditor({
   useEffect(() => {
     setLocalConfirmedVersion(confirmedVersion);
   }, [confirmedVersion]);
+
+  useEffect(() => {
+    setMailbox(capability);
+  }, [capability]);
 
   const effectiveConfirmedVersion = localConfirmedVersion ?? confirmedVersion;
   const confirmed = effectiveConfirmedVersion != null && effectiveConfirmedVersion === version;
@@ -235,7 +252,28 @@ export function EmailComposeEditor({
           >
             {t`Discard`}
           </Button>
-          {onSend ? (
+          {mailboxNeedsConnect(mailbox) ? (
+            <Button
+              type="button"
+              data-testid={
+                mailbox === "requires_reauth" ? "a2ui-email-reauth" : "a2ui-email-connect"
+              }
+              disabled={busy}
+              onClick={() => {
+                if (!onConnect) return;
+                setBusy(true);
+                setError(null);
+                void onConnect()
+                  .then(() => setMailbox("ready"))
+                  .catch((err: unknown) => setError(messageOf(err)))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              {mailbox === "requires_reauth"
+                ? t({ message: "Reconnect", context: "mailbox" })
+                : t`Connect email`}
+            </Button>
+          ) : onSend ? (
             <Button
               type="button"
               data-testid="a2ui-email-send"

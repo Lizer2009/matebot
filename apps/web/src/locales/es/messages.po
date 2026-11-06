@@ -1708,6 +1708,10 @@ msgstr "Conectar clave de API"
 msgid "Connect apps"
 msgstr "Conectar aplicaciones"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
 msgstr "Conectar servidor MCP “{name}”"
@@ -5096,6 +5100,11 @@ msgstr "Recomendadas"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
 msgstr "Reconectar"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
+msgid "Reconnect"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Reconnect OAuth"

@@ -112,4 +112,35 @@ describe("publishInteractionSurface", () => {
       eventSeq: 3,
     });
   });
+
+  it("stamps mailbox capability and needs_connection on an unbound email draft", async () => {
+    const interactionUpdate = vi.fn(async () => ({ id: "ix-1" }));
+    const prisma = {
+      $transaction: async (work: (tx: unknown) => Promise<unknown>) =>
+        work({
+          interaction: { update: interactionUpdate },
+        }),
+    };
+
+    await publishInteractionSurface(prisma as never, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan,
+      surfaceId: "surface-1",
+      capability: "not_connected",
+      status: "needs_connection",
+    });
+
+    expect(createInteraction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: "needs_connection" }),
+    );
+    expect(createThreadMessageInTransaction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        blocks: [expect.objectContaining({ capability: "not_connected" })],
+      }),
+    );
+  });
 });

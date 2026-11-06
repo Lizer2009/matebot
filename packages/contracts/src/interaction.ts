@@ -67,6 +67,11 @@ export const A2uiSurfaceBlockSchema = z.object({
   confirmedVersion: z.number().int().positive().optional(),
   /** Plan intent, such as email.compose, so hosts can show a purpose-built editor. */
   intent: z.string().trim().min(1).optional(),
+  /**
+   * Mailbox preflight for email.compose surfaces.
+   * Omitted on older events; hosts treat that as ready.
+   */
+  capability: z.enum(["not_connected", "requires_reauth", "ready"]).optional(),
   /** Short label for the timeline before/without the full catalog document. */
   title: z.string().optional(),
   summary: z.string().optional(),

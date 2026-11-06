@@ -15,6 +15,7 @@ import { memo, useCallback, useMemo } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
 import { A2uiSurfaceCard } from "../../components/a2ui/A2uiSurfaceCard";
+import { connectEmailMailbox } from "../../components/a2ui/mailbox-connect";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { PageBlockCard } from "../../components/pages/PageBlockCard";
@@ -523,6 +524,22 @@ export const MessageView = memo(function MessageView({
                           await rpc.threads.executeInteraction({
                             ...(botId ? { botId } : { groupId: groupId! }),
                             interactionId: block.interactionId,
+                          });
+                        }
+                      : undefined
+                  }
+                  onConnect={
+                    botId || groupId
+                      ? async () => {
+                          const controller = new AbortController();
+                          await connectEmailMailbox({
+                            begin: (input) => rpc.connections.begin(input),
+                            complete: (input) =>
+                              rpc.connections.complete(input, { signal: controller.signal }),
+                            openUrl: (url) => {
+                              window.open(url, "rakazo-app-connect", "popup,width=560,height=720");
+                            },
+                            signal: controller.signal,
                           });
                         }
                       : undefined

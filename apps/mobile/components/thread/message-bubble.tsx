@@ -12,7 +12,7 @@ import { fontWeight, typeScale } from "@matebot/ui-tokens";
 import type { ComponentProps } from "react";
 import { memo, useContext, useMemo, useState } from "react";
 import type { TextProps } from "react-native";
-import { Alert, Pressable, Text, View } from "react-native";
+import { Alert, Linking, Pressable, Text, View } from "react-native";
 import { isA2uiEnabled } from "../../lib/a2ui-flag";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/api";
 import { blockText, messagingProviderLabel, rpc } from "../../lib/api";
@@ -23,6 +23,7 @@ import { allowsSpace } from "../../lib/ask-action-label";
 import { plainAskTitle } from "../../lib/ask-title";
 import { t, useI18n } from "../../lib/i18n";
 import { isInlineImageBlock } from "../../lib/inline-image";
+import { connectEmailMailbox } from "../../lib/mailbox-connect";
 import {
   mentionedBots,
   textWithMentions,
@@ -741,6 +742,16 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
               await rpc("threads/executeInteraction", {
                 ...target,
                 interactionId: block.interactionId,
+              });
+            }}
+            onConnect={async () => {
+              const controller = new AbortController();
+              await connectEmailMailbox({
+                begin: (input) => rpc("connections/begin", input, { signal: controller.signal }),
+                complete: (input) =>
+                  rpc("connections/complete", input, { signal: controller.signal }),
+                openUrl: (url) => Linking.openURL(url),
+                signal: controller.signal,
               });
             }}
             onDiscard={() => undefined}

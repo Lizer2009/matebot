@@ -1709,6 +1709,10 @@ msgstr "連線 API 金鑰"
 msgid "Connect apps"
 msgstr "連接應用程式"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr "連接郵箱"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
 msgstr "連線 MCP 伺服器「{name}」"
@@ -5097,6 +5101,11 @@ msgstr ""
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
 msgstr "重新連線"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
+msgid "Reconnect"
+msgstr "重新授權"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Reconnect OAuth"

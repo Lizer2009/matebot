@@ -10,7 +10,10 @@ import { fixtureA2uiSurfaceBlock, unknownComponentSurfaceMessages } from "./fixt
 const lingui = vi.hoisted(() => ({
   Trans: ({ children }: { children: unknown }) => children,
   useLingui: () => ({
-    t: (strings: TemplateStringsArray, ...values: unknown[]) => String.raw(strings, ...values),
+    t: (input: TemplateStringsArray | { message: string }, ...values: unknown[]) => {
+      if (typeof input === "object" && "message" in input) return input.message;
+      return String.raw(input, ...values);
+    },
     i18n: { locale: "en" },
   }),
 }));
@@ -206,6 +209,77 @@ describe("A2uiSurfaceCard", () => {
     expect(container.querySelector('[data-testid="a2ui-email-compose"]')?.textContent).toMatch(
       /Discarded/,
     );
+  });
+
+  it("shows connect and hides Send when the mailbox is not connected", () => {
+    const onConnect = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "not_connected",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onConnect={onConnect}
+          onSend={onSend}
+        />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-connect"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-reauth"]')).toBeNull();
+  });
+
+  it("shows reauth and hides Send when the mailbox needs reconnect", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "requires_reauth",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={vi.fn()} />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-reauth"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-connect"]')).toBeNull();
+  });
+
+  it("shows Send after a successful connect", async () => {
+    const onConnect = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "not_connected",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onConnect={onConnect}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const connect = container.querySelector(
+      '[data-testid="a2ui-email-connect"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      connect.click();
+    });
+    expect(onConnect).toHaveBeenCalled();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="a2ui-email-connect"]')).toBeNull();
   });
 });
 

@@ -20,6 +20,13 @@ import { FixtureTranscript } from "./thread-fixture";
 
 const params = new URLSearchParams(location.search);
 const flagOff = params.get("flag") === "off";
+const capabilityParam = params.get("capability");
+const fixtureCapability =
+  capabilityParam === "not_connected" ||
+  capabilityParam === "requires_reauth" ||
+  capabilityParam === "ready"
+    ? capabilityParam
+    : undefined;
 
 if (!flagOff) {
   localStorage.setItem(A2UI_STORAGE_KEY, "1");
@@ -70,6 +77,7 @@ function EmailComposeFixture() {
     summary: undefined,
     draftVersion,
     confirmedVersion,
+    ...(fixtureCapability ? { capability: fixtureCapability } : {}),
   });
 
   return (

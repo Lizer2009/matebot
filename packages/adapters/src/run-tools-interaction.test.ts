@@ -105,6 +105,8 @@ describe("present_interaction", () => {
         botId: "bot-1",
         runId: "run-1",
         plan: expect.objectContaining({ intent: "email.compose" }),
+        capability: "not_connected",
+        status: "needs_connection",
       }),
     );
     expect(result).toMatchObject({
