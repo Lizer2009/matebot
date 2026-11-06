@@ -1387,11 +1387,10 @@ export const JA_MESSAGES: Record<string, string> = {
   "Send email": "メールを送信",
   "Could not update the draft": "下書きを更新できませんでした",
   "Needs approval": "承認が必要",
-  "Discard": "破棄",
-  "Discarded": "破棄済み",
-  "From": "差出人",
-  "CC": "CC",
-  "Email": "メール",
+  Discard: "破棄",
+  Discarded: "破棄済み",
+  From: "差出人",
+  CC: "CC",
   "Confirm this draft before sending.": "送信する前にこの下書きを確認してください。",
 };
 

@@ -1305,11 +1305,10 @@ export const ES_MESSAGES: Record<string, string> = {
   "Send email": "Enviar correo",
   "Could not update the draft": "No se pudo actualizar el borrador",
   "Needs approval": "Necesita aprobación",
-  "Discard": "Descartar",
-  "Discarded": "Descartado",
-  "From": "De",
-  "CC": "CC",
-  "Email": "Correo",
+  Discard: "Descartar",
+  Discarded: "Descartado",
+  From: "De",
+  CC: "CC",
   "Confirm this draft before sending.": "Confirma este borrador antes de enviarlo.",
 };
 

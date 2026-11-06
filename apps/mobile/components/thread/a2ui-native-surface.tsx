@@ -113,7 +113,7 @@ export function A2uiNativeSurface({
       return err instanceof Error && err.message ? err.message : t("Could not update the draft");
     }
     const effectiveConfirmed = localConfirmedVersion ?? block.confirmedVersion;
-    const title = block.title ?? t("Email");
+    const title = block.title ?? t("Send email");
     if (discarded) {
       return (
         <View testID="a2ui-native-surface">

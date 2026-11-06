@@ -1362,11 +1362,10 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Send email": "发送邮件",
   "Could not update the draft": "无法更新草稿",
   "Needs approval": "需要批准",
-  "Discard": "丢弃",
-  "Discarded": "已丢弃",
-  "From": "发件人",
-  "CC": "抄送",
-  "Email": "邮件",
+  Discard: "丢弃",
+  Discarded: "已丢弃",
+  From: "发件人",
+  CC: "抄送",
   "Confirm this draft before sending.": "发送前请确认此草稿。",
 };
 

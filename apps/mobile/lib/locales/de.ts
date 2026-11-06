@@ -1362,11 +1362,10 @@ export const DE_MESSAGES: Record<string, string> = {
   "Send email": "E-Mail senden",
   "Could not update the draft": "Der Entwurf konnte nicht aktualisiert werden",
   "Needs approval": "Genehmigung nötig",
-  "Discard": "Verwerfen",
-  "Discarded": "Verworfen",
-  "From": "Von",
-  "CC": "CC",
-  "Email": "E-Mail",
+  Discard: "Verwerfen",
+  Discarded: "Verworfen",
+  From: "Von",
+  CC: "CC",
   "Confirm this draft before sending.": "Bestätige diesen Entwurf vor dem Senden.",
 };
 
