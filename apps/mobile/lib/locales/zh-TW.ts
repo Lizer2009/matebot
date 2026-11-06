@@ -1370,6 +1370,8 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Could not send": "無法傳送",
   "Check status": "檢查狀態",
   "Don't send again": "請勿再次傳送",
+  "Authorization expired": "授權已失效",
+  "Not connected": "未連接",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "與{peer}的 {count} 則訊息" };

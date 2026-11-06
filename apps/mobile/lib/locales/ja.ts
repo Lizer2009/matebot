@@ -1397,6 +1397,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Could not send": "送信できませんでした",
   "Check status": "状態を確認",
   "Don't send again": "再送信しないでください",
+  "Authorization expired": "認証の有効期限が切れました",
+  "Not connected": "未接続",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "{peer}とのメッセージ{count}件" };

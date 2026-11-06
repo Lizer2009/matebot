@@ -1364,6 +1364,8 @@ export const NL_MESSAGES: Record<string, string> = {
   "Could not send": "Verzenden mislukt",
   "Check status": "Status controleren",
   "Don't send again": "Niet opnieuw verzenden",
+  "Authorization expired": "Autorisatie verlopen",
+  "Not connected": "Niet verbonden",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

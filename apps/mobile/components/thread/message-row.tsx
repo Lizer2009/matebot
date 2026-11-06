@@ -58,8 +58,8 @@ export type MessageRowActions = {
   dismissChoice: (messageId: string, question: string) => void;
   openPeerChat: (peer: { peerBotId: string; peerBotName: string }) => void;
   layout: (messageId: string, y: number, index: number) => void;
-  /** Reload the thread so UNKNOWN can pick up an E′ reconcile stamp. */
-  refresh?: () => void | Promise<void>;
+  /** Reload the thread so UNKNOWN can pick up an E′ reconcile stamp. Resolves when settled. */
+  refresh?: () => void | Promise<unknown>;
 };
 
 type MessageRowProps = {
