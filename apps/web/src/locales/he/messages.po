@@ -1639,6 +1639,10 @@ msgstr "המחשבים כבויים. יש להגדיר SANDBOX_PROVIDER=docker �
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "כדי לחבר אפליקציות, יש להגדיר קטלוג תוספים בשרת."
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Confirm"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
 msgstr "אישור מחיקה"
@@ -1659,6 +1663,10 @@ msgstr ""
 #: src/lib/model-connection-preflight.ts
 msgid "Confirm the URL is reachable from this browser session, then test again."
 msgstr "יש לוודא שאפשר להגיע לכתובת ה-URL מסשן הדפדפן הזה, ואז לבדוק שוב."
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Confirm this draft before sending."
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
@@ -2398,6 +2406,10 @@ msgstr "לא ניתן לעדכן את האמוג׳י"
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not update the default memory scope"
 msgstr "לא ניתן לעדכן את היקף הזיכרון המוגדר כברירת מחדל"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Could not update the draft"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
@@ -3990,6 +4002,7 @@ msgstr "מזכיר תכונות של OpenClaw"
 msgid "Mentions: {mentions}"
 msgstr "מזכיר: {mentions}"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
 #: src/pages/SpaceSearch.tsx
@@ -5710,6 +5723,7 @@ msgstr "בחירת בוט"
 msgid "Self-hosted"
 msgstr "באירוח עצמי"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/shell/composer.tsx
 msgid "Send"
 msgstr "שליחה"
@@ -5756,6 +5770,7 @@ msgstr "שליחה ב-Enter"
 msgid "Sending…"
 msgstr "שולח…"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
@@ -6169,6 +6184,10 @@ msgstr "הזרמת תשובות"
 msgid "subagent"
 msgstr "סוכן משנה"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Subject"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Submit"
@@ -6569,6 +6588,7 @@ msgstr "התזמון עשוי להשתנות"
 msgid "Title"
 msgstr "כותרת"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/ActivityList.tsx
 msgid "To"
 msgstr "עד"

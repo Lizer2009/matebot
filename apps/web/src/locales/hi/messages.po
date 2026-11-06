@@ -1639,6 +1639,10 @@ msgstr "कंप्यूटर बंद हैं। SANDBOX_PROVIDER=docker 
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Confirm"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
 msgstr "डिलीट की पुष्टि करें"
@@ -1659,6 +1663,10 @@ msgstr ""
 #: src/lib/model-connection-preflight.ts
 msgid "Confirm the URL is reachable from this browser session, then test again."
 msgstr "पुष्टि करें कि यह URL इस ब्राउज़र सत्र से पहुँच योग्य है, फिर फिर से परीक्षण करें।"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Confirm this draft before sending."
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
@@ -2398,6 +2406,10 @@ msgstr ""
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not update the default memory scope"
 msgstr "डिफ़ॉल्ट मेमोरी स्कोप अपडेट नहीं हो सका"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Could not update the draft"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
@@ -3990,6 +4002,7 @@ msgstr "OpenClaw की सुविधाओं का ज़िक्र ह�
 msgid "Mentions: {mentions}"
 msgstr "ज़िक्र: {mentions}"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
 #: src/pages/SpaceSearch.tsx
@@ -5710,6 +5723,7 @@ msgstr "एक बॉट चुनें"
 msgid "Self-hosted"
 msgstr "सेल्फ़-होस्टेड"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/shell/composer.tsx
 msgid "Send"
 msgstr "भेजें"
@@ -5756,6 +5770,7 @@ msgstr "Enter से भेजें"
 msgid "Sending…"
 msgstr "भेजा जा रहा है…"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
@@ -6169,6 +6184,10 @@ msgstr "जवाब स्ट्रीम करें"
 msgid "subagent"
 msgstr "सबएजेंट"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Subject"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Submit"
@@ -6569,6 +6588,7 @@ msgstr "समय अलग हो सकता है"
 msgid "Title"
 msgstr "शीर्षक"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/ActivityList.tsx
 msgid "To"
 msgstr ""

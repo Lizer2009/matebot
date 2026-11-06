@@ -490,6 +490,31 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
+                  onFieldChange={
+                    botId || groupId
+                      ? async (name, value, expectedDraftVersion) => {
+                          const result = await rpc.threads.updateInteractionField({
+                            ...(botId ? { botId } : { groupId: groupId! }),
+                            interactionId: block.interactionId,
+                            expectedDraftVersion,
+                            name,
+                            value,
+                          });
+                          return { draftVersion: result.draftVersion };
+                        }
+                      : undefined
+                  }
+                  onConfirm={
+                    botId || groupId
+                      ? async (draftVersion) => {
+                          await rpc.threads.confirmInteraction({
+                            ...(botId ? { botId } : { groupId: groupId! }),
+                            interactionId: block.interactionId,
+                            draftVersion,
+                          });
+                        }
+                      : undefined
+                  }
                 />
               </div>
             );
