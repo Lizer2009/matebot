@@ -741,10 +741,14 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
               });
             }}
             onSend={async () => {
-              await rpc("threads/executeInteraction", {
-                ...target,
-                interactionId: block.interactionId,
-              });
+              try {
+                await rpc("threads/executeInteraction", {
+                  ...target,
+                  interactionId: block.interactionId,
+                });
+              } finally {
+                await onRefresh?.();
+              }
             }}
             onConnect={async () => {
               const controller = new AbortController();

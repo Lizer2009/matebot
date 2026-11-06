@@ -52,7 +52,6 @@ export function A2uiNativeSurface({
   const source = messages ?? loaded;
   const [values, setValues] = useState<EmailFields>(() => emailFieldsFromSurfaceMessages(messages));
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
   const [discarded, setDiscarded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [mailbox, setMailbox] = useState(block.capability);
@@ -111,7 +110,6 @@ export function A2uiNativeSurface({
         const result = await onFieldChange(name, value, versionRef.current);
         const next = result?.draftVersion ?? versionRef.current + 1;
         if (next !== versionRef.current) {
-          setSent(false);
           setLocalConfirmedVersion(undefined);
         }
         versionRef.current = next;
@@ -143,11 +141,11 @@ export function A2uiNativeSurface({
     });
     const phase =
       busy &&
-      (resolvedTemplate === "email-draft-card" || resolvedTemplate === "action-submitting-card")
+      (resolvedTemplate === "email-draft-card" ||
+        resolvedTemplate === "action-submitting-card" ||
+        resolvedTemplate === "action-result-failed")
         ? "action-progress-card"
-        : resolvedTemplate === "action-result-success" || sent
-          ? "action-result-success"
-          : resolvedTemplate;
+        : resolvedTemplate;
     if (discarded) {
       return (
         <View testID="a2ui-native-surface">
@@ -250,7 +248,6 @@ export function A2uiNativeSurface({
                 setBusy(true);
                 setError(null);
                 void Promise.resolve(onSend?.(versionRef.current))
-                  .then(() => setSent(true))
                   .catch((err: unknown) => setError(messageOf(err)))
                   .finally(() => setBusy(false));
               }}
@@ -287,7 +284,6 @@ export function A2uiNativeSurface({
                       setLocalConfirmedVersion(next);
                     }
                     await onSend?.(next);
-                    setSent(true);
                   })
                   .catch((err: unknown) => setError(messageOf(err)))
                   .finally(() => setBusy(false));

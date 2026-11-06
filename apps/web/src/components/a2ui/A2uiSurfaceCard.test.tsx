@@ -149,7 +149,8 @@ describe("A2uiSurfaceCard", () => {
     expect(onConfirm).toHaveBeenCalledWith(1);
     expect(onSend).toHaveBeenCalledWith(1);
     expect(container.querySelector('[data-testid="a2ui-email-error"]')).toBeNull();
-    expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(form.getAttribute("data-sent")).toBe("false");
   });
 
   it("sends without a second confirm when the draft is already confirmed", async () => {
@@ -177,7 +178,103 @@ describe("A2uiSurfaceCard", () => {
     });
     expect(onConfirm).not.toHaveBeenCalled();
     expect(onSend).toHaveBeenCalledWith(1);
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+  });
+
+  it("does not paint Sent until the server success stamp arrives", async () => {
+    let finishSend!: () => void;
+    const onSend = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishSend = resolve;
+        }),
+    );
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      confirmedVersion: 1,
+      capability: "ready",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={onSend} />,
+      ),
+    );
+    await act(async () => {
+      (container.querySelector('[data-testid="a2ui-email-send"]') as HTMLButtonElement).click();
+    });
+    expect(container.querySelector('[data-testid="a2ui-email-progress"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    await act(async () => {
+      finishSend();
+    });
+    const form = container.querySelector('[data-testid="a2ui-email-compose"]') as HTMLElement;
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(form.getAttribute("data-sent")).toBe("false");
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={{
+            ...block,
+            template: "action-result-success",
+            lifecycle: "succeeded",
+            providerMessageId: "msg-1",
+          }}
+          messages={emailSurfaceMessages()}
+        />,
+      ),
+    );
     expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
+    expect(
+      (container.querySelector('[data-testid="a2ui-email-compose"]') as HTMLElement).getAttribute(
+        "data-sent",
+      ),
+    ).toBe("true");
+  });
+
+  it("shows a failed card without Sent when send is an internal error", async () => {
+    const onSend = vi.fn(async () => {
+      throw new Error("Internal server error");
+    });
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      confirmedVersion: 1,
+      capability: "ready",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={onSend} />,
+      ),
+    );
+    await act(async () => {
+      (container.querySelector('[data-testid="a2ui-email-send"]') as HTMLButtonElement).click();
+    });
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-error"]')?.textContent).toMatch(
+      /Internal server error/,
+    );
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={{
+            ...block,
+            template: "action-result-failed",
+            lifecycle: "failed",
+            error: "Internal server error",
+          }}
+          messages={emailSurfaceMessages()}
+          onSend={onSend}
+        />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-failed"]')?.textContent).toMatch(
+      /Internal server error/,
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 
   it("discards the review card without sending", async () => {
@@ -345,6 +442,7 @@ describe("A2uiSurfaceCard", () => {
     expect(container.querySelector('[data-testid="a2ui-email-failed"]')?.textContent).toMatch(
       /Could not send the email/,
     );
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
     const retry = container.querySelector('[data-testid="a2ui-email-retry"]') as HTMLButtonElement;
     await act(async () => {

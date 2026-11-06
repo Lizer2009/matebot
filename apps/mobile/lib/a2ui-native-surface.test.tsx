@@ -105,7 +105,7 @@ describe("native A2UI surface", () => {
     });
     expect(onConfirm).toHaveBeenCalledWith(1);
     expect(onSend).toHaveBeenCalledWith(1);
-    expect(text("a2ui-email-sent")).toBe("Sent");
+    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
   });
 
   it("sends a draft that is already confirmed without confirming again", async () => {
@@ -124,7 +124,81 @@ describe("native A2UI surface", () => {
     });
     expect(onConfirm).not.toHaveBeenCalled();
     expect(onSend).toHaveBeenCalledWith(1);
+    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+  });
+
+  it("does not paint Sent until the server success stamp arrives", async () => {
+    let finishSend!: () => void;
+    const onSend = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishSend = resolve;
+        }),
+    );
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, confirmedVersion: 1, capability: "ready" }}
+        onSend={onSend}
+      />,
+    );
+    await act(async () => {
+      click("a2ui-email-send");
+    });
+    expect(text("a2ui-email-progress")).toBe("Sending");
+    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    await act(async () => {
+      finishSend();
+      await Promise.resolve();
+    });
+    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    act(() => root.unmount());
+    host.remove();
+    render(
+      <A2uiNativeSurface
+        block={{
+          ...block,
+          confirmedVersion: 1,
+          template: "action-result-success",
+          lifecycle: "succeeded",
+          providerMessageId: "msg-1",
+        }}
+      />,
+    );
     expect(text("a2ui-email-sent")).toBe("Sent");
+  });
+
+  it("shows a failed card without Sent when send is an internal error", async () => {
+    const onSend = vi.fn(async () => {
+      throw new Error("Internal server error");
+    });
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, confirmedVersion: 1, capability: "ready" }}
+        onSend={onSend}
+      />,
+    );
+    await act(async () => {
+      click("a2ui-email-send");
+      await Promise.resolve();
+    });
+    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(text("a2ui-email-error")).toBe("Internal server error");
+    act(() => root.unmount());
+    host.remove();
+    render(
+      <A2uiNativeSurface
+        block={{
+          ...block,
+          template: "action-result-failed",
+          lifecycle: "failed",
+          error: "Internal server error",
+        }}
+        onSend={onSend}
+      />,
+    );
+    expect(text("a2ui-email-failed")).toBe("Internal server error");
+    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 
   it("commits edited fields before send confirms", async () => {
@@ -224,6 +298,7 @@ describe("native A2UI surface", () => {
       />,
     );
     expect(text("a2ui-email-failed")).toBe("Could not send the email");
+    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
     await act(async () => {
       click("a2ui-email-retry");

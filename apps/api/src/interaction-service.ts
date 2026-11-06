@@ -868,49 +868,6 @@ export async function executeConfirmedInteractionService(
     title: current.title,
     summary: current.summary,
   };
-  await withTransactionRetry(() =>
-    prisma.$transaction(async (tx) => {
-      await projectEmailSurface(tx, {
-        interaction,
-        plan,
-        confirmedVersion: current.confirmedVersion,
-        draftVersion: current.draftVersion,
-        runId: effect.runId,
-        spaceId: input.spaceId,
-        threadId: input.threadId,
-        botId: input.botId,
-        interactionStatus: "executing",
-        effectStatus: "ambiguous",
-        approvalEffectId: effect.id,
-        actionEvent: "thread.interaction.action_started",
-        progress: "executing",
-      });
-      await appendEventInTransaction(tx, {
-        spaceId: input.spaceId,
-        threadId: input.threadId,
-        botId: input.botId,
-        type: "thread.interaction.action_progress",
-        runId: effect.runId,
-        payload: {
-          interactionId: current.id,
-          draftVersion: current.draftVersion,
-          confirmedVersion: current.confirmedVersion,
-          progress: "executing",
-          template: "action-progress-card",
-          lifecycle: "executing",
-          messageId: current.messageId ?? undefined,
-        },
-      });
-    }),
-  );
-
-  const draft = emailSlots(effect.request);
-  const sender: InteractionEmailSender = {
-    kind: "connector",
-    context: emailSendAdapterContext({ spaceId: input.spaceId, userId: input.userId }, connection),
-    connector: input.connector,
-    connectionId: connection.id,
-  };
   const finish = (args: {
     effectStatus: "completed" | "reconciled" | "failed" | "ambiguous";
     interactionStatus: "succeeded" | "failed" | "unknown";
@@ -929,46 +886,112 @@ export async function executeConfirmedInteractionService(
       ...args,
     });
 
-  let delivery: InteractionEmailDelivery;
   try {
-    delivery = await deliverInteractionEmail(
-      {
-        ...draft,
-        idempotencyKey: effect.idempotencyKey,
-      },
-      sender,
+    await withTransactionRetry(() =>
+      prisma.$transaction(async (tx) => {
+        await projectEmailSurface(tx, {
+          interaction,
+          plan,
+          confirmedVersion: current.confirmedVersion,
+          draftVersion: current.draftVersion,
+          runId: effect.runId,
+          spaceId: input.spaceId,
+          threadId: input.threadId,
+          botId: input.botId,
+          interactionStatus: "executing",
+          effectStatus: "ambiguous",
+          approvalEffectId: effect.id,
+          actionEvent: "thread.interaction.action_started",
+          progress: "executing",
+        });
+        await appendEventInTransaction(tx, {
+          spaceId: input.spaceId,
+          threadId: input.threadId,
+          botId: input.botId,
+          type: "thread.interaction.action_progress",
+          runId: effect.runId,
+          payload: {
+            interactionId: current.id,
+            draftVersion: current.draftVersion,
+            confirmedVersion: current.confirmedVersion,
+            progress: "executing",
+            template: "action-progress-card",
+            lifecycle: "executing",
+            messageId: current.messageId ?? undefined,
+          },
+        });
+      }),
     );
-  } catch (error) {
-    const message =
-      error instanceof Error && error.message ? error.message : "Could not send the email";
-    const outcome = emailDeliveryOutcome({ error: message });
-    await finish({
-      effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
-      interactionStatus: outcome,
-      result: { error: message },
-    });
-    throw new InteractionEmailDeliveryError("Could not send the email", outcome);
-  }
-  if (!delivery.ok) {
-    const outcome = emailDeliveryOutcome(delivery);
-    await finish({
-      effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
-      interactionStatus: outcome,
-      result: { error: delivery.error },
-    });
-    throw new InteractionEmailDeliveryError(delivery.error, outcome);
-  }
 
-  await finish({
-    effectStatus: reconciling ? "reconciled" : "completed",
-    interactionStatus: "succeeded",
-    result: { deliveryId: delivery.deliveryId, providerMessageId: delivery.deliveryId },
-  });
-  return {
-    effectId: effect.id,
-    idempotencyKey: effect.idempotencyKey,
-    duplicate: false,
-    executed: true,
-    providerMessageId: delivery.deliveryId,
-  };
+    const draft = emailSlots(effect.request);
+    const sender: InteractionEmailSender = {
+      kind: "connector",
+      context: emailSendAdapterContext(
+        { spaceId: input.spaceId, userId: input.userId },
+        connection,
+      ),
+      connector: input.connector,
+      connectionId: connection.id,
+    };
+
+    let delivery: InteractionEmailDelivery;
+    try {
+      delivery = await deliverInteractionEmail(
+        {
+          ...draft,
+          idempotencyKey: effect.idempotencyKey,
+        },
+        sender,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message ? error.message : "Could not send the email";
+      const outcome = emailDeliveryOutcome({ error: message });
+      await finish({
+        effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
+        interactionStatus: outcome,
+        result: { error: message },
+      });
+      throw new InteractionEmailDeliveryError("Could not send the email", outcome);
+    }
+    if (!delivery.ok) {
+      const outcome = emailDeliveryOutcome(delivery);
+      await finish({
+        effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
+        interactionStatus: outcome,
+        result: { error: delivery.error },
+      });
+      throw new InteractionEmailDeliveryError(delivery.error, outcome);
+    }
+
+    await finish({
+      effectStatus: reconciling ? "reconciled" : "completed",
+      interactionStatus: "succeeded",
+      result: { deliveryId: delivery.deliveryId, providerMessageId: delivery.deliveryId },
+    });
+    return {
+      effectId: effect.id,
+      idempotencyKey: effect.idempotencyKey,
+      duplicate: false,
+      executed: true,
+      providerMessageId: delivery.deliveryId,
+    };
+  } catch (error) {
+    if (
+      error instanceof InteractionEmailDeliveryError ||
+      error instanceof InteractionSendRejectedError
+    ) {
+      throw error;
+    }
+    try {
+      await finish({
+        effectStatus: "failed",
+        interactionStatus: "failed",
+        result: { error: "Could not send the email" },
+      });
+    } catch {
+      // Keep the original failure; finishing is best-effort.
+    }
+    throw new InteractionEmailDeliveryError("Could not send the email");
+  }
 }

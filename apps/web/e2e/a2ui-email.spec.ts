@@ -61,6 +61,14 @@ test("failed email card shows Retry and no Send", async ({ page }) => {
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
 });
 
+test("failed send from the card never shows Sent", async ({ page }) => {
+  await page.goto("/e2e/fixtures/a2ui-email.html?send=fail");
+  await page.getByTestId("a2ui-email-send").click();
+  await expect(page.getByTestId("a2ui-email-failed")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-sent")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveAttribute("data-sent", "false");
+});
+
 test("unknown email card shows Check status and no Send", async ({ page }) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=unknown");
   await expect(page.getByTestId("a2ui-email-unknown")).toContainText("Don't send again");

@@ -66,7 +66,6 @@ export function EmailComposeEditor({
     confirmedVersion,
   );
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
   const [discarded, setDiscarded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [mailbox, setMailbox] = useState(capability);
@@ -105,11 +104,11 @@ export function EmailComposeEditor({
   });
   const phase =
     busy &&
-    (resolvedTemplate === "email-draft-card" || resolvedTemplate === "action-submitting-card")
+    (resolvedTemplate === "email-draft-card" ||
+      resolvedTemplate === "action-submitting-card" ||
+      resolvedTemplate === "action-result-failed")
       ? "action-progress-card"
-      : resolvedTemplate === "action-result-success" || sent
-        ? "action-result-success"
-        : resolvedTemplate;
+      : resolvedTemplate;
   const locked =
     phase === "action-submitting-card" ||
     phase === "action-progress-card" ||
@@ -136,7 +135,6 @@ export function EmailComposeEditor({
         versionRef.current = next;
         setVersion(next);
         setLocalConfirmedVersion(undefined);
-        setSent(false);
         return next;
       } catch (err) {
         committed.current = { ...committed.current, [name]: previous };
@@ -341,7 +339,6 @@ export function EmailComposeEditor({
                 setBusy(true);
                 setError(null);
                 void Promise.resolve(onSend?.(version))
-                  .then(() => setSent(true))
                   .catch((err: unknown) => setError(messageOf(err)))
                   .finally(() => setBusy(false));
               }}
@@ -368,7 +365,7 @@ export function EmailComposeEditor({
             <Button
               type="button"
               data-testid="a2ui-email-send"
-              disabled={busy || sent}
+              disabled={busy}
               onClick={() => {
                 setBusy(true);
                 setError(null);
@@ -384,7 +381,6 @@ export function EmailComposeEditor({
                       setLocalConfirmedVersion(next);
                     }
                     await onSend(next);
-                    setSent(true);
                   })
                   .catch((err: unknown) => setError(messageOf(err)))
                   .finally(() => setBusy(false));

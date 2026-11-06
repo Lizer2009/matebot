@@ -855,7 +855,7 @@ export function threadsRoutes(ctx: RouterContext) {
           ) {
             throw new ORPCError("BAD_REQUEST", { message: error.message });
           }
-          throw error;
+          throw new ORPCError("BAD_REQUEST", { message: "Could not send the email" });
         }
       }),
       markRead: authed.threads.markRead.handler(async ({ context, input }) => {

@@ -1817,6 +1817,11 @@ describe("userTurnInstructions", () => {
       expect(text).toContain(
         "Never send mail with shell, python, smtplib, or request_secret; the user sends from the draft.",
       );
+      expect(text).toContain(
+        "Never say the email was sent, is sending, failed, or that delivery is unknown",
+      );
+      expect(text).toContain("the draft card owns that status");
+      expect(text).toContain("Mention a send only after the surface reports succeeded.");
       expect(text).not.toContain("Missing SMTP");
       expect(text).not.toContain("Missing SMTP credentials still use request_secret");
     } finally {
@@ -1842,6 +1847,7 @@ describe("userTurnInstructions", () => {
       }).join("\n");
       expect(text).not.toContain("present_interaction");
       expect(text).not.toContain("smtplib");
+      expect(text).not.toContain("the draft card owns that status");
     } finally {
       vi.unstubAllEnvs();
     }
