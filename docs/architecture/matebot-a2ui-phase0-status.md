@@ -4,7 +4,7 @@ Status of the approved v1.1 spec ([`matebot-a2ui-best-practices-v1.1.md`](./mate
 This file records **what is actually implemented**; the spec records what is required.
 It is updated as each stage lands, and deliberately marks work as deferred rather than done.
 
-Last updated for the second foundation PR (base: PR #34 tip `df36eb755`).
+Last updated for the third foundation PR (base: PR #35 tip `1205da088`).
 
 ---
 
@@ -19,39 +19,21 @@ Last updated for the second foundation PR (base: PR #34 tip `df36eb755`).
 | Stable revision, stale/out-of-order drops, user-field protection, approved-payload invalidation, immutable executed record | **Done (pure functions)** | `packages/core/src/surface-revision.ts`; 15 tests |
 | Unknown intent / unimplemented capability → explicit safe fallback, no action | **Done** | `packages/core/src/interaction-plan-bridge.ts`; sim `capability-registry` |
 | Result surface requires no editable nodes | **Done** | compiler + DOM tests |
+| The agent loop can revise a card | **Done** | `edit_interaction` tool: registered, offered by selection, dispatched by `applyTool`; proven through the real loop |
+| One write path for card edits and prose edits | **Done** | `interaction-field-writer.ts`, shared by both |
+| One phase/lock rule for both hosts | **Done** | `emailSurfacePhase`; web and mobile both call it |
 
 ## What is deferred (not claimed as done)
 
 | Spec requirement | State | Why |
 |---|---|---|
-| Model-driven NL editing reaches the same surface | **Done** | `apps/api/src/interaction-nl-edit.ts` + `threads.editInteraction`; writes through the card's own field service and republishes that surface. Route test in `a2ui-route.test.ts` |
-| Ambiguous reference across several cards asks instead of guessing | **Done** | `packages/core/src/surface-target.ts`; 7 tests |
-| Route-level HTTP integration for edit + dispatch | **Done (in-memory Prisma)** | `apps/api/src/a2ui-route.test.ts`: real router, middleware, handler, HTTP body. No SQL/transaction coverage — see blocker below |
-| Mobile generic parity: fields and actions on device | **Done** | `apps/mobile/lib/a2ui-catalog.ts` carries variant/path/action; native press test |
-| 12-scenario corpus as a phase-aware gate | **Done (data gate)** | `packages/core/src/corpus.ts` + `corpus.test.ts` + sim `corpus-gate`; only 5 rows are implemented |
-| RPC route executes the real effect for a dispatched action | **Done** | `interaction-dispatch.ts` + `interaction-run-action.ts`: the click confirms the exact revision then runs the existing execute service. No parallel route. Tests in `interaction-dispatch.test.ts`, `interaction-run-action.test.ts` |
-| Route-level integration test (click → effect through HTTP) | **Not run** | No Postgres/Docker in this environment; covered at service level and by the real-DOM click test instead |
-| Multi-turn prose edits reaching the same surface | **Deferred** | Pure revision rules exist; nothing drives them from a model turn yet |
-| Mobile parity for the generic compiler | **Deferred** | Mobile still allows 5 components; explicit fallback, no dropped action |
+| Email's editor replaced by a generic `FieldsEditor` | **Deferred, deliberately** | Email keeps a thin specialised editor: mailbox connect/reauth and send semantics cannot be expressed by a generic field form, and replacing it would lose them. It now shares the registry, compiler, dispatch, revision rules **and** the phase/lock rule, so what remains is presentation only |
 | Calendar draft + real create (Phase 1) | **Deferred** | Registry marks `calendar.create` `implemented: false`, so no dead button ships |
-| Result/view surfaces with provenance (Phase 2) | **Deferred** | Registry has one read-only result intent as a rule proof only |
+| Result/view surfaces with provenance (Phase 2) | **Deferred** | Corpus rows 1–3 and 6 stay `deferred` with explicit safe fallbacks |
+| The 12 scenarios as an executed end-to-end run | **Data gate only** | Registry and invariants are tested, and the sim reports each row; the scenarios are not driven against a live model |
+| Real-database route test | **Blocked** | No Postgres, Docker, or root here; see below |
 | VegaChart catalog | **Not adopted** | npm 404 at audit; needs license/build/size review |
 | Performance targets (p95 ≤ 1s) | **Not measured** | Spec calls these proposals |
-| 12-scenario corpus as a gate | **Not run** | Defined in the spec; only sim rows exist today |
-
-## How to verify locally
-
-```bash
-pnpm --filter @matebot/a2ui-adapter test      # compiler + bridge
-pnpm --filter @matebot/core test              # registry, revision, fallback
-pnpm --filter @matebot/web test               # real-renderer DOM integration
-pnpm --filter @matebot/api test               # dispatch service
-pnpm test:a2ui-sim                            # matrix, including capability-registry
-```
-
-The DOM tests mount the real `@a2ui/react` renderer on trees the real compiler
-produced, so a regression to a text-only card fails them. The simulator runs the
-shipping core functions and exits nonzero when a row contradicts its invariant.
 
 ## Environment blocker: no real database
 

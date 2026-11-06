@@ -1,6 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import { emailSurfaceTemplateFromBlock } from "@matebot/core";
+import type { emailSurfaceTemplateFromBlock } from "@matebot/core";
+import { emailSurfacePhase } from "@matebot/core";
 import { Button, Input, Spinner, Textarea } from "@matebot/ui-web";
 import { useEffect, useId, useRef, useState } from "react";
 import { SuccessPop } from "../ai/primitives";
@@ -92,7 +93,8 @@ export function EmailComposeEditor({
 
   const effectiveConfirmedVersion = localConfirmedVersion ?? confirmedVersion;
   const confirmed = effectiveConfirmedVersion != null && effectiveConfirmedVersion === version;
-  const resolvedTemplate = emailSurfaceTemplateFromBlock({
+  // One rule shared with the native card; see emailSurfacePhase in @matebot/core.
+  const { phase, locked } = emailSurfacePhase({
     template:
       mailbox === "ready" &&
       (template === "email-connection-card" || template === "email-reauth-card")
@@ -102,20 +104,8 @@ export function EmailComposeEditor({
     capability: mailbox,
     intent: "email.compose",
     error: surfaceError,
+    busy,
   });
-  const phase =
-    busy &&
-    (resolvedTemplate === "email-draft-card" ||
-      resolvedTemplate === "action-submitting-card" ||
-      resolvedTemplate === "action-result-failed")
-      ? "action-progress-card"
-      : resolvedTemplate;
-  const locked =
-    phase === "action-submitting-card" ||
-    phase === "action-progress-card" ||
-    phase === "action-result-success" ||
-    phase === "action-result-failed" ||
-    phase === "action-reconcile-card";
 
   async function commit(name: EmailFieldName, override?: string): Promise<number> {
     const inflight = pending.current[name];

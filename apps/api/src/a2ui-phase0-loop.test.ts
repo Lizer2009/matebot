@@ -1,13 +1,11 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
-import type { SurfaceRevisionState } from "@matebot/core";
-import { applySurfaceEdit, canSubmitSurface } from "@matebot/core";
+import type { NaturalLanguageEditDeps, SurfaceRevisionState } from "@matebot/core";
+import { applyNaturalLanguageEdit, applySurfaceEdit, canSubmitSurface } from "@matebot/core";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   dispatchInteractionActionService,
   resetInteractionDispatchState,
 } from "./interaction-dispatch.js";
-import type { NaturalLanguageEditDeps } from "./interaction-nl-edit.js";
-import { applyNaturalLanguageEdit } from "./interaction-nl-edit.js";
 import { confirmThenExecute } from "./interaction-run-action.js";
 
 /**

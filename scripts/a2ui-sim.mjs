@@ -26,6 +26,7 @@ const nudgeModule = join(root, "packages/core/src/interaction-nudge.ts");
 const capabilityModule = join(root, "packages/core/src/interaction-capability.ts");
 const planBridgeModule = join(root, "packages/core/src/interaction-plan-bridge.ts");
 const corpusModule = join(root, "packages/core/src/corpus.ts");
+const toolNamesModule = join(root, "packages/contracts/src/builtin-tools.ts");
 
 if (!existsSync(simModule)) {
   console.error(`Cannot find ${simModule}. Run this from a full checkout.`);
@@ -59,7 +60,9 @@ import {
   surfaceFallback,
   surfacePlanForCapability,
 } from ${JSON.stringify(planBridgeModule)};
+import { readFileSync } from "node:fs";
 import { MULTI_TURN_CORPUS } from ${JSON.stringify(corpusModule)};
+import { BUILTIN_TOOL_NAMES } from ${JSON.stringify(toolNamesModule)};
 
 const lifecycleFor = (state) =>
   state === "not_connected" || state === "requires_reauth" || state === "stale_local_connected"
@@ -334,6 +337,42 @@ function buildCorpusScenario() {
   };
 }
 
+/**
+ * Which card-editing tools the agent loop actually offers. The previous release
+ * could only create a card; a follow-up "change the subject" had no tool, so the
+ * model had nothing to call. This row fails if that tool disappears again.
+ */
+function buildEditToolScenario() {
+  const names = new Set(BUILTIN_TOOL_NAMES);
+  // The definition lives in the adapters package, which pulls vendor SDKs a
+  // plain tsx run cannot load, so this checks the registry and the source.
+  const source = readFileSync(
+    ${JSON.stringify(join(root, "packages/adapters/src/builtin-tools.ts"))},
+    "utf8",
+  );
+  const defined = (name) => source.includes('name: "' + name + '"');
+  return {
+    id: "edit-tool",
+    title: "the agent can revise a card it already made",
+    rows: [
+      {
+        case: "present_interaction",
+        registered: names.has("present_interaction"),
+        defined: defined("present_interaction"),
+        editsCard: "creates the card",
+      },
+      {
+        case: "edit_interaction",
+        registered: names.has("edit_interaction"),
+        defined: defined("edit_interaction"),
+        editsCard: "revises the same card",
+      },
+    ],
+    check: (row) => row.registered === true && row.defined === true,
+    invariant: "the loop exposes a tool that revises an existing card before the user confirms",
+  };
+}
+
 const scenarios = [
   {
     id: "connection-states",
@@ -428,6 +467,7 @@ const scenarios = [
   buildDialogueScenario(),
   buildCapabilityScenario(),
   buildCorpusScenario(),
+  buildEditToolScenario(),
 ];
 
 const nudges = Object.entries(A2UI_SURFACE_NUDGE).map(([state, text]) => ({
@@ -462,7 +502,7 @@ if (args.includes("--help") || args.includes("-h")) {
       "  node scripts/a2ui-sim.mjs --json       print the raw rows",
       "  node scripts/a2ui-sim.mjs --list       list scenario ids",
       "",
-      "Scenarios: connection-states, send-outcomes, unknown-reconcile, calendar-resume, dialogue-prompts, capability-registry, corpus-gate",
+      "Scenarios: connection-states, send-outcomes, unknown-reconcile, calendar-resume, dialogue-prompts, capability-registry, corpus-gate, edit-tool",
     ].join("\n"),
   );
   process.exit(0);

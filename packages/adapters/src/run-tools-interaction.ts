@@ -106,6 +106,11 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       draftVersion: published.draftVersion,
       intent: plan.intent,
       title: plan.title,
+      /**
+       * Without these the model cannot address this card on the next turn:
+       * `edit_interaction` needs the id and the revision the card shows.
+       */
+      revision: published.draftVersion,
       ...(published.capability ? { capability: published.capability } : {}),
       /** The only words the turn should add; the card holds everything else. */
       reply: surfaceNudgeReply(published.capability),
