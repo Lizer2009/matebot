@@ -37,6 +37,16 @@ Storage key: `matebot.feature.a2ui`. Env wins over storage when set.
 
 ### Mobile (Expo)
 
+Set before starting the Expo bundle (then restart Expo):
+
+```bash
+EXPO_PUBLIC_FEATURE_A2UI=1
+```
+
+Accepted values match the API gate (`1` / `true` / `on`). Unset keeps mobile surfaces hidden.
+
+### Mobile (Expo)
+
 Set this before the mobile bundle starts. It is off when unset.
 
 ```bash
