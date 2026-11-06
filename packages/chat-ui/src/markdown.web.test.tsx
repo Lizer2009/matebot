@@ -886,7 +886,7 @@ describe("web markdown page links", () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     const openPage = vi.fn();
     const markdown =
-      "See [Duplex voice](page:page_1) and [x](javascript:alert(1)) and [y](rakazo://settings) and [z](page:a/b)";
+      "See [Duplex voice](page:page_1) and [x](javascript:alert(1)) and [y](matebot://settings) and [z](page:a/b)";
     const container = document.createElement("div");
     document.body.appendChild(container);
     const root = createRoot(container);

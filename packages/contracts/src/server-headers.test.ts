@@ -39,7 +39,7 @@ describe("server request headers", () => {
 
   it("drops a damaged saved value", () => {
     expect(parseServerHeaders({ "x-a": "1" })).toEqual({ "x-a": "1" });
-    expect(parseServerHeaders({ origin: "rakazo://" })).toBeNull();
+    expect(parseServerHeaders({ origin: "matebot://" })).toBeNull();
     expect(parseServerHeaders("x-a: 1")).toBeNull();
     expect(parseServerHeaders({ "x-a": "line\nbreak" })).toBeNull();
   });

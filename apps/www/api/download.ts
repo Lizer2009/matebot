@@ -1,6 +1,6 @@
 import type { DesktopDownloads } from "../src/github.js";
-import { fetchDesktopDownloads } from "../src/github.js";
-import { LATEST_RELEASE_URL } from "../src/site.js";
+import { fetchAndroidDownload, fetchDesktopDownloads } from "../src/github.js";
+import { CHANGELOG_URL, LATEST_RELEASE_URL } from "../src/site.js";
 
 // Edge functions are bundled, which resolves the extensionless source imports.
 export const config = { runtime: "edge" };
@@ -17,31 +17,37 @@ export const WINDOWS_INSTALLER_ENV = "RAKAZO_WINDOWS_INSTALLER";
 /**
  * A published release asset wins, so cutting a release needs no site change. The
  * configured path is the fallback for a build that a workflow uploaded but no
- * release published.
+ * release published. The APK comes from the rolling `android` release, so it is
+ * resolved separately from the newest desktop release.
  */
 function resolveLocation(
   platform: string | null,
-  downloads: DesktopDownloads,
+  desktop: DesktopDownloads,
+  android: string | null,
   env: NodeJS.ProcessEnv,
 ): string {
-  const asset = platform ? downloads[platform as keyof DesktopDownloads] : undefined;
+  if (platform === "android") return android ?? CHANGELOG_URL;
+  const asset = platform ? desktop[platform as keyof DesktopDownloads] : undefined;
   if (asset) return asset;
   const configured = platform === "windows" ? env[WINDOWS_INSTALLER_ENV]?.trim() : undefined;
   return configured && /^(https:\/\/|\/)/.test(configured) ? configured : LATEST_RELEASE_URL;
 }
 
-/** Redirects to the newest installer so a desktop release needs no site rebuild. */
+/** Redirects to the newest build so a release needs no site rebuild. */
 export async function fetchDownload(
   request: Request,
   fetchImpl: typeof fetch = fetch,
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<Response> {
   const platform = new URL(request.url).searchParams.get("platform");
-  const downloads = await fetchDesktopDownloads(fetchImpl);
+  const [desktop, android] = await Promise.all([
+    fetchDesktopDownloads(fetchImpl),
+    platform === "android" ? fetchAndroidDownload(fetchImpl) : null,
+  ]);
   return new Response(null, {
     status: 302,
     headers: {
-      Location: resolveLocation(platform, downloads, env),
+      Location: resolveLocation(platform, desktop, android, env),
       "Cache-Control": "public, max-age=0, s-maxage=300, stale-while-revalidate=86400",
     },
   });

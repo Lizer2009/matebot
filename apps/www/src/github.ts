@@ -5,9 +5,14 @@ import { GITHUB_API_REPO } from "./site";
 export const GITHUB_STARS_TIMEOUT_MS = 5_000;
 export const MAX_GITHUB_STARS_RESPONSE_BYTES = 64 * 1024;
 
-export type DesktopDownloads = Partial<Record<"mac" | "windows" | "linux", string>>;
+export type DesktopPlatform = "mac" | "windows" | "linux";
+export type DownloadPlatform = DesktopPlatform | "android";
+export type DesktopDownloads = Partial<Record<DesktopPlatform, string>>;
 
 const DESKTOP_ASSET_SUFFIXES = { mac: ".dmg", windows: ".exe", linux: ".AppImage" } as const;
+/** The rolling Android release; it is never GitHub's "latest", which the desktop updater reads. */
+export const ANDROID_RELEASE_TAG = "android";
+const ANDROID_ASSET = "matebot.apk";
 export const MAX_GITHUB_RELEASE_RESPONSE_BYTES = 256 * 1024;
 export const MAX_GITHUB_COMMITS_RESPONSE_BYTES = 512 * 1024;
 
@@ -47,7 +52,7 @@ export function availableDesktopPlatforms(downloads: DesktopDownloads) {
 }
 
 /** The redirect resolves the newest installer per request, so releases need no site rebuild. */
-export function desktopDownloadHref(platform: keyof DesktopDownloads) {
+export function downloadHref(platform: DownloadPlatform) {
   return `/api/download?platform=${platform}`;
 }
 
@@ -69,6 +74,25 @@ export async function fetchDesktopDownloads(
     }
   }
   return downloads;
+}
+
+/**
+ * The rolling APK, read from the `android` tag rather than `releases/latest`, because the desktop
+ * updater owns the newest release. Null until a build publishes one.
+ */
+export async function fetchAndroidDownload(fetchImpl: typeof fetch = fetch): Promise<string | null> {
+  const payload = await fetchGithubJson<{ assets?: unknown }>(
+    `${GITHUB_API_REPO}/releases/tags/${ANDROID_RELEASE_TAG}`,
+    MAX_GITHUB_RELEASE_RESPONSE_BYTES,
+    fetchImpl,
+  );
+  if (!Array.isArray(payload?.assets)) return null;
+  for (const asset of payload.assets as Array<{ name?: unknown; browser_download_url?: unknown }>) {
+    const { name, browser_download_url: url } = asset ?? {};
+    if (name !== ANDROID_ASSET || typeof url !== "string" || !url.startsWith("https://")) continue;
+    return url;
+  }
+  return null;
 }
 
 /** The newest product changes on main, newest first; empty when GitHub is unavailable. */

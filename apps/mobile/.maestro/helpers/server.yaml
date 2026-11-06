@@ -1,4 +1,4 @@
-appId: com.rakazo.app
+appId: com.matebot.app
 ---
 # Reuse an already-open server sheet, or open it from authentication.
 - runFlow:

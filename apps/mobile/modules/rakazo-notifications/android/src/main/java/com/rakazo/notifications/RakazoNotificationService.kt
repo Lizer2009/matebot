@@ -357,12 +357,12 @@ class RakazoNotificationService : Service() {
 
   private fun openApp(run: RunRecord? = null): PendingIntent {
     val intent = if (run == null) {
-      packageManager.getLaunchIntentForPackage(packageName) ?: Intent(Intent.ACTION_VIEW, Uri.parse("rakazo://"))
+      packageManager.getLaunchIntentForPackage(packageName) ?: Intent(Intent.ACTION_VIEW, Uri.parse("matebot://"))
     } else {
       val destination = if (run.groupId != null) {
-        "rakazo://group-thread?groupId=${Uri.encode(run.groupId)}&name=${Uri.encode(run.groupName.orEmpty())}&spaceId=${Uri.encode(run.spaceId)}&threadId=${Uri.encode(run.threadId)}"
+        "matebot://group-thread?groupId=${Uri.encode(run.groupId)}&name=${Uri.encode(run.groupName.orEmpty())}&spaceId=${Uri.encode(run.spaceId)}&threadId=${Uri.encode(run.threadId)}"
       } else {
-        "rakazo://thread?botId=${Uri.encode(run.botId)}&name=${Uri.encode(run.botName)}&spaceId=${Uri.encode(run.spaceId)}&threadId=${Uri.encode(run.threadId)}"
+        "matebot://thread?botId=${Uri.encode(run.botId)}&name=${Uri.encode(run.botName)}&spaceId=${Uri.encode(run.spaceId)}&threadId=${Uri.encode(run.threadId)}"
       }
       Intent(
         Intent.ACTION_VIEW,
@@ -1004,7 +1004,7 @@ private fun rpc(
     connection.instanceFollowRedirects = false
     serverHeaders(headers).forEach { (name, value) -> connection.setRequestProperty(name, value) }
     connection.setRequestProperty("Content-Type", "application/json")
-    connection.setRequestProperty("Origin", "rakazo://")
+    connection.setRequestProperty("Origin", "matebot://")
     connection.setRequestProperty("Authorization", "Bearer $token")
     if (spaceId.isNotBlank()) {
       connection.setRequestProperty("x-rakazo-space-id", spaceId)

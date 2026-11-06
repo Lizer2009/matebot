@@ -472,7 +472,7 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           if [[ -z "$EXPO_TOKEN" ]]; then
-            echo "Add an EXPO_TOKEN repository secret with access to the inbox-zero/rakazo Expo project." >&2
+            echo "Add an EXPO_TOKEN repository secret with access to the lizer-expo/matebot Expo project." >&2
             exit 1
           fi
 

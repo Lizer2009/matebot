@@ -38,7 +38,7 @@ import {
 } from "../i18n/locales";
 import {
   availableDesktopPlatforms,
-  desktopDownloadHref,
+  downloadHref,
   fetchDesktopDownloads,
   fetchRecentChanges,
   githubStarsLabel,
@@ -371,7 +371,7 @@ const structuredData = homeStructuredData({
               <h3>{copy.platforms.desktop}</h3>
               <div class="platform-card__links">
                 {desktopPlatforms.map((platform) => (
-                  <a href={desktopDownloadHref(platform)}>{PLATFORM_NAMES[platform]}</a>
+                  <a href={downloadHref(platform)}>{PLATFORM_NAMES[platform]}</a>
                 ))}
               </div>
             </article>
@@ -382,7 +382,8 @@ const structuredData = homeStructuredData({
               </svg>
               <h3>{copy.platforms.mobile}</h3>
               <div class="platform-card__links">
-                <a href={APP_URL}>iOS and Android</a>
+                <a href={downloadHref("android")}>Android</a>
+                <a href={APP_URL}>{copy.platforms.web}</a>
               </div>
             </article>
           </div>

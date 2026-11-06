@@ -1,4 +1,4 @@
-appId: com.rakazo.app
+appId: com.matebot.app
 name: Auth
 ---
 - runFlow: ../subflows/launch-app.yaml

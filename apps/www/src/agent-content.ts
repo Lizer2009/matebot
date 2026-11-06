@@ -128,7 +128,8 @@ export const DOWNLOAD_MARKDOWN = `# Download Matebot
 - [macOS](${SITE_URL}/api/download?platform=mac)
 - [Windows](${SITE_URL}/api/download?platform=windows)
 - [Linux](${SITE_URL}/api/download?platform=linux)
-- [Web, including phones](${APP_URL})
+- [Android](${SITE_URL}/api/download?platform=android): the APK, updated over the air.
+- [Web, including iPhone](${APP_URL})
 
 The apps also connect to a self-hosted server. See the [self-hosting guide](${SITE_URL}/self-hosted-ai-agent/).
 `;

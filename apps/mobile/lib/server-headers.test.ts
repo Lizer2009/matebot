@@ -50,7 +50,7 @@ describe("server request headers", () => {
     const fetchImpl = vi.fn(
       async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("{}"),
     );
-    const init = { method: "POST", headers: { origin: "rakazo://" } };
+    const init = { method: "POST", headers: { origin: "matebot://" } };
     await fetchServer(SERVER, init, SERVER, fetchImpl);
     expect(fetchImpl.mock.calls[0]?.[1]).toBe(init);
     await saveApiBase(SERVER, ACCESS);
@@ -87,7 +87,7 @@ describe("server request headers", () => {
 
     const headers = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
     expect(headers.get("cf-access-client-id")).toBe("id.access");
-    expect(headers.get("origin")).toBe("rakazo://");
+    expect(headers.get("origin")).toBe("matebot://");
   });
 
   it("restores saved headers on launch and drops them for another server", async () => {
@@ -142,7 +142,7 @@ describe("server request headers", () => {
     await probeApiBase(SERVER, fetchImpl as typeof fetch, ACCESS);
     expect(fetchImpl.mock.calls[0]?.[1]?.headers).toMatchObject({
       ...ACCESS,
-      origin: "rakazo://",
+      origin: "matebot://",
     });
   });
 });

@@ -1,11 +1,11 @@
-appId: com.rakazo.app
+appId: com.matebot.app
 name: Billing
 ---
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
       RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_EMAIL}
-- openLink: "rakazo:///billing"
+- openLink: "matebot:///billing"
 - extendedWaitUntil:
     visible: ".*Renews.*|.*Plan.*"
     timeout: 15000
@@ -19,7 +19,7 @@ name: Billing
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 02-billing-tiers
-- openLink: "rakazo:///wallet"
+- openLink: "matebot:///wallet"
 - extendedWaitUntil:
     visible: "Disconnect"
     timeout: 15000

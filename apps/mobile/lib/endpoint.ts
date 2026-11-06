@@ -73,7 +73,7 @@ export async function probeApiBase(
       fetchImpl(`${parsed.url}/rpc/health`, {
         method: "POST",
         ...(Object.keys(headers).length ? { redirect: "error" as const } : {}),
-        headers: { ...headers, "content-type": "application/json", origin: "rakazo://" },
+        headers: { ...headers, "content-type": "application/json", origin: "matebot://" },
         body: JSON.stringify({ json: {} }),
         signal: controller.signal,
       }),

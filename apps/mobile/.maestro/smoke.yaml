@@ -1,4 +1,4 @@
-appId: com.rakazo.app
+appId: com.matebot.app
 name: Matebot mobile smoke
 ---
 - launchApp:

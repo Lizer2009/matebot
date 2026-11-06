@@ -591,7 +591,7 @@ async function postAuth(path: string, input: Record<string, string>) {
       // Emails sent before an account has a language follow the one this app shows.
       headers: {
         "content-type": "application/json",
-        origin: "rakazo://",
+        origin: "matebot://",
         "accept-language": getActiveUiLocale(),
       },
       body: JSON.stringify(input),
@@ -658,7 +658,7 @@ export type PasswordResetCapabilities = AuthCapabilities;
 export async function passwordResetCapabilities(): Promise<PasswordResetCapabilities> {
   const { response, body } = await fetchMobileJson<unknown>(
     `${currentApiBase()}/api/auth/capabilities`,
-    { headers: { origin: "rakazo://" } },
+    { headers: { origin: "matebot://" } },
   );
   if (!response.ok) throw new Error(t("Could not load sign-in options"));
   return authCapabilitiesSchema.or(legacyAuthCapabilitiesSchema).parse(body);
@@ -671,7 +671,7 @@ export async function requestPasswordReset(email: string, redirectTo: string): P
       method: "POST",
       headers: {
         "content-type": "application/json",
-        origin: "rakazo://",
+        origin: "matebot://",
         "accept-language": getActiveUiLocale(),
       },
       body: JSON.stringify({ email, redirectTo }),
@@ -695,7 +695,7 @@ export async function updateAccountName(name: string): Promise<void> {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        origin: "rakazo://",
+        origin: "matebot://",
         ...(await authHeaders()),
       },
       body: JSON.stringify({ name: nextName }),
@@ -766,7 +766,7 @@ async function replaceSessionAfterPasswordChange(
       method: "POST",
       headers: {
         "content-type": "application/json",
-        origin: "rakazo://",
+        origin: "matebot://",
         ...headers,
       },
       body: JSON.stringify({ currentPassword, newPassword, revokeOtherSessions: true }),
@@ -852,7 +852,7 @@ export async function signOut() {
         `${currentApiBase()}/api/auth/sign-out`,
         {
           method: "POST",
-          headers: { "content-type": "application/json", origin: "rakazo://", ...headers },
+          headers: { "content-type": "application/json", origin: "matebot://", ...headers },
           body: "{}",
           signal: controller.signal,
         },
@@ -877,7 +877,7 @@ export async function deleteAccount(password?: string, token?: string) {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        origin: "rakazo://",
+        origin: "matebot://",
         ...(await authHeaders()),
       },
       body: JSON.stringify({ password, token }),
@@ -996,7 +996,7 @@ async function request(
           method: "POST",
           headers: {
             "content-type": "application/json",
-            origin: "rakazo://",
+            origin: "matebot://",
             ...requestHeaders,
             ...correlation,
           },
@@ -1475,7 +1475,7 @@ async function subscribeRpcEvents(
       headers: {
         "content-type": "application/json",
         accept: "text/event-stream",
-        origin: "rakazo://",
+        origin: "matebot://",
         ...context.headers,
       },
       body: JSON.stringify({ json: input }),
@@ -1940,7 +1940,7 @@ export { loadSessionToken };
 export async function fetchAccountSecurity(): Promise<AccountSecurity> {
   const { response, body } = await fetchMobileJson<unknown>(
     `${currentApiBase()}/api/auth/account-security`,
-    { headers: { origin: "rakazo://", ...(await authHeaders()) } },
+    { headers: { origin: "matebot://", ...(await authHeaders()) } },
     null,
   );
   // Older servers support password accounts and the original change/delete endpoints.
@@ -1960,7 +1960,7 @@ async function postSignedInAuth(path: string, payload: Record<string, string> = 
       method: "POST",
       headers: {
         "content-type": "application/json",
-        origin: "rakazo://",
+        origin: "matebot://",
         ...(await authHeaders()),
       },
       body: JSON.stringify(payload),

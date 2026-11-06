@@ -158,7 +158,7 @@ https://app.example.com/api/auth/callback/oidc
 
 Web, Electron and mobile use the same provider redirect URI. Electron completes SSO in a
 sandboxed in-app popup sharing the app's session, then returns to the main window. Mobile completes the callback
-on the API, then returns to `rakazo://sign-in` (or `rakazo://account` for linking and reauthentication) through Better Auth's Expo authorization proxy
+on the API, then returns to `matebot://sign-in` (or `matebot://account` for linking and reauthentication) through Better Auth's Expo authorization proxy
 and a native auth browser session. The `rakazo` app scheme is trusted by the auth server;
 never register a client secret in the mobile app. Mobile stores the resulting session with
 SecureStore, like password sign-in. Native builds need the Expo WebBrowser module.
@@ -238,7 +238,7 @@ iOS, `sudo swcutil developer-mode -e true` on macOS, where the app must also liv
 ```bash
 # iOS and the macOS desktop app (dev.rakazo.desktop): <Apple Team ID>.<bundle id>, comma-separated.
 # Served as /.well-known/apple-app-site-association.
-PASSKEY_APPLE_APP_IDS=ABCDE12345.com.rakazo.app,ABCDE12345.dev.rakazo.desktop
+PASSKEY_APPLE_APP_IDS=ABCDE12345.com.matebot.app,ABCDE12345.dev.matebot.desktop
 # Android: SHA-256 fingerprints of the app signing certificates, comma-separated.
 # Served as /.well-known/assetlinks.json and accepted as passkey origins.
 PASSKEY_ANDROID_CERT_SHA256=AA:BB:...:FF

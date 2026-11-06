@@ -266,6 +266,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | P2-4 | 独立 Astro/www 或关闭 www 构建 | ✅ **2026-11-05** — `apps/www` 站点身份改为 Matebot：`SITE_URL=https://test.matebot.dev`、链接指向本仓库、品牌套件/OG/wordmark 换成 Matebot 资产；只描述自托管的计费与法律文案已改写，上游托管服务仍以 Rakazo 名称出现；见 §6.2 |
 | P2-5 | 全包 rename `@rakazo` → `@matebot` | ✅ **2026-11-05** — 21 个工作区包与根包全部改名，导入路径、tsconfig、Dockerfile filter、lockfile 同步；`RAKAZO_*` 环境变量、`rakazo_app` 数据库角色、`rakazo://` scheme 与移动端 bundle id **保持不变**（映射见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)） |
 | P2-6 | **统一品牌外壳 + Windows 安装包** | ✅ **2026-11-05** — 桌面 `productName`/`appId`/`NSIS`/可执行名/配置目录迁移/更新源均指向 Matebot；`pack:win` 与 `desktop-windows-installer` 工作流产出 `Matebot-Setup-<version>.exe`；见 [`desktop-release.md#windows-installer`](./desktop-release.md#windows-installer) |
+| P2-7 | **Android APK 发布 + 站点下载** | ✅ **2026-11-06** — `apps/mobile` 重链到 `@lizer-expo/matebot`，scheme `matebot://`、包名 `com.matebot.app`；`release-android-apk` 不再要求 Firebase，发布滚动 Release `android` 的 `matebot.apk`；站点 `/api/download?platform=android` 与首页 Android 下载指向该资产；见 [`mobile-release.md`](./mobile-release.md) |
 
 ---
 
@@ -287,7 +288,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 **遗留风险（按优先级）**
 
 1. **Passkey 域名**：桌面默认服务器改为 `test.matebot.dev`，旧域名注册的 passkey 在桌面端失效；需重新注册，且服务器 `WEB_ORIGIN` / `RAKAZO_PASSKEY_RP_ID` 必须与之一致。macOS 分发还依赖对应的 provisioning profile，否则桌面端会隐藏 passkey。
-2. **移动端商店身份未改**：`com.rakazo.app` 与 `rakazo://` scheme 未动（改需 App Store / Play Console 侧协调），因此手机上安装后图标与显示名是 Matebot，但系统标识仍是上游。`eas.json`/`projectId` 仍属上游 Expo 项目，无法在此仓库内独立发版。
+2. **移动端发布身份已改为 Matebot 自有**：`com.matebot.app` 与 `matebot://` scheme 已随 Expo 项目 `@lizer-expo/matebot` 重链；Android APK 通过 GitHub Release `android` 标签分发（见 [`mobile-release.md`](./mobile-release.md)）。仍在旧 bundle id 上安装的包需要卸载后重装。
 3. **上游合并成本**：本轮改动面很大（包名、目录、品牌资产、文案），下一次 `merge upstream/main` 冲突会比 P1 阶段明显更高；包名与桌面身份的冲突应一律保留本 fork 版本。
 4. **环境变量与数据库角色仍是上游命名**（`RAKAZO_*`、`rakazo_app`、卷 `pgdata`、Compose 项目 `rakazo-desktop`）。改名需要停机与 `ALTER ROLE`，见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)。
 5. **上游归因值**：OpenRouter 的 `HTTP-Referer: https://rakazo.com` 与 web 工具 User-Agent 仍是上游值。它们不是品牌面，改动属于归因/流量策略决策。
