@@ -1,5 +1,16 @@
-import type { InteractionEmailDelivery } from "@matebot/adapters";
-import { deliverInteractionEmail } from "@matebot/adapters";
+import type { ConnectorProvider, ManagedConnectorProvider } from "@matebot/adapter-kit";
+import type {
+  EmailCapabilityRow,
+  InteractionEmailDelivery,
+  InteractionEmailSender,
+} from "@matebot/adapters";
+import {
+  deliverInteractionEmail,
+  emailCapabilityFromRows,
+  emailSendAdapterContext,
+  loadEmailReconnectRefs,
+  loadOwnerEmailConnections,
+} from "@matebot/adapters";
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
 import type { InteractionLifecycleStatus } from "@matebot/core";
@@ -8,6 +19,7 @@ import {
   canExecuteConfirmedInteraction,
   confirmedEffectMatchesDraft,
   confirmInteractionDraftState,
+  emailCapabilityAllowsSend,
   interactionConfirmEffectRequest,
   interactionConfirmIdempotencyKey,
   interactionEffectKind,
@@ -230,13 +242,25 @@ export async function updateInteractionFieldService(
   return { draftVersion: changed.draftVersion };
 }
 
+export type InteractionMailboxDeps = {
+  userId: string;
+  emailConnections?: EmailCapabilityRow[];
+  reconnectRefs?: string[];
+  connector?: Pick<ConnectorProvider, "execute"> & {
+    listReconnectRefs?: ManagedConnectorProvider["listReconnectRefs"];
+    managed?(
+      id: string,
+    ): { listReconnectRefs?: ManagedConnectorProvider["listReconnectRefs"] } | undefined;
+  };
+};
+
 export type ConfirmInteractionServiceInput = {
   spaceId: string;
   threadId: string;
   botId: string;
   interactionId: string;
   draftVersion: number;
-};
+} & InteractionMailboxDeps;
 
 export class InteractionEffectRunMissingError extends Error {
   readonly code = "INTERACTION_EFFECT_RUN_MISSING" as const;
@@ -257,12 +281,49 @@ export class InteractionEmailDeliveryError extends Error {
 
 /** Send was refused because the draft is not the confirmed version (or the run is finished). */
 export class InteractionSendRejectedError extends Error {
-  readonly code: "unconfirmed" | "terminal";
-  constructor(code: "unconfirmed" | "terminal", message: string) {
+  readonly code: "unconfirmed" | "terminal" | "needs_connection";
+  constructor(code: "unconfirmed" | "terminal" | "needs_connection", message: string) {
     super(message);
     this.name = "InteractionSendRejectedError";
     this.code = code;
   }
+}
+
+async function resolveMailboxCapability(
+  prisma: PrismaClient,
+  input: InteractionMailboxDeps & { spaceId: string },
+) {
+  const connections =
+    input.emailConnections ??
+    (await loadOwnerEmailConnections(prisma, { spaceId: input.spaceId, userId: input.userId }));
+  const reconnectRefs =
+    input.reconnectRefs ??
+    (await loadEmailReconnectRefs(
+      input.connector?.listReconnectRefs ??
+        input.connector?.managed?.("composio")?.listReconnectRefs,
+      {
+        operationId: "interaction.email.preflight",
+        traceId: "interaction.email.preflight",
+        spaceId: input.spaceId,
+        userId: input.userId,
+        signal: new AbortController().signal,
+      },
+    ));
+  return emailCapabilityFromRows(connections, reconnectRefs);
+}
+
+function rejectUnlessMailboxReady(
+  snapshot: ReturnType<typeof emailCapabilityFromRows>,
+): asserts snapshot is ReturnType<typeof emailCapabilityFromRows> & {
+  status: "CONNECTED_AND_READY";
+} {
+  if (emailCapabilityAllowsSend(snapshot.status)) return;
+  throw new InteractionSendRejectedError(
+    "needs_connection",
+    snapshot.status === "REQUIRES_REAUTH"
+      ? "Reconnect the mailbox before sending"
+      : "Connect a mailbox before sending",
+  );
 }
 
 function interactionSlots(value: unknown): Record<string, unknown> {
@@ -294,6 +355,7 @@ export async function confirmInteractionService(
   if (!current || current.threadId !== input.threadId) {
     throw new InteractionNotFoundError(input.interactionId);
   }
+  rejectUnlessMailboxReady(await resolveMailboxCapability(prisma, input));
   const plan = current.plan as InteractionPlan;
   const slots = interactionSlots(current.slots);
   const confirmed = confirmInteractionDraftState(
@@ -570,12 +632,17 @@ async function finishEmailSend(
 
 /**
  * Gate for send. Rejects when confirmedVersion is missing or stale.
- * `email.send` delivers through the offline mailbox and records the effect.
+ * `email.send` delivers through the actor's bound mailbox connection.
  * A second call finishes an effect left `ambiguous` (reconcile) without a worker.
  */
 export async function executeConfirmedInteractionService(
   prisma: PrismaClient,
-  input: { spaceId: string; threadId: string; botId: string; interactionId: string },
+  input: {
+    spaceId: string;
+    threadId: string;
+    botId: string;
+    interactionId: string;
+  } & InteractionMailboxDeps,
 ): Promise<ExecuteConfirmedInteractionResult> {
   const current = await getInteraction(prisma, input.interactionId);
   if (!current || current.threadId !== input.threadId || current.spaceId !== input.spaceId) {
@@ -637,6 +704,13 @@ export async function executeConfirmedInteractionService(
     };
   }
 
+  const mailbox = await resolveMailboxCapability(prisma, input);
+  rejectUnlessMailboxReady(mailbox);
+  const connection = mailbox.connection;
+  if (!connection || !input.connector) {
+    throw new InteractionSendRejectedError("needs_connection", "Connect a mailbox before sending");
+  }
+
   const reconciling = effect.status === "ambiguous";
   const claimed = await prisma.externalEffect.updateMany({
     where: { id: effect.id, status: effect.status },
@@ -661,12 +735,21 @@ export async function executeConfirmedInteractionService(
   });
 
   const draft = emailSlots(effect.request);
+  const sender: InteractionEmailSender = {
+    kind: "connector",
+    context: emailSendAdapterContext({ spaceId: input.spaceId, userId: input.userId }, connection),
+    connector: input.connector,
+    connectionId: connection.id,
+  };
   let delivery: InteractionEmailDelivery;
   try {
-    delivery = await deliverInteractionEmail({
-      ...draft,
-      idempotencyKey: effect.idempotencyKey,
-    });
+    delivery = await deliverInteractionEmail(
+      {
+        ...draft,
+        idempotencyKey: effect.idempotencyKey,
+      },
+      sender,
+    );
   } catch (error) {
     const message =
       error instanceof Error && error.message ? error.message : "Could not send the email";

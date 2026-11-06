@@ -104,6 +104,13 @@ describe("a2ui_surface MessageBlock", () => {
     });
   });
 
+  it("accepts an optional mailbox capability stamp", () => {
+    expect(
+      A2uiSurfaceBlockSchema.parse({ ...surface, capability: "not_connected" }).capability,
+    ).toBe("not_connected");
+    expect(A2uiSurfaceBlockSchema.parse(surface).capability).toBeUndefined();
+  });
+
   it("requires interactionId, surfaceId, protocolFamily, and draftVersion", () => {
     expect(MessageBlock.safeParse({ kind: "a2ui_surface" }).success).toBe(false);
     expect(

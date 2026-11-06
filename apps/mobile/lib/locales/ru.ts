@@ -1400,6 +1400,7 @@ export const RU_MESSAGES: Record<string, string> = {
   From: "От",
   CC: "Копия",
   "Confirm this draft before sending.": "Подтвердите этот черновик перед отправкой.",
+  "Connect email": "Подключить почту",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

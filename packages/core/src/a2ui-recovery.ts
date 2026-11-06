@@ -29,6 +29,7 @@ function withoutConfirmation(block: A2uiSurfaceBlock): A2uiSurfaceBlock {
  * Keep the newer draft. At the same version, an update that omits
  * confirmedVersion keeps the confirmation already on the timeline.
  * Pass null to clear that confirmation on purpose.
+ * A newer draft that omits capability keeps the mailbox stamp already on the timeline.
  */
 export function preferA2uiSurfaceBlock(
   current: A2uiSurfaceBlock,
@@ -36,7 +37,13 @@ export function preferA2uiSurfaceBlock(
   confirmedVersion?: number | null,
 ): A2uiSurfaceBlock {
   if (incoming.draftVersion < current.draftVersion) return current;
-  if (incoming.draftVersion > current.draftVersion) return incoming;
+  if (incoming.draftVersion > current.draftVersion) {
+    // Field edits omit capability; keep the mailbox stamp so Send does not reappear.
+    if (!incoming.capability && current.capability) {
+      return { ...incoming, capability: current.capability };
+    }
+    return incoming;
+  }
   const nextConfirmed =
     confirmedVersion === undefined
       ? (incoming.confirmedVersion ?? current.confirmedVersion)
@@ -117,6 +124,11 @@ export function a2uiSurfaceBlockFromPayload(
     Number.isInteger(payload.confirmedVersion) &&
     payload.confirmedVersion >= 1
       ? { confirmedVersion: payload.confirmedVersion }
+      : {}),
+    ...(payload.capability === "not_connected" ||
+    payload.capability === "requires_reauth" ||
+    payload.capability === "ready"
+      ? { capability: payload.capability }
       : {}),
   };
 }

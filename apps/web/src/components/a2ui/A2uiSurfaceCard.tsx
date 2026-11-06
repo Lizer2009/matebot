@@ -18,6 +18,7 @@ export function A2uiSurfaceCard({
   onFieldChange,
   onConfirm,
   onSend,
+  onConnect,
   onDiscard,
 }: {
   block: A2uiSurfaceBlock;
@@ -32,6 +33,7 @@ export function A2uiSurfaceCard({
   ) => Promise<{ draftVersion: number } | undefined>;
   onConfirm?: (draftVersion: number) => Promise<void>;
   onSend?: (draftVersion: number) => Promise<void>;
+  onConnect?: () => Promise<void>;
   onDiscard?: () => void | Promise<void>;
 }) {
   const document = useA2uiSurfaceDocument({
@@ -80,10 +82,12 @@ export function A2uiSurfaceCard({
           <EmailComposeEditor
             draftVersion={block.draftVersion}
             confirmedVersion={block.confirmedVersion}
+            capability={block.capability}
             fields={emailFieldsFromSurfaceMessages(document.messages)}
             onFieldChange={onFieldChange}
             onConfirm={onConfirm}
             onSend={onSend}
+            onConnect={onConnect}
             onDiscard={onDiscard}
           />
         ) : document.messages ? (

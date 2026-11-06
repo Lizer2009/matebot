@@ -1,4 +1,5 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
+import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
 import { interactionSlotsFromPlan } from "@matebot/core";
 import type { PrismaClient, RunLease } from "@matebot/db";
 import {
@@ -36,6 +37,9 @@ export type PublishInteractionSurfaceInput = {
   protocolFamily?: A2uiProtocolFamily;
   /** When publishing from an active run, bind history writes to that attempt's lease. */
   lease?: RunLease;
+  /** Mailbox preflight stamp; omitted on non-email surfaces. */
+  capability?: EmailSurfaceCapability;
+  status?: InteractionLifecycleStatus;
 };
 
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
@@ -65,7 +69,7 @@ export async function publishInteractionSurface(
         threadId: input.threadId,
         runId: input.runId,
         intent: input.plan.intent,
-        status: "collecting",
+        status: input.status ?? "collecting",
         plan: input.plan,
         slots,
         title: input.plan.title,
@@ -88,6 +92,7 @@ export async function publishInteractionSurface(
         title: input.plan.title,
         summary: input.plan.summary,
         documentRef,
+        ...(input.capability ? { capability: input.capability } : {}),
       };
       const message = await createThreadMessageInTransaction(tx, {
         threadId: input.threadId,
@@ -143,6 +148,7 @@ export async function publishInteractionSurface(
           summary: input.plan.summary,
           documentRef,
           messageId: message.id,
+          ...(input.capability ? { capability: input.capability } : {}),
         },
       });
       return {

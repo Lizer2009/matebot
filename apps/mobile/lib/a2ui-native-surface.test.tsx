@@ -153,6 +153,31 @@ describe("native A2UI surface", () => {
     expect(onSend).toHaveBeenCalledWith(2);
   });
 
+  it("shows connect and hides Send when the mailbox is not connected", () => {
+    const onConnect = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, capability: "not_connected" }}
+        onConnect={onConnect}
+        onSend={onSend}
+      />,
+    );
+    expect(document.querySelector('[data-testid="a2ui-email-connect"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+  });
+
+  it("shows reauth and hides Send when the mailbox needs reconnect", () => {
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, capability: "requires_reauth" }}
+        onSend={vi.fn(async () => undefined)}
+      />,
+    );
+    expect(document.querySelector('[data-testid="a2ui-email-reauth"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+  });
+
   it("discards without sending", async () => {
     const onDiscard = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);

@@ -1669,6 +1669,10 @@ msgstr "請確認此瀏覽器工作階段可以存取該 URL，然後重新測�
 msgid "Confirm this draft before sending."
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr "連接郵箱"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -5092,6 +5096,11 @@ msgstr "最近"
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"
 msgstr ""
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
+msgid "Reconnect"
+msgstr "重新授權"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/VoiceSettingsOverlay.tsx

@@ -45,6 +45,22 @@ describe("preferA2uiSurfaceBlock", () => {
       summary: "Edited",
     });
   });
+
+  it("keeps incoming capability at the same draftVersion when set", () => {
+    const current = surface({ capability: "not_connected" });
+    const incoming = surface({ capability: "ready", summary: "Bound" });
+    expect(preferA2uiSurfaceBlock(current, incoming).capability).toBe("ready");
+  });
+
+  it("keeps the mailbox stamp when a newer field edit omits capability", () => {
+    const current = surface({ draftVersion: 2, capability: "not_connected" });
+    const incoming = surface({ draftVersion: 3, confirmedVersion: undefined, title: "Edited" });
+    expect(preferA2uiSurfaceBlock(current, incoming)).toMatchObject({
+      draftVersion: 3,
+      title: "Edited",
+      capability: "not_connected",
+    });
+  });
 });
 
 describe("mergeA2uiMessageBlocks", () => {

@@ -1,7 +1,13 @@
 import type { InteractionPlan } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
+import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
 import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
+import {
+  emailCapabilityFromRows,
+  loadEmailReconnectRefs,
+  loadOwnerEmailConnections,
+} from "./interaction-email-capability.js";
 import { publishInteractionSurface } from "./interaction-publish.js";
 import type { RunContext } from "./run-context.js";
 import { runLeaseFor } from "./run-messages.js";
@@ -54,6 +60,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       runId: run.id,
       plan,
       lease: runLeaseFor(deps, run.id),
+      ...(await emailPublishCapability(ctx, plan)),
     });
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
@@ -71,6 +78,34 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       error: `Could not present the draft (${error instanceof Error ? error.message : "unknown error"}).`,
     };
   }
+}
+
+async function emailPublishCapability(
+  ctx: RunContext,
+  plan: InteractionPlan,
+): Promise<{ capability?: EmailSurfaceCapability; status?: InteractionLifecycleStatus }> {
+  if (plan.intent !== "email.compose" && plan.intent !== "email.send") return {};
+  const userId = ctx.context?.userId;
+  if (!userId) {
+    return { capability: "not_connected", status: "needs_connection" };
+  }
+  const owner = { spaceId: ctx.run.spaceId, userId };
+  const connections = await loadOwnerEmailConnections(ctx.deps.prisma, owner);
+  const reconnectRefs = await loadEmailReconnectRefs(
+    ctx.deps.connectors?.managed?.("composio")?.listReconnectRefs,
+    {
+      operationId: "interaction.email.preflight",
+      traceId: "interaction.email.preflight",
+      spaceId: owner.spaceId,
+      userId,
+      signal: ctx.context.signal ?? new AbortController().signal,
+    },
+  );
+  const snapshot = emailCapabilityFromRows(connections, reconnectRefs);
+  return {
+    capability: snapshot.surfaceCapability,
+    ...(snapshot.interactionNeedsConnection ? { status: "needs_connection" as const } : {}),
+  };
 }
 
 export const interactionTools: ToolHandlers = {

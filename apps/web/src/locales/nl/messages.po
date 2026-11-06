@@ -1668,6 +1668,10 @@ msgstr "Bevestig dat de URL vanuit deze browsersessie bereikbaar is en test daar
 msgid "Confirm this draft before sending."
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -5090,6 +5094,11 @@ msgstr "Recent"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"
+msgstr ""
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
+msgid "Reconnect"
 msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
