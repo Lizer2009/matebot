@@ -12,7 +12,7 @@ node scripts/a2ui-sim.mjs --scenario send-outcomes
 node scripts/a2ui-sim.mjs --json         # 机器可读，便于贴进 issue 或测试
 ```
 
-输出是五张表，每行一次「输入状态 → 卡片」的推演：
+输出是六张表，每行一次「输入状态 → 卡片」的推演：
 
 | 场景 | 覆盖 |
 | --- | --- |
@@ -21,6 +21,7 @@ node scripts/a2ui-sim.mjs --json         # 机器可读，便于贴进 issue 或
 | `unknown-reconcile` | UNKNOWN 只提供「检查状态」，不再给发送 |
 | `calendar-resume` | 授权完成后是否继续（日历、邮箱、错误应用、非等待态） |
 | `dialogue-prompts` | 三段真实中文提示词，按实机状态逐步推演 |
+| `capability-registry` | 哪些 intent 已登记/已实现，未登记请求的安全回落 |
 
 任何一行与该 PR 的不变量冲突时，进程以 `1` 退出，可直接当作 CI 门禁。
 
@@ -76,9 +77,10 @@ simulatedConnection("stale_local_connected");
   `apps/mobile/lib/a2ui-*.test.tsx`。
 - 真实 provider 文案变化需要在 `packages/core/src/interaction-connection.ts` 的
   `RECONNECT_SIGNALS` 里补一条，并同时在模拟器里加一个投递结果。
-- 日历目前只有服务端戳记可推演：宿主只对 `email.compose` 渲染编辑表单与连接按钮，
-  所以 `simulateCalendarSurface` 一律返回 `action: none` 与 `editor: none`，
-  并在 `gap` 里写明原因。日历若要真正可编辑，需要先有日历模板与宿主控件。
+- 日历行不再强制套用 email 模板：非 email intent 不打 stamp，所以那一行的
+  `template` 是 `null`，`implemented` 为 false。这正是产品缺口，不应该被模拟器掩盖。
+- `capability-registry` 行读的是真实注册表：`email.compose` 渲染，未登记 intent
+  一律 `unregistered_intent` 且没有 action。若有人给未登记 intent 伪造出卡，这行会红。
 
 相关文档：[`matebot-a2ui-orchestration-addendum.md`](../docs/architecture/matebot-a2ui-orchestration-addendum.md)、
 [`matebot-a2ui-integration-design.md`](../docs/architecture/matebot-a2ui-integration-design.md)。

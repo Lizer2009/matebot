@@ -16,6 +16,7 @@ import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
 import { A2uiSurfaceCard } from "../../components/a2ui/A2uiSurfaceCard";
 import { connectEmailMailbox } from "../../components/a2ui/mailbox-connect";
+import { parseSurfaceAction } from "../../components/a2ui/parse-surface-action";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { PageBlockCard } from "../../components/pages/PageBlockCard";
@@ -559,6 +560,22 @@ export const MessageView = memo(function MessageView({
                           } finally {
                             await onRefresh();
                           }
+                        }
+                      : undefined
+                  }
+                  onAction={
+                    botId || groupId
+                      ? async (action) => {
+                          const parsed = parseSurfaceAction(action);
+                          if (!parsed) return;
+                          await rpc.threads.dispatchInteractionAction({
+                            ...(botId ? { botId } : { groupId: groupId! }),
+                            interactionId: parsed.interactionId,
+                            surfaceId: action.surfaceId,
+                            action: parsed.action,
+                            revision: parsed.revision,
+                          });
+                          await onRefresh();
                         }
                       : undefined
                   }

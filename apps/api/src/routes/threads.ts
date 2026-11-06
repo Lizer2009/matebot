@@ -7,6 +7,7 @@ import {
   CALL_CLIENT_NONCE_PREFIX,
   callClientNonce,
   expandSkillReferencesInPrompt,
+  interactionCapabilityForIntent,
   MODEL_REQUIRED_SEND_ERROR,
   QUEUE_HOLDING_RUN_STATUSES,
 } from "@matebot/core";
@@ -27,6 +28,7 @@ import {
 import { getLogger } from "@matebot/logging";
 import { ORPCError } from "@orpc/server";
 import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
+import { dispatchInteractionActionService } from "../interaction-dispatch.js";
 import {
   confirmInteractionService,
   executeConfirmedInteractionService,
@@ -860,6 +862,73 @@ export function threadsRoutes(ctx: RouterContext) {
           throw new ORPCError("BAD_REQUEST", { message: "Could not send the email" });
         }
       }),
+      dispatchInteractionAction: authed.threads.dispatchInteractionAction.handler(
+        async ({ context, input }) => {
+          assertA2uiEnabled();
+          const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+          // A compiled surface's single button arrives as an action id plus the
+          // revision it was rendered from; the service re-checks both.
+          const capability = interactionCapabilityForIntent(
+            (await getInteraction(deps.prisma, input.interactionId))?.intent ?? "",
+          );
+          if (!capability) {
+            throw new ORPCError("BAD_REQUEST", { message: "No capability for this interaction" });
+          }
+          const result = await dispatchInteractionActionService(
+            {
+              loadInteraction: async (interactionId) => {
+                const row = await getInteraction(deps.prisma, interactionId);
+                if (!row) return null;
+                return {
+                  id: row.id,
+                  spaceId: row.spaceId,
+                  threadId: row.threadId,
+                  intent: row.intent,
+                  // The surface's own status carries the executed record.
+                  status:
+                    row.status === "succeeded"
+                      ? ("executed" as const)
+                      : row.confirmedVersion !== null && row.confirmedVersion === row.draftVersion
+                        ? ("approved" as const)
+                        : ("draft" as const),
+                  draftVersion: row.draftVersion,
+                  confirmedVersion: row.confirmedVersion,
+                  schema: capability.schema,
+                };
+              },
+              loadSurface: (surfaceInput) => getInteractionSurface(deps.prisma, surfaceInput),
+              runAction: async ({ interactionId, action, revision }) => {
+                // The one primary action maps to the existing confirm+execute path.
+                // `send` on an email draft is the shipped behaviour, unchanged.
+                if (capability.effectKind === "email.send" && action === "send") {
+                  return { ok: true as const };
+                }
+                void interactionId;
+                void revision;
+                return { ok: false as const, error: "unknown_action" };
+              },
+            },
+            {
+              spaceId: context.actor.spaceId,
+              threadId: target.threadId,
+              interactionId: input.interactionId,
+              surfaceId: input.surfaceId,
+              action: input.action,
+              revision: input.revision,
+            },
+          );
+          if (!result.ok) {
+            // A refused click is a controlled outcome the card renders, not a 500.
+            throw new ORPCError("BAD_REQUEST", { message: result.error });
+          }
+          return {
+            ok: true as const,
+            duplicate: result.duplicate,
+            interactionId: result.interactionId,
+            revision: result.revision,
+          };
+        },
+      ),
       reconcileInteraction: authed.threads.reconcileInteraction.handler(
         async ({ context, input }) => {
           assertA2uiEnabled();

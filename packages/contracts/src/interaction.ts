@@ -316,3 +316,49 @@ export const ThreadsGetA2uiSurfaceOutput = z.object({
   documentRef: z.string().trim().min(1),
 });
 export type ThreadsGetA2uiSurfaceOutput = z.infer<typeof ThreadsGetA2uiSurfaceOutput>;
+
+/**
+ * Dispatch a compiled surface's action. The client may only echo what the
+ * server rendered: the interaction, the surface, and the exact revision the
+ * click came from. The server re-checks all three plus ownership before any
+ * effect runs, so a stale or forged click cannot execute.
+ */
+export const ThreadsDispatchInteractionActionInput = ThreadTargetSchema.safeExtend({
+  interactionId: Id,
+  surfaceId: z.string().trim().min(1),
+  /** The action id from the rendered button, e.g. "send". */
+  action: z.string().trim().min(1).max(64),
+  /** The draft revision this surface was rendered from. */
+  revision: z.number().int().positive(),
+});
+export type ThreadsDispatchInteractionActionInput = z.infer<
+  typeof ThreadsDispatchInteractionActionInput
+>;
+
+export const ThreadsDispatchInteractionActionOutput = z.object({
+  ok: z.literal(true),
+  /** True when this exact click had already run; nothing executed again. */
+  duplicate: z.boolean(),
+  interactionId: Id,
+  revision: z.number().int().positive(),
+});
+export type ThreadsDispatchInteractionActionOutput = z.infer<
+  typeof ThreadsDispatchInteractionActionOutput
+>;
+
+/**
+ * Rejections a dispatch can produce. Returned as a controlled code rather than a
+ * thrown 500 so the card can render the matching state instead of a dead end.
+ */
+export const InteractionDispatchError = z.enum([
+  "stale_revision",
+  "not_approved",
+  "already_executed",
+  "unknown_action",
+  "unknown_surface",
+  "unknown_interaction",
+  "forbidden",
+  "invalid_schema",
+  "action_failed",
+]);
+export type InteractionDispatchError = z.infer<typeof InteractionDispatchError>;

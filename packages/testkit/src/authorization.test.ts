@@ -357,6 +357,16 @@ describeWithDatabase("API authorization and resource isolation", () => {
         { botId: "missing-bot", interactionId: "missing-ix", draftVersion: 1 },
       ],
       ["threads/executeInteraction", { botId: "missing-bot", interactionId: "missing-ix" }],
+      [
+        "threads/dispatchInteractionAction",
+        {
+          botId: "missing-bot",
+          interactionId: "missing-ix",
+          surfaceId: "missing-surface",
+          action: "send",
+          revision: 1,
+        },
+      ],
       ["threads/reconcileInteraction", { botId: "missing-bot", interactionId: "missing-ix" }],
       ["computer/status", { botId: "missing-bot" }],
       ["computer/boot", { botId: "missing-bot" }],
@@ -741,6 +751,16 @@ describeWithDatabase("API authorization and resource isolation", () => {
         { botId: ownerBot.id, interactionId: "missing-ix", draftVersion: 1 },
       ],
       ["threads/executeInteraction", { botId: ownerBot.id, interactionId: "missing-ix" }],
+      [
+        "threads/dispatchInteractionAction",
+        {
+          botId: ownerBot.id,
+          interactionId: "missing-ix",
+          surfaceId: "missing-surface",
+          action: "send",
+          revision: 1,
+        },
+      ],
       ["threads/reconcileInteraction", { botId: ownerBot.id, interactionId: "missing-ix" }],
       ["computer/status", { botId: ownerBot.id }],
       ["computer/boot", { botId: ownerBot.id }],

@@ -3,6 +3,7 @@ import { A2uiSurfaceHost } from "./A2uiSurfaceHost";
 import { EmailComposeEditor } from "./EmailComposeEditor";
 import type { EmailFieldName } from "./email-fields";
 import { emailFieldsFromSurfaceMessages, isEmailComposeIntent } from "./email-fields";
+import type { A2uiActionListener } from "./load-a2ui";
 import { useA2uiSurfaceDocument } from "./use-a2ui-surface-document";
 
 /**
@@ -20,6 +21,7 @@ export function A2uiSurfaceCard({
   onSend,
   onConnect,
   onCheckStatus,
+  onAction,
   onDiscard,
 }: {
   block: A2uiSurfaceBlock;
@@ -36,6 +38,8 @@ export function A2uiSurfaceCard({
   onSend?: (draftVersion: number) => Promise<void>;
   onConnect?: () => Promise<void>;
   onCheckStatus?: () => Promise<void>;
+  /** The one bridge for a compiled surface's buttons. */
+  onAction?: A2uiActionListener;
   onDiscard?: () => void | Promise<void>;
 }) {
   const document = useA2uiSurfaceDocument({
@@ -98,7 +102,11 @@ export function A2uiSurfaceCard({
             onDiscard={onDiscard}
           />
         ) : document.messages ? (
-          <A2uiSurfaceHost surfaceId={block.surfaceId} messages={document.messages} />
+          <A2uiSurfaceHost
+            surfaceId={block.surfaceId}
+            messages={document.messages}
+            onAction={onAction}
+          />
         ) : (
           <div
             data-testid="a2ui-surface-placeholder"
