@@ -50,6 +50,7 @@ export * from "./instruction-diff.js";
 export * from "./interaction-capability.js";
 export * from "./interaction-connection.js";
 export * from "./interaction-effect.js";
+export * from "./interaction-nl-edit.js";
 export * from "./interaction-nudge.js";
 export * from "./interaction-plan-bridge.js";
 export * from "./interaction-preflight.js";

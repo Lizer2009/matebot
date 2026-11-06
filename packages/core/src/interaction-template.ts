@@ -210,3 +210,53 @@ export function emailDeliveryOutcome(input: {
   }
   return "failed";
 }
+
+/**
+ * The card's visible phase and whether its controls are locked.
+ *
+ * Both hosts derived this with the same copy-pasted expression, which is exactly
+ * the duplicated domain state matrix the spec forbids: two hosts drifting on
+ * "is the Send button live" is a correctness bug, not a styling one. The rule is
+ * one function; each host only decides what to render for the phase.
+ */
+export function emailSurfacePhase(input: {
+  template?: EmailSurfaceTemplate;
+  lifecycle?: EmailSurfaceLifecycle;
+  capability?: EmailSurfaceCapability;
+  intent?: string;
+  error?: string | null;
+  /** A submit is in flight from this client. */
+  busy?: boolean;
+}): {
+  template: EmailSurfaceTemplate;
+  phase: EmailSurfaceTemplate;
+  locked: boolean;
+  /** Whether this phase is a terminal execution state. */
+  settled: boolean;
+} {
+  const template = emailSurfaceTemplateFromBlock(input);
+  // While a submit is in flight from this client, the card shows progress even
+  // if the server stamp has not arrived yet.
+  const phase: EmailSurfaceTemplate =
+    input.busy &&
+    (template === "email-draft-card" ||
+      template === "action-submitting-card" ||
+      template === "action-result-failed")
+      ? "action-progress-card"
+      : template;
+  const locked =
+    phase === "action-submitting-card" ||
+    phase === "action-progress-card" ||
+    phase === "action-result-success" ||
+    phase === "action-result-failed" ||
+    phase === "action-reconcile-card";
+  return {
+    template,
+    phase,
+    locked,
+    settled:
+      phase === "action-result-success" ||
+      phase === "action-result-failed" ||
+      phase === "action-reconcile-card",
+  };
+}

@@ -725,7 +725,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "present_interaction",
     description:
-      'Present an editable surface in the chat for the user to review and act on. Use it when the user asks in natural language to compose or send an email (intent "email.compose") or to create a calendar or events (intent "calendar.create"), with fields for the values you have and status "resolved"/"missing" for each. The user edits and acts from the surface. Never send mail or create anything with shell, python, smtplib, or request_secret. After it is published, reply with one short sentence telling the user to use the card; do not restate fields, explain credentials, or report an outcome the card has not reported.',
+      'Present an editable surface in the chat for the user to review and act on. Use it when the user asks in natural language to compose or send an email (intent "email.compose") or to create a calendar or events (intent "calendar.create"), with fields for the values you have and status "resolved"/"missing" for each. The user edits and acts from the surface. Never send mail or create anything with shell, python, smtplib, or request_secret. After it is published, reply with one short sentence telling the user to use the card; do not restate fields, explain credentials, or report an outcome the card has not reported. The result returns interactionId and revision: keep them, and pass them to edit_interaction when the user later asks to change something on that card.',
     inputSchema: {
       type: "object",
       properties: {
@@ -776,6 +776,33 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
       },
       required: ["plan"],
+    },
+  },
+  {
+    name: "edit_interaction",
+    description:
+      "Change an editable card that is already in this chat, when the user asks in natural language to fix, add, or replace something on it (a recipient, a subject, a time, a name). Pass only the fields that change; each name must be one the card already shows. Include the revision the card was shown at. This edits the existing card and republishes it — it does not send, create, or execute anything, and the user still confirms on the card. Never use shell, python, or request_secret for this. If two cards could match, the tool returns the candidates: ask which one instead of guessing. After it succeeds, reply with one short sentence telling the user the card is updated.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        interactionId: {
+          type: "string",
+          description:
+            "The card to edit, when the user named one or only one is open. Omit to let the server resolve by context.",
+        },
+        revision: {
+          type: "number",
+          description:
+            "The draft revision shown on the card. A submit or edit from an older revision is refused.",
+        },
+        fields: {
+          type: "object",
+          description:
+            "Field name to new value, for fields the card already declares. Only send what changes.",
+          additionalProperties: true,
+        },
+      },
+      required: ["fields", "revision"],
     },
   },
   {

@@ -119,7 +119,7 @@ export function selectBuiltinToolsForRun(options: {
       (options.paymentWalletEnabled || !PURCHASE_TOOL_NAMES.has(tool.name)) &&
       (options.mediaImagesEnabled || tool.name !== "generate_image") &&
       (options.mediaVideoEnabled || tool.name !== "generate_video") &&
-      (a2uiEnabled || tool.name !== "present_interaction") &&
+      (a2uiEnabled || (tool.name !== "present_interaction" && tool.name !== "edit_interaction")) &&
       (options.ticketBoardEnabled ||
         (tool.name !== "board_tickets" && !tool.name.startsWith("ticket_"))) &&
       (!isBackgroundRunTrigger(options.trigger) ||
@@ -131,6 +131,7 @@ export function selectBuiltinToolsForRun(options: {
           "generate_image",
           "generate_video",
           "present_interaction",
+          "edit_interaction",
         ].includes(tool.name)) &&
       (options.voiceCall || tool.name !== "end_call") &&
       (options.userComputer || tool.name !== "user_computer_shell") &&
@@ -157,6 +158,7 @@ export function selectBuiltinToolsForRun(options: {
             "task_catalog",
             "board_tickets",
             "present_interaction",
+            "edit_interaction",
           ].includes(tool.name) &&
           !tool.name.startsWith("scratchpad_") &&
           !tool.name.startsWith("ticket_"))),

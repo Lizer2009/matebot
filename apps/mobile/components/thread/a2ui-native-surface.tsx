@@ -1,5 +1,5 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import { emailSurfaceTemplateFromBlock } from "@matebot/core";
+import { emailSurfacePhase } from "@matebot/core";
 import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import type { NativeCatalogNode } from "../../lib/a2ui-catalog";
@@ -138,7 +138,8 @@ export function A2uiNativeSurface({
     }
     const effectiveConfirmed = localConfirmedVersion ?? block.confirmedVersion;
     const title = block.title ?? t("Send email");
-    const resolvedTemplate = emailSurfaceTemplateFromBlock({
+    // One rule shared with the web card; see emailSurfacePhase in @matebot/core.
+    const { phase } = emailSurfacePhase({
       template:
         mailbox === "ready" &&
         (block.template === "email-connection-card" || block.template === "email-reauth-card")
@@ -148,14 +149,8 @@ export function A2uiNativeSurface({
       capability: mailbox,
       intent: block.intent,
       error: block.error,
+      busy,
     });
-    const phase =
-      busy &&
-      (resolvedTemplate === "email-draft-card" ||
-        resolvedTemplate === "action-submitting-card" ||
-        resolvedTemplate === "action-result-failed")
-        ? "action-progress-card"
-        : resolvedTemplate;
     if (discarded) {
       return (
         <View testID="a2ui-native-surface">

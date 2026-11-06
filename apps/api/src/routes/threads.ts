@@ -4,6 +4,7 @@ import type { Actor, ProductEvent } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef, parseA2uiSurfaceDocumentRef } from "@matebot/contracts";
 import {
   AttachmentValidationError,
+  applyNaturalLanguageEdit,
   CALL_CLIENT_NONCE_PREFIX,
   callClientNonce,
   expandSkillReferencesInPrompt,
@@ -29,7 +30,6 @@ import { getLogger } from "@matebot/logging";
 import { ORPCError } from "@orpc/server";
 import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
 import { dispatchInteractionActionService } from "../interaction-dispatch.js";
-import { applyNaturalLanguageEdit } from "../interaction-nl-edit.js";
 import { confirmThenExecute } from "../interaction-run-action.js";
 import {
   confirmInteractionService,

@@ -1,6 +1,8 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
-import type { OpenSurface, SurfaceStatus } from "@matebot/core";
-import { canSubmitSurface, resolveSurfaceTarget } from "@matebot/core";
+import type { SurfaceStatus } from "./surface-revision.js";
+import { canSubmitSurface } from "./surface-revision.js";
+import type { OpenSurface } from "./surface-target.js";
+import { resolveSurfaceTarget } from "./surface-target.js";
 
 /**
  * Applies a model-proposed natural-language edit to an existing draft.
@@ -22,8 +24,15 @@ export type NaturalLanguageEditDeps = {
     confirmedVersion: number | null;
     slots: Record<string, unknown>;
   } | null>;
-  /** Every live card in the thread, so an unnamed reference can be judged. */
-  listOpenSurfaces: (input: { spaceId: string; threadId: string }) => Promise<OpenSurface[]>;
+  /**
+   * Cards in the thread. Live ones by default; `includeExecuted` also returns
+   * finished ones so a caller can explain that a card already ran.
+   */
+  listOpenSurfaces: (input: {
+    spaceId: string;
+    threadId: string;
+    includeExecuted?: boolean;
+  }) => Promise<OpenSurface[]>;
   /**
    * The same write the card's direct edit uses. It already recompiles and
    * republishes the surface, which is why prose edits and direct edits cannot
