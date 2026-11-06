@@ -29,6 +29,7 @@ import { getLogger } from "@matebot/logging";
 import { ORPCError } from "@orpc/server";
 import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
 import { dispatchInteractionActionService } from "../interaction-dispatch.js";
+import { applyNaturalLanguageEdit } from "../interaction-nl-edit.js";
 import { confirmThenExecute } from "../interaction-run-action.js";
 import {
   confirmInteractionService,
@@ -862,6 +863,106 @@ export function threadsRoutes(ctx: RouterContext) {
           }
           throw new ORPCError("BAD_REQUEST", { message: "Could not send the email" });
         }
+      }),
+      editInteraction: authed.threads.editInteraction.handler(async ({ context, input }) => {
+        assertA2uiEnabled();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const interactions = await deps.prisma.interaction.findMany({
+          where: {
+            threadId: target.threadId,
+            status: { notIn: ["cancelled", "failed", "unknown"] },
+          },
+          orderBy: { updatedAt: "desc" },
+          select: {
+            id: true,
+            intent: true,
+            status: true,
+            draftVersion: true,
+            title: true,
+            summary: true,
+            surfaces: { select: { surfaceId: true }, orderBy: { updatedAt: "desc" }, take: 1 },
+          },
+        });
+        const open = interactions
+          .filter((row) => row.surfaces.length > 0)
+          .map((row) => ({
+            taskId: row.id,
+            surfaceId: row.surfaces[0]!.surfaceId,
+            intent: row.intent,
+            label: row.title ?? row.summary ?? row.intent,
+            status:
+              row.status === "succeeded"
+                ? ("executed" as const)
+                : row.status === "awaiting_approval"
+                  ? ("approved" as const)
+                  : ("draft" as const),
+          }));
+        // The schema comes from the registry for the card being edited, so a
+        // model cannot widen the fields by proposing them.
+        const chosenId = input.interactionId ?? (open.length === 1 ? open[0]!.taskId : undefined);
+        const chosen = chosenId ? open.find((row) => row.taskId === chosenId) : undefined;
+        const capability = interactionCapabilityForIntent(chosen?.intent ?? "");
+        const botId = chosen
+          ? await resolveInteractionBotId(deps.prisma, target, chosen.taskId)
+          : null;
+        const result = await applyNaturalLanguageEdit(
+          {
+            loadInteraction: async (interactionId) => {
+              const row = await getInteraction(deps.prisma, interactionId);
+              if (!row) return null;
+              return {
+                id: row.id,
+                spaceId: row.spaceId,
+                threadId: row.threadId,
+                intent: row.intent,
+                status: row.status,
+                draftVersion: row.draftVersion,
+                confirmedVersion: row.confirmedVersion,
+                slots: (row.slots ?? {}) as Record<string, unknown>,
+              };
+            },
+            listOpenSurfaces: async () => open,
+            applyField: async (fieldInput) => {
+              await updateInteractionFieldService(deps.prisma, {
+                spaceId: fieldInput.spaceId,
+                threadId: fieldInput.threadId,
+                botId: fieldInput.botId || botId || "",
+                interactionId: fieldInput.interactionId,
+                expectedDraftVersion: fieldInput.expectedDraftVersion,
+                name: fieldInput.name,
+                value: fieldInput.value,
+              });
+              return { draftVersion: fieldInput.expectedDraftVersion + 1 };
+            },
+          },
+          {
+            spaceId: context.actor.spaceId,
+            threadId: target.threadId,
+            botId: botId ?? undefined,
+            interactionId: input.interactionId,
+            // Without a registered capability there is nothing to edit safely.
+            schema: capability?.schema ?? {
+              schemaVersion: 1,
+              presentation: "result",
+              fields: [],
+              action: null,
+            },
+            fields: input.fields,
+            revision: input.revision,
+            userEditedFields: input.userEditedFields,
+          },
+        );
+        if (!result.ok) throw new ORPCError("BAD_REQUEST", { message: result.error });
+        // The field service already emitted thread.surface.updated; nothing else to fan out.
+        return {
+          ok: true as const,
+          interactionId: result.interactionId,
+          surfaceId: result.surfaceId,
+          draftVersion: result.draftVersion,
+          skippedFields: result.skippedFields,
+          confirmationInvalidated: result.confirmationInvalidated,
+          nudge: result.nudge,
+        };
       }),
       dispatchInteractionAction: authed.threads.dispatchInteractionAction.handler(
         async ({ context, input }) => {

@@ -25,6 +25,7 @@ const simModule = join(root, "packages/core/src/interaction-simulation.ts");
 const nudgeModule = join(root, "packages/core/src/interaction-nudge.ts");
 const capabilityModule = join(root, "packages/core/src/interaction-capability.ts");
 const planBridgeModule = join(root, "packages/core/src/interaction-plan-bridge.ts");
+const corpusModule = join(root, "packages/core/src/corpus.ts");
 
 if (!existsSync(simModule)) {
   console.error(`Cannot find ${simModule}. Run this from a full checkout.`);
@@ -58,6 +59,7 @@ import {
   surfaceFallback,
   surfacePlanForCapability,
 } from ${JSON.stringify(planBridgeModule)};
+import { MULTI_TURN_CORPUS } from ${JSON.stringify(corpusModule)};
 
 const lifecycleFor = (state) =>
   state === "not_connected" || state === "requires_reauth" || state === "stale_local_connected"
@@ -301,6 +303,37 @@ function buildCapabilityScenario() {
   };
 }
 
+/**
+ * The 12-scenario gate, reported as the product actually stands. A deferred or
+ * unsupported row passes only by showing its safe fallback; it is never counted
+ * as an end-to-end capability.
+ */
+function buildCorpusScenario() {
+  return {
+    id: "corpus-gate",
+    title: "the twelve multi-turn scenarios and their real status",
+    rows: MULTI_TURN_CORPUS.map((row) => ({
+      id: row.id,
+      class: row.class,
+      status: row.status,
+      phase: row.phase,
+      surface: row.surfaceKind ?? "-",
+      action: row.expectsAction ? "yes" : "no",
+      multiTurn: row.multiTurn ? "yes" : "no",
+      fallback: row.safeBehaviour ?? "-",
+    })),
+    check: (row) => {
+      const source = MULTI_TURN_CORPUS.find((entry) => entry.id === row.id);
+      if (!source) return false;
+      if (source.status === "implemented") return true;
+      // Anything not implemented must state what the user gets instead.
+      return Boolean(source.safeBehaviour) && !source.expectsAction;
+    },
+    invariant:
+      "an unimplemented scenario states its safe fallback and offers no action; only implemented rows are end-to-end",
+  };
+}
+
 const scenarios = [
   {
     id: "connection-states",
@@ -394,6 +427,7 @@ const scenarios = [
   },
   buildDialogueScenario(),
   buildCapabilityScenario(),
+  buildCorpusScenario(),
 ];
 
 const nudges = Object.entries(A2UI_SURFACE_NUDGE).map(([state, text]) => ({
@@ -428,7 +462,7 @@ if (args.includes("--help") || args.includes("-h")) {
       "  node scripts/a2ui-sim.mjs --json       print the raw rows",
       "  node scripts/a2ui-sim.mjs --list       list scenario ids",
       "",
-      "Scenarios: connection-states, send-outcomes, unknown-reconcile, calendar-resume, dialogue-prompts, capability-registry",
+      "Scenarios: connection-states, send-outcomes, unknown-reconcile, calendar-resume, dialogue-prompts, capability-registry, corpus-gate",
     ].join("\n"),
   );
   process.exit(0);

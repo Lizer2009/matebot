@@ -74,6 +74,7 @@
     "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
+    "@matebot/a2ui-adapter": "workspace:*",
     "@react-native/metro-config": "0.86.3",
     "@sentry/cli": "2.58.4",
     "@types/node": "24.13.3",

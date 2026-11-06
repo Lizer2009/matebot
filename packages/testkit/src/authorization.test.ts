@@ -358,6 +358,15 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ],
       ["threads/executeInteraction", { botId: "missing-bot", interactionId: "missing-ix" }],
       [
+        "threads/editInteraction",
+        {
+          botId: "missing-bot",
+          interactionId: "missing-ix",
+          revision: 1,
+          fields: { subject: "x" },
+        },
+      ],
+      [
         "threads/dispatchInteractionAction",
         {
           botId: "missing-bot",
@@ -751,6 +760,10 @@ describeWithDatabase("API authorization and resource isolation", () => {
         { botId: ownerBot.id, interactionId: "missing-ix", draftVersion: 1 },
       ],
       ["threads/executeInteraction", { botId: ownerBot.id, interactionId: "missing-ix" }],
+      [
+        "threads/editInteraction",
+        { botId: ownerBot.id, interactionId: "missing-ix", revision: 1, fields: { subject: "x" } },
+      ],
       [
         "threads/dispatchInteractionAction",
         {
