@@ -14,6 +14,7 @@ import { UserRound } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
+import { A2uiSurfaceCard } from "../../components/a2ui/A2uiSurfaceCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { PageBlockCard } from "../../components/pages/PageBlockCard";
@@ -27,6 +28,7 @@ import {
 } from "../../components/ToolActivityDisclosure";
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
+import { isA2uiEnabled } from "../../lib/feature-flags";
 import { messageProviderLabel } from "../../lib/messaging";
 import type { PageBlock } from "../../lib/page-cards";
 import { useOpenPage } from "../../lib/pages";
@@ -465,6 +467,15 @@ export const MessageView = memo(function MessageView({
                 block={block}
                 updated={isPageSuperseded?.(message.id, block) ?? false}
               />
+            );
+          }
+          if (block.kind === "a2ui_surface") {
+            // Feature flag default off — production 0.6.0 behavior unchanged.
+            if (!isA2uiEnabled()) return null;
+            return (
+              <div key={i} className="flex justify-start">
+                <A2uiSurfaceCard block={block} />
+              </div>
             );
           }
           if (block.kind === "chart") {

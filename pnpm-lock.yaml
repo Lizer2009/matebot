@@ -16,6 +16,11 @@ overrides:
   '@electron/get>undici': 7.30.1
   e2b>undici: 7.30.1
   e2b>undici8: npm:undici@8.12.3
+  '@a2ui/react>zod': 3.25.76
+  '@a2ui/web_core>zod': 3.25.76
+  '@a2ui/markdown-it>zod': 3.25.76
+
+packageExtensionsChecksum: ad8b98de1e2b2d92dfc401fda6252593
 
 patchedDependencies:
   app-builder-lib@26.15.3:
@@ -332,6 +337,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@a2ui/react':
+        specifier: 0.15.0
+        version: 0.15.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.6.7)
+      '@a2ui/web_core':
+        specifier: 0.15.0
+        version: 0.15.0
       '@better-auth/passkey':
         specifier: 1.7.16
         version: 1.7.16(2hz3m5qqe6wpxegtvx4k3yxebm)
@@ -1252,6 +1263,19 @@ importers:
         version: 4.1.12(@opentelemetry/api@1.9.1)(@types/node@26.5.0)(jsdom@30.1.3(@noble/hashes@2.3.0))(vite@8.3.5(@types/node@26.5.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.15)(yaml@2.9.1))
 
 packages:
+
+  '@a2ui/markdown-it@0.2.2':
+    resolution: {integrity: sha512-oj58ybxIPwnRzN2NpvgxrOOwDlZuBKoEtW5U6wRs6SOq1dDjk/zAAkRtb0U52WPSu01gHJOFSGEkuE+Xe09dcQ==}
+    peerDependencies:
+      '@a2ui/web_core': ^0.14.0
+
+  '@a2ui/react@0.15.0':
+    resolution: {integrity: sha512-SkbdIMoRgtYNGh+nSEvK8YHDSAgS8LVFggDMCYdDqrUAWMLb2PS1unYOL8lfkXjskYK/+VoD7sa6X+I2F+F62w==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: 19.2.3
+      react-dom: 19.2.3
+      zod: 3.25.76
 
   '@a2ui/web_core@0.15.0':
     resolution: {integrity: sha512-S3k9rAJ9O55z5TlDeWy22ly3yQnDLO+XBWihlL5JQSuyxaCUmd7jgFnxO4eq/Bn6dSgdBF0WG8cve/euMoz8SA==}
@@ -11739,6 +11763,22 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
+
+  '@a2ui/markdown-it@0.2.2(@a2ui/web_core@0.15.0)':
+    dependencies:
+      '@a2ui/web_core': 0.15.0
+      dompurify: 3.4.17
+      markdown-it: 14.3.0
+
+  '@a2ui/react@0.15.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.6.7)':
+    dependencies:
+      '@a2ui/markdown-it': 0.2.2(@a2ui/web_core@0.15.0)
+      '@a2ui/web_core': 0.15.0
+      clsx: 2.1.1
+      markdown-it: 14.3.0
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+      zod: 4.6.7
 
   '@a2ui/web_core@0.15.0':
     dependencies:
