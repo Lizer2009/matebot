@@ -472,9 +472,60 @@ export const MessageView = memo(function MessageView({
           if (block.kind === "a2ui_surface") {
             // Feature flag default off — production 0.6.0 behavior unchanged.
             if (!isA2uiEnabled()) return null;
+            const botId = "botId" in artifactTarget ? artifactTarget.botId : message.botId;
+            const groupId = "groupId" in artifactTarget ? artifactTarget.groupId : undefined;
             return (
               <div key={i} className="flex justify-start">
-                <A2uiSurfaceCard block={block} />
+                <A2uiSurfaceCard
+                  block={block}
+                  fetchDocument={
+                    block.documentRef
+                      ? async (documentRef) => {
+                          if (!botId && !groupId) return undefined;
+                          const result = await rpc.threads.getA2uiSurface({
+                            ...(botId ? { botId } : { groupId: groupId! }),
+                            documentRef,
+                          });
+                          return result.messages;
+                        }
+                      : undefined
+                  }
+                  onFieldChange={
+                    botId || groupId
+                      ? async (name, value, expectedDraftVersion) => {
+                          const result = await rpc.threads.updateInteractionField({
+                            ...(botId ? { botId } : { groupId: groupId! }),
+                            interactionId: block.interactionId,
+                            expectedDraftVersion,
+                            name,
+                            value,
+                          });
+                          return { draftVersion: result.draftVersion };
+                        }
+                      : undefined
+                  }
+                  onConfirm={
+                    botId || groupId
+                      ? async (draftVersion) => {
+                          await rpc.threads.confirmInteraction({
+                            ...(botId ? { botId } : { groupId: groupId! }),
+                            interactionId: block.interactionId,
+                            draftVersion,
+                          });
+                        }
+                      : undefined
+                  }
+                  onSend={
+                    botId || groupId
+                      ? async () => {
+                          await rpc.threads.executeInteraction({
+                            ...(botId ? { botId } : { groupId: groupId! }),
+                            interactionId: block.interactionId,
+                          });
+                        }
+                      : undefined
+                  }
+                />
               </div>
             );
           }

@@ -3,14 +3,20 @@ import { MessageBlock, ProductEventSchema, ProductEventType } from "./events.js"
 import {
   A2uiProtocolFamily,
   A2uiSurfaceBlockSchema,
+  a2uiSurfaceDocumentRef,
   InteractionFieldStatus,
   InteractionNextStep,
   InteractionPlanSchema,
   InteractionProductEventPayloadSchema,
   InteractionRiskLevel,
+  parseA2uiSurfaceDocumentRef,
   SurfaceProductEventPayloadSchema,
   ThreadsConfirmInteractionInput,
   ThreadsConfirmInteractionOutput,
+  ThreadsExecuteInteractionInput,
+  ThreadsExecuteInteractionOutput,
+  ThreadsGetA2uiSurfaceInput,
+  ThreadsGetA2uiSurfaceOutput,
   ThreadsUpdateInteractionFieldInput,
   ThreadsUpdateInteractionFieldOutput,
 } from "./interaction.js";
@@ -202,10 +208,30 @@ describe("threads interaction RPC draft schemas", () => {
         draftVersion: 4,
       }),
     ).toMatchObject({ groupId: "group-1", draftVersion: 4 });
-    expect(ThreadsConfirmInteractionOutput.parse({ ok: true, confirmedVersion: 4 })).toEqual({
-      ok: true,
-      confirmedVersion: 4,
-    });
+    expect(
+      ThreadsConfirmInteractionOutput.parse({
+        ok: true,
+        confirmedVersion: 4,
+        effectId: "effect-1",
+        idempotencyKey: "a2ui:interaction:ix-1:confirm:4",
+      }),
+    ).toMatchObject({ confirmedVersion: 4, effectId: "effect-1" });
+    expect(
+      ThreadsConfirmInteractionOutput.safeParse({ ok: true, confirmedVersion: 4 }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an execute call that omits the thread target", () => {
+    expect(ThreadsExecuteInteractionInput.safeParse({ interactionId: "ix-1" }).success).toBe(false);
+    expect(
+      ThreadsExecuteInteractionOutput.parse({
+        ok: true,
+        effectId: "effect-1",
+        idempotencyKey: "a2ui:interaction:ix-1:confirm:4",
+        duplicate: false,
+        executed: false,
+      }).executed,
+    ).toBe(false);
   });
 
   it("requires exactly one of botId or groupId", () => {
@@ -225,5 +251,39 @@ describe("threads interaction RPC draft schemas", () => {
         draftVersion: 1,
       }).success,
     ).toBe(false);
+  });
+
+  it("validates getA2uiSurface input/output", () => {
+    expect(
+      ThreadsGetA2uiSurfaceInput.parse({
+        botId: "bot-1",
+        documentRef: a2uiSurfaceDocumentRef({ interactionId: "ix-1", surfaceId: "surf-1" }),
+      }).documentRef,
+    ).toContain("a2ui:interaction:");
+    expect(
+      ThreadsGetA2uiSurfaceOutput.parse({
+        interactionId: "ix-1",
+        surfaceId: "surf-1",
+        protocolFamily: "v0_9",
+        draftVersion: 1,
+        messages: [{ version: "v0.9" }],
+        documentRef: a2uiSurfaceDocumentRef({ interactionId: "ix-1", surfaceId: "surf-1" }),
+      }).messages,
+    ).toHaveLength(1);
+  });
+});
+
+describe("a2uiSurfaceDocumentRef", () => {
+  it("round-trips interaction and surface ids", () => {
+    const ref = a2uiSurfaceDocumentRef({ interactionId: "ix-42", surfaceId: "email-draft" });
+    expect(parseA2uiSurfaceDocumentRef(ref)).toEqual({
+      interactionId: "ix-42",
+      surfaceId: "email-draft",
+    });
+  });
+
+  it("rejects fixtures and malformed refs", () => {
+    expect(parseA2uiSurfaceDocumentRef("fixture:v0_9-minimal")).toBeNull();
+    expect(parseA2uiSurfaceDocumentRef("a2ui:interaction:only-id")).toBeNull();
   });
 });

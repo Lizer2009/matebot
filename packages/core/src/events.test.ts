@@ -1104,3 +1104,181 @@ describe("liveActivityLine", () => {
     ).toBeUndefined();
   });
 });
+
+describe("projectMessages A2UI surface", () => {
+  it("projects thread.surface.created onto a timeline a2ui_surface block", () => {
+    const messages = projectMessages([
+      {
+        id: "e1",
+        threadId: "t1",
+        botId: "bot-1",
+        seq: 0,
+        type: "thread.surface.created",
+        payload: {
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          title: "Email draft",
+          documentRef: "a2ui:interaction:ix-1:surface:surf-1",
+          messageId: "m-surface",
+        },
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
+    expect(messages).toHaveLength(1);
+    expect(messages[0]?.id).toBe("m-surface");
+    expect(messages[0]?.blocks[0]).toMatchObject({
+      kind: "a2ui_surface",
+      interactionId: "ix-1",
+      surfaceId: "surf-1",
+      draftVersion: 1,
+      intent: "email.compose",
+      documentRef: "a2ui:interaction:ix-1:surface:surf-1",
+    });
+  });
+
+  it("updates an existing message block on thread.surface.updated", () => {
+    const messages = projectMessages([
+      {
+        id: "e0",
+        threadId: "t1",
+        seq: 0,
+        type: "thread.message.created",
+        payload: {
+          messageId: "m1",
+          role: "bot",
+          blocks: [
+            {
+              kind: "a2ui_surface",
+              interactionId: "ix-1",
+              surfaceId: "surf-1",
+              protocolFamily: "v0_9",
+              draftVersion: 1,
+              title: "Draft",
+            },
+          ],
+        },
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: "e1",
+        threadId: "t1",
+        seq: 1,
+        type: "thread.surface.updated",
+        payload: {
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 2,
+          title: "Draft",
+          summary: "Edited",
+          messageId: "m1",
+          documentRef: "a2ui:interaction:ix-1:surface:surf-1",
+        },
+        createdAt: "2026-01-01T00:00:01.000Z",
+      },
+    ]);
+    expect(messages).toHaveLength(1);
+    expect(messages[0]?.blocks[0]).toMatchObject({
+      kind: "a2ui_surface",
+      draftVersion: 2,
+      summary: "Edited",
+      documentRef: "a2ui:interaction:ix-1:surface:surf-1",
+    });
+  });
+
+  it("keeps confirmedVersion on a surface update that records it", () => {
+    const messages = projectMessages([
+      {
+        id: "e1",
+        threadId: "t1",
+        seq: 1,
+        type: "thread.surface.updated",
+        payload: {
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 2,
+          confirmedVersion: 2,
+          messageId: "m1",
+        },
+        createdAt: "2026-01-01T00:00:01.000Z",
+      },
+    ]);
+    expect(messages[0]?.blocks[0]).toMatchObject({
+      kind: "a2ui_surface",
+      draftVersion: 2,
+      confirmedVersion: 2,
+    });
+  });
+
+  it("does not let an older surface event regress a newer draft", () => {
+    const messages = projectMessages([
+      {
+        id: "e1",
+        threadId: "t1",
+        seq: 1,
+        type: "thread.surface.updated",
+        payload: {
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 3,
+          title: "Edited",
+          messageId: "m1",
+        },
+        createdAt: "2026-01-01T00:00:01.000Z",
+      },
+      {
+        id: "e0",
+        threadId: "t1",
+        seq: 2,
+        type: "thread.surface.updated",
+        payload: {
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 2,
+          confirmedVersion: 2,
+          title: "Old",
+          messageId: "m1",
+        },
+        createdAt: "2026-01-01T00:00:02.000Z",
+      },
+    ]);
+    expect(messages[0]?.blocks[0]).toMatchObject({ draftVersion: 3, title: "Edited" });
+    expect(messages[0]?.blocks[0]).not.toHaveProperty("confirmedVersion");
+  });
+
+  it("applies thread.message.updated block replacements", () => {
+    const messages = projectMessages([
+      {
+        id: "e0",
+        threadId: "t1",
+        seq: 0,
+        type: "thread.message.created",
+        payload: {
+          messageId: "m1",
+          role: "bot",
+          blocks: [{ kind: "text", text: "old" }],
+        },
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: "e1",
+        threadId: "t1",
+        seq: 1,
+        type: "thread.message.updated",
+        payload: {
+          messageId: "m1",
+          role: "bot",
+          blocks: [{ kind: "text", text: "new" }],
+        },
+        createdAt: "2026-01-01T00:00:01.000Z",
+      },
+    ]);
+    expect(messages[0]?.blocks[0]).toEqual({ kind: "text", text: "new" });
+  });
+});

@@ -1,3 +1,4 @@
+export * from "./a2ui-recovery.js";
 export * from "./action-approval.js";
 export * from "./activity-sections.js";
 export * from "./agent-import/index.js";
@@ -45,6 +46,8 @@ export * from "./identity-display.js";
 export { identitySource } from "./identity-source.js";
 export * from "./inbound-routine.js";
 export * from "./instruction-diff.js";
+export * from "./interaction-effect.js";
+export * from "./interaction-runtime.js";
 export * from "./list-search.js";
 export * from "./logo-avatar-activity.js";
 export * from "./logo-avatar-activity-store.js";

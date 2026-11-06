@@ -1,4 +1,9 @@
 import type { MessageBlock, ThreadMessage } from "@matebot/contracts";
+import {
+  a2uiSurfaceBlockFromPayload,
+  mergeA2uiMessageBlocks,
+  placeA2uiSurfaceBlock,
+} from "./a2ui-recovery.js";
 import { cloudAgentBlockFromPayload } from "./cloud-agent.js";
 import { preserveIdentitySource } from "./identity-source.js";
 import { modelFallbackFailure, parseModelFallbackFailure } from "./run-error.js";
@@ -137,6 +142,31 @@ export function projectMessages(
         seq: event.seq,
         role: "bot",
         blocks: [block],
+        botId: event.botId ?? undefined,
+        runId: event.runId ?? undefined,
+        createdAt,
+      });
+      continue;
+    }
+    if (event.type === "thread.message.updated") {
+      const messageId = typeof payload.messageId === "string" ? payload.messageId : null;
+      if (messageId) {
+        const blocks = (payload.blocks as MessageBlock[]) ?? null;
+        if (blocks) {
+          for (const message of messages) {
+            if (message.id === messageId) {
+              message.blocks = mergeA2uiMessageBlocks(message.blocks, blocks);
+            }
+          }
+        }
+      }
+      continue;
+    }
+    if (event.type === "thread.surface.created" || event.type === "thread.surface.updated") {
+      applySurfaceProjection(messages, payload, {
+        eventId: event.id,
+        threadId: event.threadId,
+        seq: event.seq,
         botId: event.botId ?? undefined,
         runId: event.runId ?? undefined,
         createdAt,
@@ -737,6 +767,40 @@ export function createStreamingRedactor(secrets: string[]) {
       covered = buffer.length;
     },
   };
+}
+
+/**
+ * Project thread.surface.* onto an a2ui_surface MessageBlock.
+ * Prefer updating an existing message when messageId is present; otherwise append.
+ */
+function applySurfaceProjection(
+  messages: ThreadMessage[],
+  payload: Record<string, unknown>,
+  meta: {
+    eventId: string;
+    threadId: string;
+    seq: number;
+    botId?: string;
+    runId?: string;
+    createdAt: string;
+  },
+): void {
+  const block = a2uiSurfaceBlockFromPayload(payload);
+  if (!block) return;
+  const messageId = typeof payload.messageId === "string" ? payload.messageId : null;
+  const placed = placeA2uiSurfaceBlock(messages, block, messageId);
+  messages.splice(0, messages.length, ...placed.messages);
+  if (placed.placed) return;
+  messages.push({
+    id: messageId ?? `a2ui:${block.interactionId}:${block.surfaceId}:${meta.eventId}`,
+    threadId: meta.threadId,
+    seq: meta.seq,
+    role: "bot",
+    blocks: [block],
+    botId: meta.botId,
+    runId: meta.runId,
+    createdAt: meta.createdAt,
+  });
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

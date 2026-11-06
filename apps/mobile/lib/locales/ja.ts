@@ -1381,6 +1381,12 @@ export const JA_MESSAGES: Record<string, string> = {
   Organization: "組織",
   "Delete organization": "組織を削除",
   "Type {name} to confirm": "確認のため {name} と入力",
+  To: "宛先",
+  Subject: "件名",
+  Confirm: "確認",
+  "Send email": "メールを送信",
+  "Could not update the draft": "下書きを更新できませんでした",
+  "Confirm this draft before sending.": "送信する前にこの下書きを確認してください。",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "{peer}とのメッセージ{count}件" };

@@ -159,7 +159,17 @@ import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
-import { ThreadTargetSchema } from "./interaction.js";
+import {
+  ThreadsConfirmInteractionInput,
+  ThreadsConfirmInteractionOutput,
+  ThreadsExecuteInteractionInput,
+  ThreadsExecuteInteractionOutput,
+  ThreadsGetA2uiSurfaceInput,
+  ThreadsGetA2uiSurfaceOutput,
+  ThreadsUpdateInteractionFieldInput,
+  ThreadsUpdateInteractionFieldOutput,
+  ThreadTargetSchema,
+} from "./interaction.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
 import {
@@ -683,10 +693,9 @@ export const appContract = {
       .output(z.object({ ok: z.literal(true) })),
     clear: oc.input(threadTarget).output(z.object({ ok: z.literal(true) })),
     /**
-     * Ask / approval answers. Interaction field edits and draft confirmation are
-     * drafted in `./interaction.js` (`ThreadsUpdateInteractionFieldInput`,
-     * `ThreadsConfirmInteractionInput`) for a later threads.* mount — not on
-     * this procedure yet, so existing answer handlers stay unchanged.
+     * Ask / approval answers. Interaction field edits and draft confirmation use
+     * `updateInteractionField` / `confirmInteraction` so existing answer handlers
+     * stay unchanged.
      */
     answer: oc
       .input(
@@ -724,6 +733,29 @@ export const appContract = {
           ),
       )
       .output(z.object({ ok: z.literal(true) })),
+    /** Hydrate a persisted A2UI surface document (server authority). */
+    getA2uiSurface: oc.input(ThreadsGetA2uiSurfaceInput).output(ThreadsGetA2uiSurfaceOutput),
+    /**
+     * Edit an Interaction slot. Mounted in PR-5 runtime; contract present so
+     * clients can type against it. Server rejects when A2UI is not enabled.
+     */
+    updateInteractionField: oc
+      .input(ThreadsUpdateInteractionFieldInput)
+      .output(ThreadsUpdateInteractionFieldOutput),
+    /**
+     * Confirm the current draft (confirmedVersion = draftVersion). Mounted with
+     * ExternalEffect binding in PR-6; rejects when A2UI is not enabled.
+     */
+    confirmInteraction: oc
+      .input(ThreadsConfirmInteractionInput)
+      .output(ThreadsConfirmInteractionOutput),
+    /**
+     * Run the confirmed draft's ExternalEffect. Rejects when the draft is not
+     * confirmed. Email send completes the effect; a completed effect is not sent again.
+     */
+    executeInteraction: oc
+      .input(ThreadsExecuteInteractionInput)
+      .output(ThreadsExecuteInteractionOutput),
     /** `unreadAfterSeq`: the seq read up to before this call, null when nothing was unread. */
     markRead: oc
       .input(threadTarget)

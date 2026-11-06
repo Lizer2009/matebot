@@ -1389,6 +1389,12 @@ export const RU_MESSAGES: Record<string, string> = {
   Organization: "Организация",
   "Delete organization": "Удалить организацию",
   "Type {name} to confirm": "Введите {name} для подтверждения",
+  To: "Кому",
+  Subject: "Тема",
+  Confirm: "Подтвердить",
+  "Send email": "Отправить письмо",
+  "Could not update the draft": "Не удалось обновить черновик",
+  "Confirm this draft before sending.": "Подтвердите этот черновик перед отправкой.",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

@@ -1299,6 +1299,12 @@ export const ES_MESSAGES: Record<string, string> = {
   Organization: "Organización",
   "Delete organization": "Eliminar organización",
   "Type {name} to confirm": "Escribe {name} para confirmar",
+  To: "Para",
+  Subject: "Asunto",
+  Confirm: "Confirmar",
+  "Send email": "Enviar correo",
+  "Could not update the draft": "No se pudo actualizar el borrador",
+  "Confirm this draft before sending.": "Confirma este borrador antes de enviarlo.",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

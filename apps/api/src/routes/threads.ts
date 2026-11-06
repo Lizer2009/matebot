@@ -1,6 +1,7 @@
 import { runContinueJob, runJobKey } from "@matebot/adapter-kit";
 import { settleCallRequest } from "@matebot/adapters";
 import type { Actor, ProductEvent } from "@matebot/contracts";
+import { a2uiSurfaceDocumentRef, parseA2uiSurfaceDocumentRef } from "@matebot/contracts";
 import {
   AttachmentValidationError,
   CALL_CLIENT_NONCE_PREFIX,
@@ -15,12 +16,25 @@ import {
   appendEventInTransaction,
   createExternalConversationRepos,
   createThreadMessageInTransaction,
+  getInteraction,
+  getInteractionSurface,
+  InteractionNotFoundError,
+  InteractionVersionConflictError,
   IsolationError,
   lockOwnedGroup,
   touchGroupUpdatedAt,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { ORPCError } from "@orpc/server";
+import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
+import {
+  confirmInteractionService,
+  executeConfirmedInteractionService,
+  InteractionEffectRunMissingError,
+  InteractionEmailDeliveryError,
+  InteractionSendRejectedError,
+  updateInteractionFieldService,
+} from "../interaction-service.js";
 import type { RouterDeps } from "../router.js";
 import { createRoutineTestRun, routineTestRunNonce, routineTestTarget } from "../routines.js";
 import { withSerializableRetry } from "../serializable-retry.js";
@@ -64,6 +78,41 @@ import {
  * the marker's callId. User turns carry a uuid suffix, so they never collide. */
 export function callMarkerClientNonce(callId: string): string {
   return `${CALL_CLIENT_NONCE_PREFIX}${callId}:marker`;
+}
+
+function assertA2uiEnabled(): void {
+  if (!isA2uiFeatureEnabled()) {
+    throw new ORPCError("NOT_FOUND", { message: "A2UI is not enabled" });
+  }
+}
+
+async function resolveInteractionBotId(
+  prisma: RouterDeps["prisma"],
+  target: ThreadTarget,
+  interactionId: string,
+): Promise<string> {
+  if (target.kind === "bot") return target.botId;
+  const interaction = await getInteraction(prisma, interactionId);
+  if (!interaction || interaction.threadId !== target.threadId) {
+    throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+  }
+  if (interaction.runId) {
+    const run = await prisma.run.findUnique({
+      where: { id: interaction.runId },
+      select: { botId: true },
+    });
+    if (run?.botId) return run.botId;
+  }
+  if (interaction.messageId) {
+    const message = await prisma.message.findUnique({
+      where: { id: interaction.messageId },
+      select: { botId: true },
+    });
+    if (message?.botId) return message.botId;
+  }
+  throw new ORPCError("BAD_REQUEST", {
+    message: "Could not resolve bot for this interaction",
+  });
 }
 
 /** The card is closed by a marker; the run that follows finishes whatever the call left open. */
@@ -666,6 +715,136 @@ export function threadsRoutes(ctx: RouterContext) {
           getLogger().error("thread answer enqueue", error);
         });
         return { ok: true as const };
+      }),
+      getA2uiSurface: authed.threads.getA2uiSurface.handler(async ({ context, input }) => {
+        assertA2uiEnabled();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
+          includeArchived: true,
+        });
+        const ids = input.documentRef
+          ? parseA2uiSurfaceDocumentRef(input.documentRef)
+          : input.interactionId && input.surfaceId
+            ? { interactionId: input.interactionId, surfaceId: input.surfaceId }
+            : null;
+        if (!ids) {
+          throw new ORPCError("BAD_REQUEST", { message: "Invalid A2UI surface reference" });
+        }
+        const interaction = await getInteraction(deps.prisma, ids.interactionId);
+        if (!interaction || interaction.threadId !== target.threadId) {
+          throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+        }
+        const surface = await getInteractionSurface(deps.prisma, ids);
+        if (!surface) {
+          throw new ORPCError("NOT_FOUND", { message: "Surface not found" });
+        }
+        const protocolFamily =
+          surface.protocolFamily === "v0_9" || surface.protocolFamily === "v1_0"
+            ? surface.protocolFamily
+            : null;
+        if (!protocolFamily) {
+          throw new ORPCError("INTERNAL_SERVER_ERROR", {
+            message: "Surface protocolFamily is invalid",
+          });
+        }
+        const messages = Array.isArray(surface.document) ? surface.document : [];
+        return {
+          interactionId: surface.interactionId,
+          surfaceId: surface.surfaceId,
+          protocolFamily,
+          draftVersion: surface.draftVersion,
+          messages,
+          documentRef: a2uiSurfaceDocumentRef(ids),
+        };
+      }),
+      updateInteractionField: authed.threads.updateInteractionField.handler(
+        async ({ context, input }) => {
+          assertA2uiEnabled();
+          const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+          const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
+          try {
+            const result = await updateInteractionFieldService(deps.prisma, {
+              spaceId: context.actor.spaceId,
+              threadId: target.threadId,
+              botId,
+              interactionId: input.interactionId,
+              expectedDraftVersion: input.expectedDraftVersion,
+              name: input.name,
+              value: input.value,
+            });
+            return { ok: true as const, draftVersion: result.draftVersion };
+          } catch (error) {
+            if (error instanceof InteractionNotFoundError) {
+              throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+            }
+            if (error instanceof InteractionVersionConflictError) {
+              throw new ORPCError("CONFLICT", {
+                message: "Interaction draft was updated elsewhere; reload and retry",
+              });
+            }
+            throw error;
+          }
+        },
+      ),
+      confirmInteraction: authed.threads.confirmInteraction.handler(async ({ context, input }) => {
+        assertA2uiEnabled();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
+        try {
+          const result = await confirmInteractionService(deps.prisma, {
+            spaceId: context.actor.spaceId,
+            threadId: target.threadId,
+            botId,
+            interactionId: input.interactionId,
+            draftVersion: input.draftVersion,
+          });
+          return {
+            ok: true as const,
+            confirmedVersion: result.confirmedVersion,
+            effectId: result.effectId,
+            idempotencyKey: result.idempotencyKey,
+          };
+        } catch (error) {
+          if (error instanceof InteractionNotFoundError) {
+            throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+          }
+          if (error instanceof InteractionVersionConflictError) {
+            throw new ORPCError("CONFLICT", {
+              message: "Interaction draft was updated elsewhere; reload and retry",
+            });
+          }
+          if (error instanceof InteractionEffectRunMissingError) {
+            throw new ORPCError("BAD_REQUEST", { message: error.message });
+          }
+          if (error instanceof Error && error.message.includes("Required fields")) {
+            throw new ORPCError("BAD_REQUEST", { message: error.message });
+          }
+          throw error;
+        }
+      }),
+      executeInteraction: authed.threads.executeInteraction.handler(async ({ context, input }) => {
+        assertA2uiEnabled();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
+        try {
+          const result = await executeConfirmedInteractionService(deps.prisma, {
+            spaceId: context.actor.spaceId,
+            threadId: target.threadId,
+            botId,
+            interactionId: input.interactionId,
+          });
+          return { ok: true as const, ...result };
+        } catch (error) {
+          if (error instanceof InteractionNotFoundError) {
+            throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+          }
+          if (
+            error instanceof InteractionSendRejectedError ||
+            error instanceof InteractionEmailDeliveryError
+          ) {
+            throw new ORPCError("BAD_REQUEST", { message: error.message });
+          }
+          throw error;
+        }
       }),
       markRead: authed.threads.markRead.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);

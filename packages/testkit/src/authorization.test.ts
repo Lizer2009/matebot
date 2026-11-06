@@ -335,6 +335,28 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ["threads/answerCall"],
       ["threads/declineCall"],
       ["threads/answer"],
+      [
+        "threads/getA2uiSurface",
+        {
+          botId: "missing-bot",
+          documentRef: "a2ui:interaction:missing-ix:surface:missing-surface",
+        },
+      ],
+      [
+        "threads/updateInteractionField",
+        {
+          botId: "missing-bot",
+          interactionId: "missing-ix",
+          expectedDraftVersion: 1,
+          name: "to",
+          value: "a@example.com",
+        },
+      ],
+      [
+        "threads/confirmInteraction",
+        { botId: "missing-bot", interactionId: "missing-ix", draftVersion: 1 },
+      ],
+      ["threads/executeInteraction", { botId: "missing-bot", interactionId: "missing-ix" }],
       ["computer/status", { botId: "missing-bot" }],
       ["computer/boot", { botId: "missing-bot" }],
       ["computer/stop", { botId: "missing-bot" }],
@@ -696,6 +718,28 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ],
       ["threads/markRead", { botId: ownerBot.id }],
       ["threads/markUnread", { botId: ownerBot.id }],
+      [
+        "threads/getA2uiSurface",
+        {
+          botId: ownerBot.id,
+          documentRef: "a2ui:interaction:missing-ix:surface:missing-surface",
+        },
+      ],
+      [
+        "threads/updateInteractionField",
+        {
+          botId: ownerBot.id,
+          interactionId: "missing-ix",
+          expectedDraftVersion: 1,
+          name: "to",
+          value: "a@example.com",
+        },
+      ],
+      [
+        "threads/confirmInteraction",
+        { botId: ownerBot.id, interactionId: "missing-ix", draftVersion: 1 },
+      ],
+      ["threads/executeInteraction", { botId: ownerBot.id, interactionId: "missing-ix" }],
       ["computer/status", { botId: ownerBot.id }],
       ["computer/boot", { botId: ownerBot.id }],
       ["computer/stop", { botId: ownerBot.id }],

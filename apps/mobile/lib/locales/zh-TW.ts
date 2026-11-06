@@ -1354,6 +1354,12 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   Organization: "組織",
   "Delete organization": "刪除組織",
   "Type {name} to confirm": "輸入 {name} 以確認",
+  To: "收件人",
+  Subject: "主旨",
+  Confirm: "確認",
+  "Send email": "傳送郵件",
+  "Could not update the draft": "無法更新草稿",
+  "Confirm this draft before sending.": "傳送前請確認此草稿。",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "與{peer}的 {count} 則訊息" };

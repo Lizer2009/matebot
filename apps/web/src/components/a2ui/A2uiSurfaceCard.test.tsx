@@ -75,4 +75,127 @@ describe("A2uiSurfaceCard", () => {
     expect(refused?.textContent).toMatch(/EvilWidget/);
     expect(container.querySelector('[data-testid="a2ui-surface-host"]')).toBeNull();
   });
+
+  it("edits and confirms an email compose draft", async () => {
+    const onFieldChange = vi.fn(async () => ({ draftVersion: 2 }));
+    const onConfirm = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      title: "Send email",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onFieldChange={onFieldChange}
+          onConfirm={onConfirm}
+        />,
+      ),
+    );
+    expect(
+      (container.querySelector('[data-testid="a2ui-email-to"]') as HTMLInputElement).value,
+    ).toBe("a@example.com");
+    const subject = container.querySelector(
+      '[data-testid="a2ui-email-subject"]',
+    ) as HTMLInputElement;
+    setControlValue(subject, "Hello again");
+    await act(async () => {
+      subject.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      subject.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    });
+    expect(onFieldChange).toHaveBeenCalledWith("subject", "Hello again", 1);
+    const confirm = container.querySelector(
+      '[data-testid="a2ui-email-confirm"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      confirm.click();
+    });
+    expect(onConfirm).toHaveBeenCalledWith(2);
+    expect(container.querySelector('[data-testid="a2ui-surface-host"]')).toBeNull();
+  });
+
+  it("rejects send until the draft version is confirmed", async () => {
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onConfirm={async () => undefined}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const send = container.querySelector('[data-testid="a2ui-email-send"]') as HTMLButtonElement;
+    await act(async () => {
+      send.click();
+    });
+    expect(onSend).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-testid="a2ui-email-error"]')?.textContent).toMatch(
+      /Confirm this draft/,
+    );
+  });
+
+  it("sends once the draft version is confirmed", async () => {
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      confirmedVersion: 1,
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onConfirm={async () => undefined}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const send = container.querySelector('[data-testid="a2ui-email-send"]') as HTMLButtonElement;
+    await act(async () => {
+      send.click();
+    });
+    expect(onSend).toHaveBeenCalledWith(1);
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
+  });
 });
+
+function emailSurfaceMessages(): unknown[] {
+  return [
+    {
+      version: "v0.9",
+      updateDataModel: {
+        surfaceId: "fixture-minimal",
+        value: {
+          intent: "email.compose",
+          fields: [
+            { name: "to", value: "a@example.com" },
+            { name: "subject", value: "Hi" },
+            { name: "body", value: "Hello" },
+          ],
+        },
+      },
+    },
+  ];
+}
+
+function setControlValue(element: HTMLInputElement | HTMLTextAreaElement, value: string) {
+  const prototype =
+    element instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(element, value);
+}
