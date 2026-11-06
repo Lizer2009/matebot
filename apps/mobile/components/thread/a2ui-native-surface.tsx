@@ -31,6 +31,7 @@ export function A2uiNativeSurface({
   onSend,
   onConnect,
   onCheckStatus,
+  onAction,
   onDiscard,
 }: {
   block: A2uiSurfaceBlock;
@@ -45,6 +46,14 @@ export function A2uiNativeSurface({
   onSend?: (draftVersion: number) => Promise<void>;
   onConnect?: () => Promise<void>;
   onCheckStatus?: () => Promise<void>;
+  /** The same bridge the web card uses, so a native button can submit too. */
+  onAction?: (action: {
+    name: string;
+    surfaceId: string;
+    sourceComponentId: string;
+    timestamp: string;
+    context: Record<string, unknown>;
+  }) => void | Promise<void>;
   onDiscard?: () => void | Promise<void>;
 }) {
   const { t } = useI18n();
@@ -315,30 +324,55 @@ export function A2uiNativeSurface({
   return (
     <View testID="a2ui-native-surface">
       {block.title ? <Text>{block.title}</Text> : null}
-      <A2uiCatalogNodes nodes={catalog.nodes} />
+      <A2uiCatalogNodes nodes={catalog.nodes} block={block} onAction={onAction} />
     </View>
   );
 }
 
-function A2uiCatalogNodes({ nodes }: { nodes: NativeCatalogNode[] }) {
+type NativeActionHandler = NonNullable<Parameters<typeof A2uiNativeSurface>[0]["onAction"]>;
+
+function A2uiCatalogNodes({
+  nodes,
+  block,
+  onAction,
+}: {
+  nodes: NativeCatalogNode[];
+  block: A2uiSurfaceBlock;
+  onAction?: NativeActionHandler;
+}) {
   return (
     <View>
       {nodes.map((node, index) => (
-        <A2uiCatalogNode key={`${node.type}-${index}`} node={node} />
+        <A2uiCatalogNode
+          key={`${node.type}-${index}`}
+          node={node}
+          block={block}
+          onAction={onAction}
+        />
       ))}
     </View>
   );
 }
 
-function A2uiCatalogNode({ node }: { node: NativeCatalogNode }) {
+function A2uiCatalogNode({
+  node,
+  block,
+  onAction,
+}: {
+  node: NativeCatalogNode;
+  block: A2uiSurfaceBlock;
+  onAction?: NativeActionHandler;
+}) {
   const { t } = useI18n();
   if (node.type === "Text") return <Text>{node.text}</Text>;
-  if (node.type === "Column") return <A2uiCatalogNodes nodes={node.children} />;
+  if (node.type === "Column") {
+    return <A2uiCatalogNodes nodes={node.children} block={block} onAction={onAction} />;
+  }
   if (node.type === "Sheet") {
     return (
       <A2uiSheet label={node.title ?? t("Open")}>
         {node.title ? <Text>{node.title}</Text> : null}
-        <A2uiCatalogNodes nodes={node.children} />
+        <A2uiCatalogNodes nodes={node.children} block={block} onAction={onAction} />
       </A2uiSheet>
     );
   }
@@ -356,7 +390,22 @@ function A2uiCatalogNode({ node }: { node: NativeCatalogNode }) {
     <A2uiButton
       label={node.label}
       testID={`a2ui-native-button-${node.id}`}
-      onPress={() => undefined}
+      onPress={() => {
+        // Only a button whose action resolved can submit. An unresolved
+        // binding leaves it inert rather than submitting the wrong draft.
+        const action = node.action;
+        if (!onAction || !action) return;
+        void onAction({
+          name: action.name,
+          surfaceId: block.surfaceId,
+          sourceComponentId: node.id,
+          timestamp: new Date().toISOString(),
+          context: {
+            ...(action.interactionId ? { interactionId: action.interactionId } : {}),
+            ...(action.revision !== undefined ? { revision: action.revision } : {}),
+          },
+        });
+      }}
     />
   );
 }

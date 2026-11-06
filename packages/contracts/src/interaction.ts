@@ -362,3 +362,36 @@ export const InteractionDispatchError = z.enum([
   "action_failed",
 ]);
 export type InteractionDispatchError = z.infer<typeof InteractionDispatchError>;
+
+/**
+ * Apply a model-proposed natural-language edit to an existing draft.
+ *
+ * The model supplies field values and the revision its view was built from.
+ * The server resolves which card they belong to (asking when several are open),
+ * writes through the same field path the card uses, and republishes that same
+ * surface. It never creates a second card and never sends.
+ */
+export const ThreadsEditInteractionInput = ThreadTargetSchema.safeExtend({
+  /** Absent when the user used a pronoun; the server resolves or asks. */
+  interactionId: Id.optional(),
+  /** The revision the model's view was built from. */
+  revision: z.number().int().positive(),
+  fields: z.record(z.string().trim().min(1).max(64), z.unknown()),
+  /** Fields the user typed themselves; a model rewrite must not clobber them. */
+  userEditedFields: z.array(z.string().trim().min(1).max(64)).max(40).optional(),
+});
+export type ThreadsEditInteractionInput = z.infer<typeof ThreadsEditInteractionInput>;
+
+export const ThreadsEditInteractionOutput = z.object({
+  ok: z.literal(true),
+  interactionId: Id,
+  surfaceId: z.string().trim().min(1),
+  draftVersion: z.number().int().positive(),
+  /** Fields the edit left alone because the user had already typed them. */
+  skippedFields: z.array(z.string()).default([]),
+  /** True when this edit voided an approval the payload no longer matches. */
+  confirmationInvalidated: z.boolean(),
+  /** The one short line the turn says; the card holds the fields. */
+  nudge: z.string(),
+});
+export type ThreadsEditInteractionOutput = z.infer<typeof ThreadsEditInteractionOutput>;

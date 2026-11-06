@@ -774,6 +774,28 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                   }
                 : undefined
             }
+            onAction={async (action) => {
+              // Same contract as the web card: the compiled button carries the
+              // interaction and revision it was rendered from.
+              const interactionId = action.context.interactionId;
+              const revision = action.context.revision;
+              if (typeof interactionId !== "string" || typeof revision !== "number") return;
+              const actionId = action.name.startsWith("interaction.action.")
+                ? action.name.slice("interaction.action.".length)
+                : "";
+              if (!actionId) return;
+              try {
+                await rpc("threads/dispatchInteractionAction", {
+                  ...target,
+                  interactionId,
+                  surfaceId: action.surfaceId,
+                  action: actionId,
+                  revision,
+                });
+              } finally {
+                await onRefresh?.();
+              }
+            }}
             onDiscard={() => undefined}
           />
         );

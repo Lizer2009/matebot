@@ -64,7 +64,14 @@ describe("native A2UI catalog", () => {
           type: "Column",
           children: [
             { type: "Text", text: "Hello" },
-            { type: "TextField", id: "field", label: "Note", value: "Body" },
+            {
+              type: "TextField",
+              id: "field",
+              label: "Note",
+              value: "Body",
+              variant: "shortText",
+              path: "/note",
+            },
             { type: "Text", text: "" },
             { type: "Button", id: "go", label: "Go" },
             { type: "Sheet", title: "More", children: [{ type: "Text", text: "Hello" }] },

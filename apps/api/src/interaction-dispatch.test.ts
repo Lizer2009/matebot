@@ -115,14 +115,12 @@ describe("dispatchInteractionActionService", () => {
     });
   });
 
-  // A draft that was edited after approval must not submit on the old approval.
-  it("refuses when the payload is no longer the approved revision", async () => {
-    const d = deps({ row: { confirmedVersion: 2 } });
-    expect(await dispatchInteractionActionService(d, input)).toMatchObject({
-      ok: false,
-      error: "not_approved",
-    });
-    expect(d.runAction).not.toHaveBeenCalled();
+  // The click confirms the revision it carries, so a fresh draft is runnable —
+  // but a click from an older revision is not (covered above by stale_revision).
+  it("runs a fresh draft, because the click is the confirmation", async () => {
+    const d = deps({ row: { confirmedVersion: null, status: "draft" } });
+    expect(await dispatchInteractionActionService(d, input)).toMatchObject({ ok: true });
+    expect(d.runAction).toHaveBeenCalledTimes(1);
   });
 
   it("refuses an action the schema does not declare", async () => {

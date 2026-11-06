@@ -4,7 +4,7 @@ Status of the approved v1.1 spec ([`matebot-a2ui-best-practices-v1.1.md`](./mate
 This file records **what is actually implemented**; the spec records what is required.
 It is updated as each stage lands, and deliberately marks work as deferred rather than done.
 
-Last updated for the first foundation PR (base: PR #33 tip `ebca31d5b`).
+Last updated for the second foundation PR (base: PR #34 tip `df36eb755`).
 
 ---
 
@@ -24,7 +24,11 @@ Last updated for the first foundation PR (base: PR #33 tip `ebca31d5b`).
 
 | Spec requirement | State | Why |
 |---|---|---|
-| Email migrated onto the shared shell (`FieldsEditor` path) | **Deferred** | Email still uses its dedicated editor and lifecycle; both work, and the migration is its own change |
+| Model-driven NL editing reaches the same surface | **Done** | `apps/api/src/interaction-nl-edit.ts` + `threads.editInteraction`; writes through the card's own field service and republishes that surface. Route test in `a2ui-route.test.ts` |
+| Ambiguous reference across several cards asks instead of guessing | **Done** | `packages/core/src/surface-target.ts`; 7 tests |
+| Route-level HTTP integration for edit + dispatch | **Done (in-memory Prisma)** | `apps/api/src/a2ui-route.test.ts`: real router, middleware, handler, HTTP body. No SQL/transaction coverage — see blocker below |
+| Mobile generic parity: fields and actions on device | **Done** | `apps/mobile/lib/a2ui-catalog.ts` carries variant/path/action; native press test |
+| 12-scenario corpus as a phase-aware gate | **Done (data gate)** | `packages/core/src/corpus.ts` + `corpus.test.ts` + sim `corpus-gate`; only 5 rows are implemented |
 | RPC route executes the real effect for a dispatched action | **Done** | `interaction-dispatch.ts` + `interaction-run-action.ts`: the click confirms the exact revision then runs the existing execute service. No parallel route. Tests in `interaction-dispatch.test.ts`, `interaction-run-action.test.ts` |
 | Route-level integration test (click → effect through HTTP) | **Not run** | No Postgres/Docker in this environment; covered at service level and by the real-DOM click test instead |
 | Multi-turn prose edits reaching the same surface | **Deferred** | Pure revision rules exist; nothing drives them from a model turn yet |
@@ -49,6 +53,17 @@ The DOM tests mount the real `@a2ui/react` renderer on trees the real compiler
 produced, so a regression to a text-only card fails them. The simulator runs the
 shipping core functions and exits nonzero when a row contradicts its invariant.
 
+## Environment blocker: no real database
+
+The route-level test (`apps/api/src/a2ui-route.test.ts`) drives the real oRPC
+router over real HTTP with an in-memory Prisma client, because this environment
+has no Postgres, no Docker, and no root to install either. That covers routing,
+middleware, request/response shape, validation, and the service logic. It does
+**not** cover SQL constraints, transaction isolation, or row security — those
+remain the `.postgres.test.ts` suites, which need a database and were not run
+here. Integration evidence was not silently replaced with pure unit tests; the
+gap is named.
+
 ## Deliberate design notes
 
 - **No new tables and no new packages.** The capability entry is keyed by intent;
@@ -59,3 +74,9 @@ shipping core functions and exits nonzero when a row contradicts its invariant.
   rather than literals, so a click reports the draft it was rendered from.
 - **A registered capability may be unimplemented.** `calendar.create` is registered
   with `implemented: false` precisely so it is recognized without pretending it works.
+- **One write path.** A prose edit and a direct field edit call the same
+  `updateInteractionFieldService`, so they cannot drift; the prose path only adds
+  target resolution and user-field protection.
+- **The corpus is data, not handlers.** Twelve rows declare class, phase, status,
+  and safe fallback; adding a capability moves rows to `implemented` without a
+  new prompt-specific branch.

@@ -164,6 +164,8 @@ import {
   ThreadsConfirmInteractionOutput,
   ThreadsDispatchInteractionActionInput,
   ThreadsDispatchInteractionActionOutput,
+  ThreadsEditInteractionInput,
+  ThreadsEditInteractionOutput,
   ThreadsExecuteInteractionInput,
   ThreadsExecuteInteractionOutput,
   ThreadsGetA2uiSurfaceInput,
@@ -760,6 +762,12 @@ export const appContract = {
     executeInteraction: oc
       .input(ThreadsExecuteInteractionInput)
       .output(ThreadsExecuteInteractionOutput),
+    /**
+     * Apply a model-proposed natural-language edit to an existing draft. The
+     * server resolves the card, writes the same field path the card uses, and
+     * republishes that surface. Never creates a second card, never sends.
+     */
+    editInteraction: oc.input(ThreadsEditInteractionInput).output(ThreadsEditInteractionOutput),
     /**
      * Dispatch a compiled surface's action (the single primary button). The
      * server re-checks action allowlist, ownership, surface, and revision.

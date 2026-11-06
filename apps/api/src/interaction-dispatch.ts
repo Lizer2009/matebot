@@ -1,7 +1,7 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
 import { InteractionSurfaceSchema as InteractionSurfaceSchemaZ } from "@matebot/contracts";
 import type { SurfaceStatus } from "@matebot/core";
-import { canSubmitSurface } from "@matebot/core";
+import { canDispatchSurfaceAction } from "@matebot/core";
 
 /**
  * The API half of the action bridge: everything the browser claims is checked
@@ -86,15 +86,15 @@ export async function dispatchInteractionActionService(
   });
   if (!surface) return { ok: false, error: "unknown_surface" };
 
-  // Approval is derived from the versions, never from a status column the
-  // client could have seen earlier: an edit after approval revokes it.
-  const approved = row.confirmedVersion !== null && row.confirmedVersion === row.draftVersion;
-  const gate = canSubmitSurface({
+  // The click confirms the revision it carries and runs it in one gesture, so
+  // the requirement is that the revision is the current one — a click from an
+  // older surface is refused, which is what keeps a stale payload from sending.
+  const gate = canDispatchSurfaceAction({
     state: {
       taskId: input.interactionId,
       surfaceId: input.surfaceId,
       revision: row.draftVersion,
-      status: approved ? "approved" : "draft",
+      status: row.status,
       values: {},
       editedFields: [],
     },
