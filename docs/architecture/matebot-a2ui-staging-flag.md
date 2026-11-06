@@ -66,18 +66,20 @@ TIP_SHA=$(git rev-parse "origin/$TIP_REF")
 echo "Pull: ghcr.io/lizer2009/matebot/app:sha-${TIP_SHA}"
 ```
 
-3. On `192.168.10.5`, point Compose at that tag (example; do not SSH from this agent):
+3. On `192.168.10.5`, point Compose at the published tip tag (example; do not SSH from this agent):
 
 ```bash
 # After a successful publish-server-image workflow_dispatch on tip
-# cursor/a2ui-pr10-mobile-catalog-1fe7 (this agent cannot dispatch: Actions 403):
-export RAKAZO_IMAGE=ghcr.io/lizer2009/matebot/app:sha-d5fee2080bf1fe6607a86a92bf280a9a7f520bac
+# cursor/a2ui-pr10-mobile-catalog-1fe7 (Cloud Agents get Actions 403 on dispatch —
+# a maintainer must Run workflow on that ref):
+TIP_REF=cursor/a2ui-pr10-mobile-catalog-1fe7
+git fetch origin "$TIP_REF"
+TIP_SHA=$(git rev-parse "origin/$TIP_REF")
+export RAKAZO_IMAGE=ghcr.io/lizer2009/matebot/app:sha-${TIP_SHA}
 # then restart the stack with the normal compose path for that host
 ```
 
-Current tip SHA to publish/pull (update if tip moves): `d5fee2080bf1fe6607a86a92bf280a9a7f520bac`.
-
-There is no separate `a2ui` moving tag in the publish action today; use the immutable `sha-` tag. Do **not** dispatch with `--ref main` for this experiment if the goal is to avoid touching `edge`.
+Exact pull tag = `ghcr.io/lizer2009/matebot/app:sha-<full-40-char-sha-of-the-dispatched-tip-commit>`. `edge` is **not** moved (publish-image only enables `edge` when `github.ref == refs/heads/main`). There is no separate `a2ui` moving tag today. Do **not** dispatch with `--ref main` for this experiment if the goal is to avoid touching `edge`.
 
 ### Verify flag-off
 
