@@ -232,7 +232,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   actionProps: MessageActionProps;
   doubleTapSurface?: boolean;
   userBubble?: UserBubble;
-  onRefresh?: () => void | Promise<void>;
+  onRefresh?: () => void | Promise<unknown>;
 }) {
   const colorScheme = useResolvedAppearance();
   const tokens = withUserBubble(mobileTokens(), userBubble);
@@ -741,10 +741,14 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
               });
             }}
             onSend={async () => {
-              await rpc("threads/executeInteraction", {
-                ...target,
-                interactionId: block.interactionId,
-              });
+              try {
+                await rpc("threads/executeInteraction", {
+                  ...target,
+                  interactionId: block.interactionId,
+                });
+              } finally {
+                await onRefresh?.();
+              }
             }}
             onConnect={async () => {
               const controller = new AbortController();

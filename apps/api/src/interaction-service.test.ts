@@ -767,6 +767,79 @@ describe("executeConfirmedInteractionService", () => {
     expect(db.interactions.get("ix-1")?.status).toBe("unknown");
   });
 
+  it("maps an unexpected provider throw to a failed effect instead of leaving executing", async () => {
+    vi.mocked(deliverInteractionEmail).mockRejectedValueOnce(new Error("Internal server error"));
+    const db = confirmedDraft({
+      surface: { surfaceId: "surf-1", protocolFamily: "v0_9" },
+      message: {
+        id: "msg-surface",
+        blocks: [
+          {
+            kind: "a2ui_surface",
+            interactionId: "ix-1",
+            surfaceId: "surf-1",
+            protocolFamily: "v0_9",
+            draftVersion: 2,
+            capability: "ready",
+          },
+        ],
+      },
+    });
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+      }),
+    ).rejects.toBeInstanceOf(InteractionEmailDeliveryError);
+    expect(lastSurfacePayload()).toMatchObject({
+      template: "action-result-failed",
+      lifecycle: "failed",
+    });
+    expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("failed");
+    expect(db.interactions.get("ix-1")?.status).toBe("failed");
+  });
+
+  it("maps a post-claim crash to a failed surface instead of a bare 500", async () => {
+    const db = confirmedDraft({
+      surface: { surfaceId: "surf-1", protocolFamily: "v0_9" },
+      message: {
+        id: "msg-surface",
+        blocks: [
+          {
+            kind: "a2ui_surface",
+            interactionId: "ix-1",
+            surfaceId: "surf-1",
+            protocolFamily: "v0_9",
+            draftVersion: 2,
+            capability: "ready",
+          },
+        ],
+      },
+    });
+    vi.spyOn(db.prisma, "$transaction").mockRejectedValueOnce(new Error("Internal server error"));
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+      }),
+    ).rejects.toMatchObject({
+      name: "InteractionEmailDeliveryError",
+      message: "Could not send the email",
+    });
+    expect(lastSurfacePayload()).toMatchObject({
+      template: "action-result-failed",
+      lifecycle: "failed",
+    });
+    expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("failed");
+    expect(db.interactions.get("ix-1")?.status).toBe("failed");
+  });
+
   it("retries a failed send on the same confirmed effect", async () => {
     vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({
       ok: false,

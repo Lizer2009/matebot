@@ -85,8 +85,23 @@ function EmailComposeFixture() {
   const [draftVersion, setDraftVersion] = useState(1);
   const [confirmedVersion, setConfirmedVersion] = useState<number | undefined>(undefined);
   const [fields, setFields] = useState(initialFields);
+  const [lifecycle, setLifecycle] = useState(fixtureLifecycle);
+  const [sendError, setSendError] = useState(
+    fixtureLifecycle === "failed" ? "Could not send the email" : undefined,
+  );
   const versionRef = useRef(1);
   const confirmedRef = useRef<number | undefined>(undefined);
+  const sendFails = params.get("send") === "fail";
+  const template =
+    lifecycle === "executing"
+      ? "action-progress-card"
+      : lifecycle === "succeeded"
+        ? "action-result-success"
+        : lifecycle === "failed"
+          ? "action-result-failed"
+          : lifecycle === "unknown"
+            ? "action-reconcile-card"
+            : fixtureTemplate;
 
   const block = fixtureA2uiSurfaceBlock({
     intent: "email.compose",
@@ -96,10 +111,10 @@ function EmailComposeFixture() {
     draftVersion,
     confirmedVersion,
     ...(fixtureCapability ? { capability: fixtureCapability } : {}),
-    ...(fixtureLifecycle ? { lifecycle: fixtureLifecycle } : {}),
-    ...(fixtureTemplate ? { template: fixtureTemplate } : {}),
-    ...(fixtureLifecycle === "succeeded" ? { providerMessageId: "msg-1" } : {}),
-    ...(fixtureLifecycle === "failed" ? { error: "Could not send the email" } : {}),
+    ...(lifecycle ? { lifecycle } : {}),
+    ...(template ? { template } : {}),
+    ...(lifecycle === "succeeded" ? { providerMessageId: "msg-1" } : {}),
+    ...(sendError ? { error: sendError } : {}),
   });
 
   return (
@@ -127,6 +142,12 @@ function EmailComposeFixture() {
           if (confirmedRef.current !== version) {
             throw new Error("Confirm this draft before sending.");
           }
+          if (sendFails) {
+            setSendError("Internal server error");
+            setLifecycle("failed");
+            throw new Error("Internal server error");
+          }
+          setLifecycle("succeeded");
         }}
         onCheckStatus={async () => undefined}
         onDiscard={() => undefined}

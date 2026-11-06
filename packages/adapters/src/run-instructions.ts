@@ -403,7 +403,7 @@ export function userTurnInstructions(parts: {
       ? offeredBuiltinClause(
           parts.disabledBuiltinTools,
           "present_interaction",
-          'When the user asks to compose or send an email (any language), present an editable draft with present_interaction and intent "email.compose". Never send mail with shell, python, smtplib, or request_secret; the user sends from the draft.',
+          'When the user asks to compose or send an email (any language), present an editable draft with present_interaction and intent "email.compose". Never send mail with shell, python, smtplib, or request_secret; the user sends from the draft. Never say the email was sent, is sending, failed, or that delivery is unknown — the draft card owns that status. Mention a send only after the surface reports succeeded.',
         )
       : undefined,
     offeredBuiltinClause(

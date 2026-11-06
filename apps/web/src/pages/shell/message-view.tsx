@@ -521,10 +521,14 @@ export const MessageView = memo(function MessageView({
                   onSend={
                     botId || groupId
                       ? async () => {
-                          await rpc.threads.executeInteraction({
-                            ...(botId ? { botId } : { groupId: groupId! }),
-                            interactionId: block.interactionId,
-                          });
+                          try {
+                            await rpc.threads.executeInteraction({
+                              ...(botId ? { botId } : { groupId: groupId! }),
+                              interactionId: block.interactionId,
+                            });
+                          } finally {
+                            await onRefresh();
+                          }
                         }
                       : undefined
                   }

@@ -59,7 +59,7 @@ export type MessageRowActions = {
   openPeerChat: (peer: { peerBotId: string; peerBotName: string }) => void;
   layout: (messageId: string, y: number, index: number) => void;
   /** Reload the thread so UNKNOWN can pick up an E′ reconcile stamp. */
-  refresh?: () => void | Promise<void>;
+  refresh?: () => void | Promise<unknown>;
 };
 
 type MessageRowProps = {
