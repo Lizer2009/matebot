@@ -25,7 +25,8 @@ Last updated for the first foundation PR (base: PR #33 tip `ebca31d5b`).
 | Spec requirement | State | Why |
 |---|---|---|
 | Email migrated onto the shared shell (`FieldsEditor` path) | **Deferred** | Email still uses its dedicated editor and lifecycle; both work, and the migration is its own change |
-| RPC route executes the real effect for a dispatched action | **Partially wired** | The route + service checks are in place; `runAction` currently confirms the action is valid but does not invoke the existing confirm/execute path. **This is the next change and is load-bearing.** |
+| RPC route executes the real effect for a dispatched action | **Done** | `interaction-dispatch.ts` + `interaction-run-action.ts`: the click confirms the exact revision then runs the existing execute service. No parallel route. Tests in `interaction-dispatch.test.ts`, `interaction-run-action.test.ts` |
+| Route-level integration test (click → effect through HTTP) | **Not run** | No Postgres/Docker in this environment; covered at service level and by the real-DOM click test instead |
 | Multi-turn prose edits reaching the same surface | **Deferred** | Pure revision rules exist; nothing drives them from a model turn yet |
 | Mobile parity for the generic compiler | **Deferred** | Mobile still allows 5 components; explicit fallback, no dropped action |
 | Calendar draft + real create (Phase 1) | **Deferred** | Registry marks `calendar.create` `implemented: false`, so no dead button ships |

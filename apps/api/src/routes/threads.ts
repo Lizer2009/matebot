@@ -29,6 +29,7 @@ import { getLogger } from "@matebot/logging";
 import { ORPCError } from "@orpc/server";
 import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
 import { dispatchInteractionActionService } from "../interaction-dispatch.js";
+import { confirmThenExecute } from "../interaction-run-action.js";
 import {
   confirmInteractionService,
   executeConfirmedInteractionService,
@@ -866,6 +867,7 @@ export function threadsRoutes(ctx: RouterContext) {
         async ({ context, input }) => {
           assertA2uiEnabled();
           const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+          const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
           // A compiled surface's single button arrives as an action id plus the
           // revision it was rendered from; the service re-checks both.
           const capability = interactionCapabilityForIntent(
@@ -897,15 +899,33 @@ export function threadsRoutes(ctx: RouterContext) {
                 };
               },
               loadSurface: (surfaceInput) => getInteractionSurface(deps.prisma, surfaceInput),
-              runAction: async ({ interactionId, action, revision }) => {
-                // The one primary action maps to the existing confirm+execute path.
-                // `send` on an email draft is the shipped behaviour, unchanged.
-                if (capability.effectKind === "email.send" && action === "send") {
-                  return { ok: true as const };
-                }
-                void interactionId;
-                void revision;
-                return { ok: false as const, error: "unknown_action" };
+              runAction: async () => {
+                // The compiled button runs the *existing* effect path, so there is
+                // one execution route per capability rather than a second one here.
+                return confirmThenExecute(
+                  {
+                    confirm: (confirmInput) =>
+                      confirmInteractionService(deps.prisma, {
+                        ...confirmInput,
+                        connector: deps.connectors,
+                      }),
+                    execute: (executeInput) =>
+                      executeConfirmedInteractionService(deps.prisma, {
+                        ...executeInput,
+                        connector: deps.connectors,
+                        jobs: deps.jobs,
+                      }),
+                  },
+                  {
+                    spaceId: context.actor.spaceId,
+                    threadId: target.threadId,
+                    botId,
+                    interactionId: input.interactionId,
+                    revision: input.revision,
+                    userId: context.actor.userId,
+                    kind: capability.effectKind,
+                  },
+                );
               },
             },
             {
