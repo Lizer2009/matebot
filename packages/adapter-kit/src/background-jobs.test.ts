@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  actionReconcileJob,
   dispatchBackgroundJob,
   HISTORY_COMPACT_MAX_ATTEMPTS,
   historyCompactJob,
@@ -25,6 +26,7 @@ function handlers(): BackgroundJobHandlers {
     "messaging.credential-cleanup": vi.fn(async () => undefined),
     "cloud_agent.poll": vi.fn(async () => undefined),
     "purchase.poll": vi.fn(async () => undefined),
+    "action.reconcile": vi.fn(async () => undefined),
     "push.receipt": vi.fn(async () => undefined),
   };
 }
@@ -80,6 +82,18 @@ describe("background job contracts", () => {
       availableAt,
       replaceKey: "routine.retry:run-1",
     });
+  });
+
+  it("validates and dispatches action.reconcile", async () => {
+    const target = handlers();
+    await dispatchBackgroundJob(target, "action.reconcile", { effectId: "effect-1" });
+    expect(target["action.reconcile"]).toHaveBeenCalledWith({ effectId: "effect-1" });
+    expect(actionReconcileJob("effect-1")).toEqual({
+      name: "action.reconcile",
+      payload: { effectId: "effect-1" },
+      replaceKey: "action.reconcile:effect-1",
+    });
+    expect(() => parseBackgroundJob("action.reconcile", { effectId: "" })).toThrow();
   });
 
   it("rejects unknown names and malformed deliveries", () => {

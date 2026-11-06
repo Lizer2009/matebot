@@ -68,6 +68,7 @@ import {
   RunJobPublisher,
   RunStarter,
   RunWorkerHost,
+  reconcileAmbiguousEmailEffects,
   reconcileCloudAgents,
   reconcileComputerUpdates,
   reconcilePurchases,
@@ -353,6 +354,7 @@ async function main() {
     cloudAgent,
     paymentWallet,
     notifications,
+    connector: stack.connector,
   });
   const reconciler = createJobReconciler({
     prisma,
@@ -367,6 +369,8 @@ async function main() {
     reconcileStrategicInitiatives: createStrategicInitiativeReconciler({ prisma, jobs }),
     reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
     reconcilePurchases: () => reconcilePurchases({ prisma, jobs, paymentWallet }),
+    reconcileAmbiguousEmails: () =>
+      reconcileAmbiguousEmailEffects({ prisma, jobs, connector: stack.connector }),
     reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
     reconcileRoutineRetryNotices: inMemoryJobs
       ? undefined

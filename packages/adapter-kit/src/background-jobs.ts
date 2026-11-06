@@ -30,6 +30,7 @@ const payloadSchemas = {
   }),
   "cloud_agent.poll": z.object({ agentId: z.string().min(1) }),
   "purchase.poll": z.object({ purchaseId: z.string().min(1) }),
+  "action.reconcile": z.object({ effectId: z.string().min(1) }),
   "push.receipt": z.object({
     userId: z.string().min(1),
     ticketId: z.string().min(1),
@@ -207,6 +208,20 @@ export function purchasePollJob(purchaseId: string, availableAt?: Date): Backgro
     name: "purchase.poll",
     payload: { purchaseId },
     replaceKey: `purchase.poll:${purchaseId}`,
+    ...(availableAt ? { availableAt } : {}),
+  };
+}
+
+export function actionReconcileJobKey(effectId: string): string {
+  return `action.reconcile:${effectId}`;
+}
+
+/** One inspect job per effect. Replaces a waiting job so lost work can be re-queued. */
+export function actionReconcileJob(effectId: string, availableAt?: Date): BackgroundJob {
+  return {
+    name: "action.reconcile",
+    payload: { effectId },
+    replaceKey: actionReconcileJobKey(effectId),
     ...(availableAt ? { availableAt } : {}),
   };
 }

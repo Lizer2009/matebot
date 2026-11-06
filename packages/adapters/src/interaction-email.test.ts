@@ -1,7 +1,12 @@
 import type { AdapterContext, ConnectorEvent, ConnectorProvider } from "@matebot/adapter-kit";
 import { describe, expect, it } from "vitest";
 import { FakeComposioClient } from "./composio-fake.js";
-import { deliverInteractionEmail } from "./interaction-email.js";
+import {
+  deliverInteractionEmail,
+  INTERACTION_EMAIL_INSPECT_TOOL,
+  INTERACTION_EMAIL_SEND_TOOL,
+  inspectInteractionEmailDelivery,
+} from "./interaction-email.js";
 
 const draft = {
   to: "a@example.com",
@@ -81,6 +86,89 @@ describe("deliverInteractionEmail", () => {
       ok: false,
       error: "Could not send the email",
       outcome: "unknown",
+    });
+  });
+
+  it("inspects SENT mail without invoking send", async () => {
+    const client = new FakeComposioClient();
+    client.connect("user-1", "gmail");
+    await deliverInteractionEmail(draft, {
+      kind: "client",
+      userId: "user-1",
+      client,
+    });
+    const inspect = await inspectInteractionEmailDelivery(draft, {
+      kind: "client",
+      userId: "user-1",
+      client,
+    });
+    expect(inspect).toEqual({ found: true, deliveryId: "18c5f5e1" });
+    expect(client.executions.map((entry) => entry.tool)).toEqual([
+      INTERACTION_EMAIL_SEND_TOOL,
+      INTERACTION_EMAIL_INSPECT_TOOL,
+    ]);
+  });
+
+  it("inspects through a connector with a distinct execution id", async () => {
+    const tools: string[] = [];
+    const ids: string[] = [];
+    const connector: Pick<ConnectorProvider, "execute"> = {
+      async *execute(call) {
+        tools.push(call.tool);
+        ids.push(call.executionId);
+        yield {
+          type: "result",
+          data: {
+            data: {
+              messages: [{ messageId: "prov-found", to: "a@example.com", subject: "Hi" }],
+            },
+          },
+        };
+      },
+    };
+    const context = {
+      operationId: "interaction.email.inspect",
+      traceId: "interaction.email.inspect",
+      spaceId: "space-1",
+      userId: "user-1",
+      signal: new AbortController().signal,
+    } satisfies AdapterContext;
+    await expect(
+      inspectInteractionEmailDelivery(draft, {
+        kind: "connector",
+        context,
+        connector,
+        connectionId: "conn-gmail",
+      }),
+    ).resolves.toEqual({ found: true, deliveryId: "prov-found" });
+    expect(tools).toEqual([INTERACTION_EMAIL_INSPECT_TOOL]);
+    expect(ids).toEqual([`${draft.idempotencyKey}:inspect`]);
+  });
+
+  it("classifies an inspect timeout as still unknown", async () => {
+    const connector: Pick<ConnectorProvider, "execute"> = {
+      async *execute() {
+        yield { type: "error", message: "Request timed out" };
+      },
+    };
+    const context = {
+      operationId: "interaction.email.inspect",
+      traceId: "interaction.email.inspect",
+      spaceId: "space-1",
+      userId: "user-1",
+      signal: new AbortController().signal,
+    } satisfies AdapterContext;
+    await expect(
+      inspectInteractionEmailDelivery(draft, {
+        kind: "connector",
+        context,
+        connector,
+        connectionId: "conn-gmail",
+      }),
+    ).resolves.toEqual({
+      found: false,
+      outcome: "unknown",
+      error: "Request timed out",
     });
   });
 

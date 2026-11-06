@@ -166,6 +166,8 @@ import {
   ThreadsExecuteInteractionOutput,
   ThreadsGetA2uiSurfaceInput,
   ThreadsGetA2uiSurfaceOutput,
+  ThreadsReconcileInteractionInput,
+  ThreadsReconcileInteractionOutput,
   ThreadsUpdateInteractionFieldInput,
   ThreadsUpdateInteractionFieldOutput,
   ThreadTargetSchema,
@@ -756,6 +758,13 @@ export const appContract = {
     executeInteraction: oc
       .input(ThreadsExecuteInteractionInput)
       .output(ThreadsExecuteInteractionOutput),
+    /**
+     * Inspect an UNKNOWN email send. Never re-invokes send. Rejects when A2UI
+     * is not enabled or the interaction is not waiting on reconcile.
+     */
+    reconcileInteraction: oc
+      .input(ThreadsReconcileInteractionInput)
+      .output(ThreadsReconcileInteractionOutput),
     /** `unreadAfterSeq`: the seq read up to before this call, null when nothing was unread. */
     markRead: oc
       .input(threadTarget)

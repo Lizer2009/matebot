@@ -551,7 +551,14 @@ export const MessageView = memo(function MessageView({
                   onCheckStatus={
                     botId || groupId
                       ? async () => {
-                          await onRefresh();
+                          try {
+                            await rpc.threads.reconcileInteraction({
+                              ...(botId ? { botId } : { groupId: groupId! }),
+                              interactionId: block.interactionId,
+                            });
+                          } finally {
+                            await onRefresh();
+                          }
                         }
                       : undefined
                   }
