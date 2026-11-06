@@ -1,0 +1,25 @@
+{
+  "name": "@matebot/a2ui-adapter",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "check": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --root ../.. packages/a2ui-adapter"
+  },
+  "dependencies": {
+    "@a2ui/web_core": "github:Lizer2009/a2ui#dee8167996b0a802b18b3ebe51f3515c55b757de&path:typescript/core/web_core",
+    "@matebot/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "4.1.12"
+  }
+}

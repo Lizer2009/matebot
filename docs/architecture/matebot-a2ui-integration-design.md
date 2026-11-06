@@ -228,7 +228,7 @@ Matebot 使用 **pnpm workspace**；上游 a2ui 示例常用 yarn——**禁止*
 4. Mobile Native Catalog 同步协议语义（组件能力矩阵），再开 feature flag。
 5. 更新本设计「当前 pin」表（实现 PR 的 `## Changes` 引用 commit）。
 
-**当前设计态 pin 占位（PR-2 填写）：** `Lizer2009/a2ui@<TBD-commit>` · render family: **v0.9** · server: **v0.9 + reserve v1.0**。
+**当前 pin（PR-2）：** `Lizer2009/a2ui@dee8167996b0a802b18b3ebe51f3515c55b757de` · `@a2ui/web_core` via pnpm `github:…#<sha>&path:typescript/core/web_core`（§4.3 A）· package version `0.15.0` · render family: **v0.9** · server: **v0.9 + reserve v1.0**。详见 `packages/a2ui-adapter/README.md`。
 
 ---
 
