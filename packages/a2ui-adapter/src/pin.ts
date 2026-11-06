@@ -10,9 +10,13 @@ export const A2UI_UPSTREAM_COMMIT = "dee8167996b0a802b18b3ebe51f3515c55b757de" a
 /** Monorepo subpath that publishes as `@a2ui/web_core`. */
 export const A2UI_WEB_CORE_PATH = "typescript/core/web_core" as const;
 
-/** Design §4.3 strategy A specifier (git commit + subpath) — also the package.json dep. */
+/**
+ * Design §4.3 strategy A specifier (git commit + subpath).
+ * Install uses exact npm `@a2ui/web_core@0.15.0` (strategy B): upstream git
+ * prepare requires Yarn 4 via Corepack and breaks Matebot CI — see README.
+ */
 export const A2UI_PNPM_GIT_SPEC =
   `github:${A2UI_UPSTREAM_REPO}#${A2UI_UPSTREAM_COMMIT}&path:${A2UI_WEB_CORE_PATH}` as const;
 
-/** Package version field at the pin commit (npm semver ≠ protocol version). */
-export const A2UI_WEB_CORE_PACKAGE_VERSION = "0.15.0" as const;
+/** Exact npm package version aligned with the pin commit’s package.json. */
+export const A2UI_WEB_CORE_NPM_VERSION = "0.15.0" as const;

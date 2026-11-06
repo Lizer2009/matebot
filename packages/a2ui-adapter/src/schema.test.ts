@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   A2UI_PNPM_GIT_SPEC,
   A2UI_UPSTREAM_COMMIT,
-  A2UI_WEB_CORE_PACKAGE_VERSION,
+  A2UI_WEB_CORE_NPM_VERSION,
   compileInteractionPlan,
   DEFAULT_PROTOCOL_FAMILY,
   validateA2uiMessages,
@@ -22,7 +22,7 @@ describe("a2ui upstream pin", () => {
     expect(A2UI_UPSTREAM_COMMIT).toMatch(/^[0-9a-f]{40}$/);
     expect(A2UI_PNPM_GIT_SPEC).toContain(A2UI_UPSTREAM_COMMIT);
     expect(A2UI_PNPM_GIT_SPEC).toContain("path:typescript/core/web_core");
-    expect(A2UI_WEB_CORE_PACKAGE_VERSION).toBe("0.15.0");
+    expect(A2UI_WEB_CORE_NPM_VERSION).toBe("0.15.0");
   });
 
   it("defaults compile/validate to v0_9", () => {

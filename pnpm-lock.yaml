@@ -611,8 +611,8 @@ importers:
   packages/a2ui-adapter:
     dependencies:
       '@a2ui/web_core':
-        specifier: github:Lizer2009/a2ui#dee8167996b0a802b18b3ebe51f3515c55b757de&path:typescript/core/web_core
-        version: https://codeload.github.com/Lizer2009/a2ui/tar.gz/dee8167996b0a802b18b3ebe51f3515c55b757de#path:typescript/core/web_core
+        specifier: 0.15.0
+        version: 0.15.0
       '@matebot/contracts':
         specifier: workspace:*
         version: link:../contracts
@@ -1253,9 +1253,8 @@ importers:
 
 packages:
 
-  '@a2ui/web_core@https://codeload.github.com/Lizer2009/a2ui/tar.gz/dee8167996b0a802b18b3ebe51f3515c55b757de#path:typescript/core/web_core':
-    resolution: {path: typescript/core/web_core, tarball: https://codeload.github.com/Lizer2009/a2ui/tar.gz/dee8167996b0a802b18b3ebe51f3515c55b757de}
-    version: 0.15.0
+  '@a2ui/web_core@0.15.0':
+    resolution: {integrity: sha512-S3k9rAJ9O55z5TlDeWy22ly3yQnDLO+XBWihlL5JQSuyxaCUmd7jgFnxO4eq/Bn6dSgdBF0WG8cve/euMoz8SA==}
 
   '@adraffy/ens-normalize@1.11.1':
     resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
@@ -10113,6 +10112,11 @@ packages:
     resolution: {integrity: sha512-Kko+Y5XQ6fM+Ce3dq3m9YGxnacYZYl9cA1wZjaF3Vbry2L3i1qVg8+CAgNPsXRArPMUMCaOR7oa9Nqntc43JKA==}
     engines: {node: '>= 20.19.0'}
 
+  redos-detector@6.1.4:
+    resolution: {integrity: sha512-lPlka1rEH6kK42gtgokvvxMmpAvyc28DcRjQbGxeP5RJsJWgAduBOdGedVCDPdSyCr4ay/JDxq3nGYsJZyt8tA==}
+    engines: {node: '>=16.0.0'}
+    hasBin: true
+
   reflect-metadata@0.2.2:
     resolution: {integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==}
 
@@ -10141,6 +10145,10 @@ packages:
 
   regjsgen@0.8.0:
     resolution: {integrity: sha512-RvwtGe3d7LvWiDQXeQw8p5asZUmfU1G/l6WbUXeHta7Y2PEIvBTwH6E2EfmYUK8pxcxEdEmaomqyp0vZZ7C+3Q==}
+
+  regjsparser@0.13.0:
+    resolution: {integrity: sha512-NZQZdC5wOE/H3UT28fVGL+ikOZcEzfMGk/c3iN9UGxzWHMa1op7274oyiUVrAG4B2EuFhus8SvkaYnhvW92p9Q==}
+    hasBin: true
 
   regjsparser@0.13.2:
     resolution: {integrity: sha512-NgRBy2Nx/bE+9F27nVHnqcN5HjyLmecqsqx2PJHu3/IEtADD4WuxuXIVExD5PoSDFVrl78dOonfcOe5O+5nbzQ==}
@@ -11732,11 +11740,12 @@ packages:
 
 snapshots:
 
-  '@a2ui/web_core@https://codeload.github.com/Lizer2009/a2ui/tar.gz/dee8167996b0a802b18b3ebe51f3515c55b757de#path:typescript/core/web_core':
+  '@a2ui/web_core@0.15.0':
     dependencies:
       '@lit/context': 1.1.6
       '@preact/signals-core': 1.14.5
       lit: 3.3.3
+      redos-detector: 6.1.4
       validate-color: 2.2.4
       zod: 3.25.76
       zod-to-json-schema: 3.25.2(zod@3.25.76)
@@ -16039,9 +16048,7 @@ snapshots:
       metro-runtime: 0.84.5
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -22645,6 +22652,10 @@ snapshots:
 
   readdirp@5.1.1: {}
 
+  redos-detector@6.1.4:
+    dependencies:
+      regjsparser: 0.13.0
+
   reflect-metadata@0.2.2: {}
 
   regenerate-unicode-properties@10.2.2:
@@ -22675,6 +22686,10 @@ snapshots:
       unicode-match-property-value-ecmascript: 2.2.1
 
   regjsgen@0.8.0: {}
+
+  regjsparser@0.13.0:
+    dependencies:
+      jsesc: 3.1.0
 
   regjsparser@0.13.2:
     dependencies:

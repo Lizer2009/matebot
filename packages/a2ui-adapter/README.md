@@ -12,20 +12,19 @@ Business code depends on Matebot `InteractionPlan` and this package’s API — 
 | **Commit (full SHA)** | `dee8167996b0a802b18b3ebe51f3515c55b757de` |
 | Render family (Phase 1) | **v0.9** |
 | Server | **v0.9 + reserved v1.0** (dual-track) |
-| Package path | `typescript/core/web_core` → `@a2ui/web_core` |
+| Package path | `typescript/core/web_core` → `@a2ui/web_core@0.15.0` |
 
 Constant: `A2UI_UPSTREAM_COMMIT` / `A2UI_PNPM_GIT_SPEC` in `src/pin.ts`.
 
-## Install strategy (design §4.3 **A**)
+## Install strategy (design §4.3)
 
-```text
-github:Lizer2009/a2ui#dee8167996b0a802b18b3ebe51f3515c55b757de&path:typescript/core/web_core
-```
+- **Selected: B (exact npm)** — `@a2ui/web_core@0.15.0`, matching the package version at the pin commit.
+- **Strategy A (git commit subpath)** was tried:
 
-- Pin is the **full commit SHA** (not floating `main`).
+  `github:Lizer2009/a2ui#dee8167996b0a802b18b3ebe51f3515c55b757de&path:typescript/core/web_core`
+
+  Upstream git `prepare`/`prepack` runs `yarn install` against `packageManager: yarn@4.x`. Matebot CI’s global Yarn is 1.x without Corepack for that fetch, so `pnpm install --frozen-lockfile` fails with `ERR_PNPM_PREPARE_PACKAGE`. Lock the published npm build instead of floating `main`.
 - Matebot stays on **pnpm**; do not merge the a2ui yarn workspace into this repo.
-- Upstream’s git `prepare`/`prepack` builds `@a2ui/web_core` from that commit (yarn inside the fetched package only).
-- Package version at the pin is `0.15.0` (npm package version ≠ protocol version).
 
 ## Dual-track
 
