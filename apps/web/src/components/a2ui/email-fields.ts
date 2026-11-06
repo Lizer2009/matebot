@@ -1,10 +1,22 @@
 export type EmailDraftFields = {
+  from: string;
   to: string;
+  cc: string;
   subject: string;
   body: string;
 };
 
-export const EMPTY_EMAIL_DRAFT: EmailDraftFields = { to: "", subject: "", body: "" };
+export type EmailFieldName = keyof EmailDraftFields;
+
+export const EMAIL_DRAFT_FIELD_NAMES = ["from", "to", "cc", "subject", "body"] as const;
+
+export const EMPTY_EMAIL_DRAFT: EmailDraftFields = {
+  from: "",
+  to: "",
+  cc: "",
+  subject: "",
+  body: "",
+};
 
 export function isEmailComposeIntent(intent: string | undefined): boolean {
   return intent === "email.compose" || intent === "email.send";
@@ -27,7 +39,13 @@ export function emailFieldsFromSurfaceMessages(messages: unknown[] | undefined):
       ) as { value?: unknown } | undefined;
       return typeof field?.value === "string" ? field.value : "";
     };
-    return { to: read("to"), subject: read("subject"), body: read("body") };
+    return {
+      from: read("from"),
+      to: read("to"),
+      cc: read("cc"),
+      subject: read("subject"),
+      body: read("body"),
+    };
   }
   return EMPTY_EMAIL_DRAFT;
 }

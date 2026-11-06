@@ -4,6 +4,7 @@ import {
   FLEET_WRITE_TOOL_NAMES,
 } from "@matebot/contracts";
 import { isBackgroundRunTrigger, isOwnerStartedRun } from "@matebot/core";
+import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
 import { selectMemoryTools } from "./memory-tools.js";
@@ -86,9 +87,12 @@ export function selectBuiltinToolsForRun(options: {
   userComputer?: boolean;
   /** That desktop can look at and drive its apps. */
   userComputerScreen?: boolean;
+  /** Override FEATURE_A2UI for tests; production reads process.env. */
+  a2uiEnabled?: boolean;
 }) {
   const disabled = disabledBuiltinToolSet(options.disabledBuiltinTools);
   const ownerStartedRun = isOwnerStartedRun(options.trigger, Boolean(options.followUpFromUser));
+  const a2uiEnabled = options.a2uiEnabled ?? isA2uiFeatureEnabled();
   return selectCloudAgentTools(
     selectMemoryTools(
       filterBuiltinToolsForRun(
@@ -115,6 +119,7 @@ export function selectBuiltinToolsForRun(options: {
       (options.paymentWalletEnabled || !PURCHASE_TOOL_NAMES.has(tool.name)) &&
       (options.mediaImagesEnabled || tool.name !== "generate_image") &&
       (options.mediaVideoEnabled || tool.name !== "generate_video") &&
+      (a2uiEnabled || tool.name !== "present_interaction") &&
       (options.ticketBoardEnabled ||
         (tool.name !== "board_tickets" && !tool.name.startsWith("ticket_"))) &&
       (!isBackgroundRunTrigger(options.trigger) ||
@@ -125,6 +130,7 @@ export function selectBuiltinToolsForRun(options: {
           "message_agent",
           "generate_image",
           "generate_video",
+          "present_interaction",
         ].includes(tool.name)) &&
       (options.voiceCall || tool.name !== "end_call") &&
       (options.userComputer || tool.name !== "user_computer_shell") &&
@@ -150,6 +156,7 @@ export function selectBuiltinToolsForRun(options: {
             "forget_memory",
             "task_catalog",
             "board_tickets",
+            "present_interaction",
           ].includes(tool.name) &&
           !tool.name.startsWith("scratchpad_") &&
           !tool.name.startsWith("ticket_"))),

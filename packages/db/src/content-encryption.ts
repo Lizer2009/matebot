@@ -22,7 +22,18 @@ import { createRowId } from "./row-id.js";
  * them (`array_contains`, `path`, artifact lookups). Everything else in a block,
  * including these values, is only authoritative inside the sealed copy.
  */
-const MESSAGE_BLOCK_PLAIN_KEYS = new Set(["kind", "status", "channelId", "serverId", "artifactId"]);
+const MESSAGE_BLOCK_PLAIN_KEYS = new Set([
+  "kind",
+  "status",
+  "channelId",
+  "serverId",
+  "artifactId",
+  // A2UI surface identity + confirm gate must stay queryable on sealed rows.
+  "interactionId",
+  "surfaceId",
+  "draftVersion",
+  "confirmedVersion",
+]);
 /** Event payload keys that event queries filter on. */
 const EVENT_PAYLOAD_PLAIN_KEYS = new Set([
   "messageId",

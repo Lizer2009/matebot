@@ -1,6 +1,7 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import { A2uiSurfaceHost } from "./A2uiSurfaceHost";
 import { EmailComposeEditor } from "./EmailComposeEditor";
+import type { EmailFieldName } from "./email-fields";
 import { emailFieldsFromSurfaceMessages, isEmailComposeIntent } from "./email-fields";
 import { useA2uiSurfaceDocument } from "./use-a2ui-surface-document";
 
@@ -17,6 +18,7 @@ export function A2uiSurfaceCard({
   onFieldChange,
   onConfirm,
   onSend,
+  onDiscard,
 }: {
   block: A2uiSurfaceBlock;
   /** Optional protocol messages; fixture documentRef fills this when omitted. */
@@ -24,12 +26,13 @@ export function A2uiSurfaceCard({
   /** Load a persisted documentRef from the API when not a fixture. */
   fetchDocument?: (documentRef: string) => Promise<unknown[] | undefined>;
   onFieldChange?: (
-    name: "to" | "subject" | "body",
+    name: EmailFieldName,
     value: string,
     expectedDraftVersion: number,
   ) => Promise<{ draftVersion: number } | undefined>;
   onConfirm?: (draftVersion: number) => Promise<void>;
   onSend?: (draftVersion: number) => Promise<void>;
+  onDiscard?: () => void | Promise<void>;
 }) {
   const document = useA2uiSurfaceDocument({
     documentRef: block.documentRef,
@@ -38,6 +41,7 @@ export function A2uiSurfaceCard({
   });
   const title = block.title?.trim() || "Surface";
   const summary = block.summary?.trim();
+  const emailCompose = isEmailComposeIntent(block.intent);
 
   if (block.protocolFamily !== "v0_9") {
     return (
@@ -59,18 +63,20 @@ export function A2uiSurfaceCard({
       data-draft-version={block.draftVersion}
       className="w-full max-w-[561px] overflow-hidden rounded-[20px] bg-card ring-[0.5px] ring-border pointer-coarse:min-[900px]:max-w-[639px]"
     >
-      <div className="border-b border-border/60 px-5 py-3">
-        <div className="truncate text-[15px] font-medium leading-[21px] text-foreground">
-          {title}
-        </div>
-        {summary ? (
-          <div className="mt-0.5 truncate text-[14px] leading-[20px] text-muted-foreground">
-            {summary}
+      {emailCompose ? null : (
+        <div className="border-b border-border/60 px-5 py-3">
+          <div className="truncate text-[15px] font-medium leading-[21px] text-foreground">
+            {title}
           </div>
-        ) : null}
-      </div>
+          {summary ? (
+            <div className="mt-0.5 truncate text-[14px] leading-[20px] text-muted-foreground">
+              {summary}
+            </div>
+          ) : null}
+        </div>
+      )}
       <div className="px-5 py-4">
-        {isEmailComposeIntent(block.intent) ? (
+        {emailCompose ? (
           <EmailComposeEditor
             draftVersion={block.draftVersion}
             confirmedVersion={block.confirmedVersion}
@@ -78,6 +84,7 @@ export function A2uiSurfaceCard({
             onFieldChange={onFieldChange}
             onConfirm={onConfirm}
             onSend={onSend}
+            onDiscard={onDiscard}
           />
         ) : document.messages ? (
           <A2uiSurfaceHost surfaceId={block.surfaceId} messages={document.messages} />

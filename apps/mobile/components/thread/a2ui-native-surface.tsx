@@ -10,8 +10,10 @@ import {
 import { useI18n } from "../../lib/i18n";
 import { A2uiButton, A2uiSheet, A2uiTextField } from "./a2ui-native-controls";
 
-type EmailFields = { to: string; subject: string; body: string };
+type EmailFields = { from: string; to: string; cc: string; subject: string; body: string };
 type EmailFieldName = keyof EmailFields;
+
+const EMAIL_FIELD_NAMES = ["from", "to", "cc", "subject", "body"] as const;
 
 export function A2uiNativeSurface({
   block,
@@ -20,6 +22,7 @@ export function A2uiNativeSurface({
   onFieldChange,
   onConfirm,
   onSend,
+  onDiscard,
 }: {
   block: A2uiSurfaceBlock;
   messages?: unknown[];
@@ -30,7 +33,8 @@ export function A2uiNativeSurface({
     expectedDraftVersion: number,
   ) => Promise<{ draftVersion: number } | undefined>;
   onConfirm?: (draftVersion: number) => Promise<void>;
-  onSend?: () => Promise<void>;
+  onSend?: (draftVersion: number) => Promise<void>;
+  onDiscard?: () => void | Promise<void>;
 }) {
   const { t } = useI18n();
   const [loaded, setLoaded] = useState<unknown[] | undefined>(messages);
@@ -38,6 +42,10 @@ export function A2uiNativeSurface({
   const [values, setValues] = useState<EmailFields>(() => emailFieldsFromSurfaceMessages(messages));
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [discarded, setDiscarded] = useState(false);
+  const [localConfirmedVersion, setLocalConfirmedVersion] = useState<number | undefined>(
+    block.confirmedVersion,
+  );
   const valuesRef = useRef(values);
   const versionRef = useRef(block.draftVersion);
   const committed = useRef(values);
@@ -53,6 +61,10 @@ export function A2uiNativeSurface({
     committed.current = next;
     versionRef.current = block.draftVersion;
   }, [source, block.draftVersion]);
+
+  useEffect(() => {
+    setLocalConfirmedVersion(block.confirmedVersion);
+  }, [block.confirmedVersion]);
 
   useEffect(() => {
     if (messages || !block.documentRef) return;
@@ -81,7 +93,10 @@ export function A2uiNativeSurface({
       try {
         const result = await onFieldChange(name, value, versionRef.current);
         const next = result?.draftVersion ?? versionRef.current + 1;
-        if (next !== versionRef.current) setSent(false);
+        if (next !== versionRef.current) {
+          setSent(false);
+          setLocalConfirmedVersion(undefined);
+        }
         versionRef.current = next;
         return next;
       } catch (err) {
@@ -91,22 +106,43 @@ export function A2uiNativeSurface({
     }
     async function flush(): Promise<number> {
       let next = versionRef.current;
-      for (const name of ["to", "subject", "body"] as const) next = await commit(name);
+      for (const name of EMAIL_FIELD_NAMES) next = await commit(name);
       return next;
     }
     function messageOf(err: unknown): string {
       return err instanceof Error && err.message ? err.message : t("Could not update the draft");
     }
+    const effectiveConfirmed = localConfirmedVersion ?? block.confirmedVersion;
     const title = block.title ?? t("Send email");
+    if (discarded) {
+      return (
+        <View testID="a2ui-native-surface">
+          <Text testID="a2ui-email-compose">{t("Discarded")}</Text>
+        </View>
+      );
+    }
     return (
       <View testID="a2ui-native-surface" style={{ gap: 8 }}>
         <Text>{title}</Text>
+        <Text testID="a2ui-email-status">{sent ? t("Sent") : t("Needs approval")}</Text>
         <A2uiSheet label={title}>
+          <A2uiTextField
+            label={t("From")}
+            value={values.from}
+            testID="a2ui-email-from"
+            onChangeText={setField("from")}
+          />
           <A2uiTextField
             label={t("To")}
             value={values.to}
             testID="a2ui-email-to"
             onChangeText={setField("to")}
+          />
+          <A2uiTextField
+            label={t("CC")}
+            value={values.cc}
+            testID="a2ui-email-cc"
+            onChangeText={setField("cc")}
           />
           <A2uiTextField
             label={t("Subject")}
@@ -121,12 +157,12 @@ export function A2uiNativeSurface({
             onChangeText={setField("body")}
           />
           <A2uiButton
-            label={t("Confirm")}
-            testID="a2ui-email-confirm"
+            label={t("Discard")}
+            testID="a2ui-email-discard"
             onPress={() => {
               setError(null);
-              void flush()
-                .then((next) => onConfirm?.(next))
+              void Promise.resolve(onDiscard?.())
+                .then(() => setDiscarded(true))
                 .catch((err: unknown) => setError(messageOf(err)));
             }}
           />
@@ -137,11 +173,15 @@ export function A2uiNativeSurface({
               setError(null);
               void flush()
                 .then(async (next) => {
-                  if (block.confirmedVersion !== next) {
-                    setError(t("Confirm this draft before sending."));
-                    return;
+                  if (effectiveConfirmed !== next) {
+                    if (!onConfirm) {
+                      setError(t("Confirm this draft before sending."));
+                      return;
+                    }
+                    await onConfirm(next);
+                    setLocalConfirmedVersion(next);
                   }
-                  await onSend?.();
+                  await onSend?.(next);
                   setSent(true);
                 })
                 .catch((err: unknown) => setError(messageOf(err)));

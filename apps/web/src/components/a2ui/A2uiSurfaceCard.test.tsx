@@ -7,12 +7,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { A2uiSurfaceCard } from "./A2uiSurfaceCard";
 import { fixtureA2uiSurfaceBlock, unknownComponentSurfaceMessages } from "./fixtures";
 
-vi.mock("@lingui/react/macro", () => ({
+const lingui = vi.hoisted(() => ({
   Trans: ({ children }: { children: unknown }) => children,
   useLingui: () => ({
     t: (strings: TemplateStringsArray, ...values: unknown[]) => String.raw(strings, ...values),
+    i18n: { locale: "en" },
   }),
 }));
+vi.mock("@lingui/react/macro", () => lingui);
+vi.mock("@lingui/react", () => lingui);
 
 let container: HTMLDivElement;
 let root: Root;
@@ -76,7 +79,7 @@ describe("A2uiSurfaceCard", () => {
     expect(container.querySelector('[data-testid="a2ui-surface-host"]')).toBeNull();
   });
 
-  it("edits and confirms an email compose draft", async () => {
+  it("edits an email compose draft on the review card", async () => {
     const onFieldChange = vi.fn(async () => ({ draftVersion: 2 }));
     const onConfirm = vi.fn(async () => undefined);
     const block = fixtureA2uiSurfaceBlock({
@@ -98,6 +101,10 @@ describe("A2uiSurfaceCard", () => {
     expect(
       (container.querySelector('[data-testid="a2ui-email-to"]') as HTMLInputElement).value,
     ).toBe("a@example.com");
+    expect(container.querySelector('[data-testid="a2ui-email-status"]')?.textContent).toMatch(
+      /Needs approval/,
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-confirm"]')).toBeNull();
     const subject = container.querySelector(
       '[data-testid="a2ui-email-subject"]',
     ) as HTMLInputElement;
@@ -109,17 +116,11 @@ describe("A2uiSurfaceCard", () => {
       subject.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
     });
     expect(onFieldChange).toHaveBeenCalledWith("subject", "Hello again", 1);
-    const confirm = container.querySelector(
-      '[data-testid="a2ui-email-confirm"]',
-    ) as HTMLButtonElement;
-    await act(async () => {
-      confirm.click();
-    });
-    expect(onConfirm).toHaveBeenCalledWith(2);
     expect(container.querySelector('[data-testid="a2ui-surface-host"]')).toBeNull();
   });
 
-  it("rejects send until the draft version is confirmed", async () => {
+  it("sends with confirm+execute in one gesture when props omit confirmedVersion", async () => {
+    const onConfirm = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);
     const block = fixtureA2uiSurfaceBlock({
       intent: "email.compose",
@@ -131,22 +132,25 @@ describe("A2uiSurfaceCard", () => {
         <A2uiSurfaceCard
           block={block}
           messages={emailSurfaceMessages()}
-          onConfirm={async () => undefined}
+          onConfirm={onConfirm}
           onSend={onSend}
         />,
       ),
     );
+    const form = container.querySelector('[data-testid="a2ui-email-compose"]') as HTMLElement;
+    expect(form.getAttribute("data-confirmed")).toBe("false");
     const send = container.querySelector('[data-testid="a2ui-email-send"]') as HTMLButtonElement;
     await act(async () => {
       send.click();
     });
-    expect(onSend).not.toHaveBeenCalled();
-    expect(container.querySelector('[data-testid="a2ui-email-error"]')?.textContent).toMatch(
-      /Confirm this draft/,
-    );
+    expect(onConfirm).toHaveBeenCalledWith(1);
+    expect(onSend).toHaveBeenCalledWith(1);
+    expect(container.querySelector('[data-testid="a2ui-email-error"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
   });
 
-  it("sends once the draft version is confirmed", async () => {
+  it("sends without a second confirm when the draft is already confirmed", async () => {
+    const onConfirm = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);
     const block = fixtureA2uiSurfaceBlock({
       intent: "email.compose",
@@ -159,7 +163,7 @@ describe("A2uiSurfaceCard", () => {
         <A2uiSurfaceCard
           block={block}
           messages={emailSurfaceMessages()}
-          onConfirm={async () => undefined}
+          onConfirm={onConfirm}
           onSend={onSend}
         />,
       ),
@@ -168,8 +172,40 @@ describe("A2uiSurfaceCard", () => {
     await act(async () => {
       send.click();
     });
+    expect(onConfirm).not.toHaveBeenCalled();
     expect(onSend).toHaveBeenCalledWith(1);
     expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
+  });
+
+  it("discards the review card without sending", async () => {
+    const onDiscard = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onDiscard={onDiscard}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const discard = container.querySelector(
+      '[data-testid="a2ui-email-discard"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      discard.click();
+    });
+    expect(onDiscard).toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-testid="a2ui-email-compose"]')?.textContent).toMatch(
+      /Discarded/,
+    );
   });
 });
 
@@ -182,7 +218,9 @@ function emailSurfaceMessages(): unknown[] {
         value: {
           intent: "email.compose",
           fields: [
+            { name: "from", value: "bot@example.com" },
             { name: "to", value: "a@example.com" },
+            { name: "cc", value: "" },
             { name: "subject", value: "Hi" },
             { name: "body", value: "Hello" },
           ],

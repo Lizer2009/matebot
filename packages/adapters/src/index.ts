@@ -1,3 +1,4 @@
+export * from "./a2ui-feature.js";
 export * from "./agent-connections.js";
 export * from "./agent-environment.js";
 export * from "./agent-import-settings.js";
@@ -98,6 +99,7 @@ export * from "./installed-connectors.js";
 export * from "./installed-messaging-surface.js";
 export * from "./integration-provider-settings.js";
 export * from "./interaction-email.js";
+export * from "./interaction-publish.js";
 export * from "./jev-auto-review.js";
 export * from "./job-reconciler.js";
 export * from "./keenable-web.js";

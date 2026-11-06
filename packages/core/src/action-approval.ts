@@ -228,6 +228,7 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "request_secret",
   "save_memory",
   "save_page",
+  "present_interaction",
   "save_shared_memory",
   "schedule_cancel",
   "schedule_create",

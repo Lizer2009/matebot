@@ -815,7 +815,12 @@ export function threadsRoutes(ctx: RouterContext) {
           if (error instanceof InteractionEffectRunMissingError) {
             throw new ORPCError("BAD_REQUEST", { message: error.message });
           }
-          if (error instanceof Error && error.message.includes("Required fields")) {
+          if (
+            error instanceof Error &&
+            (error.message.includes("Required fields") ||
+              error.message.includes("cannot be confirmed") ||
+              /\bnot ready\b/i.test(error.message))
+          ) {
             throw new ORPCError("BAD_REQUEST", { message: error.message });
           }
           throw error;

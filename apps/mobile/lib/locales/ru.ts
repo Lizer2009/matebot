@@ -1394,6 +1394,11 @@ export const RU_MESSAGES: Record<string, string> = {
   Confirm: "Подтвердить",
   "Send email": "Отправить письмо",
   "Could not update the draft": "Не удалось обновить черновик",
+  "Needs approval": "Нужно одобрение",
+  Discard: "Отменить",
+  Discarded: "Отменено",
+  From: "От",
+  CC: "Копия",
   "Confirm this draft before sending.": "Подтвердите этот черновик перед отправкой.",
 };
 

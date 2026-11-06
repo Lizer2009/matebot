@@ -1353,6 +1353,11 @@ export const NL_MESSAGES: Record<string, string> = {
   Confirm: "Bevestigen",
   "Send email": "E-mail verzenden",
   "Could not update the draft": "Het concept kon niet worden bijgewerkt",
+  "Needs approval": "Goedkeuring nodig",
+  Discard: "Verwerpen",
+  Discarded: "Verworpen",
+  From: "Van",
+  CC: "CC",
   "Confirm this draft before sending.": "Bevestig dit concept voordat je het verzendt.",
 };
 

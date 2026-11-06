@@ -20,6 +20,9 @@ describe("describeToolActivity", () => {
     expect(describeToolActivity("save_page", { title: "Plan", source: "x" })).toBe(
       "Writing the page code",
     );
+    expect(describeToolActivity("present_interaction", { plan: { intent: "email.compose" } })).toBe(
+      "Preparing an editable draft",
+    );
     expect(describeToolActivity("add_mcp_server", { name: "Linear" })).toBe(
       "Connecting MCP server: Linear",
     );

@@ -197,6 +197,7 @@ export function describeToolActivity(toolName: string, args: unknown): string {
   if (toolName === "save_page") {
     return record.help === true ? "Reading the page kit reference" : "Writing the page code";
   }
+  if (toolName === "present_interaction") return "Preparing an editable draft";
   if (toolName === "add_mcp_server") return `Connecting MCP server: ${detail(record.name)}`;
   if (toolName === "computer_observe") return "Looking at the screen";
   if (toolName === "browser_navigate")

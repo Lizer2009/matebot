@@ -1268,6 +1268,10 @@ msgstr "Card view"
 msgid "Cards"
 msgstr "Cards"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "CC"
+msgstr "CC"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "Change {name}"
@@ -1638,10 +1642,6 @@ msgstr "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_T
 #: src/pages/PluginsOverlay.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "Configure a plugin catalog on the server to connect apps."
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Confirm"
-msgstr "Confirm"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -2779,9 +2779,17 @@ msgstr "Disable a tool"
 msgid "Disabled"
 msgstr "Disabled"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discard"
+msgstr "Discard"
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
 msgstr "Discard recording"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discarded"
+msgstr "Discarded"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -2937,6 +2945,7 @@ msgstr "Edit name"
 msgid "Edit Profile"
 msgstr "Edit Profile"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3264,6 +3273,7 @@ msgstr "Free plan ends {day}"
 msgid "Friday"
 msgstr "Friday"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
 msgstr "From"
@@ -4246,6 +4256,10 @@ msgstr "Needs an answer"
 #: src/lib/user-error.ts
 msgid "Needs an OAuth client ID"
 msgstr "Needs an OAuth client ID"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Needs approval"
+msgstr "Needs approval"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"

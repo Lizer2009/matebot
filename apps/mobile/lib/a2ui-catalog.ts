@@ -21,11 +21,13 @@ type ComponentRecord = {
 };
 
 export function emailFieldsFromSurfaceMessages(messages: unknown[] | undefined): {
+  from: string;
   to: string;
+  cc: string;
   subject: string;
   body: string;
 } {
-  const empty = { to: "", subject: "", body: "" };
+  const empty = { from: "", to: "", cc: "", subject: "", body: "" };
   if (!messages) return empty;
   for (const message of messages) {
     if (!message || typeof message !== "object") continue;
@@ -40,7 +42,13 @@ export function emailFieldsFromSurfaceMessages(messages: unknown[] | undefined):
       ) as { value?: unknown } | undefined;
       return typeof field?.value === "string" ? field.value : "";
     };
-    return { to: read("to"), subject: read("subject"), body: read("body") };
+    return {
+      from: read("from"),
+      to: read("to"),
+      cc: read("cc"),
+      subject: read("subject"),
+      body: read("body"),
+    };
   }
   return empty;
 }

@@ -512,6 +512,8 @@ export const MessageView = memo(function MessageView({
                             interactionId: block.interactionId,
                             draftVersion,
                           });
+                          // Pull confirmedVersion onto the timeline if SSE lags.
+                          await onRefresh();
                         }
                       : undefined
                   }
@@ -525,6 +527,7 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
+                  onDiscard={() => undefined}
                 />
               </div>
             );

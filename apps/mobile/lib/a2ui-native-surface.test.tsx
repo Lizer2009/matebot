@@ -92,41 +92,78 @@ describe("native A2UI surface", () => {
     act(() => root.render(node));
   }
 
-  it("rejects send until the draft is confirmed", async () => {
-    const onSend = vi.fn();
-    render(<A2uiNativeSurface block={block} onSend={onSend} />);
+  it("sends with confirm+execute in one gesture when confirmation is missing", async () => {
+    const onConfirm = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    render(<A2uiNativeSurface block={block} onConfirm={onConfirm} onSend={onSend} />);
+    expect(text("a2ui-email-status")).toBe("Needs approval");
+    expect(document.querySelector('[data-testid="a2ui-email-confirm"]')).toBeNull();
     await act(async () => {
       click("a2ui-email-send");
+      await Promise.resolve();
+      await Promise.resolve();
     });
-    expect(text("a2ui-email-error")).toBe("Confirm this draft before sending.");
-    expect(onSend).not.toHaveBeenCalled();
+    expect(onConfirm).toHaveBeenCalledWith(1);
+    expect(onSend).toHaveBeenCalledWith(1);
+    expect(text("a2ui-email-sent")).toBe("Sent");
   });
 
-  it("sends a draft that is already confirmed", async () => {
+  it("sends a draft that is already confirmed without confirming again", async () => {
+    const onConfirm = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);
-    render(<A2uiNativeSurface block={{ ...block, confirmedVersion: 1 }} onSend={onSend} />);
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, confirmedVersion: 1 }}
+        onConfirm={onConfirm}
+        onSend={onSend}
+      />,
+    );
     await act(async () => {
       click("a2ui-email-send");
       await Promise.resolve();
     });
-    expect(onSend).toHaveBeenCalledOnce();
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(onSend).toHaveBeenCalledWith(1);
     expect(text("a2ui-email-sent")).toBe("Sent");
   });
 
-  it("commits edited fields before confirm", async () => {
+  it("commits edited fields before send confirms", async () => {
     const onFieldChange = vi.fn(async () => ({ draftVersion: 2 }));
     const onConfirm = vi.fn(async () => undefined);
-    render(<A2uiNativeSurface block={block} onFieldChange={onFieldChange} onConfirm={onConfirm} />);
+    const onSend = vi.fn(async () => undefined);
+    render(
+      <A2uiNativeSurface
+        block={block}
+        onFieldChange={onFieldChange}
+        onConfirm={onConfirm}
+        onSend={onSend}
+      />,
+    );
     await act(async () => {
       type("a2ui-email-subject", "Hello again");
     });
     await act(async () => {
-      click("a2ui-email-confirm");
+      click("a2ui-email-send");
+      await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
     });
     expect(onFieldChange).toHaveBeenCalledWith("subject", "Hello again", 1);
     expect(onConfirm).toHaveBeenCalledWith(2);
+    expect(onSend).toHaveBeenCalledWith(2);
+  });
+
+  it("discards without sending", async () => {
+    const onDiscard = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    render(<A2uiNativeSurface block={block} onDiscard={onDiscard} onSend={onSend} />);
+    await act(async () => {
+      click("a2ui-email-discard");
+      await Promise.resolve();
+    });
+    expect(onDiscard).toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
+    expect(text("a2ui-email-compose")).toBe("Discarded");
   });
 
   it("shows the catalog and refuses an unknown component", () => {
