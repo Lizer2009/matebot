@@ -1,12 +1,12 @@
 /** @jsxRuntime automatic */
 import type { TransactionalEmail } from "@matebot/adapter-kit";
-import { ANDROID_APP_STORE_URL, IOS_APP_STORE_URL } from "@matebot/contracts";
+import { ANDROID_APK_URL, IOS_APP_STORE_URL } from "@matebot/contracts";
 import { Link, Text } from "react-email";
 import { emailText, greeting, linkStyle, message } from "./email.js";
 
 const APPS: Readonly<Record<string, string>> = {
   iPhone: IOS_APP_STORE_URL,
-  Android: ANDROID_APP_STORE_URL,
+  Android: ANDROID_APK_URL,
   Mac: "https://rakazo.com/api/download?platform=mac",
   Windows: "https://rakazo.com/api/download?platform=windows",
   Linux: "https://rakazo.com/api/download?platform=linux",

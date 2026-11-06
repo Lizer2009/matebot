@@ -139,7 +139,7 @@ describe("pageLinkRequest", () => {
       "JavaScript:alert(1)",
       "data:text/html,<b>x</b>",
       "file:///etc/passwd",
-      "rakazo://settings",
+      "matebot://settings",
       "intent://x#Intent;end",
       "/relative",
       `https://example.com/${"a".repeat(5000)}`,

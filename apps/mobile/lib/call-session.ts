@@ -777,7 +777,7 @@ async function transcribeClip(
   const { apiBase, headers } = requestContext;
   const res = await fetch(`${apiBase}/api/voice/transcribe`, {
     method: "POST",
-    headers: { "content-type": "application/json", origin: "rakazo://", ...headers },
+    headers: { "content-type": "application/json", origin: "matebot://", ...headers },
     body: JSON.stringify({ audioBase64: clip.base64, mimeType: clip.mimeType }),
     signal,
   });

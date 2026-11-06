@@ -8,6 +8,11 @@ Self-hosters normally do not need to publish their own mobile app: the Matebot
 client can select a compatible server from the sign-in screen. If you distribute
 your own branded build, use your own Expo and store accounts.
 
+This fork's own build is linked in `apps/mobile/app.json` to the Expo project
+`@lizer-expo/matebot` (project id `4d08d2e7-5be4-4446-a430-8781f9203fae`), with
+scheme `matebot`, iOS bundle id `com.matebot.app` and Android package
+`com.matebot.app`. The `EXPO_TOKEN` Actions secret must grant access to it.
+
 ## Configure a build
 
 1. Link `apps/mobile` to an Expo project owned by your account.
@@ -62,21 +67,32 @@ alone.
 
 ## Android APK
 
-Android users should install [Matebot from Google Play](https://play.google.com/store/apps/details?id=com.rakazo.app).
-For manual installation, an APK remains available.
-`release-mobile` publishes it, or run the `release-android-apk` workflow from
-`main` on its own. It builds the `android-apk` EAS profile, signed with the
-project's managed keystore, and replaces the rolling `android` GitHub release,
-so the download link stays the same:
+For manual installation, an APK remains available. `release-mobile` publishes it,
+or run the `release-android-apk` workflow from `main` on its own:
+
+```sh
+gh workflow run release-android-apk.yml --repo Lizer2009/matebot --ref main
+gh run list --repo Lizer2009/matebot --workflow release-android-apk.yml --limit 3
+```
+
+It builds the `android-apk` EAS profile, signed with the project's managed
+keystore, and replaces the rolling `android` GitHub release, so the download link
+stays the same:
 
 ```text
 https://github.com/Lizer2009/matebot/releases/download/android/matebot.apk
 ```
 
+The marketing site hands out that file from `/api/download?platform=android`,
+which reads the `android` release by tag (not `releases/latest`, which the desktop
+updater owns). The homepage and the download page link to that redirect without
+checking GitHub at build time, so the first published APK needs no site rebuild;
+until one exists the redirect falls back to the releases page instead of a dead
+link.
+
 The APK uses the production update channel, so JavaScript changes reach it
-through the over-the-air updates below without a new APK. A Google Play install
-is signed with Play's key, so switching from the APK to Play means uninstalling
-the APK first.
+through the over-the-air updates below without a new APK. The rolling release is
+never GitHub's "latest", so a desktop release stays the newest download.
 
 ## Android push
 
@@ -91,7 +107,9 @@ eas env:set production --name GOOGLE_SERVICES_JSON --type file --value ./google-
 Keep the file and credentials out of Git. Upload an FCM V1 service account key
 with `eas credentials` under Android > Google Service Account > FCM V1. Then
 rebuild the APK: Firebase configuration is native, so an OTA update cannot add
-it to an existing binary. Builds without the variable remain supported.
+it to an existing binary. Without the variable the `release-android-apk` workflow
+still builds and publishes the APK, logs a warning, and the installed app simply
+receives no push while closed: builds without it remain supported.
 
 ## Over-the-air updates
 

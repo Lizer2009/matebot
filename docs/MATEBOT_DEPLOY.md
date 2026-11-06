@@ -153,6 +153,14 @@ Windows 安装包下载由 `/api/download?platform=windows` 解析，顺序是�
 
 二进制不进 git：`apps/www/public/downloads/` 由运维在部署机上放置，路径必须与 `RAKAZO_WINDOWS_INSTALLER` 一致。
 
+Android APK 由 `/api/download?platform=android` 解析，读的是滚动 Release **`android` 标签**（不是 `releases/latest`，那个标签属于桌面更新器），资产名固定为 `matebot.apk`。首次 APK 由 `release-android-apk` 工作流发布：
+
+```sh
+gh workflow run release-android-apk.yml --repo Lizer2009/matebot --ref main
+```
+
+在该资产出现之前，首页的 Android 按钮与下载页仍会展示，但 `/api/download?platform=android` 会跳到 Releases 页面，而不是死链。因此**顺序是：先发 APK，再发营销站**，或者接受首屏 Android 按钮短暂跳到 Releases。首页与下载页在构建期不探测该 Release，站点无需为了 APK 上线重新构建。
+
 ### 环境变量命名
 
 P2 重命名（`@rakazo/*` → `@matebot/*`）**只改 npm 包名与导入路径**，环境变量保持原样，避免已在运行的部署在拉取新镜像后读不到密钥：
@@ -162,7 +170,7 @@ P2 重命名（`@rakazo/*` → `@matebot/*`）**只改 npm 包名与导入路径
 | `RAKAZO_*`（`RAKAZO_HOST`、`RAKAZO_IMAGE`、`RAKAZO_DOCKER_BINARY`、`RAKAZO_PASSKEY_RP_ID` 等） | 已存在于各实例 `.env`；改名会让旧配置静默失效 |
 | Postgres 角色 `rakazo_app`、`POSTGRES_USER=rakazo` | 角色与已有卷一起创建，改名需要 `ALTER ROLE` 与停机 |
 | Compose 项目名 `rakazo-desktop`、卷名 `pgdata` | 改名会让已有的桌面栈与数据库变成“新栈”，看起来像数据丢失 |
-| 移动端 URL scheme `rakazo://`、bundle id `com.rakazo.app` | 需要在 App Store / Play Console 侧同步，属于商店发布工作 |
+| 移动端 URL scheme `matebot://`、bundle id `com.matebot.app` | 已随 Expo 项目重链改为 Matebot 自有身份；自托管实例的 `PASSKEY_*_APP_IDS` 需按新 bundle id 配置 |
 | OpenRouter 归因 `HTTP-Referer: https://rakazo.com` | 上游归因值；改动属于归因策略变更，不是品牌改名 |
 
 **已改的品牌面**：npm 包名 `@matebot/*`、根包名 `matebot`、桌面 `productName` / `appId` / 安装包与可执行文件名、AppData 目录名、窗口与设置页文案、www 站点与 README。

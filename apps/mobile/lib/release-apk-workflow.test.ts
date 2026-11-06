@@ -40,4 +40,26 @@ describe("Android APK release workflow", () => {
       '"android-apk"',
     );
   });
+
+  // The marketing site's /api/download?platform=android and docs/mobile-release.md name this asset.
+  it("publishes the APK under the documented stable name", () => {
+    expect(workflow).toContain("RELEASE_TAG: android");
+    expect(workflow).toContain("releases/download/android/matebot.apk");
+    expect(workflow).not.toContain("rakazo.apk");
+    // The create and replace paths both use the stable name, or the download URL breaks.
+    expect(workflow).toContain('gh release create "$RELEASE_TAG" "$RUNNER_TEMP/matebot.apk"');
+    expect(workflow).toContain("-f name=matebot.apk");
+  });
+
+  // Firebase config is native, so it cannot arrive in an OTA update; its absence must not block the
+  // first APK, which docs/mobile-release.md states is supported.
+  it("warns instead of failing when Android push is not configured", () => {
+    const step = workflow.slice(
+      workflow.indexOf("- name: Check the Android push configuration"),
+      workflow.indexOf("- name: Build APK on EAS"),
+    );
+    expect(step).toContain("GOOGLE_SERVICES_JSON");
+    expect(step).toContain("::warning::");
+    expect(step).not.toContain("exit 1");
+  });
 });

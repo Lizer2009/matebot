@@ -1,4 +1,4 @@
-appId: com.rakazo.app
+appId: com.matebot.app
 name: Onboarding
 ---
 - runFlow:
@@ -11,14 +11,14 @@ name: Onboarding
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 01-empty-inbox
-- openLink: "rakazo:///artifacts"
+- openLink: "matebot:///artifacts"
 - extendedWaitUntil:
     visible: "No artifacts yet|Artifacts"
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 02-empty-artifacts
-- openLink: "rakazo:///"
+- openLink: "matebot:///"
 - extendedWaitUntil:
     visible: "Create"
     timeout: 15000

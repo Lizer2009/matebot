@@ -135,7 +135,7 @@ private func target(_ bot: BotEntity?) -> (botId: String, spaceId: String?)? {
 
 @MainActor
 private func openChat(botId: String, spaceId: String?) async {
-  var link = URLComponents(string: "rakazo://thread")
+  var link = URLComponents(string: "matebot://thread")
   link?.queryItems = [URLQueryItem(name: "botId", value: botId)]
   if let spaceId { link?.queryItems?.append(URLQueryItem(name: "spaceId", value: spaceId)) }
   if let url = link?.url { await UIApplication.shared.open(url) }
@@ -461,7 +461,7 @@ private struct RakazoSession {
     request.httpMethod = "POST"
     for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
     request.setValue("application/json", forHTTPHeaderField: "content-type")
-    request.setValue("rakazo://", forHTTPHeaderField: "origin")
+    request.setValue("matebot://", forHTTPHeaderField: "origin")
     request.setValue("Bearer \(token)", forHTTPHeaderField: "authorization")
     if let spaceId { request.setValue(spaceId, forHTTPHeaderField: "x-rakazo-space-id") }
     request.httpBody = try JSONSerialization.data(withJSONObject: ["json": input])

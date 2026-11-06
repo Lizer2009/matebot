@@ -118,7 +118,7 @@ internal object SenderPush {
   private fun openThread(context: Context, data: JSONObject, botId: String, threadId: String): PendingIntent {
     val groupId = data.optString("groupId")
     val owner = if (groupId.isNotBlank()) "group-thread?groupId=${Uri.encode(groupId)}" else "thread?botId=${Uri.encode(botId)}"
-    val link = "rakazo://$owner&spaceId=${Uri.encode(data.optString("spaceId"))}&threadId=${Uri.encode(threadId)}"
+    val link = "matebot://$owner&spaceId=${Uri.encode(data.optString("spaceId"))}&threadId=${Uri.encode(threadId)}"
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link)).setPackage(context.packageName).apply {
       flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
     }

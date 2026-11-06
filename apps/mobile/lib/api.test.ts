@@ -247,7 +247,7 @@ describe("mobile API authentication", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          origin: "rakazo://",
+          origin: "matebot://",
           "accept-language": "en",
         },
         body: JSON.stringify({ email: "ada@example.com", password: "correct horse" }),
@@ -288,7 +288,7 @@ describe("mobile API authentication", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          origin: "rakazo://",
+          origin: "matebot://",
           "accept-language": "en",
         },
         body: JSON.stringify({
@@ -318,7 +318,7 @@ describe("mobile API authentication", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          origin: "rakazo://",
+          origin: "matebot://",
           "accept-language": "en",
         },
         body: JSON.stringify({ email: "ada@example.test", type: "sign-in" }),
@@ -331,7 +331,7 @@ describe("mobile API authentication", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          origin: "rakazo://",
+          origin: "matebot://",
           "accept-language": "en",
         },
         body: JSON.stringify({ email: "ada@example.test", otp: "123456", name: "Ada" }),
@@ -422,7 +422,7 @@ describe("mobile API authentication", () => {
     expect(fetchMock.mock.calls[0]?.[0]).toContain("/api/auth/update-user");
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       method: "POST",
-      headers: expect.objectContaining({ origin: "rakazo://" }),
+      headers: expect.objectContaining({ origin: "matebot://" }),
       body: JSON.stringify({ name: "Alex Rivera" }),
     });
   });

@@ -144,7 +144,7 @@ internal object IncomingCalls {
         val custom = runCatching { JSONObject(headers) }.getOrDefault(JSONObject())
         for (key in custom.keys()) connection.setRequestProperty(key, custom.getString(key))
         connection.setRequestProperty("Authorization", "Bearer $token")
-        connection.setRequestProperty("Origin", "rakazo://")
+        connection.setRequestProperty("Origin", "matebot://")
         connection.setRequestProperty("Content-Type", "application/json")
         try {
           connection.outputStream.use { it.write(JSONObject().put("json", JSONObject().put("callId", call.getString("callId"))).toString().toByteArray()) }

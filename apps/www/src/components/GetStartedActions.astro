@@ -1,7 +1,7 @@
 ---
 import type { HomeCopy } from "../i18n/home";
 import type { DesktopDownloads } from "../github";
-import { availableDesktopPlatforms, desktopDownloadHref } from "../github";
+import { availableDesktopPlatforms, downloadHref } from "../github";
 import { APP_URL, GITHUB_URL } from "../site";
 
 type Props = {
@@ -18,12 +18,14 @@ const { class: className, copy, downloads, placement, githubLabel = copy.viewOnG
   Astro.props;
 
 // `data-show` lists the platforms (set on <html> by the HomePage script) that see each action.
-// Exactly one primary action shows per platform: the Windows installer on computers, the web app
-// on phones, which have no desktop build. Matebot has no App Store listing yet.
+// Exactly one primary action shows per platform: the Windows installer on computers, the Android
+// APK on Android, and the web app everywhere as the secondary action. The Android button does not
+// wait for the release lookup: `/api/download?platform=android` resolves per request, so the first
+// APK needs no site rebuild, and the redirect falls back to the releases page until one exists.
 const desktopPlatforms = downloads ? availableDesktopPlatforms(downloads) : [];
 const otherDownloads = desktopPlatforms
   .filter((platform) => platform !== "windows")
-  .map((platform) => ({ platform, href: desktopDownloadHref(platform), label: copy.download[platform] }));
+  .map((platform) => ({ platform, href: downloadHref(platform), label: copy.download[platform] }));
 // Linux keeps the GitHub link until a release ships an AppImage.
 const githubPlatforms = desktopPlatforms.includes("linux") ? "" : "linux";
 ---
@@ -31,11 +33,19 @@ const githubPlatforms = desktopPlatforms.includes("linux") ? "" : "linux";
 <div class={className}>
   <a
     class="button button--primary"
-    href={desktopDownloadHref("windows")}
+    href={downloadHref("windows")}
     data-show="mac windows linux"
     data-attr={`${placement}-windows`}
   >
     {copy.download.windows}
+  </a>
+  <a
+    class="button button--primary"
+    href={downloadHref("android")}
+    data-show="android"
+    data-attr={`${placement}-android`}
+  >
+    {copy.download.android}
   </a>
   <a
     class="button button--secondary"

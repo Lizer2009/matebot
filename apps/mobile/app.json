@@ -1,9 +1,9 @@
 {
   "expo": {
     "name": "Matebot",
-    "slug": "rakazo",
-    "owner": "inbox-zero",
-    "scheme": "rakazo",
+    "slug": "matebot",
+    "owner": "lizer-expo",
+    "scheme": "matebot",
     "version": "1.0.12",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
@@ -89,7 +89,7 @@
       "es": "./locales/es.json"
     },
     "ios": {
-      "bundleIdentifier": "com.rakazo.app",
+      "bundleIdentifier": "com.matebot.app",
       "buildNumber": "1",
       "supportsTablet": true,
       "icon": "../../packages/ui-tokens/assets/Matebot.icon",
@@ -112,7 +112,7 @@
       }
     },
     "android": {
-      "package": "com.rakazo.app",
+      "package": "com.matebot.app",
       "versionCode": 10,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/icon.png",
@@ -129,18 +129,18 @@
       "router": {},
       "supportsRTL": true,
       "eas": {
-        "projectId": "07f7eb04-45e3-47fe-9374-99a2f991131e",
+        "projectId": "4d08d2e7-5be4-4446-a430-8781f9203fae",
         "build": {
           "experimental": {
             "ios": {
               "appExtensions": [
                 {
                   "targetName": "RakazoWidgets",
-                  "bundleIdentifier": "com.rakazo.app.widgets"
+                  "bundleIdentifier": "com.matebot.app.widgets"
                 },
                 {
                   "targetName": "AgentNotifications",
-                  "bundleIdentifier": "com.rakazo.app.notifications",
+                  "bundleIdentifier": "com.matebot.app.notifications",
                   "entitlements": {
                     "com.apple.developer.usernotifications.communication": true
                   }
@@ -155,7 +155,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/07f7eb04-45e3-47fe-9374-99a2f991131e"
+      "url": "https://u.expo.dev/4d08d2e7-5be4-4446-a430-8781f9203fae"
     }
   }
 }

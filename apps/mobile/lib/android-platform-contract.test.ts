@@ -89,7 +89,7 @@ describe("Android mobile platform contract", () => {
       "fun clearSession(context: Context) {\n      synchronized(sessionLock)",
     );
     expect(service).not.toContain("private fun postCompletion(");
-    expect(service).toContain('"rakazo://group-thread?groupId=');
+    expect(service).toContain('"matebot://group-thread?groupId=');
     expect(service).toMatch(/&spaceId=\$\{Uri\.encode\(run\.spaceId\)\}/);
     expect(service).toContain('putString("rakazo.spaceId", run.spaceId)');
     expect(service).toMatch(/&threadId=\$\{Uri\.encode\(run\.threadId\)\}/);

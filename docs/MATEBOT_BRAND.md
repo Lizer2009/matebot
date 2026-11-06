@@ -81,6 +81,10 @@ Packaging names are set where the tooling reads them, and must stay in step:
 | Windows installer | `build.nsis.artifactName` | `${productName}-Setup-${version}.exe` |
 | Linux executable | `build.linux.executableName` | `matebot` |
 | Expo app name | `apps/mobile/app.json` `expo.name` | `Matebot` |
+| Expo project | `apps/mobile/app.json` `expo.owner` / `slug` / `eas.projectId` | `lizer-expo` / `matebot` / the project's own id |
+| Mobile URL scheme | `apps/mobile/app.json` `expo.scheme` | `matebot` |
+| iOS bundle id | `apps/mobile/app.json` `expo.ios.bundleIdentifier` | `com.matebot.app` (extensions `com.matebot.app.widgets`, `com.matebot.app.notifications`) |
+| Android package | `apps/mobile/app.json` `expo.android.package` | `com.matebot.app` |
 
 Electron names the per-user profile folder after `productName` (`%APPDATA%\Matebot` on Windows,
 `~/.config/Matebot` on Linux, `~/Library/Application Support/Matebot` on macOS), not after
@@ -90,5 +94,4 @@ over on first launch instead of stranding an existing install's setup.
 
 Names that deliberately keep their upstream value are listed in
 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#环境变量命名): the `RAKAZO_*` environment variables, the
-`rakazo_app` database role, the `rakazo://` mobile scheme, and the mobile bundle id, which need
-store-side coordination before they can change.
+`rakazo_app` database role, and the upstream attribution values.
