@@ -1,5 +1,9 @@
 import type { EmailConnectionSnapshot } from "./interaction-preflight.js";
-import { emailCapabilityAllowsSend, preflightEmailCapability } from "./interaction-preflight.js";
+import {
+  emailCapabilityAllowsSend,
+  preflightCalendarCapability,
+  preflightEmailCapability,
+} from "./interaction-preflight.js";
 import type { InteractionLifecycleStatus } from "./interaction-runtime.js";
 import type { EmailSurfaceLifecycle, EmailSurfaceTemplate } from "./interaction-template.js";
 import {
@@ -39,6 +43,45 @@ export type SimulatedConnection = {
 
 const SIMULATED_ACCOUNT = "ca_simulated";
 const SIMULATED_REVOKED_ACCOUNT = "ca_simulated_revoked";
+
+/** Provider slug each simulated app stores its Connection row under. */
+const SIMULATED_PROVIDER: Record<Exclude<SimulatedApp, "none">, string> = {
+  email: "gmail",
+  calendar: "googlecalendar",
+};
+
+/**
+ * The same four states for either app, because the calendar row and the mailbox
+ * row differ only by provider: both can be missing, revoked, usable, or stale.
+ */
+export function simulatedConnectionFor(
+  app: Exclude<SimulatedApp, "none">,
+  state: SimulatedConnectionState,
+): SimulatedConnection {
+  const provider = SIMULATED_PROVIDER[app];
+  switch (state) {
+    case "ready":
+      return {
+        connections: [{ provider, status: "connected", providerRef: SIMULATED_ACCOUNT }],
+        reconnectRefs: [],
+        providerReady: { [provider]: true },
+      };
+    case "requires_reauth":
+      return {
+        connections: [{ provider, status: "error", providerRef: SIMULATED_REVOKED_ACCOUNT }],
+        reconnectRefs: [SIMULATED_REVOKED_ACCOUNT],
+        providerReady: { [provider]: false },
+      };
+    case "stale_local_connected":
+      return {
+        connections: [{ provider, status: "connected", providerRef: SIMULATED_REVOKED_ACCOUNT }],
+        reconnectRefs: [SIMULATED_REVOKED_ACCOUNT],
+        providerReady: { [provider]: false },
+      };
+    default:
+      return { connections: [], reconnectRefs: [], providerReady: {} };
+  }
+}
 
 /**
  * Connection rows as the database would hold them, plus the provider's own view.
@@ -91,6 +134,12 @@ export type SimulatedSurface = {
   primaryAction: SimulatedPrimaryAction;
   /** Whether the server would accept Send right now. */
   canSend: boolean;
+  /**
+   * Whether the host renders editable fields for this surface. Both hosts gate
+   * their editor on an email intent, and the compiler emits a text-only tree for
+   * every other intent, so a calendar surface is read-only today.
+   */
+  editor: "email-draft" | "none";
 };
 
 export type SimulatedTurnInput = {
@@ -135,6 +184,7 @@ export function simulateEmailSurface(input: SimulatedTurnInput): SimulatedSurfac
     // Send is on screen only on the editable draft of a usable mailbox; every
     // other template owns its own single action or none at all.
     canSend: stamps.template === "email-draft-card" && emailCapabilityAllowsSend(preflight.status),
+    editor: "email-draft",
   };
 }
 
@@ -223,6 +273,39 @@ export function simulatedApp(intent: string): SimulatedApp {
 }
 
 /**
+ * What an intent that is not a shipping interaction would actually need. The
+ * orchestrator only knows compose-and-send and create-a-calendar today, so
+ * anything else has no surface to present and no simulator path. Naming the
+ * capability keeps the report honest instead of inventing a passing row.
+ */
+export type SimulatedCapability = SimulatedApp | "shell" | "computer";
+
+export function simulatedCapability(intent: string): SimulatedCapability {
+  const app = simulatedApp(intent);
+  if (app !== "none") return app;
+  if (intent.startsWith("computer.") || intent.startsWith("file.")) return "computer";
+  if (intent.includes("fetch") || intent.includes("clone") || intent.includes("shell")) {
+    return "shell";
+  }
+  return "shell";
+}
+
+/** Whether the A2UI orchestrator can present anything for this intent at all. */
+export function simulatedIntentSupported(intent: string): boolean {
+  return simulatedApp(intent) !== "none";
+}
+
+/** The shipping intent that answers a request, or null when nothing does. */
+export function simulatedIntentForRequest(request: string): string | null {
+  const text = request.toLowerCase();
+  const calendar = /日历|日程|calendar|schedule/.test(text);
+  const email = /邮件|邮箱|email|mail/.test(text);
+  if (calendar) return "calendar.create";
+  if (email) return "email.compose";
+  return null;
+}
+
+/**
  * The connect → resume handshake: a surface that waited for an app must produce
  * another surface once that app is connected, not a free-text reply.
  */
@@ -249,5 +332,54 @@ export function simulateConnectionResume(input: {
       capability: "ready",
       interactionStatus: "collecting",
     }),
+  };
+}
+
+/**
+ * A calendar surface as the server and hosts actually produce it.
+ *
+ * The server stamps the same email template ids, because the compiler has no
+ * calendar template. Neither host renders anything for a calendar intent beyond
+ * the compiled text tree: both gate their editable sheet — and the connection
+ * card that lives inside it — on an email intent. So the stamp says what the
+ * server wanted, `action` says what the user can actually tap, and `gap` says
+ * why they differ. Reporting that keeps the shortfall visible.
+ */
+export function simulateCalendarSurface(input: {
+  connection: SimulatedConnectionState;
+  interactionStatus: InteractionLifecycleStatus;
+}): {
+  capability: ReturnType<typeof preflightCalendarCapability>["surfaceCapability"];
+  interactionStatus: InteractionLifecycleStatus;
+  template: EmailSurfaceTemplate;
+  lifecycle: EmailSurfaceLifecycle;
+  action: "none";
+  canSend: false;
+  editor: "none";
+  gap: string;
+} {
+  const sim = simulatedConnectionFor("calendar", input.connection);
+  const preflight = preflightCalendarCapability({
+    connections: sim.connections,
+    reconnectRefs: sim.reconnectRefs,
+    providerReady: sim.providerReady,
+  });
+  const stamps = emailSurfaceBlockFields({
+    intent: "calendar.create",
+    capability: preflight.surfaceCapability,
+    interactionStatus: input.interactionStatus,
+  });
+  const connected = stamps.template === "email-draft-card";
+  return {
+    capability: preflight.surfaceCapability,
+    interactionStatus: input.interactionStatus,
+    template: stamps.template,
+    lifecycle: stamps.lifecycle,
+    action: "none",
+    canSend: false,
+    editor: "none",
+    gap: connected
+      ? "connected, but the surface is text-only: no name/events input and nothing to submit"
+      : "unbound, but no connect button is rendered: the connection card lives inside the email editor, so this step runs through the connect_app card instead",
   };
 }

@@ -4,8 +4,12 @@ import {
   SIMULATED_CONNECTION_STATES,
   SIMULATED_DELIVERIES,
   SIMULATED_RECONNECT_ERROR,
+  simulateCalendarSurface,
   simulateConnectionResume,
   simulatedConnection,
+  simulatedConnectionFor,
+  simulatedIntentForRequest,
+  simulatedIntentSupported,
   simulateEmailSend,
   simulateEmailSurface,
   simulateSendGate,
@@ -221,5 +225,69 @@ describe("post-surface nudge", () => {
       expect(text.length).toBeLessThanOrEqual(20);
       expect(text.endsWith("。")).toBe(true);
     }
+  });
+});
+
+describe("intent mapping for real requests", () => {
+  it("maps an email or calendar request to the shipping intent", () => {
+    expect(simulatedIntentForRequest("帮我发邮件:给 a@example.com 主题: 秋后问候")).toBe(
+      "email.compose",
+    );
+    expect(simulatedIntentForRequest("确定下周日程，主题和内容自理")).toBe("calendar.create");
+  });
+
+  // No surface exists for a shell job, and the simulator must say so rather than
+  // map it onto something that would render a card.
+  it("maps a computer or shell request to no intent at all", () => {
+    expect(
+      simulatedIntentForRequest("登录 Github 做一次简单的代码拉取到本地电脑，项目你自选"),
+    ).toBeNull();
+    expect(simulatedIntentSupported("computer.shell")).toBe(false);
+    expect(simulatedIntentSupported("calendar.create")).toBe(true);
+  });
+});
+
+describe("calendar surfaces", () => {
+  it("stamps the email template because no calendar template exists", () => {
+    const surface = simulateCalendarSurface({
+      connection: "not_connected",
+      interactionStatus: "needs_connection",
+    });
+    expect(surface.template).toBe("email-draft-card");
+    expect(surface.capability).toBe("not_connected");
+  });
+
+  // The honest shortfall: nothing on a calendar surface is tappable today.
+  it("offers no action and no editor in any connection state", () => {
+    for (const connection of SIMULATED_CONNECTION_STATES) {
+      const surface = simulateCalendarSurface({
+        connection,
+        interactionStatus: connection === "ready" ? "collecting" : "needs_connection",
+      });
+      expect(surface.action).toBe("none");
+      expect(surface.canSend).toBe(false);
+      expect(surface.editor).toBe("none");
+      expect(surface.gap.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("still resumes once the calendar connects", () => {
+    expect(
+      simulateConnectionResume({
+        intent: "calendar.create",
+        interactionStatusBefore: "needs_connection",
+        connectedProvider: "googlecalendar",
+      }).resumed,
+    ).toBe(true);
+  });
+
+  it("models a calendar row with the same four states as a mailbox", () => {
+    expect(simulatedConnectionFor("calendar", "ready").connections[0]?.provider).toBe(
+      "googlecalendar",
+    );
+    expect(simulatedConnectionFor("calendar", "stale_local_connected").providerReady).toEqual({
+      googlecalendar: false,
+    });
+    expect(simulatedConnectionFor("email", "ready").connections[0]?.provider).toBe("gmail");
   });
 });

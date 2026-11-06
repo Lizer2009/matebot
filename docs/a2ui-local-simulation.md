@@ -12,7 +12,7 @@ node scripts/a2ui-sim.mjs --scenario send-outcomes
 node scripts/a2ui-sim.mjs --json         # 机器可读，便于贴进 issue 或测试
 ```
 
-输出是四张表，每行一次「输入状态 → 卡片」的推演：
+输出是五张表，每行一次「输入状态 → 卡片」的推演：
 
 | 场景 | 覆盖 |
 | --- | --- |
@@ -20,8 +20,31 @@ node scripts/a2ui-sim.mjs --json         # 机器可读，便于贴进 issue 或
 | `send-outcomes` | 成功 / 普通 provider 失败 / 超时（UNKNOWN）/ 授权失效 |
 | `unknown-reconcile` | UNKNOWN 只提供「检查状态」，不再给发送 |
 | `calendar-resume` | 授权完成后是否继续（日历、邮箱、错误应用、非等待态） |
+| `dialogue-prompts` | 三段真实中文提示词，按实机状态逐步推演 |
 
 任何一行与该 PR 的不变量冲突时，进程以 `1` 退出，可直接当作 CI 门禁。
+
+## 用真实对话跑（`dialogue-prompts`）
+
+```bash
+node scripts/a2ui-sim.mjs --scenario dialogue-prompts
+node scripts/a2ui-sim.mjs --scenario dialogue-prompts --json
+```
+
+三段提示词各占一到两行，列是 `prompt / step / template / action / canSend / resumed / nudge / expect / ok / gap`：
+
+| 提示词 | 覆盖的步骤 |
+| --- | --- |
+| `帮我发邮件:给 418452732@qq.com 主题: 秋后问候，内容: 自理` | 失效邮箱出稿 → 发信 → 重新授权卡；就绪邮箱发信成功 |
+| `确定下周日程，主题和内容自理` | 未连接 → 连 `connect_app`；授权后是否续跑 |
+| `登录 Github 做一次简单的代码拉取到本地电脑，项目你自选` | `out_of_scope`：无对应 intent |
+
+`expect` 是该行**应当**命中的形态，`ok` 只表示它符合当前实现。第三段的 `out_of_scope`
+是有意的：`expect = out_of_scope` 且 `template = none` 才算通过，这样报告里能直接看出
+「这条请求不由 A2UI 编排覆盖」，而不是假装通过。
+
+`gap` 列记录当前实现与产品预期的差距（例如日历已续跑但卡片上没有可编辑控件），
+它是给人读的说明，不参与 `ok` 判定。
 
 ## 覆盖的连接状态
 
@@ -53,6 +76,9 @@ simulatedConnection("stale_local_connected");
   `apps/mobile/lib/a2ui-*.test.tsx`。
 - 真实 provider 文案变化需要在 `packages/core/src/interaction-connection.ts` 的
   `RECONNECT_SIGNALS` 里补一条，并同时在模拟器里加一个投递结果。
+- 日历目前只有服务端戳记可推演：宿主只对 `email.compose` 渲染编辑表单与连接按钮，
+  所以 `simulateCalendarSurface` 一律返回 `action: none` 与 `editor: none`，
+  并在 `gap` 里写明原因。日历若要真正可编辑，需要先有日历模板与宿主控件。
 
 相关文档：[`matebot-a2ui-orchestration-addendum.md`](../docs/architecture/matebot-a2ui-orchestration-addendum.md)、
 [`matebot-a2ui-integration-design.md`](../docs/architecture/matebot-a2ui-integration-design.md)。

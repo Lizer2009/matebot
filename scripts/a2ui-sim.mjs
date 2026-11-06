@@ -39,9 +39,12 @@ const childSource = `
 import {
   SIMULATED_CONNECTION_STATES,
   SIMULATED_DELIVERIES,
+  simulateCalendarSurface,
   simulateConnectionResume,
   simulateEmailSend,
   simulateEmailSurface,
+  simulatedIntentForRequest,
+  simulatedIntentSupported,
   simulateSendGate,
 } from ${JSON.stringify(simModule)};
 import { A2UI_SURFACE_NUDGE, surfaceNudgeFor } from ${JSON.stringify(nudgeModule)};
@@ -59,6 +62,167 @@ const EXPECTED_SEND_OUTCOMES = {
   reconnect_error: { template: "email-reauth-card", action: "reconnect" },
 };
 
+/** The line the turn would actually say, or "-" when the card owns the outcome. */
+const surfaceNudge = (capability, lifecycle) => {
+  const state = surfaceNudgeFor({ capability, lifecycle });
+  return state ? A2UI_SURFACE_NUDGE[state] : "-";
+};
+
+/**
+ * Real Chinese prompts typed into the desktop app, run through the shipping
+ * simulators with the workspace states that were true in production. Each row is
+ * one thing the user would do next, so the table reads like the session did.
+ */
+function buildDialogueScenario() {
+  const rows = [];
+
+  // 1. Email to a fixed address, subject and body supplied by the assistant.
+  //    Tonight's mailbox was revoked while the local row still said connected.
+  const emailRequest = "帮我发邮件:给 418452732@qq.com 主题: 秋后问候，内容: 自理";
+  const staleDraft = simulateEmailSurface({
+    connection: "stale_local_connected",
+    interactionStatus: "needs_connection",
+  });
+  const staleSend = simulateEmailSend({
+    connection: "stale_local_connected",
+    delivery: "reconnect_error",
+  });
+  rows.push({
+    prompt: emailRequest,
+    step: "1a draft, revoked mailbox",
+    template: staleDraft.template,
+    action: staleDraft.primaryAction,
+    canSend: staleDraft.canSend,
+    resumed: "-",
+    nudge: surfaceNudge(staleDraft.capability, staleDraft.lifecycle),
+    expect: "reconnect",
+  });
+  rows.push({
+    prompt: emailRequest,
+    step: "1a send on revoked mailbox",
+    template: staleSend.template,
+    action: staleSend.primaryAction,
+    canSend: staleSend.canSend,
+    resumed: "-",
+    nudge: surfaceNudge(staleSend.capability, staleSend.lifecycle),
+    expect: "reconnect",
+  });
+  const readySend = simulateEmailSend({ connection: "ready", delivery: "ok" });
+  rows.push({
+    prompt: emailRequest,
+    step: "1b send on live mailbox",
+    template: readySend.template,
+    action: readySend.primaryAction,
+    canSend: readySend.canSend,
+    resumed: "-",
+    nudge: surfaceNudge(readySend.capability, readySend.lifecycle),
+    expect: "sent",
+  });
+
+  // 2. A week of schedule, details left to the assistant. Today the closest
+  //    shipping intent is calendar.create; nothing carries a date range, and no
+  //    host renders a calendar editor. The connect step runs through the
+  //    connect_app card, not a calendar connection card.
+  const calendarRequest = "确定下周日程，主题和内容自理";
+  const calendarIntent = simulatedIntentForRequest(calendarRequest);
+  const calendarUnbound = simulateCalendarSurface({
+    connection: "not_connected",
+    interactionStatus: "needs_connection",
+  });
+  rows.push({
+    prompt: calendarRequest,
+    step: "2a unbound: connect_app card",
+    template: calendarUnbound.template,
+    action: "none",
+    canSend: false,
+    resumed: "-",
+    nudge: surfaceNudge(calendarUnbound.capability, calendarUnbound.lifecycle),
+    expect: "connect-via-app-card",
+  });
+  const calendarResume = simulateConnectionResume({
+    intent: calendarIntent ?? "calendar.create",
+    interactionStatusBefore: "needs_connection",
+    connectedProvider: "googlecalendar",
+  });
+  const calendarConnected = simulateCalendarSurface({
+    connection: "ready",
+    interactionStatus: "collecting",
+  });
+  rows.push({
+    prompt: calendarRequest,
+    step: "2b after googlecalendar connect",
+    template: calendarConnected.template,
+    action: calendarConnected.action,
+    canSend: calendarConnected.canSend,
+    resumed: calendarResume.resumed,
+    nudge: surfaceNudge(calendarConnected.capability, calendarConnected.lifecycle),
+    expect: "resumed-readonly",
+    // The honest gap: the turn resumes, but there is nothing to type into.
+    gap:
+      calendarConnected.gap +
+      '; a date range ("下周") has no slot on that plan, and the nudge points at a card with nothing to tap',
+  });
+
+  // 3. A shell job on the user's own computer. The orchestrator presents
+  //    compose/send and calendar surfaces only, so this has no surface at all.
+  const githubRequest = "登录 Github 做一次简单的代码拉取到本地电脑，项目你自选";
+  const githubIntent = simulatedIntentForRequest(githubRequest);
+  rows.push({
+    prompt: githubRequest,
+    step: "3 github pull to local computer",
+    template: githubIntent ?? "none",
+    action: "none",
+    canSend: false,
+    resumed: false,
+    nudge: "-",
+    expect: "out_of_scope",
+    gap: githubIntent
+      ? "mapped to an intent the orchestrator has no editor for"
+      : "no InteractionPlan/intent exists: this is a computer/shell task, not an A2UI surface",
+  });
+
+  return {
+    id: "dialogue-prompts",
+    title: "three real Chinese prompts, run against tonight's workspace states",
+    rows,
+    check: (row) => {
+      if (row.expect === "reconnect") {
+        return (
+          row.template === "email-reauth-card" &&
+          row.action === "reconnect" &&
+          !row.canSend &&
+          row.nudge === A2UI_SURFACE_NUDGE.reconnect
+        );
+      }
+      if (row.expect === "sent") {
+        return (
+          row.template === "action-result-success" &&
+          row.nudge === "-" &&
+          !row.canSend
+        );
+      }
+      if (row.expect === "connect-via-app-card") {
+        // The calendar surface offers no button of its own: the template is the
+        // email draft card because the compiler has no calendar template, and
+        // hosts only render an editor for an email intent. The user connects
+        // through the connect_app card, and the nudge says so.
+        return (
+          row.template === "email-draft-card" &&
+          row.action === "none" &&
+          !row.canSend &&
+          row.nudge === A2UI_SURFACE_NUDGE.awaiting_connection
+        );
+      }
+      if (row.expect === "resumed-readonly") {
+        return row.resumed === true && row.action === "none" && !row.canSend;
+      }
+      // Nothing presents a surface, and the row must say so rather than pass.
+      return row.expect === "out_of_scope" && !simulatedIntentSupported(row.template);
+    },
+    invariant:
+      "each prompt lands on the card its state calls for; an unsupported request reports out_of_scope instead of passing",
+  };
+}
 
 const scenarios = [
   {
@@ -151,6 +315,7 @@ const scenarios = [
     },
     invariant: "only the app the surface acts through resumes it",
   },
+  buildDialogueScenario(),
 ];
 
 const nudges = Object.entries(A2UI_SURFACE_NUDGE).map(([state, text]) => ({
