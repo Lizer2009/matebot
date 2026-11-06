@@ -966,6 +966,10 @@ msgstr "身份验证失败。"
 msgid "Authorization code"
 msgstr "授权码"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Authorization expired"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Authorization parameters (optional)"
 msgstr "授权参数（可选）"
@@ -1342,6 +1346,10 @@ msgstr "检查更新"
 msgid "Check in."
 msgstr "报到。"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Check status"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "请检查 API 密钥或登录，然后重新测试。"
@@ -1668,26 +1676,6 @@ msgstr "请确认此浏览器会话可以访问该 URL，然后重新测试。"
 msgid "Confirm this draft before sending."
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Connect email"
-msgstr "连接邮箱"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Could not send"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Check status"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Don't send again"
-msgstr ""
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1727,6 +1715,10 @@ msgstr "连接 API 密钥"
 #: src/pages/Shell.tsx
 msgid "Connect apps"
 msgstr "连接应用"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr "连接邮箱"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
@@ -2349,6 +2341,10 @@ msgstr "无法保存此选择"
 msgid "Could not search catalog"
 msgstr "无法搜索目录"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Could not send"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not send reset email"
 msgstr "无法发送重置邮件"
@@ -2889,6 +2885,10 @@ msgstr "文档已更改。请重新打开以编辑最新版本。"
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
 msgstr "还没有账户？"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Don't send again"
+msgstr ""
 
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
@@ -4530,6 +4530,10 @@ msgstr "未添加：{0}"
 msgid "Not checked yet"
 msgstr "尚未检查"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Not connected"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "未导入"
@@ -5112,15 +5116,15 @@ msgstr "最近"
 msgid "Recommended"
 msgstr "推荐"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgctxt "mailbox"
-msgid "Reconnect"
-msgstr "重新授权"
-
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
 msgstr "重新连接"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
+msgid "Reconnect"
+msgstr "重新授权"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Reconnect OAuth"
@@ -5461,6 +5465,7 @@ msgstr "已恢复"
 msgid "Restoring your workspace"
 msgstr "正在恢复工作区"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5802,6 +5807,10 @@ msgstr "发送重置链接"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
 msgstr "按 Enter 发送"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Sending"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx

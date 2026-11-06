@@ -64,6 +64,7 @@ export async function publishInteractionSurface(
   documentRef: string;
   draftVersion: number;
   eventSeq: number;
+  capability?: EmailSurfaceCapability;
 }> {
   const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
@@ -179,6 +180,7 @@ export async function publishInteractionSurface(
         documentRef,
         draftVersion: interaction.draftVersion,
         eventSeq: surfaceEvent.seq,
+        ...(input.capability ? { capability: input.capability } : {}),
       };
     }),
   );

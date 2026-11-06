@@ -4,7 +4,14 @@ import type {
   EmailPreflightStatus,
   EmailSurfaceCapability,
 } from "@matebot/core";
-import { preflightEmailCapability, selectEmailSendConnection } from "@matebot/core";
+import {
+  connectionSatisfiesApp,
+  interactionRequiredApp,
+  preflightCalendarCapability,
+  preflightEmailCapability,
+  selectCalendarConnection,
+  selectEmailSendConnection,
+} from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { connectedContext } from "./connection-context.js";
 
@@ -60,19 +67,87 @@ export async function loadEmailReconnectRefs(
   }
 }
 
+/**
+ * Ask the connector whether each stored provider still works. A local row keeps
+ * `connected` after the provider revokes the account, so the provider's own
+ * answer decides. Providers that cannot answer are left out, not assumed dead.
+ */
+export async function loadProviderReadiness(
+  provider:
+    | { connectionReady?(context: AdapterContext, externalId: string): Promise<boolean> }
+    | undefined,
+  context: AdapterContext,
+  rows: readonly EmailCapabilityRow[],
+): Promise<Record<string, boolean>> {
+  const ready = provider?.connectionReady;
+  if (!ready) return {};
+  const slugs = [
+    ...new Set(rows.filter((row) => row.status === "connected").map((r) => r.provider)),
+  ];
+  const answers = await Promise.all(
+    slugs.map(async (slug) => {
+      try {
+        return [slug, await ready.call(provider, context, slug)] as const;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return Object.fromEntries(answers.filter((entry) => entry !== null));
+}
+
 export function emailCapabilityFromRows(
   connections: EmailCapabilityRow[],
   reconnectRefs: readonly string[] = [],
+  providerReady?: Readonly<Record<string, boolean>>,
 ): EmailCapabilitySnapshot {
-  const preflight = preflightEmailCapability({ connections, reconnectRefs });
+  const preflight = preflightEmailCapability({ connections, reconnectRefs, providerReady });
   return {
     status: preflight.status,
     surfaceCapability: preflight.surfaceCapability,
     interactionNeedsConnection: preflight.interactionStatus === "needs_connection",
-    connection: selectEmailSendConnection(connections, reconnectRefs),
+    connection: selectEmailSendConnection(connections, reconnectRefs, providerReady),
     connections,
     reconnectRefs: [...reconnectRefs],
   };
+}
+
+/** Three-state preflight for any app an interaction acts through. */
+export function interactionCapabilityFromRows(
+  intent: string | undefined,
+  connections: EmailCapabilityRow[],
+  reconnectRefs: readonly string[] = [],
+  providerReady?: Readonly<Record<string, boolean>>,
+): {
+  status: EmailPreflightStatus;
+  surfaceCapability: EmailSurfaceCapability;
+  interactionNeedsConnection: boolean;
+  connection: EmailCapabilityRow | undefined;
+} {
+  const app = interactionRequiredApp(intent);
+  const preflight =
+    app === "calendar"
+      ? preflightCalendarCapability({ connections, reconnectRefs, providerReady })
+      : preflightEmailCapability({ connections, reconnectRefs, providerReady });
+  const connection =
+    app === "calendar"
+      ? selectCalendarConnection(connections, reconnectRefs, providerReady)
+      : selectEmailSendConnection(connections, reconnectRefs, providerReady);
+  return {
+    status: preflight.status,
+    surfaceCapability: preflight.surfaceCapability,
+    interactionNeedsConnection: preflight.interactionStatus === "needs_connection",
+    connection,
+  };
+}
+
+/** Whether a freshly connected provider is the app this interaction waited on. */
+export function providerSatisfiesInteractionApp(
+  intent: string | undefined,
+  provider: string,
+): boolean {
+  const app = interactionRequiredApp(intent);
+  return app !== undefined && connectionSatisfiesApp(app, provider);
 }
 
 export function emailSendAdapterContext(

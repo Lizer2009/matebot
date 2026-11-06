@@ -1,8 +1,9 @@
+import { deliveryNeedsReconnect } from "./interaction-connection.js";
 import type { EmailSurfaceCapability } from "./interaction-preflight.js";
 import type { InteractionLifecycleStatus } from "./interaction-runtime.js";
 
 /**
- * Catalog template ids for email.compose / email.send (design §4.4).
+ * Catalog template ids for the email surface (design §4.4).
  * Hosts switch on this instead of intent-only.
  */
 export const EMAIL_SURFACE_TEMPLATES = [
@@ -36,6 +37,8 @@ export type EmailSurfaceTemplateInput = {
   interactionStatus: InteractionLifecycleStatus;
   /** ExternalEffect.status. D′/E′ consume `ambiguous` as in-flight / UNKNOWN. */
   effectStatus?: string | null;
+  /** Last send error; a reconnect failure keeps the card actionable. */
+  error?: string | null;
 };
 
 export function isEmailSurfaceIntent(intent: string | undefined): boolean {
@@ -68,8 +71,10 @@ export function resolveEmailSurfaceLifecycle(
 
 /**
  * Template = f(intent, capability, interaction, effect).
- * Connection cards win only while the draft is still in preflight; execution
- * outcomes (progress / success / failed / UNKNOWN) outrank mailbox stamps.
+ * Connection cards win only while the draft is still preflight; execution
+ * outcomes (progress / success / failed / UNKNOWN) outrank mailbox stamps —
+ * except a failure the user can only fix by reconnecting, which returns to the
+ * reconnect card so the same surface stays actionable.
  */
 export function resolveEmailSurfaceTemplate(
   input: EmailSurfaceTemplateInput,
@@ -79,8 +84,10 @@ export function resolveEmailSurfaceTemplate(
   if (lifecycle === "submitting") return "action-submitting-card";
   if (lifecycle === "executing") return "action-progress-card";
   if (lifecycle === "succeeded") return "action-result-success";
-  if (lifecycle === "failed") return "action-result-failed";
   if (lifecycle === "unknown") return "action-reconcile-card";
+  if (lifecycle === "failed") {
+    return deliveryNeedsReconnect(input.error) ? "email-reauth-card" : "action-result-failed";
+  }
   if (input.capability === "requires_reauth") return "email-reauth-card";
   if (input.capability === "not_connected" || input.interactionStatus === "needs_connection") {
     return "email-connection-card";
@@ -120,6 +127,7 @@ export function emailSurfaceTemplateFromBlock(block: {
   lifecycle?: EmailSurfaceLifecycle;
   capability?: EmailSurfaceCapability;
   intent?: string;
+  error?: string | null;
 }): EmailSurfaceTemplate {
   if (block.template && (EMAIL_SURFACE_TEMPLATES as readonly string[]).includes(block.template)) {
     return block.template;
@@ -130,6 +138,7 @@ export function emailSurfaceTemplateFromBlock(block: {
     capability: block.capability,
     interactionStatus,
     effectStatus: effectStatusFromLifecycle(block.lifecycle),
+    error: block.error,
   });
 }
 

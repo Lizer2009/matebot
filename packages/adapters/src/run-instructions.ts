@@ -403,7 +403,7 @@ export function userTurnInstructions(parts: {
       ? offeredBuiltinClause(
           parts.disabledBuiltinTools,
           "present_interaction",
-          'When the user asks to compose or send an email (any language), present an editable draft with present_interaction and intent "email.compose". Never send mail with shell, python, smtplib, or request_secret; the user sends from the draft. Never say the email was sent, is sending, failed, or that delivery is unknown — the draft card owns that status. Mention a send only after the surface reports succeeded.',
+          'When the user asks to compose or send an email (any language), present an editable draft with present_interaction and intent "email.compose". When the user asks for a calendar or to create events (any language), present it with intent "calendar.create", fields name and events, the same way. Never send mail, write files, or call shell, python, smtplib, or request_secret for these; the user acts from the surface. Once the surface is published your entire reply is one short sentence telling them to use the card, such as whether to confirm, fill it in, or authorize first. Never restate the card fields, never explain how to find credentials or app passwords, never say the email was sent, is sending, failed, or that delivery is unknown, and never guess why an earlier attempt failed — the card owns that status and its buttons. Mention a result only after the surface reports succeeded.',
         )
       : undefined,
     offeredBuiltinClause(

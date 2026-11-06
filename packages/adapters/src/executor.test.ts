@@ -1814,14 +1814,14 @@ describe("userTurnInstructions", () => {
       expect(text).toContain("any language");
       expect(text).toContain("present_interaction");
       expect(text).toContain('intent "email.compose"');
+      expect(text).toContain('intent "calendar.create"');
       expect(text).toContain(
-        "Never send mail with shell, python, smtplib, or request_secret; the user sends from the draft.",
+        "Never send mail, write files, or call shell, python, smtplib, or request_secret for these; the user acts from the surface.",
       );
-      expect(text).toContain(
-        "Never say the email was sent, is sending, failed, or that delivery is unknown",
-      );
-      expect(text).toContain("the draft card owns that status");
-      expect(text).toContain("Mention a send only after the surface reports succeeded.");
+      expect(text).toContain("your entire reply is one short sentence");
+      expect(text).toContain("Never restate the card fields");
+      expect(text).toContain("the card owns that status and its buttons");
+      expect(text).toContain("Mention a result only after the surface reports succeeded.");
       expect(text).not.toContain("Missing SMTP");
       expect(text).not.toContain("Missing SMTP credentials still use request_secret");
     } finally {

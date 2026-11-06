@@ -725,7 +725,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "present_interaction",
     description:
-      'Present an editable draft surface in the chat for the user to review and send. Use this when the user asks in natural language to compose or send an email (any language). Pass plan with intent "email.compose", a short title, fields for to/subject/body (status "resolved" when known, "missing" when not), nextStep "ask" or "request_approval", and riskLevel "medium". Never send mail with shell, python, smtplib, or request_secret; the user edits and sends from the surface.',
+      'Present an editable surface in the chat for the user to review and act on. Use it when the user asks in natural language to compose or send an email (intent "email.compose") or to create a calendar or events (intent "calendar.create"), with fields for the values you have and status "resolved"/"missing" for each. The user edits and acts from the surface. Never send mail or create anything with shell, python, smtplib, or request_secret. After it is published, reply with one short sentence telling the user to use the card; do not restate fields, explain credentials, or report an outcome the card has not reported.',
     inputSchema: {
       type: "object",
       properties: {
@@ -734,7 +734,11 @@ export const builtinAgentTools: ConnectorTool[] = [
           description:
             "InteractionPlan: intent, title, optional summary, fields, nextStep, riskLevel.",
           properties: {
-            intent: { type: "string", description: 'Use "email.compose" for mail drafts.' },
+            intent: {
+              type: "string",
+              description:
+                'Use "email.compose" for mail drafts and "calendar.create" for a calendar or events.',
+            },
             title: { type: "string" },
             summary: { type: "string" },
             fields: {

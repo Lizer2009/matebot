@@ -35,6 +35,7 @@
     "test:computer-replay": "tsx packages/testkit/src/cli/computer-replay.ts",
     "test:computer": "tsx packages/testkit/src/cli/computer.ts",
     "test:flows": "tsx packages/testkit/src/cli/flows.ts",
+    "test:a2ui-sim": "node scripts/a2ui-sim.mjs",
     "perf:desktop": "tsx packages/testkit/src/cli/desktop-performance.ts",
     "perf:compare": "tsx packages/testkit/src/cli/compare-performance.ts",
     "bench:page-browser": "tsx packages/testkit/src/cli/page-browser-bench.ts",

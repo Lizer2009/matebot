@@ -12,7 +12,9 @@ import {
   createThreadMessageInTransaction,
   IsolationError,
 } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 import { requireBotThread } from "./bot-thread.js";
+import { resumeInteractionAfterConnection } from "./interaction-resume.js";
 import { resolveThreadTarget } from "./thread-target.js";
 
 /**
@@ -25,6 +27,10 @@ type OnboardingDeps = {
   prisma: PrismaClient;
   events: ThreadEvents;
   connectors: ConnectorRegistry;
+  /** Wakes the run that resumes a chat whose surface waited on the app. */
+  jobs?: {
+    enqueue(job: { name: string; payload: unknown; replaceKey?: string }): Promise<unknown>;
+  };
 };
 
 type FocusOption = {
@@ -386,6 +392,20 @@ export async function markAppConnected(
     return events;
   });
   for (const event of updates) await deps.events.notify(thread.id, event.seq);
+  // The card flipping to connected is only half the job: a chat that paused for
+  // this app needs its surface back, or the bot never asks for the next fields.
+  await resumeInteractionAfterConnection(
+    { prisma: deps.prisma, jobs: deps.jobs },
+    {
+      actor: { spaceId: actor.spaceId, userId: actor.userId },
+      botId: bot.id,
+      threadId: thread.id,
+      provider: entry.slug,
+      appConnected: entry.connected,
+    },
+  ).catch((error) => {
+    getLogger().error("interaction resume after app connect", error);
+  });
 }
 
 function capitalize(value: string): string {

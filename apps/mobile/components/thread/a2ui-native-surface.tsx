@@ -138,6 +138,7 @@ export function A2uiNativeSurface({
       lifecycle: block.lifecycle,
       capability: mailbox,
       intent: block.intent,
+      error: block.error,
     });
     const phase =
       busy &&
@@ -175,7 +176,11 @@ export function A2uiNativeSurface({
                 ? (block.error ?? t("Could not send"))
                 : phase === "action-reconcile-card"
                   ? t("Don't send again")
-                  : t("Needs approval")}
+                  : phase === "email-reauth-card"
+                    ? t("Authorization expired")
+                    : phase === "email-connection-card"
+                      ? t("Not connected")
+                      : t("Needs approval")}
         </Text>
         {phase === "action-result-success" && block.providerMessageId ? (
           <Text testID="a2ui-email-provider-id">{block.providerMessageId}</Text>
