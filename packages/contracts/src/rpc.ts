@@ -159,6 +159,7 @@ import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
+import { ThreadTargetSchema } from "./interaction.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./model-roles.js";
 import {
@@ -184,22 +185,7 @@ import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./s
 const botId = z.object({ botId: Id });
 const groupId = z.object({ groupId: Id });
 
-const threadTarget = z
-  .object({
-    botId: Id.optional(),
-    groupId: Id.optional(),
-  })
-  .superRefine((input, ctx) => {
-    const hasBot = Boolean(input.botId);
-    const hasGroup = Boolean(input.groupId);
-    if (hasBot === hasGroup) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Provide exactly one of botId or groupId",
-        path: ["botId"],
-      });
-    }
-  });
+const threadTarget = ThreadTargetSchema;
 
 const structuredMentionTarget = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("bot"), id: Id }),
@@ -696,6 +682,12 @@ export const appContract = {
       )
       .output(z.object({ ok: z.literal(true) })),
     clear: oc.input(threadTarget).output(z.object({ ok: z.literal(true) })),
+    /**
+     * Ask / approval answers. Interaction field edits and draft confirmation are
+     * drafted in `./interaction.js` (`ThreadsUpdateInteractionFieldInput`,
+     * `ThreadsConfirmInteractionInput`) for a later threads.* mount — not on
+     * this procedure yet, so existing answer handlers stay unchanged.
+     */
     answer: oc
       .input(
         threadTarget

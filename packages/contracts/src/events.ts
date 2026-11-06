@@ -2,6 +2,7 @@ import * as z from "zod";
 import { AgentImportSetupItemSchema } from "./agent-import-setup.js";
 import { botSecretDestinationSchema, LoginFieldLabels, OneTimeCodeTarget } from "./bot-secrets.js";
 import { Id, ThinkingLevelSchema } from "./ids.js";
+import { A2uiSurfaceBlockSchema } from "./interaction.js";
 import { McpTransportSchema } from "./mcp.js";
 import { PAGE_TITLE_MAX_LENGTH } from "./pages.js";
 
@@ -19,6 +20,17 @@ export const ProductEventType = z.enum([
   "thread.subagent",
   "thread.cloud_agent",
   "thread.call.ended",
+  "thread.interaction.created",
+  "thread.interaction.updated",
+  "thread.surface.created",
+  "thread.surface.updated",
+  "thread.interaction.field_changed",
+  /** May coexist with thread.ask / MessageBlock ask for confirmation UX. */
+  "thread.interaction.approval_requested",
+  "thread.interaction.action_started",
+  "thread.interaction.action_progress",
+  "thread.interaction.action_succeeded",
+  "thread.interaction.action_failed",
   "run.started",
   "run.steering.claimed",
   "run.checkpointed",
@@ -358,6 +370,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     /** Links in a bot-started chain; absent when a person started it. */
     hop: z.number().int().nonnegative().optional(),
   }),
+  A2uiSurfaceBlockSchema,
 ]);
 export type MessageBlock = z.infer<typeof MessageBlock>;
 
