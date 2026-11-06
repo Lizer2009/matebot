@@ -17,6 +17,8 @@ import {
   ThreadsExecuteInteractionOutput,
   ThreadsGetA2uiSurfaceInput,
   ThreadsGetA2uiSurfaceOutput,
+  ThreadsReconcileInteractionInput,
+  ThreadsReconcileInteractionOutput,
   ThreadsUpdateInteractionFieldInput,
   ThreadsUpdateInteractionFieldOutput,
 } from "./interaction.js";
@@ -261,6 +263,19 @@ describe("threads interaction RPC draft schemas", () => {
         executed: false,
       }).executed,
     ).toBe(false);
+  });
+
+  it("rejects a reconcile call that omits the thread target", () => {
+    expect(ThreadsReconcileInteractionInput.safeParse({ interactionId: "ix-1" }).success).toBe(
+      false,
+    );
+    expect(
+      ThreadsReconcileInteractionOutput.parse({
+        ok: true,
+        effectId: "effect-1",
+        status: "unknown",
+      }).status,
+    ).toBe("unknown");
   });
 
   it("requires exactly one of botId or groupId", () => {

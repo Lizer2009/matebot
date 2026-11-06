@@ -4,6 +4,7 @@ import type {
   ArtifactStore,
   BackgroundJobExecution,
   BackgroundJobHandlers,
+  ConnectorProvider,
   JobPublisher,
   MessagingSurface,
   PaymentWalletProvider,
@@ -28,6 +29,7 @@ import { performComputerUpdate } from "./computer-update.js";
 import type { createRunExecutor } from "./executor.js";
 import type { ExpoPushProvider } from "./expo-push.js";
 import { compactHistory } from "./history-compaction.js";
+import { reconcileAmbiguousEmailEffect } from "./interaction-email-reconcile.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
 import { pollPurchase } from "./purchase-poll.js";
@@ -74,6 +76,7 @@ export function createBackgroundJobHandlers(deps: {
   cloudAgent?: CloudAgentConnection | null;
   paymentWallet?: PaymentWalletProvider | null;
   notifications?: ExpoPushProvider;
+  connector?: ConnectorProvider;
 }): BackgroundJobHandlers {
   const messagingDeps = deps.messaging
     ? {
@@ -115,6 +118,13 @@ export function createBackgroundJobHandlers(deps: {
     deps.prisma.cloudAgent.findUnique({ where: { id: agentId }, select: OWNER });
   const purchase = ({ purchaseId }: { purchaseId: string }) =>
     deps.prisma.purchase.findUnique({ where: { id: purchaseId }, select: OWNER });
+  const effectOwner = async ({ effectId }: { effectId: string }) => {
+    const effect = await deps.prisma.externalEffect.findUnique({
+      where: { id: effectId },
+      select: { spaceId: true, run: { select: { userId: true } } },
+    });
+    return effect?.run ? { spaceId: effect.spaceId, userId: effect.run.userId } : null;
+  };
   const updatedComputer = async ({ updateId }: { updateId: string }) =>
     (
       await deps.prisma.computerUpdate.findUnique({
@@ -211,6 +221,12 @@ export function createBackgroundJobHandlers(deps: {
           jobs: deps.jobs,
           paymentWallet: deps.paymentWallet,
         },
+        payload,
+      );
+    }),
+    "action.reconcile": asOwner(effectOwner, async (payload) => {
+      await reconcileAmbiguousEmailEffect(
+        { prisma: deps.prisma, jobs: deps.jobs, connector: deps.connector },
         payload,
       );
     }),

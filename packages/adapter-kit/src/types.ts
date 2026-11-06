@@ -778,6 +778,8 @@ export interface BackgroundJobPayloads {
   /** Reconcile durable remote-agent intent; scope is loaded from the database. */
   "cloud_agent.poll": { agentId: string };
   "purchase.poll": { purchaseId: string };
+  /** Inspect an ambiguous email.send effect. Never re-invokes send. */
+  "action.reconcile": { effectId: string };
   /** Read an Expo push receipt; the token is identified by its digest, never stored. */
   "push.receipt": { userId: string; ticketId: string; tokenDigest: string };
 }

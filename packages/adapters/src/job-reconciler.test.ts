@@ -66,14 +66,17 @@ describe("createJobReconciler", () => {
       throw new Error("queue unavailable");
     });
     const reconcileRoutineRetryNotices = vi.fn(async () => undefined);
+    const reconcileAmbiguousEmails = vi.fn(async () => undefined);
     await createJobReconciler({
       prisma,
       jobs,
       reconcileRoutineRetryNotices,
+      reconcileAmbiguousEmails,
       reconcileCloudAgents,
       reconcileComputerUpdates,
     }).reconcileOnce();
     expect(reconcileRoutineRetryNotices).toHaveBeenCalledOnce();
+    expect(reconcileAmbiguousEmails).toHaveBeenCalledOnce();
     expect(reconcileCloudAgents).toHaveBeenCalledOnce();
     expect(reconcileComputerUpdates).toHaveBeenCalledOnce();
     expect(prisma.run.findMany).toHaveBeenCalled();

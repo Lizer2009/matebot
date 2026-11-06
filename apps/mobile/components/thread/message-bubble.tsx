@@ -763,7 +763,14 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
             onCheckStatus={
               onRefresh
                 ? async () => {
-                    await onRefresh();
+                    try {
+                      await rpc("threads/reconcileInteraction", {
+                        ...target,
+                        interactionId: block.interactionId,
+                      });
+                    } finally {
+                      await onRefresh();
+                    }
                   }
                 : undefined
             }

@@ -100,6 +100,8 @@ export * from "./installed-messaging-surface.js";
 export * from "./integration-provider-settings.js";
 export * from "./interaction-email.js";
 export * from "./interaction-email-capability.js";
+export * from "./interaction-email-outcome.js";
+export * from "./interaction-email-reconcile.js";
 export * from "./interaction-publish.js";
 export * from "./jev-auto-review.js";
 export * from "./job-reconciler.js";

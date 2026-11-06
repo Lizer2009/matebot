@@ -275,6 +275,18 @@ export const ThreadsExecuteInteractionOutput = z.object({
 });
 export type ThreadsExecuteInteractionOutput = z.infer<typeof ThreadsExecuteInteractionOutput>;
 
+/** Inspect an UNKNOWN send. Does not deliver. */
+export const ThreadsReconcileInteractionInput = ThreadsExecuteInteractionInput;
+export type ThreadsReconcileInteractionInput = z.infer<typeof ThreadsReconcileInteractionInput>;
+
+export const ThreadsReconcileInteractionOutput = z.object({
+  ok: z.literal(true),
+  effectId: Id,
+  status: z.enum(["succeeded", "failed", "unknown"]),
+  providerMessageId: z.string().trim().min(1).optional(),
+});
+export type ThreadsReconcileInteractionOutput = z.infer<typeof ThreadsReconcileInteractionOutput>;
+
 /**
  * Hydrate a persisted A2UI surface document by documentRef or interaction+surface ids.
  * Server is authority; clients must not invent documents.

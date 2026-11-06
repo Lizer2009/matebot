@@ -83,6 +83,7 @@ import {
   piSessionsRoot,
   RunJobPublisher,
   RunStarter,
+  reconcileAmbiguousEmailEffects,
   reconcileCloudAgents,
   reconcileComputerUpdates,
   reconcilePurchases,
@@ -712,6 +713,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     messaging,
     cloudAgent,
     paymentWallet,
+    connector: stack.connector,
   });
   if (inMemoryJobs) {
     await inMemoryJobs.start(jobHandlers);
@@ -729,6 +731,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         }),
         reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
         reconcilePurchases: () => reconcilePurchases({ prisma, jobs, paymentWallet }),
+        reconcileAmbiguousEmails: () =>
+          reconcileAmbiguousEmailEffects({ prisma, jobs, connector: stack.connector }),
         reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
         reconcileStrategicInitiatives: createStrategicInitiativeReconciler({
           prisma,

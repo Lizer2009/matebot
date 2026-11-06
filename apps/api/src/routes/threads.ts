@@ -33,6 +33,7 @@ import {
   InteractionEffectRunMissingError,
   InteractionEmailDeliveryError,
   InteractionSendRejectedError,
+  reconcileConfirmedInteractionService,
   updateInteractionFieldService,
 } from "../interaction-service.js";
 import type { RouterDeps } from "../router.js";
@@ -843,6 +844,7 @@ export function threadsRoutes(ctx: RouterContext) {
             interactionId: input.interactionId,
             userId: context.actor.userId,
             connector: deps.connectors,
+            jobs: deps.jobs,
           });
           return { ok: true as const, ...result };
         } catch (error) {
@@ -858,6 +860,33 @@ export function threadsRoutes(ctx: RouterContext) {
           throw new ORPCError("BAD_REQUEST", { message: "Could not send the email" });
         }
       }),
+      reconcileInteraction: authed.threads.reconcileInteraction.handler(
+        async ({ context, input }) => {
+          assertA2uiEnabled();
+          const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+          const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
+          try {
+            const result = await reconcileConfirmedInteractionService(deps.prisma, {
+              spaceId: context.actor.spaceId,
+              threadId: target.threadId,
+              botId,
+              interactionId: input.interactionId,
+              userId: context.actor.userId,
+              connector: deps.connectors,
+              jobs: deps.jobs,
+            });
+            return { ok: true as const, ...result };
+          } catch (error) {
+            if (error instanceof InteractionNotFoundError) {
+              throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+            }
+            if (error instanceof InteractionSendRejectedError) {
+              throw new ORPCError("BAD_REQUEST", { message: error.message });
+            }
+            throw new ORPCError("BAD_REQUEST", { message: "Could not check send status" });
+          }
+        },
+      ),
       markRead: authed.threads.markRead.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         const unreadAfterSeq = await markThreadRead(deps.prisma, context.actor, target);

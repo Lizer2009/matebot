@@ -15,10 +15,12 @@ vi.mock("@matebot/adapters", async () => {
   return {
     ...actual,
     deliverInteractionEmail: vi.fn(async () => ({ ok: true, deliveryId: "msg-1" })),
+    inspectInteractionEmailDelivery: vi.fn(),
+    reconcileAmbiguousEmailEffect: vi.fn(),
   };
 });
 
-import { deliverInteractionEmail } from "@matebot/adapters";
+import { deliverInteractionEmail, reconcileAmbiguousEmailEffect } from "@matebot/adapters";
 import { appendEventInTransaction } from "@matebot/db";
 import {
   confirmInteractionService,
@@ -26,6 +28,7 @@ import {
   InteractionEffectRunMissingError,
   InteractionEmailDeliveryError,
   InteractionSendRejectedError,
+  reconcileConfirmedInteractionService,
 } from "./interaction-service.js";
 
 const plan: InteractionPlan = {
@@ -767,6 +770,57 @@ describe("executeConfirmedInteractionService", () => {
     expect(db.interactions.get("ix-1")?.status).toBe("unknown");
   });
 
+  it("enqueues a reconcile job on timeout and does not send again", async () => {
+    vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({
+      ok: false,
+      error: "Request timed out",
+      outcome: "unknown",
+    });
+    const jobs = { enqueue: vi.fn(async () => undefined) };
+    const db = confirmedDraft();
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        jobs,
+        ...readyMailbox,
+      }),
+    ).rejects.toMatchObject({ outcome: "unknown" });
+    expect(jobs.enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "action.reconcile",
+        payload: { effectId: "effect-1" },
+      }),
+    );
+    expect(deliverInteractionEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets Check status inspect without calling send", async () => {
+    vi.mocked(reconcileAmbiguousEmailEffect).mockResolvedValueOnce({
+      status: "succeeded",
+      providerMessageId: "prov-found",
+    });
+    const db = confirmedDraft();
+    db.interactions.get("ix-1")!.status = "unknown";
+    db.effects.get("a2ui:interaction:ix-1:confirm:2")!.status = "ambiguous";
+    await expect(
+      reconcileConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+      }),
+    ).resolves.toEqual({
+      effectId: "effect-1",
+      status: "succeeded",
+      providerMessageId: "prov-found",
+    });
+    expect(deliverInteractionEmail).not.toHaveBeenCalled();
+  });
+
   it("maps an unexpected provider throw to a failed effect instead of leaving executing", async () => {
     vi.mocked(deliverInteractionEmail).mockRejectedValueOnce(new Error("Internal server error"));
     const db = confirmedDraft({
@@ -891,6 +945,21 @@ describe("executeConfirmedInteractionService", () => {
   it("refuses a second send after UNKNOWN so the user cannot resend", async () => {
     const db = confirmedDraft();
     db.interactions.get("ix-1")!.status = "unknown";
+    db.effects.get("a2ui:interaction:ix-1:confirm:2")!.status = "ambiguous";
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+      }),
+    ).rejects.toMatchObject({ code: "unknown" });
+    expect(deliverInteractionEmail).not.toHaveBeenCalled();
+  });
+
+  it("refuses Send when the effect is already ambiguous", async () => {
+    const db = confirmedDraft();
     db.effects.get("a2ui:interaction:ix-1:confirm:2")!.status = "ambiguous";
     await expect(
       executeConfirmedInteractionService(db.prisma, {
