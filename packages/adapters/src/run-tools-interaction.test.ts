@@ -1,5 +1,6 @@
 import type { InteractionPlan } from "@matebot/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { builtinAgentTools } from "./builtin-tools.js";
 
 const publishInteractionSurface = vi.fn();
 vi.mock("./interaction-publish.js", () => ({
@@ -7,7 +8,9 @@ vi.mock("./interaction-publish.js", () => ({
 }));
 
 const { interactionTools, normalizeEmailComposePlan } = await import("./run-tools-interaction.js");
-const { selectBuiltinToolsForRun } = await import("./run-tool-selection.js");
+const { isEmailShellEscape, preferredToolForEmailIntent, selectBuiltinToolsForRun } = await import(
+  "./run-tool-selection.js"
+);
 
 const emailPlan: InteractionPlan = {
   intent: "email.compose",
@@ -134,5 +137,34 @@ describe("selectBuiltinToolsForRun a2ui gate", () => {
     );
     expect(off).not.toContain("present_interaction");
     expect(on).toContain("present_interaction");
+  });
+
+  it("routes email.compose/send to present_interaction over shell when A2UI tools are offered", () => {
+    const on = selectBuiltinToolsForRun({ ...toolSelectBase, a2uiEnabled: true }).map(
+      (tool) => tool.name,
+    );
+    const off = selectBuiltinToolsForRun({ ...toolSelectBase, a2uiEnabled: false }).map(
+      (tool) => tool.name,
+    );
+    expect(on).toContain("shell");
+    expect(preferredToolForEmailIntent("email.compose", on)).toBe("present_interaction");
+    expect(preferredToolForEmailIntent("email.send", on)).toBe("present_interaction");
+    expect(isEmailShellEscape("shell", "email.compose", on)).toBe(true);
+    expect(isEmailShellEscape("user_computer_shell", "email.send", on)).toBe(true);
+    expect(isEmailShellEscape("present_interaction", "email.compose", on)).toBe(false);
+    expect(preferredToolForEmailIntent("email.compose", off)).toBeUndefined();
+    expect(isEmailShellEscape("shell", "email.compose", off)).toBe(false);
+    expect(preferredToolForEmailIntent("web.search", on)).toBeUndefined();
+  });
+
+  it("does not teach SMTP or request_secret as the mail fallback", () => {
+    const tool = builtinAgentTools.find((entry) => entry.name === "present_interaction");
+    expect(tool?.description).toMatch(/any language/);
+    expect(tool?.description).toContain("email.compose");
+    expect(tool?.description).toMatch(
+      /Never send mail with shell, python, smtplib, or request_secret/,
+    );
+    expect(tool?.description).not.toMatch(/SMTP/);
+    expect(tool?.description).not.toMatch(/request_secret as usual/);
   });
 });

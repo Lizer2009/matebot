@@ -403,7 +403,7 @@ export function userTurnInstructions(parts: {
       ? offeredBuiltinClause(
           parts.disabledBuiltinTools,
           "present_interaction",
-          'When the user asks to compose or send an email (any language), present an editable draft with present_interaction and intent "email.compose". Do not send mail yourself; they edit and confirm on the surface. Missing SMTP credentials still use request_secret.',
+          'When the user asks to compose or send an email (any language), present an editable draft with present_interaction and intent "email.compose". Never send mail with shell, python, smtplib, or request_secret; the user sends from the draft.',
         )
       : undefined,
     offeredBuiltinClause(

@@ -725,7 +725,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "present_interaction",
     description:
-      'Present an editable draft surface in the chat for the user to review and confirm. Use this when the user asks in natural language to compose or send an email (any language). Pass plan with intent "email.compose", a short title, fields for to/subject/body (status "resolved" when known, "missing" when not), nextStep "ask" or "request_approval", and riskLevel "medium". Do not send mail yourself; the user edits and confirms on the surface. Missing SMTP credentials still use request_secret as usual.',
+      'Present an editable draft surface in the chat for the user to review and send. Use this when the user asks in natural language to compose or send an email (any language). Pass plan with intent "email.compose", a short title, fields for to/subject/body (status "resolved" when known, "missing" when not), nextStep "ask" or "request_approval", and riskLevel "medium". Never send mail with shell, python, smtplib, or request_secret; the user edits and sends from the surface.',
     inputSchema: {
       type: "object",
       properties: {

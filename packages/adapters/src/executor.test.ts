@@ -1795,6 +1795,58 @@ describe("userTurnInstructions", () => {
     expect(text).not.toContain("generate_secret");
   });
 
+  it("routes NL mail to present_interaction and forbids smtplib when FEATURE_A2UI is on", () => {
+    vi.stubEnv("FEATURE_A2UI", "1");
+    try {
+      const text = userTurnInstructions({
+        ...base,
+        groupContext: undefined,
+        messagingContext: undefined,
+        redactedMemoryContext: undefined,
+        redactedScratchpadContext: undefined,
+        hasHistoricalContext: false,
+        agentEnvironmentInstruction: undefined,
+        botDirectory: undefined,
+        pluginLine: undefined,
+        agentSkillsLine: undefined,
+        taughtSkillsLine: undefined,
+      }).join("\n");
+      expect(text).toContain("any language");
+      expect(text).toContain("present_interaction");
+      expect(text).toContain('intent "email.compose"');
+      expect(text).toContain(
+        "Never send mail with shell, python, smtplib, or request_secret; the user sends from the draft.",
+      );
+      expect(text).not.toContain("Missing SMTP");
+      expect(text).not.toContain("Missing SMTP credentials still use request_secret");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("omits the interaction mail clause when FEATURE_A2UI is off", () => {
+    vi.stubEnv("FEATURE_A2UI", "0");
+    try {
+      const text = userTurnInstructions({
+        ...base,
+        groupContext: undefined,
+        messagingContext: undefined,
+        redactedMemoryContext: undefined,
+        redactedScratchpadContext: undefined,
+        hasHistoricalContext: false,
+        agentEnvironmentInstruction: undefined,
+        botDirectory: undefined,
+        pluginLine: undefined,
+        agentSkillsLine: undefined,
+        taughtSkillsLine: undefined,
+      }).join("\n");
+      expect(text).not.toContain("present_interaction");
+      expect(text).not.toContain("smtplib");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("drops the credential safeguard when secret tools and shell are off", () => {
     const instructions = userTurnInstructions({
       ...base,
