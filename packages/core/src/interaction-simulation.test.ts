@@ -248,13 +248,17 @@ describe("intent mapping for real requests", () => {
 });
 
 describe("calendar surfaces", () => {
-  it("stamps the email template because no calendar template exists", () => {
+  // The old simulator forced the email template here, which hid the gap.
+  // A non-email intent is stamped with nothing and has no editor.
+  it("stamps no email template for a calendar intent", () => {
     const surface = simulateCalendarSurface({
       connection: "not_connected",
       interactionStatus: "needs_connection",
     });
-    expect(surface.template).toBe("email-draft-card");
+    expect(surface.template).toBeNull();
     expect(surface.capability).toBe("not_connected");
+    expect(surface.registered).toBe(true);
+    expect(surface.implemented).toBe(false);
   });
 
   // The honest shortfall: nothing on a calendar surface is tappable today.
@@ -267,6 +271,7 @@ describe("calendar surfaces", () => {
       expect(surface.action).toBe("none");
       expect(surface.canSend).toBe(false);
       expect(surface.editor).toBe("none");
+      expect(surface.implemented).toBe(false);
       expect(surface.gap.length).toBeGreaterThan(0);
     }
   });

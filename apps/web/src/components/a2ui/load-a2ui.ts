@@ -4,6 +4,22 @@
  * of the renderer when production leaves the flag off.
  */
 
+/** One payload the renderer emits when a user presses a compiled button. */
+export type A2uiActionPayload = {
+  name: string;
+  surfaceId: string;
+  sourceComponentId: string;
+  timestamp: string;
+  context: Record<string, unknown>;
+};
+
+/**
+ * A surface's action listener. The host passes it to `MessageProcessor`, which
+ * routes every `action.event` in the tree through it — one bridge for all
+ * compiled surfaces, not a handler per domain.
+ */
+export type A2uiActionListener = (action: A2uiActionPayload) => void | Promise<void>;
+
 export type A2uiRendererModules = {
   A2uiSurface: typeof import("@a2ui/react").A2uiSurface;
   MarkdownContext: typeof import("@a2ui/react").MarkdownContext;
@@ -31,6 +47,19 @@ export async function loadA2uiRenderer(): Promise<A2uiRendererModules> {
     basicCatalog: catalog.basicCatalog,
     injectBasicCatalogStyles: catalog.injectBasicCatalogStyles,
   };
+}
+
+/**
+ * Build the processor for one surface. `onAction` is what turns a compiled
+ * Button into a server call; without it the renderer draws a dead control, which
+ * is exactly the gap this bridge closes. Keeping it here means every host gets
+ * the same wiring instead of each screen remembering to pass one.
+ */
+export function createA2uiProcessor(
+  mods: A2uiRendererModules,
+  onAction: A2uiActionListener,
+): InstanceType<A2uiRendererModules["MessageProcessor"]> {
+  return new mods.MessageProcessor([mods.basicCatalog], onAction);
 }
 
 /** Escape-only markdown so Text never injects raw HTML from the model. */

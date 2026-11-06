@@ -162,6 +162,8 @@ import {
 import {
   ThreadsConfirmInteractionInput,
   ThreadsConfirmInteractionOutput,
+  ThreadsDispatchInteractionActionInput,
+  ThreadsDispatchInteractionActionOutput,
   ThreadsExecuteInteractionInput,
   ThreadsExecuteInteractionOutput,
   ThreadsGetA2uiSurfaceInput,
@@ -758,6 +760,13 @@ export const appContract = {
     executeInteraction: oc
       .input(ThreadsExecuteInteractionInput)
       .output(ThreadsExecuteInteractionOutput),
+    /**
+     * Dispatch a compiled surface's action (the single primary button). The
+     * server re-checks action allowlist, ownership, surface, and revision.
+     */
+    dispatchInteractionAction: oc
+      .input(ThreadsDispatchInteractionActionInput)
+      .output(ThreadsDispatchInteractionActionOutput),
     /**
      * Inspect an UNKNOWN email send. Never re-invokes send. Rejects when A2UI
      * is not enabled or the interaction is not waiting on reconcile.

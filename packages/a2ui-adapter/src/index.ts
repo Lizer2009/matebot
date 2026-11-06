@@ -1,8 +1,28 @@
 export {
+  dispatchInteractionAction,
+  type InteractionActionPayload,
+  type InteractionActionRecord,
+  type InteractionDispatchDeps,
+  type InteractionDispatchResult,
+  type ParsedInteractionAction,
+  parseInteractionAction,
+  resetInteractionActionState,
+} from "./action-bridge.js";
+export {
   type CompileInteractionPlanInput,
   type CompileInteractionPlanResult,
   compileInteractionPlan,
 } from "./compile.js";
+export {
+  type CompileInteractionSurfaceInput,
+  type CompileInteractionSurfaceResult,
+  compileInteractionSurface,
+  INTERACTION_ACTION_EVENT,
+  INTERACTION_ALLOWED_ACTIONS,
+  type InteractionAllowedAction,
+  type SurfaceDataModel,
+  surfaceDataModel,
+} from "./compile-surface.js";
 export {
   A2UI_PNPM_GIT_SPEC,
   A2UI_UPSTREAM_COMMIT,

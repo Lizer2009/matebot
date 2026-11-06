@@ -23,6 +23,8 @@ import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const simModule = join(root, "packages/core/src/interaction-simulation.ts");
 const nudgeModule = join(root, "packages/core/src/interaction-nudge.ts");
+const capabilityModule = join(root, "packages/core/src/interaction-capability.ts");
+const planBridgeModule = join(root, "packages/core/src/interaction-plan-bridge.ts");
 
 if (!existsSync(simModule)) {
   console.error(`Cannot find ${simModule}. Run this from a full checkout.`);
@@ -48,6 +50,14 @@ import {
   simulateSendGate,
 } from ${JSON.stringify(simModule)};
 import { A2UI_SURFACE_NUDGE, surfaceNudgeFor } from ${JSON.stringify(nudgeModule)};
+import {
+  INTERACTION_CAPABILITIES,
+  findInteractionCapability,
+} from ${JSON.stringify(capabilityModule)};
+import {
+  surfaceFallback,
+  surfacePlanForCapability,
+} from ${JSON.stringify(planBridgeModule)};
 
 const lifecycleFor = (state) =>
   state === "not_connected" || state === "requires_reauth" || state === "stale_local_connected"
@@ -202,12 +212,11 @@ function buildDialogueScenario() {
         );
       }
       if (row.expect === "connect-via-app-card") {
-        // The calendar surface offers no button of its own: the template is the
-        // email draft card because the compiler has no calendar template, and
-        // hosts only render an editor for an email intent. The user connects
-        // through the connect_app card, and the nudge says so.
+        // No template is stamped for a non-email intent, so the calendar surface
+        // carries none. The user connects through the connect_app card, and the
+        // nudge says so; the row must not pretend an email draft exists.
         return (
-          row.template === "email-draft-card" &&
+          row.template === null &&
           row.action === "none" &&
           !row.canSend &&
           row.nudge === A2UI_SURFACE_NUDGE.awaiting_connection
@@ -221,6 +230,74 @@ function buildDialogueScenario() {
     },
     invariant:
       "each prompt lands on the card its state calls for; an unsupported request reports out_of_scope instead of passing",
+  };
+}
+
+/**
+ * Which intents are actually registered, and what a request that names none of
+ * them produces. This is the guard against "register one card per prompt": a
+ * prompt with no capability must return a safe fallback, not a surface.
+ */
+function buildCapabilityScenario() {
+  const registered = INTERACTION_CAPABILITIES.map((capability) => {
+    const plan = surfacePlanForCapability(capability.intent);
+    return {
+      case: capability.intent,
+      registered: findInteractionCapability(capability.intent) !== undefined,
+      implemented: capability.implemented,
+      presentation: capability.schema.presentation,
+      action: capability.schema.action?.id ?? "-",
+      connection: capability.requiresConnection ?? "-",
+      renders: plan.ok ? "yes" : plan.reason,
+      expect: capability.implemented ? "renders" : "not_implemented",
+    };
+  });
+
+  const unregistered = [
+    "github.clone",
+    "sales.annualTrend",
+    "schedule.week",
+    "file.analyze",
+  ].map((intent) => {
+    const plan = surfacePlanForCapability(intent);
+    const fallback = surfaceFallback(intent);
+    return {
+      case: intent,
+      registered: findInteractionCapability(intent) !== undefined,
+      implemented: false,
+      presentation: "-",
+      action: "-",
+      connection: "-",
+      renders: plan.ok ? "yes" : plan.reason,
+      expect: "unregistered_intent",
+      fallback: fallback.text,
+    };
+  });
+
+  return {
+    id: "capability-registry",
+    title: "which intents exist, and what an unregistered one produces",
+    rows: [...registered, ...unregistered],
+    check: (row) => {
+      // A form must offer exactly one action; a result surface must offer none.
+      if (row.expect === "renders") {
+        return row.presentation === "form"
+          ? row.renders === "yes" && row.action !== "-"
+          : row.renders === "yes" && row.action === "-";
+      }
+      if (row.expect === "not_implemented") {
+        return row.renders === "not_implemented" && row.action === "-";
+      }
+      // No capability means no surface and no action, ever.
+      return (
+        row.renders === "unregistered_intent" &&
+        row.action === "-" &&
+        typeof row.fallback === "string" &&
+        row.fallback.length > 0
+      );
+    },
+    invariant:
+      "an intent renders only when registered and implemented; anything else gets a text fallback and no action",
   };
 }
 
@@ -316,6 +393,7 @@ const scenarios = [
     invariant: "only the app the surface acts through resumes it",
   },
   buildDialogueScenario(),
+  buildCapabilityScenario(),
 ];
 
 const nudges = Object.entries(A2UI_SURFACE_NUDGE).map(([state, text]) => ({
@@ -350,7 +428,7 @@ if (args.includes("--help") || args.includes("-h")) {
       "  node scripts/a2ui-sim.mjs --json       print the raw rows",
       "  node scripts/a2ui-sim.mjs --list       list scenario ids",
       "",
-      "Scenarios: connection-states, send-outcomes, unknown-reconcile, calendar-resume",
+      "Scenarios: connection-states, send-outcomes, unknown-reconcile, calendar-resume, dialogue-prompts, capability-registry",
     ].join("\n"),
   );
   process.exit(0);

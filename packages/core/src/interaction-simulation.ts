@@ -1,3 +1,4 @@
+import { findInteractionCapability } from "./interaction-capability.js";
 import type { EmailConnectionSnapshot } from "./interaction-preflight.js";
 import {
   emailCapabilityAllowsSend,
@@ -336,14 +337,13 @@ export function simulateConnectionResume(input: {
 }
 
 /**
- * A calendar surface as the server and hosts actually produce it.
+ * A calendar surface as the product actually produces it today.
  *
- * The server stamps the same email template ids, because the compiler has no
- * calendar template. Neither host renders anything for a calendar intent beyond
- * the compiled text tree: both gate their editable sheet — and the connection
- * card that lives inside it — on an email intent. So the stamp says what the
- * server wanted, `action` says what the user can actually tap, and `gap` says
- * why they differ. Reporting that keeps the shortfall visible.
+ * The email template ids are stamped only for an email intent, so a calendar
+ * surface has no template at all — forcing one here is what previously hid this
+ * gap. What the registry says is authoritative: the capability is registered but
+ * `implemented: false`, so it has no action, no editor, and no submit. The row
+ * reports that instead of borrowing the email card's shape.
  */
 export function simulateCalendarSurface(input: {
   connection: SimulatedConnectionState;
@@ -351,11 +351,14 @@ export function simulateCalendarSurface(input: {
 }): {
   capability: ReturnType<typeof preflightCalendarCapability>["surfaceCapability"];
   interactionStatus: InteractionLifecycleStatus;
-  template: EmailSurfaceTemplate;
+  /** Null: no template is stamped for a non-email intent. */
+  template: null;
   lifecycle: EmailSurfaceLifecycle;
   action: "none";
   canSend: false;
   editor: "none";
+  registered: boolean;
+  implemented: boolean;
   gap: string;
 } {
   const sim = simulatedConnectionFor("calendar", input.connection);
@@ -364,22 +367,20 @@ export function simulateCalendarSurface(input: {
     reconnectRefs: sim.reconnectRefs,
     providerReady: sim.providerReady,
   });
-  const stamps = emailSurfaceBlockFields({
-    intent: "calendar.create",
-    capability: preflight.surfaceCapability,
-    interactionStatus: input.interactionStatus,
-  });
-  const connected = stamps.template === "email-draft-card";
+  const capability = findInteractionCapability("calendar.create");
   return {
     capability: preflight.surfaceCapability,
     interactionStatus: input.interactionStatus,
-    template: stamps.template,
-    lifecycle: stamps.lifecycle,
+    template: null,
+    lifecycle: "draft",
     action: "none",
     canSend: false,
     editor: "none",
-    gap: connected
-      ? "connected, but the surface is text-only: no name/events input and nothing to submit"
-      : "unbound, but no connect button is rendered: the connection card lives inside the email editor, so this step runs through the connect_app card instead",
+    registered: capability !== undefined,
+    implemented: capability?.implemented ?? false,
+    gap:
+      preflight.surfaceCapability === "ready"
+        ? "connected, but the capability is not implemented: no name/start input and nothing to submit"
+        : "unbound: the connect step runs through the connect_app card, and no calendar editor exists yet",
   };
 }
