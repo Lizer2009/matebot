@@ -11,16 +11,23 @@ import {
 } from "@matebot/core";
 import type { Prisma } from "@matebot/db";
 import {
+  a2uiSurfaceDocumentRef,
+  parseA2uiSurfaceDocumentRef,
+} from "@matebot/contracts";
+import {
   AnswerTooLongError,
   appendEventInTransaction,
   createExternalConversationRepos,
   createThreadMessageInTransaction,
+  getInteraction,
+  getInteractionSurface,
   IsolationError,
   lockOwnedGroup,
   touchGroupUpdatedAt,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { ORPCError } from "@orpc/server";
+import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
 import type { RouterDeps } from "../router.js";
 import { createRoutineTestRun, routineTestRunNonce, routineTestTarget } from "../routines.js";
 import { withSerializableRetry } from "../serializable-retry.js";
@@ -64,6 +71,12 @@ import {
  * the marker's callId. User turns carry a uuid suffix, so they never collide. */
 export function callMarkerClientNonce(callId: string): string {
   return `${CALL_CLIENT_NONCE_PREFIX}${callId}:marker`;
+}
+
+function assertA2uiEnabled(): void {
+  if (!isA2uiFeatureEnabled()) {
+    throw new ORPCError("NOT_FOUND", { message: "A2UI is not enabled" });
+  }
 }
 
 /** The card is closed by a marker; the run that follows finishes whatever the call left open. */
@@ -666,6 +679,60 @@ export function threadsRoutes(ctx: RouterContext) {
           getLogger().error("thread answer enqueue", error);
         });
         return { ok: true as const };
+      }),
+      getA2uiSurface: authed.threads.getA2uiSurface.handler(async ({ context, input }) => {
+        assertA2uiEnabled();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input, {
+          includeArchived: true,
+        });
+        const ids = input.documentRef
+          ? parseA2uiSurfaceDocumentRef(input.documentRef)
+          : input.interactionId && input.surfaceId
+            ? { interactionId: input.interactionId, surfaceId: input.surfaceId }
+            : null;
+        if (!ids) {
+          throw new ORPCError("BAD_REQUEST", { message: "Invalid A2UI surface reference" });
+        }
+        const interaction = await getInteraction(deps.prisma, ids.interactionId);
+        if (!interaction || interaction.threadId !== target.threadId) {
+          throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+        }
+        const surface = await getInteractionSurface(deps.prisma, ids);
+        if (!surface) {
+          throw new ORPCError("NOT_FOUND", { message: "Surface not found" });
+        }
+        const protocolFamily =
+          surface.protocolFamily === "v0_9" || surface.protocolFamily === "v1_0"
+            ? surface.protocolFamily
+            : null;
+        if (!protocolFamily) {
+          throw new ORPCError("INTERNAL_SERVER_ERROR", {
+            message: "Surface protocolFamily is invalid",
+          });
+        }
+        const messages = Array.isArray(surface.document) ? surface.document : [];
+        return {
+          interactionId: surface.interactionId,
+          surfaceId: surface.surfaceId,
+          protocolFamily,
+          draftVersion: surface.draftVersion,
+          messages,
+          documentRef: a2uiSurfaceDocumentRef(ids),
+        };
+      }),
+      updateInteractionField: authed.threads.updateInteractionField.handler(async () => {
+        assertA2uiEnabled();
+        // PR-5 mounts the Interaction Runtime against this procedure.
+        throw new ORPCError("NOT_IMPLEMENTED", {
+          message: "Interaction field updates are not available yet",
+        });
+      }),
+      confirmInteraction: authed.threads.confirmInteraction.handler(async () => {
+        assertA2uiEnabled();
+        // PR-6 binds confirm to ExternalEffect draft/confirmed version rules.
+        throw new ORPCError("NOT_IMPLEMENTED", {
+          message: "Interaction confirmation is not available yet",
+        });
       }),
       markRead: authed.threads.markRead.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);

@@ -451,6 +451,7 @@ model Space {
   computers                   Computer[]
   computerRuns                ComputerRun[]
   externalEffects             ExternalEffect[]
+  interactions                Interaction[]
   mcpServers                  McpServer[]
   mcpOAuthSessions            McpOAuthSession[]
   modelOAuthSessions          ModelOAuthSession[]
@@ -893,6 +894,7 @@ model Thread {
   tasks                       Task[]
   runs                        Run[]
   routines                    Routine[]
+  interactions                Interaction[]
 
   @@index([spaceId])
   @@index([spaceId, userId])
@@ -1012,6 +1014,7 @@ model Run {
   updatedAt            DateTime          @updatedAt
   attempts             Attempt[]
   effects              ExternalEffect[]
+  interactions         Interaction[]
   steeringMessages     SteeringMessage[]
   externalMessage      ExternalMessage?
 
@@ -1031,6 +1034,55 @@ model Run {
   // Partial index runs_bot_outcome_pending_idx (unreturned bot-message outcomes) is created in SQL.
   @@index([routineId])
   @@map("runs")
+}
+
+/// Server-authoritative A2UI interaction (intent, draft/confirm versions, slots).
+/// Mobile saved-chats are not authority. See matebot-a2ui-integration-design.md §7.2 Option A.
+model Interaction {
+  id               String               @id @default(cuid())
+  spaceId          String
+  space            Space                @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  threadId         String
+  thread           Thread               @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  runId            String?
+  run              Run?                 @relation(fields: [runId], references: [id], onDelete: SetNull)
+  intent           String
+  status           String
+  draftVersion     Int                  @default(1)
+  confirmedVersion Int?
+  plan             Json
+  /// Field name → current draft value; server owns edits.
+  slots            Json                 @default("{}")
+  title            String?
+  summary          String?
+  /// ExternalEffect id when confirmation/send is bound (PR-6+).
+  approvalEffectId String?
+  /// Timeline message that carries the a2ui_surface MessageBlock.
+  messageId        String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  surfaces         InteractionSurface[]
+
+  @@index([threadId, updatedAt])
+  @@index([spaceId, threadId])
+  @@index([runId])
+  @@map("interactions")
+}
+
+model InteractionSurface {
+  id             String      @id @default(cuid())
+  interactionId  String
+  interaction    Interaction @relation(fields: [interactionId], references: [id], onDelete: Cascade)
+  surfaceId      String
+  protocolFamily String
+  /// Compiled A2UI protocol messages for hydrate (server authority).
+  document       Json
+  draftVersion   Int
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([interactionId, surfaceId])
+  @@map("interaction_surfaces")
 }
 
 model SteeringMessage {
