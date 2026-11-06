@@ -1,6 +1,7 @@
 import type { AgentToolExecutionObserver } from "@matebot/adapter-kit";
 import { toolResultTaintsRun } from "@matebot/core";
 import { isTerminatingReplyResult } from "./approval-effect.js";
+import { refuseOutboundEmailShell } from "./email-shell-escape.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import type { RunContext } from "./run-context.js";
 import { noteComputerTaskStep } from "./run-progress.js";
@@ -100,6 +101,10 @@ async function dispatchTool(
   }
   if (IMAGE_RETURNING_COMPUTER_TOOLS.has(name) && !ctx.computer.acceptsImages) {
     return { error: MODEL_CANNOT_SEE_MESSAGE };
+  }
+  if (name === "shell" || name === USER_COMPUTER_SHELL_TOOL) {
+    const mailEscape = refuseOutboundEmailShell(ctx, args);
+    if (mailEscape) return mailEscape;
   }
   const request = await resolveToolRequest(ctx, name, args, executionId);
   if ("error" in request) return request;

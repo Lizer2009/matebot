@@ -83,7 +83,7 @@ Exact pull tag = `ghcr.io/lizer2009/matebot/app:sha-<full-40-char-sha-of-the-dis
 
 ### Agent email compose (when flag on)
 
-With `FEATURE_A2UI` enabled on the API/worker, the built-in `present_interaction` tool is offered to interactive runs. A natural-language request to compose or send mail (any language) should call that tool with an `email.compose` `InteractionPlan`, which publishes an `a2ui_surface` via `publishInteractionSurface`. Flag off: the tool is not offered; legacy `request_secret` / ask / ExternalEffect paths stay unchanged (including SMTP auth when a secret is missing).
+With `FEATURE_A2UI` enabled on the API/worker, the built-in `present_interaction` tool is offered to interactive runs. A natural-language request to compose or send mail (any language) should call that tool with an `email.compose` `InteractionPlan`, which publishes an `a2ui_surface` via `publishInteractionSurface`. Shell/python SMTP scripts (`smtplib`, `MAIL_*` injection) are refused while that tool is offered. Flag off: the tool is not offered; legacy `request_secret` / ask / ExternalEffect paths stay unchanged (including SMTP auth when a secret is missing).
 
 ### Verify flag-off
 

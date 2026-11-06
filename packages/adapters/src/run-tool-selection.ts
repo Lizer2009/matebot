@@ -203,3 +203,29 @@ export function followUpsOffered(
     FOLLOW_UP_TOOL_NAMES.every((name) => tools.some((tool) => tool.name === name))
   );
 }
+
+const EMAIL_NATIVE_INTENTS = new Set(["email.compose", "email.send"]);
+const EMAIL_SHELL_ESCAPE_TOOLS = new Set(["shell", "user_computer_shell"]);
+
+/**
+ * When present_interaction is offered, email compose/send uses that tool — never shell.
+ * Intent is structured (InteractionPlan), not guessed from free-form prose.
+ */
+export function preferredToolForEmailIntent(
+  intent: string,
+  offeredToolNames: readonly string[],
+): "present_interaction" | undefined {
+  if (!EMAIL_NATIVE_INTENTS.has(intent)) return undefined;
+  return offeredToolNames.includes("present_interaction") ? "present_interaction" : undefined;
+}
+
+export function isEmailShellEscape(
+  toolName: string,
+  intent: string,
+  offeredToolNames: readonly string[],
+): boolean {
+  return (
+    preferredToolForEmailIntent(intent, offeredToolNames) === "present_interaction" &&
+    EMAIL_SHELL_ESCAPE_TOOLS.has(toolName)
+  );
+}

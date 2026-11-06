@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApprovedEffectReplayQueue, terminatingToolResult } from "./approval-effect.js";
 
 const audited = vi.hoisted(() => [] as { tool: string; outcome: string; metadata: unknown }[]);
@@ -28,6 +28,7 @@ vi.mock("./run-tool-gate.js", async (importOriginal) => ({
   }),
 }));
 
+import { OUTBOUND_EMAIL_SHELL_REFUSAL } from "./email-shell-escape.js";
 import { applyTool, isToolError } from "./run-tools.js";
 
 function dispatchContext(tainted: boolean) {
@@ -52,6 +53,7 @@ function dispatchContext(tainted: boolean) {
     },
     tools: {
       disabled: new Set<string>(),
+      builtins: [] as { name: string }[],
       approvedReplays: createApprovedEffectReplayQueue([]),
       connector: new Map(),
     },
@@ -174,6 +176,35 @@ describe("isToolError", () => {
     expect(isToolError({ details: { refused: "owner-settings" } })).toBe(false);
     expect(isToolError({ terminate: true, details: { refused: "repeat" } })).toBe(false);
     expect(isToolError({ terminate: true, details: { refused: "owner-settings" } })).toBe(false);
+  });
+});
+
+describe("email shell escape", () => {
+  const smtp = `python3 -c 'import smtplib; smtplib.SMTP("localhost", 587).sendmail("a@x.test", ["b@x.test"], "hi")'`;
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("rejects smtplib on shell and user_computer_shell when present_interaction is offered", async () => {
+    vi.stubEnv("FEATURE_A2UI", "1");
+    const base = dispatchContext(false);
+    const ctx = {
+      ...base,
+      tools: {
+        ...base.tools,
+        builtins: [{ name: "present_interaction" }, { name: "shell" }],
+      },
+    };
+    await expect(applyTool(ctx as never, "shell", { command: smtp }, "call-1")).resolves.toEqual({
+      error: OUTBOUND_EMAIL_SHELL_REFUSAL,
+    });
+    await expect(
+      applyTool(ctx as never, "user_computer_shell", { command: smtp }, "call-1"),
+    ).resolves.toEqual({
+      error: OUTBOUND_EMAIL_SHELL_REFUSAL,
+    });
+    expect(audited).toEqual([]);
   });
 });
 
