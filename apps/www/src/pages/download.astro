@@ -26,7 +26,7 @@ const platforms = [
   // Android gets a build before iOS does; `/api/download` resolves the APK per request, so this
   // page needs no rebuild when one is published.
   { name: "Android", action: "Download the APK", href: downloadHref("android"), attr: "android" },
-  { name: "iPhone and web", action: "Open the web app", href: APP_URL, attr: "web" },
+  { name: "iPhone", action: "Open the web app", href: APP_URL, attr: "web" },
 ];
 ---
 
