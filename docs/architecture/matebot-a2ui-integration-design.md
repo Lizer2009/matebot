@@ -60,12 +60,16 @@ A2UI 是 Matebot 实现**对话内、声明式、可流式更新**交互界面�
 ### 0.4 文档关系
 
 ```text
-matebot-a2ui-source-audit.md     ← 事实源（路径/符号）
-matebot-a2ui-gap-checklist.md    ← P0/P1 缺口
-matebot-a2ui-integration-design.md  ← 本文件（设计 v1.1）
+matebot-a2ui-source-audit.md                  ← 事实源（路径/符号）
+matebot-a2ui-gap-checklist.md                 ← P0/P1 缺口
+matebot-a2ui-integration-design.md            ← 本文件（设计 v1.1）
+MATEBOT_A2UI_ORCHESTRATION_SPEC.md            ← 编排意向规格（包路径未对齐）
+matebot-a2ui-orchestration-gap-analysis.md    ← 编排规格 vs 本设计 / tip 对照
+matebot-a2ui-orchestration-addendum.md        ← 采纳编排意图、不破坏 v1.1 的不变量
 ```
 
-冲突时：**审计 > 本设计 > v1.0 原文**。
+冲突时：**审计 > 本设计 > 编排 addendum / gap analysis > 编排规格原文 > v1.0 原文**。  
+编排规格中的新包名与 `ActionExecution` 表是意向，不是对本设计 §10 / §7 的修订。
 
 ---
 
@@ -551,7 +555,8 @@ type InteractionPlan = {
 10. Mobile：自建 Catalog；saved-chats 非跨设备真相。  
 11. 部署：明确 **不改 RAKAZO_*** / roles / volumes。  
 12. 路线图：PR-0 = 审计已完成；分支策略 `feature/a2ui` + feature flag。  
-13. 审计边界从「实施前再查」改为「已完成 Phase 0，本设计以其为准」。
+13. 审计边界从「实施前再查」改为「已完成 Phase 0，本设计以其为准」。  
+14. 编排规格（交互状态机 / 能力预检 / 工具分档）作为**意向**收录；与本设计的对齐、否决平行 `ActionExecution` / 包爆炸、以及 tip PR#26 之后的 PR-A′…E′ 见 `matebot-a2ui-orchestration-gap-analysis.md`。`FEATURE_A2UI` 仍默认关闭。
 
 ---
 
