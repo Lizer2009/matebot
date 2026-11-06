@@ -1,27 +1,29 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import { useMemo } from "react";
 import { A2uiSurfaceHost } from "./A2uiSurfaceHost";
-import { resolveFixtureMessages } from "./fixtures";
+import { useA2uiSurfaceDocument } from "./use-a2ui-surface-document";
 
 /**
  * Timeline card for `MessageBlock.kind === "a2ui_surface"`.
  * Sibling to page-kit (`kind: page`) — never merged.
  *
- * Without a document (PR-4 persistence) the card shows title/summary only.
- * Fixture `documentRef` values hydrate a local message list for demos.
+ * Hydrates from fixture documentRef, explicit messages, or server fetch (PR-4).
  */
 export function A2uiSurfaceCard({
   block,
   messages,
+  fetchDocument,
 }: {
   block: A2uiSurfaceBlock;
   /** Optional protocol messages; fixture documentRef fills this when omitted. */
   messages?: unknown[];
+  /** Load a persisted documentRef from the API when not a fixture. */
+  fetchDocument?: (documentRef: string) => Promise<unknown[] | undefined>;
 }) {
-  const document = useMemo(
-    () => messages ?? resolveFixtureMessages(block.documentRef),
-    [messages, block.documentRef],
-  );
+  const document = useA2uiSurfaceDocument({
+    documentRef: block.documentRef,
+    messages,
+    fetchDocument,
+  });
   const title = block.title?.trim() || "Surface";
   const summary = block.summary?.trim();
 
@@ -56,11 +58,13 @@ export function A2uiSurfaceCard({
         ) : null}
       </div>
       <div className="px-5 py-4">
-        {document ? (
-          <A2uiSurfaceHost surfaceId={block.surfaceId} messages={document} />
+        {document.messages ? (
+          <A2uiSurfaceHost surfaceId={block.surfaceId} messages={document.messages} />
         ) : (
           <div
             data-testid="a2ui-surface-placeholder"
+            data-loading={document.loading ? "true" : "false"}
+            data-error={document.error ?? undefined}
             className="text-[14px] text-muted-foreground"
           />
         )}

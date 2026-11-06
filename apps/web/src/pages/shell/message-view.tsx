@@ -472,9 +472,25 @@ export const MessageView = memo(function MessageView({
           if (block.kind === "a2ui_surface") {
             // Feature flag default off — production 0.6.0 behavior unchanged.
             if (!isA2uiEnabled()) return null;
+            const botId = "botId" in artifactTarget ? artifactTarget.botId : message.botId;
+            const groupId = "groupId" in artifactTarget ? artifactTarget.groupId : undefined;
             return (
               <div key={i} className="flex justify-start">
-                <A2uiSurfaceCard block={block} />
+                <A2uiSurfaceCard
+                  block={block}
+                  fetchDocument={
+                    block.documentRef
+                      ? async (documentRef) => {
+                          if (!botId && !groupId) return undefined;
+                          const result = await rpc.threads.getA2uiSurface({
+                            ...(botId ? { botId } : { groupId: groupId! }),
+                            documentRef,
+                          });
+                          return result.messages;
+                        }
+                      : undefined
+                  }
+                />
               </div>
             );
           }
