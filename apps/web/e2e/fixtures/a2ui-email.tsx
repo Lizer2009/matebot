@@ -11,10 +11,10 @@ import "../../src/styles.css";
 import { FixtureTranscript } from "./thread-fixture";
 
 /**
- * Playwright fixture for email compose → confirm → send.
+ * Playwright fixture for email review-card → Send (confirm+execute) / Discard.
  *
  * Open: `/e2e/fixtures/a2ui-email.html`
- * - default: local draft that mirrors confirm-before-send
+ * - default: local draft that mirrors confirm-before-send on the server
  * - `?flag=off`: timeline hides the a2ui_surface block
  */
 
@@ -28,7 +28,9 @@ if (!flagOff) {
 }
 
 const initialFields: EmailDraftFields = {
+  from: "bot@example.com",
   to: "a@example.com",
+  cc: "",
   subject: "Hi",
   body: "Hello",
 };
@@ -42,7 +44,9 @@ function emailMessages(fields: EmailDraftFields): unknown[] {
         value: {
           intent: "email.compose",
           fields: [
+            { name: "from", value: fields.from },
             { name: "to", value: fields.to },
+            { name: "cc", value: fields.cc },
             { name: "subject", value: fields.subject },
             { name: "body", value: fields.body },
           ],
@@ -90,9 +94,11 @@ function EmailComposeFixture() {
           setConfirmedVersion(version);
         }}
         onSend={async (version) => {
-          if (confirmedRef.current !== version)
+          if (confirmedRef.current !== version) {
             throw new Error("Confirm this draft before sending.");
+          }
         }}
+        onDiscard={() => undefined}
       />
     </div>
   );

@@ -1268,6 +1268,10 @@ msgstr ""
 msgid "Cards"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "CC"
+msgstr ""
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "{name} 변경"
@@ -1637,10 +1641,6 @@ msgstr "컴퓨터가 꺼져 있습니다. SANDBOX_PROVIDER=docker와 SANDBOX_SUP
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Confirm"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -2779,8 +2779,16 @@ msgstr "도구 비활성화"
 msgid "Disabled"
 msgstr "비활성화됨"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discard"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
+msgstr ""
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discarded"
 msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
@@ -2937,6 +2945,7 @@ msgstr "이름 편집"
 msgid "Edit Profile"
 msgstr "Bot 정보 수정"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3264,6 +3273,7 @@ msgstr "무료 플랜이 {day}에 종료됩니다"
 msgid "Friday"
 msgstr "금요일"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
 msgstr ""
@@ -4246,6 +4256,10 @@ msgstr ""
 #: src/lib/user-error.ts
 msgid "Needs an OAuth client ID"
 msgstr "OAuth 클라이언트 ID가 필요합니다"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Needs approval"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"

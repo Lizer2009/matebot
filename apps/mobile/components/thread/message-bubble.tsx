@@ -743,6 +743,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                 interactionId: block.interactionId,
               });
             }}
+            onDiscard={() => undefined}
           />
         );
       })}

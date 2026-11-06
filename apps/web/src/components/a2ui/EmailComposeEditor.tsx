@@ -1,10 +1,13 @@
 import { useLingui } from "@lingui/react/macro";
 import { Button, Input, Textarea } from "@matebot/ui-web";
 import { useEffect, useId, useRef, useState } from "react";
-import type { EmailDraftFields } from "./email-fields";
+import type { EmailDraftFields, EmailFieldName } from "./email-fields";
+import { EMAIL_DRAFT_FIELD_NAMES } from "./email-fields";
 
-type EmailFieldName = keyof EmailDraftFields;
-
+/**
+ * Review-card email draft: edit fields, then one Send gesture.
+ * Server still requires confirm-before-send; Send runs confirm then execute.
+ */
 export function EmailComposeEditor({
   draftVersion,
   confirmedVersion,
@@ -12,6 +15,7 @@ export function EmailComposeEditor({
   onFieldChange,
   onConfirm,
   onSend,
+  onDiscard,
 }: {
   draftVersion: number;
   confirmedVersion?: number;
@@ -23,19 +27,23 @@ export function EmailComposeEditor({
   ) => Promise<{ draftVersion: number } | undefined>;
   onConfirm?: (draftVersion: number) => Promise<void>;
   onSend?: (draftVersion: number) => Promise<void>;
+  onDiscard?: () => void | Promise<void>;
 }) {
   const { t } = useLingui();
+  const fromId = useId();
   const toId = useId();
+  const ccId = useId();
   const subjectId = useId();
   const bodyId = useId();
   const [values, setValues] = useState(fields);
   const [version, setVersion] = useState(draftVersion);
-  /** Optimistic confirm: props lag SSE/snapshot; fixture keeps local confirmedVersion too. */
+  /** Optimistic confirm: props lag SSE/snapshot after confirmInteraction. */
   const [localConfirmedVersion, setLocalConfirmedVersion] = useState<number | undefined>(
     confirmedVersion,
   );
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [discarded, setDiscarded] = useState(false);
   const [busy, setBusy] = useState(false);
   const committed = useRef(fields);
   const versionRef = useRef(draftVersion);
@@ -48,7 +56,7 @@ export function EmailComposeEditor({
     committed.current = fields;
     versionRef.current = draftVersion;
     setVersion(draftVersion);
-  }, [draftVersion, fields.to, fields.subject, fields.body]);
+  }, [draftVersion, fields.from, fields.to, fields.cc, fields.subject, fields.body]);
 
   useEffect(() => {
     setLocalConfirmedVersion(confirmedVersion);
@@ -93,7 +101,7 @@ export function EmailComposeEditor({
 
   async function flush(): Promise<number> {
     let next = versionRef.current;
-    for (const name of ["to", "subject", "body"] as const) {
+    for (const name of EMAIL_DRAFT_FIELD_NAMES) {
       next = await commit(name);
     }
     return next;
@@ -101,6 +109,18 @@ export function EmailComposeEditor({
 
   function messageOf(err: unknown): string {
     return err instanceof Error && err.message ? err.message : t`Could not update the draft`;
+  }
+
+  if (discarded) {
+    return (
+      <div
+        data-testid="a2ui-email-compose"
+        data-discarded="true"
+        className="text-[14px] text-muted-foreground"
+      >
+        {t`Discarded`}
+      </div>
+    );
   }
 
   return (
@@ -112,31 +132,19 @@ export function EmailComposeEditor({
       className="grid gap-3"
       onSubmit={(event) => event.preventDefault()}
     >
-      <div className="grid gap-1">
-        <label htmlFor={toId} className="text-[13px] text-muted-foreground">
-          {t`To`}
-        </label>
-        <Input
-          id={toId}
-          data-testid="a2ui-email-to"
-          value={values.to}
-          autoComplete="email"
-          onChange={(event) => setValues((current) => ({ ...current, to: event.target.value }))}
-          onBlur={(event) => {
-            void commit("to", event.currentTarget.value).catch((err: unknown) =>
-              setError(messageOf(err)),
-            );
-          }}
-        />
+      <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-muted-foreground">
+        {t`Email`}
       </div>
       <div className="grid gap-1">
-        <label htmlFor={subjectId} className="text-[13px] text-muted-foreground">
+        <label htmlFor={subjectId} className="sr-only">
           {t`Subject`}
         </label>
         <Input
           id={subjectId}
           data-testid="a2ui-email-subject"
           value={values.subject}
+          placeholder={t`Subject`}
+          className="border-0 bg-transparent px-0 text-[18px] font-semibold shadow-none focus-visible:ring-0"
           onChange={(event) =>
             setValues((current) => ({ ...current, subject: event.target.value }))
           }
@@ -147,15 +155,52 @@ export function EmailComposeEditor({
           }}
         />
       </div>
+      <div className="grid gap-2 border-b border-border/60 pb-3">
+        <FieldRow
+          id={fromId}
+          testId="a2ui-email-from"
+          label={t`From`}
+          value={values.from}
+          autoComplete="email"
+          onChange={(value) => setValues((current) => ({ ...current, from: value }))}
+          onBlur={(value) => {
+            void commit("from", value).catch((err: unknown) => setError(messageOf(err)));
+          }}
+        />
+        <FieldRow
+          id={toId}
+          testId="a2ui-email-to"
+          label={t`To`}
+          value={values.to}
+          autoComplete="email"
+          onChange={(value) => setValues((current) => ({ ...current, to: value }))}
+          onBlur={(value) => {
+            void commit("to", value).catch((err: unknown) => setError(messageOf(err)));
+          }}
+        />
+        <FieldRow
+          id={ccId}
+          testId="a2ui-email-cc"
+          label={t`CC`}
+          value={values.cc}
+          autoComplete="email"
+          placeholder="name@example.com"
+          onChange={(value) => setValues((current) => ({ ...current, cc: value }))}
+          onBlur={(value) => {
+            void commit("cc", value).catch((err: unknown) => setError(messageOf(err)));
+          }}
+        />
+      </div>
       <div className="grid gap-1">
-        <label htmlFor={bodyId} className="text-[13px] text-muted-foreground">
+        <label htmlFor={bodyId} className="sr-only">
           {t`Message`}
         </label>
         <Textarea
           id={bodyId}
           data-testid="a2ui-email-body"
           value={values.body}
-          rows={4}
+          rows={6}
+          className="min-h-[8rem] border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
           onChange={(event) => setValues((current) => ({ ...current, body: event.target.value }))}
           onBlur={(event) => {
             void commit("body", event.currentTarget.value).catch((err: unknown) =>
@@ -164,51 +209,62 @@ export function EmailComposeEditor({
           }}
         />
       </div>
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          data-testid="a2ui-email-confirm"
-          disabled={busy || !onConfirm}
-          onClick={() => {
-            setBusy(true);
-            setError(null);
-            void flush()
-              .then(async (next) => {
-                await onConfirm?.(next);
-                // Keep Send gated even if timeline props lag behind confirmInteraction.
-                setLocalConfirmedVersion(next);
-              })
-              .catch((err: unknown) => setError(messageOf(err)))
-              .finally(() => setBusy(false));
-          }}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div
+          data-testid="a2ui-email-status"
+          className="text-[13px] text-muted-foreground"
+          aria-live="polite"
         >
-          {t`Confirm`}
-        </Button>
-        {onSend ? (
+          {sent ? t`Sent` : t`Needs approval`}
+        </div>
+        <div className="flex items-center gap-3">
           <Button
             type="button"
-            variant="outline"
-            data-testid="a2ui-email-send"
-            disabled={busy}
+            variant="ghost"
+            data-testid="a2ui-email-discard"
+            disabled={busy || sent}
+            className="text-muted-foreground"
             onClick={() => {
               setBusy(true);
               setError(null);
-              void flush()
-                .then(async (next) => {
-                  if (effectiveConfirmedVersion !== next) {
-                    setError(t`Confirm this draft before sending.`);
-                    return;
-                  }
-                  await onSend(next);
-                  setSent(true);
-                })
+              void Promise.resolve(onDiscard?.())
+                .then(() => setDiscarded(true))
                 .catch((err: unknown) => setError(messageOf(err)))
                 .finally(() => setBusy(false));
             }}
           >
-            {t`Send`}
+            {t`Discard`}
           </Button>
-        ) : null}
+          {onSend ? (
+            <Button
+              type="button"
+              data-testid="a2ui-email-send"
+              disabled={busy || sent}
+              onClick={() => {
+                setBusy(true);
+                setError(null);
+                void flush()
+                  .then(async (next) => {
+                    // One user gesture: confirm then execute when the draft is current.
+                    if (effectiveConfirmedVersion !== next) {
+                      if (!onConfirm) {
+                        setError(t`Confirm this draft before sending.`);
+                        return;
+                      }
+                      await onConfirm(next);
+                      setLocalConfirmedVersion(next);
+                    }
+                    await onSend(next);
+                    setSent(true);
+                  })
+                  .catch((err: unknown) => setError(messageOf(err)))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              {t`Send`}
+            </Button>
+          ) : null}
+        </div>
       </div>
       {error ? (
         <p data-testid="a2ui-email-error" role="alert" className="text-[13px] text-destructive">
@@ -216,10 +272,48 @@ export function EmailComposeEditor({
         </p>
       ) : null}
       {sent ? (
-        <p data-testid="a2ui-email-sent" className="text-[13px] text-muted-foreground">
+        <p data-testid="a2ui-email-sent" className="sr-only">
           {t`Sent`}
         </p>
       ) : null}
     </form>
+  );
+}
+
+function FieldRow({
+  id,
+  testId,
+  label,
+  value,
+  placeholder,
+  autoComplete,
+  onChange,
+  onBlur,
+}: {
+  id: string;
+  testId: string;
+  label: string;
+  value: string;
+  placeholder?: string;
+  autoComplete?: string;
+  onChange: (value: string) => void;
+  onBlur: (value: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
+      <label htmlFor={id} className="text-[13px] text-muted-foreground">
+        {label}
+      </label>
+      <Input
+        id={id}
+        data-testid={testId}
+        value={value}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+        onChange={(event) => onChange(event.target.value)}
+        onBlur={(event) => onBlur(event.currentTarget.value)}
+      />
+    </div>
   );
 }

@@ -21,8 +21,14 @@ describe("native A2UI catalog", () => {
           },
         },
       ]),
-    ).toEqual({ to: "a@b.c", subject: "Hi", body: "There" });
-    expect(emailFieldsFromSurfaceMessages(undefined)).toEqual({ to: "", subject: "", body: "" });
+    ).toEqual({ from: "", to: "a@b.c", cc: "", subject: "Hi", body: "There" });
+    expect(emailFieldsFromSurfaceMessages(undefined)).toEqual({
+      from: "",
+      to: "",
+      cc: "",
+      subject: "",
+      body: "",
+    });
   });
 
   it("recognizes the email compose intents", () => {

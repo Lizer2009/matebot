@@ -1268,6 +1268,10 @@ msgstr "תצוגת כרטיסים"
 msgid "Cards"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "CC"
+msgstr ""
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "שינוי {name}"
@@ -1638,10 +1642,6 @@ msgstr "המחשבים כבויים. יש להגדיר SANDBOX_PROVIDER=docker �
 #: src/pages/PluginsOverlay.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "כדי לחבר אפליקציות, יש להגדיר קטלוג תוספים בשרת."
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Confirm"
-msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -2779,8 +2779,16 @@ msgstr "השבתת כלי"
 msgid "Disabled"
 msgstr "מושבת"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discard"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
+msgstr ""
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discarded"
 msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
@@ -2937,6 +2945,7 @@ msgstr "עריכת שם"
 msgid "Edit Profile"
 msgstr "עריכת פרופיל"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3264,6 +3273,7 @@ msgstr "התוכנית החינמית מסתיימת ב-{day}"
 msgid "Friday"
 msgstr "יום שישי"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
 msgstr "מתאריך"
@@ -4246,6 +4256,10 @@ msgstr "ממתין לתשובה"
 #: src/lib/user-error.ts
 msgid "Needs an OAuth client ID"
 msgstr "נדרש מזהה לקוח OAuth"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Needs approval"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"

@@ -1268,6 +1268,10 @@ msgstr ""
 msgid "Cards"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "CC"
+msgstr ""
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "{name} बदलें"
@@ -1637,10 +1641,6 @@ msgstr "कंप्यूटर बंद हैं। SANDBOX_PROVIDER=docker 
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Confirm"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -2779,9 +2779,17 @@ msgstr "टूल अक्षम करें"
 msgid "Disabled"
 msgstr "अक्षम"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discard"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
 msgstr "रिकॉर्डिंग हटाएँ"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discarded"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -2937,6 +2945,7 @@ msgstr "नाम संपादित करें"
 msgid "Edit Profile"
 msgstr "प्रोफ़ाइल संपादित करें"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3264,6 +3273,7 @@ msgstr "मुफ़्त प्लान {day} को खत्म होग�
 msgid "Friday"
 msgstr "शुक्रवार"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
 msgstr ""
@@ -4246,6 +4256,10 @@ msgstr ""
 #: src/lib/user-error.ts
 msgid "Needs an OAuth client ID"
 msgstr "OAuth क्लाइंट ID चाहिए"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Needs approval"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"

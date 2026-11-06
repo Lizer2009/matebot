@@ -7,21 +7,28 @@ import type { RunContext } from "./run-context.js";
 import { runLeaseFor } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 
-const EMAIL_COMPOSE_FIELDS = ["to", "subject", "body"] as const;
+const EMAIL_REQUIRED_FIELDS = ["to", "subject", "body"] as const;
+const EMAIL_OPTIONAL_FIELDS = ["from", "cc"] as const;
 
 /** Fill missing email.compose slots so the surface always has the draft fields. */
 export function normalizeEmailComposePlan(plan: InteractionPlan): InteractionPlan {
   if (plan.intent !== "email.compose" && plan.intent !== "email.send") return plan;
   const byName = new Map(plan.fields.map((field) => [field.name, field]));
-  const fields = EMAIL_COMPOSE_FIELDS.map((name) => {
-    const existing = byName.get(name);
-    if (existing) return existing;
-    return { name, required: true, status: "missing" as const };
-  });
+  const fields = [
+    ...EMAIL_OPTIONAL_FIELDS.map((name) => {
+      const existing = byName.get(name);
+      if (existing) return existing;
+      return { name, required: false, status: "missing" as const };
+    }),
+    ...EMAIL_REQUIRED_FIELDS.map((name) => {
+      const existing = byName.get(name);
+      if (existing) return existing;
+      return { name, required: true, status: "missing" as const };
+    }),
+  ];
+  const known = new Set<string>([...EMAIL_REQUIRED_FIELDS, ...EMAIL_OPTIONAL_FIELDS]);
   for (const field of plan.fields) {
-    if (!EMAIL_COMPOSE_FIELDS.includes(field.name as (typeof EMAIL_COMPOSE_FIELDS)[number])) {
-      fields.push(field);
-    }
+    if (!known.has(field.name)) fields.push(field);
   }
   return { ...plan, fields };
 }

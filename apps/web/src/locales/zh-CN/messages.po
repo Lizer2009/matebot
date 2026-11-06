@@ -1268,6 +1268,10 @@ msgstr "卡片视图"
 msgid "Cards"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "CC"
+msgstr "抄送"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "更改 {name}"
@@ -1638,10 +1642,6 @@ msgstr "电脑未开启。请设置 SANDBOX_PROVIDER=docker 并提供 SANDBOX_SU
 #: src/pages/PluginsOverlay.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "要连接应用，请先在服务器上配置插件目录。"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Confirm"
-msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -2779,9 +2779,17 @@ msgstr "禁用工具"
 msgid "Disabled"
 msgstr "已禁用"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discard"
+msgstr "丢弃"
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
 msgstr "丢弃录音"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discarded"
+msgstr "已丢弃"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -2937,6 +2945,7 @@ msgstr "编辑名称"
 msgid "Edit Profile"
 msgstr "编辑资料"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3264,6 +3273,7 @@ msgstr "免费方案将于 {day} 结束"
 msgid "Friday"
 msgstr "周五"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
 msgstr "从"
@@ -4246,6 +4256,10 @@ msgstr "等你回答"
 #: src/lib/user-error.ts
 msgid "Needs an OAuth client ID"
 msgstr "需要 OAuth 客户端 ID"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Needs approval"
+msgstr "需要批准"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"

@@ -50,9 +50,19 @@ const toolSelectBase = {
 };
 
 describe("normalizeEmailComposePlan", () => {
-  it("adds missing to/subject/body for email.compose", () => {
+  it("adds missing from/cc/to/subject/body for email.compose", () => {
     const normalized = normalizeEmailComposePlan(emailPlan);
-    expect(normalized.fields.map((field) => field.name)).toEqual(["to", "subject", "body"]);
+    expect(normalized.fields.map((field) => field.name)).toEqual([
+      "from",
+      "cc",
+      "to",
+      "subject",
+      "body",
+    ]);
+    expect(normalized.fields.find((field) => field.name === "from")).toMatchObject({
+      required: false,
+      status: "missing",
+    });
     expect(normalized.fields.find((field) => field.name === "body")).toMatchObject({
       required: true,
       status: "missing",

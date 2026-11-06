@@ -527,6 +527,7 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
+                  onDiscard={() => undefined}
                 />
               </div>
             );

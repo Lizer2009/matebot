@@ -1359,6 +1359,12 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   Confirm: "確認",
   "Send email": "傳送郵件",
   "Could not update the draft": "無法更新草稿",
+  "Needs approval": "需要批准",
+  "Discard": "捨棄",
+  "Discarded": "已捨棄",
+  "From": "寄件人",
+  "CC": "副本",
+  "Email": "郵件",
   "Confirm this draft before sending.": "傳送前請確認此草稿。",
 };
 
