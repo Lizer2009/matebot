@@ -716,6 +716,9 @@ importers:
       '@larksuiteoapi/node-sdk':
         specifier: 1.73.1
         version: 1.73.1
+      '@matebot/a2ui-adapter':
+        specifier: workspace:*
+        version: link:../a2ui-adapter
       '@matebot/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit

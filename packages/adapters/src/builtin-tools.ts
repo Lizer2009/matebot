@@ -723,6 +723,58 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "present_interaction",
+    description:
+      'Present an editable draft surface in the chat for the user to review and confirm. Use this when the user asks in natural language to compose or send an email (any language). Pass plan with intent "email.compose", a short title, fields for to/subject/body (status "resolved" when known, "missing" when not), nextStep "ask" or "request_approval", and riskLevel "medium". Do not send mail yourself; the user edits and confirms on the surface. Missing SMTP credentials still use request_secret as usual.',
+    inputSchema: {
+      type: "object",
+      properties: {
+        plan: {
+          type: "object",
+          description:
+            "InteractionPlan: intent, title, optional summary, fields, nextStep, riskLevel.",
+          properties: {
+            intent: { type: "string", description: 'Use "email.compose" for mail drafts.' },
+            title: { type: "string" },
+            summary: { type: "string" },
+            fields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  value: {},
+                  required: { type: "boolean" },
+                  status: {
+                    type: "string",
+                    enum: ["resolved", "missing", "needs_confirmation", "invalid"],
+                  },
+                  source: { type: "string" },
+                  confidence: { type: "number" },
+                },
+                required: ["name", "required", "status"],
+              },
+            },
+            nextStep: {
+              type: "string",
+              enum: [
+                "render",
+                "ask",
+                "request_connection",
+                "request_approval",
+                "execute",
+                "complete",
+              ],
+            },
+            riskLevel: { type: "string", enum: ["low", "medium", "high"] },
+          },
+          required: ["intent", "title", "fields", "nextStep", "riskLevel"],
+        },
+      },
+      required: ["plan"],
+    },
+  },
+  {
     name: "add_mcp_server",
     description:
       "Connect a remote MCP tool server to this Space when the user asks you to add one and provides the details (URL, optional token/headers). The server is created immediately and an approval card appears in the chat; its tools reach you once the user approves it there. Do not invent endpoints; only use details the user provided. Local (stdio) servers can only be added by an admin in Settings.",

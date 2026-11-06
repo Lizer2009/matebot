@@ -4,6 +4,7 @@ import {
   runReadsThreadHistory,
   toolRequiresExplicitApproval,
 } from "@matebot/core";
+import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import { replyGuidanceForOfferedTools } from "./run-replies.js";
 import type { UserComputerState } from "./run-tools-user-computer.js";
@@ -397,6 +398,14 @@ export function userTurnInstructions(parts: {
       "save_page",
       'For a dashboard, report, tracker or comparison, build a page with save_page (call it with {"help": true} first for the kit guide). To change a page, pass its pageId with edits or new source instead of making a new page. In your reply, mention the page by its title; never paste its source.',
     ),
+    // Only when FEATURE_A2UI is on; the tool itself is filtered the same way.
+    isA2uiFeatureEnabled()
+      ? offeredBuiltinClause(
+          parts.disabledBuiltinTools,
+          "present_interaction",
+          'When the user asks to compose or send an email (any language), present an editable draft with present_interaction and intent "email.compose". Do not send mail yourself; they edit and confirm on the surface. Missing SMTP credentials still use request_secret.',
+        )
+      : undefined,
     offeredBuiltinClause(
       parts.disabledBuiltinTools,
       "add_mcp_server",

@@ -11,19 +11,19 @@ import {
   interactionConfirmEffectRequest,
   interactionConfirmIdempotencyKey,
   interactionEffectKind,
-  interactionSlotsFromPlan,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
   appendEventInTransaction,
-  createInteraction,
-  createThreadMessageInTransaction,
   getInteraction,
   InteractionNotFoundError,
   InteractionVersionConflictError,
   upsertInteractionSurface,
   withTransactionRetry,
 } from "@matebot/db";
+
+export type { PublishInteractionSurfaceInput } from "@matebot/adapters";
+export { publishInteractionSurface } from "@matebot/adapters";
 
 async function compilePlanSurface(input: {
   plan: InteractionPlan;
@@ -40,129 +40,6 @@ async function compilePlanSurface(input: {
     throw new Error(compiled.error);
   }
   return { protocolFamily: compiled.protocolFamily, messages: compiled.messages };
-}
-
-export type PublishInteractionSurfaceInput = {
-  spaceId: string;
-  threadId: string;
-  botId: string;
-  runId?: string;
-  plan: InteractionPlan;
-  surfaceId?: string;
-  protocolFamily?: A2uiProtocolFamily;
-};
-
-/** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
-export async function publishInteractionSurface(
-  prisma: PrismaClient,
-  input: PublishInteractionSurfaceInput,
-): Promise<{
-  interactionId: string;
-  surfaceId: string;
-  messageId: string;
-  documentRef: string;
-  draftVersion: number;
-}> {
-  const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
-  const compiled = await compilePlanSurface({
-    plan: input.plan,
-    surfaceId,
-    protocolFamily: input.protocolFamily,
-  });
-  const slots = interactionSlotsFromPlan(input.plan);
-
-  return withTransactionRetry(() =>
-    prisma.$transaction(async (tx) => {
-      const interaction = await createInteraction(tx, {
-        spaceId: input.spaceId,
-        threadId: input.threadId,
-        runId: input.runId,
-        intent: input.plan.intent,
-        status: "collecting",
-        plan: input.plan,
-        slots,
-        title: input.plan.title,
-        summary: input.plan.summary,
-      });
-      const { documentRef } = await upsertInteractionSurface(tx, {
-        interactionId: interaction.id,
-        surfaceId,
-        protocolFamily: compiled.protocolFamily,
-        document: compiled.messages,
-        draftVersion: interaction.draftVersion,
-      });
-      const block: MessageBlock = {
-        kind: "a2ui_surface",
-        interactionId: interaction.id,
-        surfaceId,
-        protocolFamily: compiled.protocolFamily,
-        draftVersion: interaction.draftVersion,
-        intent: input.plan.intent,
-        title: input.plan.title,
-        summary: input.plan.summary,
-        documentRef,
-      };
-      const message = await createThreadMessageInTransaction(tx, {
-        threadId: input.threadId,
-        role: "bot",
-        blocks: [block],
-        botId: input.botId,
-        runId: input.runId,
-      });
-      await tx.interaction.update({
-        where: { id: interaction.id },
-        data: { messageId: message.id },
-      });
-      await appendEventInTransaction(tx, {
-        spaceId: input.spaceId,
-        threadId: input.threadId,
-        botId: input.botId,
-        type: "thread.message.created",
-        runId: input.runId,
-        payload: { messageId: message.id, role: "bot", blocks: [block] },
-      });
-      await appendEventInTransaction(tx, {
-        spaceId: input.spaceId,
-        threadId: input.threadId,
-        botId: input.botId,
-        type: "thread.interaction.created",
-        runId: input.runId,
-        payload: {
-          interactionId: interaction.id,
-          intent: interaction.intent,
-          draftVersion: interaction.draftVersion,
-          title: interaction.title,
-          summary: interaction.summary,
-          messageId: message.id,
-        },
-      });
-      await appendEventInTransaction(tx, {
-        spaceId: input.spaceId,
-        threadId: input.threadId,
-        botId: input.botId,
-        type: "thread.surface.created",
-        runId: input.runId,
-        payload: {
-          interactionId: interaction.id,
-          surfaceId,
-          protocolFamily: compiled.protocolFamily,
-          draftVersion: interaction.draftVersion,
-          intent: input.plan.intent,
-          title: input.plan.title,
-          summary: input.plan.summary,
-          documentRef,
-          messageId: message.id,
-        },
-      });
-      return {
-        interactionId: interaction.id,
-        surfaceId,
-        messageId: message.id,
-        documentRef,
-        draftVersion: interaction.draftVersion,
-      };
-    }),
-  );
 }
 
 export type UpdateInteractionFieldServiceInput = {
