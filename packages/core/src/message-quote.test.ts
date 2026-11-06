@@ -275,6 +275,18 @@ const visibleBlocks: Array<[MessageBlock, string]> = [
     { kind: "bot_message_received", fromBotId: "two", fromBotName: "Helper", text: "Checked" },
     "Checked",
   ],
+  [
+    {
+      kind: "a2ui_surface",
+      interactionId: "ix-1",
+      surfaceId: "surf-1",
+      protocolFamily: "v0_9",
+      draftVersion: 1,
+      title: "Email draft",
+      summary: "missing subject",
+    },
+    "Email draft",
+  ],
 ];
 
 it.each(visibleBlocks)("previews a visible $kind block", (block, expected) => {

@@ -164,6 +164,8 @@ function replyBlockText(block: MessageBlock): string {
     case "cloud_agent":
     case "page":
       return block.title;
+    case "a2ui_surface":
+      return block.title || block.summary || "";
     case "call_request":
       return block.reason;
     case "subagent":
