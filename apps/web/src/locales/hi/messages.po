@@ -1342,6 +1342,10 @@ msgstr ""
 msgid "Check in."
 msgstr "जांच करें।"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Check status"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "API कुंजी या साइन-इन जाँचें, फिर फिर से परीक्षण करें।"
@@ -1668,26 +1672,6 @@ msgstr "पुष्टि करें कि यह URL इस ब्राउ
 msgid "Confirm this draft before sending."
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Connect email"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Could not send"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Check status"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Don't send again"
-msgstr ""
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1727,6 +1711,10 @@ msgstr "API कुंजी कनेक्ट करें"
 #: src/pages/Shell.tsx
 msgid "Connect apps"
 msgstr "ऐप कनेक्ट करें"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
@@ -2349,6 +2337,10 @@ msgstr "यह विकल्प सहेजा नहीं जा सका"
 msgid "Could not search catalog"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Could not send"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not send reset email"
 msgstr "रीसेट ईमेल नहीं भेजा जा सका"
@@ -2889,6 +2881,10 @@ msgstr "दस्तावेज़ बदल गया है। नवीन�
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
 msgstr "खाता नहीं है?"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Don't send again"
+msgstr ""
 
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
@@ -5112,13 +5108,13 @@ msgstr "हाल के"
 msgid "Recommended"
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgctxt "mailbox"
+#: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
 msgstr ""
 
-#: src/components/integrations/plugin-marketplace.tsx
-#: src/pages/VoiceSettingsOverlay.tsx
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
 msgid "Reconnect"
 msgstr ""
 
@@ -5461,6 +5457,7 @@ msgstr "बहाल किया गया"
 msgid "Restoring your workspace"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5802,6 +5799,10 @@ msgstr "रीसेट लिंक भेजें"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
 msgstr "Enter से भेजें"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Sending"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx

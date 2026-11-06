@@ -1342,6 +1342,10 @@ msgstr "Check for updates"
 msgid "Check in."
 msgstr "Check in."
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Check status"
+msgstr "Check status"
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "Check the API key or sign-in, then test again."
@@ -1668,26 +1672,6 @@ msgstr "Confirm the URL is reachable from this browser session, then test again.
 msgid "Confirm this draft before sending."
 msgstr "Confirm this draft before sending."
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Connect email"
-msgstr "Connect email"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
-msgstr "Sending"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Could not send"
-msgstr "Could not send"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Check status"
-msgstr "Check status"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Don't send again"
-msgstr "Don't send again"
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1727,6 +1711,10 @@ msgstr "Connect API key"
 #: src/pages/Shell.tsx
 msgid "Connect apps"
 msgstr "Connect apps"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr "Connect email"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
@@ -2349,6 +2337,10 @@ msgstr "Could not save this choice"
 msgid "Could not search catalog"
 msgstr "Could not search catalog"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Could not send"
+msgstr "Could not send"
+
 #: src/pages/Auth.tsx
 msgid "Could not send reset email"
 msgstr "Could not send reset email"
@@ -2889,6 +2881,10 @@ msgstr "Document changed. Reopen to edit the latest version."
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
 msgstr "Don’t have an account?"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Don't send again"
+msgstr "Don't send again"
 
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
@@ -5112,13 +5108,13 @@ msgstr "Recent"
 msgid "Recommended"
 msgstr "Recommended"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgctxt "mailbox"
+#: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
 msgstr "Reconnect"
 
-#: src/components/integrations/plugin-marketplace.tsx
-#: src/pages/VoiceSettingsOverlay.tsx
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -5461,6 +5457,7 @@ msgstr "Restored"
 msgid "Restoring your workspace"
 msgstr "Restoring your workspace"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5802,6 +5799,10 @@ msgstr "Send reset link"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
 msgstr "Send with Enter"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Sending"
+msgstr "Sending"
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
