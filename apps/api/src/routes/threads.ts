@@ -1,6 +1,7 @@
 import { runContinueJob, runJobKey } from "@matebot/adapter-kit";
 import { settleCallRequest } from "@matebot/adapters";
 import type { Actor, ProductEvent } from "@matebot/contracts";
+import { a2uiSurfaceDocumentRef, parseA2uiSurfaceDocumentRef } from "@matebot/contracts";
 import {
   AttachmentValidationError,
   CALL_CLIENT_NONCE_PREFIX,
@@ -10,10 +11,6 @@ import {
   QUEUE_HOLDING_RUN_STATUSES,
 } from "@matebot/core";
 import type { Prisma } from "@matebot/db";
-import {
-  a2uiSurfaceDocumentRef,
-  parseA2uiSurfaceDocumentRef,
-} from "@matebot/contracts";
 import {
   AnswerTooLongError,
   appendEventInTransaction,
@@ -32,6 +29,9 @@ import { ORPCError } from "@orpc/server";
 import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
 import {
   confirmInteractionService,
+  executeConfirmedInteractionService,
+  InteractionEffectRunMissingError,
+  InteractionSendRejectedError,
   updateInteractionFieldService,
 } from "../interaction-service.js";
 import type { RouterDeps } from "../router.js";
@@ -789,7 +789,6 @@ export function threadsRoutes(ctx: RouterContext) {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
         try {
-          // PR-6 binds ExternalEffect; confirmedVersion is set here.
           const result = await confirmInteractionService(deps.prisma, {
             spaceId: context.actor.spaceId,
             threadId: target.threadId,
@@ -797,7 +796,12 @@ export function threadsRoutes(ctx: RouterContext) {
             interactionId: input.interactionId,
             draftVersion: input.draftVersion,
           });
-          return { ok: true as const, confirmedVersion: result.confirmedVersion };
+          return {
+            ok: true as const,
+            confirmedVersion: result.confirmedVersion,
+            effectId: result.effectId,
+            idempotencyKey: result.idempotencyKey,
+          };
         } catch (error) {
           if (error instanceof InteractionNotFoundError) {
             throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
@@ -807,7 +811,30 @@ export function threadsRoutes(ctx: RouterContext) {
               message: "Interaction draft was updated elsewhere; reload and retry",
             });
           }
+          if (error instanceof InteractionEffectRunMissingError) {
+            throw new ORPCError("BAD_REQUEST", { message: error.message });
+          }
           if (error instanceof Error && error.message.includes("Required fields")) {
+            throw new ORPCError("BAD_REQUEST", { message: error.message });
+          }
+          throw error;
+        }
+      }),
+      executeInteraction: authed.threads.executeInteraction.handler(async ({ context, input }) => {
+        assertA2uiEnabled();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        try {
+          const result = await executeConfirmedInteractionService(deps.prisma, {
+            spaceId: context.actor.spaceId,
+            threadId: target.threadId,
+            interactionId: input.interactionId,
+          });
+          return { ok: true as const, ...result };
+        } catch (error) {
+          if (error instanceof InteractionNotFoundError) {
+            throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+          }
+          if (error instanceof InteractionSendRejectedError) {
             throw new ORPCError("BAD_REQUEST", { message: error.message });
           }
           throw error;

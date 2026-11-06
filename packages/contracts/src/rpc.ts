@@ -162,6 +162,8 @@ import {
 import {
   ThreadsConfirmInteractionInput,
   ThreadsConfirmInteractionOutput,
+  ThreadsExecuteInteractionInput,
+  ThreadsExecuteInteractionOutput,
   ThreadsGetA2uiSurfaceInput,
   ThreadsGetA2uiSurfaceOutput,
   ThreadsUpdateInteractionFieldInput,
@@ -747,6 +749,13 @@ export const appContract = {
     confirmInteraction: oc
       .input(ThreadsConfirmInteractionInput)
       .output(ThreadsConfirmInteractionOutput),
+    /**
+     * Run the confirmed draft's ExternalEffect. Rejects when the draft is not
+     * confirmed, and does not re-run an effect that already completed.
+     */
+    executeInteraction: oc
+      .input(ThreadsExecuteInteractionInput)
+      .output(ThreadsExecuteInteractionOutput),
     /** `unreadAfterSeq`: the seq read up to before this call, null when nothing was unread. */
     markRead: oc
       .input(threadTarget)
