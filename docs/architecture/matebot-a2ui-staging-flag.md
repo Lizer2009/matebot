@@ -69,10 +69,13 @@ echo "Pull: ghcr.io/lizer2009/matebot/app:sha-${TIP_SHA}"
 3. On `192.168.10.5`, point Compose at that tag (example; do not SSH from this agent):
 
 ```bash
-# After the publish run finishes for the tip SHA:
-export RAKAZO_IMAGE=ghcr.io/lizer2009/matebot/app:sha-<full-40-char-sha>
+# After a successful publish-server-image workflow_dispatch on tip
+# cursor/a2ui-pr10-mobile-catalog-1fe7 (this agent cannot dispatch: Actions 403):
+export RAKAZO_IMAGE=ghcr.io/lizer2009/matebot/app:sha-d5fee2080bf1fe6607a86a92bf280a9a7f520bac
 # then restart the stack with the normal compose path for that host
 ```
+
+Current tip SHA to publish/pull (update if tip moves): `d5fee2080bf1fe6607a86a92bf280a9a7f520bac`.
 
 There is no separate `a2ui` moving tag in the publish action today; use the immutable `sha-` tag. Do **not** dispatch with `--ref main` for this experiment if the goal is to avoid touching `edge`.
 
