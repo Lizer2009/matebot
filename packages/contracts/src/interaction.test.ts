@@ -13,6 +13,8 @@ import {
   SurfaceProductEventPayloadSchema,
   ThreadsConfirmInteractionInput,
   ThreadsConfirmInteractionOutput,
+  ThreadsExecuteInteractionInput,
+  ThreadsExecuteInteractionOutput,
   ThreadsGetA2uiSurfaceInput,
   ThreadsGetA2uiSurfaceOutput,
   ThreadsUpdateInteractionFieldInput,
@@ -206,10 +208,30 @@ describe("threads interaction RPC draft schemas", () => {
         draftVersion: 4,
       }),
     ).toMatchObject({ groupId: "group-1", draftVersion: 4 });
-    expect(ThreadsConfirmInteractionOutput.parse({ ok: true, confirmedVersion: 4 })).toEqual({
-      ok: true,
-      confirmedVersion: 4,
-    });
+    expect(
+      ThreadsConfirmInteractionOutput.parse({
+        ok: true,
+        confirmedVersion: 4,
+        effectId: "effect-1",
+        idempotencyKey: "a2ui:interaction:ix-1:confirm:4",
+      }),
+    ).toMatchObject({ confirmedVersion: 4, effectId: "effect-1" });
+    expect(
+      ThreadsConfirmInteractionOutput.safeParse({ ok: true, confirmedVersion: 4 }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an execute call that omits the thread target", () => {
+    expect(ThreadsExecuteInteractionInput.safeParse({ interactionId: "ix-1" }).success).toBe(false);
+    expect(
+      ThreadsExecuteInteractionOutput.parse({
+        ok: true,
+        effectId: "effect-1",
+        idempotencyKey: "a2ui:interaction:ix-1:confirm:4",
+        duplicate: false,
+        executed: false,
+      }).executed,
+    ).toBe(false);
   });
 
   it("requires exactly one of botId or groupId", () => {

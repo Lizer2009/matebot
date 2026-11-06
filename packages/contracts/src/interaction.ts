@@ -60,6 +60,11 @@ export const A2uiSurfaceBlockSchema = z.object({
   surfaceId: z.string().trim().min(1),
   protocolFamily: A2uiProtocolFamily,
   draftVersion: z.number().int().positive(),
+  /**
+   * Set when the server has confirmed this exact draft.
+   * Absent or unequal to draftVersion means the draft is not sendable.
+   */
+  confirmedVersion: z.number().int().positive().optional(),
   /** Short label for the timeline before/without the full catalog document. */
   title: z.string().optional(),
   summary: z.string().optional(),
@@ -121,6 +126,7 @@ export const SurfaceProductEventPayloadSchema = z.object({
   surfaceId: z.string().trim().min(1),
   protocolFamily: A2uiProtocolFamily,
   draftVersion: z.number().int().positive(),
+  confirmedVersion: z.number().int().positive().optional(),
   title: z.string().optional(),
   summary: z.string().optional(),
   documentRef: z.string().trim().min(1).optional(),
@@ -186,8 +192,31 @@ export type ThreadsConfirmInteractionInput = z.infer<typeof ThreadsConfirmIntera
 export const ThreadsConfirmInteractionOutput = z.object({
   ok: z.literal(true),
   confirmedVersion: z.number().int().positive(),
+  /** ExternalEffect created or reused for this confirmed draft. */
+  effectId: Id,
+  idempotencyKey: z.string().min(1),
 });
 export type ThreadsConfirmInteractionOutput = z.infer<typeof ThreadsConfirmInteractionOutput>;
+
+/**
+ * Execute a confirmed interaction. The server rejects the call when
+ * confirmedVersion is missing or no longer matches draftVersion.
+ */
+export const ThreadsExecuteInteractionInput = ThreadTargetSchema.safeExtend({
+  interactionId: Id,
+});
+export type ThreadsExecuteInteractionInput = z.infer<typeof ThreadsExecuteInteractionInput>;
+
+export const ThreadsExecuteInteractionOutput = z.object({
+  ok: z.literal(true),
+  effectId: Id,
+  idempotencyKey: z.string().min(1),
+  /** True when a completed effect was returned instead of running again. */
+  duplicate: z.boolean(),
+  /** False until a sender for this effect kind runs (email send lands later). */
+  executed: z.boolean(),
+});
+export type ThreadsExecuteInteractionOutput = z.infer<typeof ThreadsExecuteInteractionOutput>;
 
 /**
  * Hydrate a persisted A2UI surface document by documentRef or interaction+surface ids.

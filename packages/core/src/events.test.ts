@@ -1187,6 +1187,31 @@ describe("projectMessages A2UI surface", () => {
     });
   });
 
+  it("keeps confirmedVersion on a surface update that records it", () => {
+    const messages = projectMessages([
+      {
+        id: "e1",
+        threadId: "t1",
+        seq: 1,
+        type: "thread.surface.updated",
+        payload: {
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 2,
+          confirmedVersion: 2,
+          messageId: "m1",
+        },
+        createdAt: "2026-01-01T00:00:01.000Z",
+      },
+    ]);
+    expect(messages[0]?.blocks[0]).toMatchObject({
+      kind: "a2ui_surface",
+      draftVersion: 2,
+      confirmedVersion: 2,
+    });
+  });
+
   it("applies thread.message.updated block replacements", () => {
     const messages = projectMessages([
       {

@@ -1,10 +1,15 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
+import type { InteractionLifecycleStatus } from "@matebot/core";
 import {
   applyInteractionFieldChange,
+  canExecuteConfirmedInteraction,
+  confirmedEffectMatchesDraft,
   confirmInteractionDraftState,
+  interactionConfirmEffectRequest,
+  interactionConfirmIdempotencyKey,
+  interactionEffectKind,
   interactionSlotsFromPlan,
-  type InteractionLifecycleStatus,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
@@ -348,22 +353,57 @@ export type ConfirmInteractionServiceInput = {
   botId: string;
   interactionId: string;
   draftVersion: number;
-  approvalEffectId?: string;
 };
+
+export class InteractionEffectRunMissingError extends Error {
+  readonly code = "INTERACTION_EFFECT_RUN_MISSING" as const;
+  constructor(readonly interactionId: string) {
+    super("Interaction has no run to bind an effect");
+    this.name = "InteractionEffectRunMissingError";
+  }
+}
+
+/** Send was refused because the draft is not the confirmed version (or the run is finished). */
+export class InteractionSendRejectedError extends Error {
+  readonly code: "unconfirmed" | "terminal";
+  constructor(code: "unconfirmed" | "terminal", message: string) {
+    super(message);
+    this.name = "InteractionSendRejectedError";
+    this.code = code;
+  }
+}
+
+function interactionSlots(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return { ...(value as Record<string, unknown>) };
+}
+
+async function resolveEffectRunId(
+  prisma: PrismaClient,
+  interaction: { id: string; runId: string | null },
+  threadId: string,
+  spaceId: string,
+): Promise<string> {
+  if (interaction.runId) return interaction.runId;
+  const run = await prisma.run.findFirst({
+    where: { threadId, spaceId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+  if (!run) throw new InteractionEffectRunMissingError(interaction.id);
+  return run.id;
+}
 
 export async function confirmInteractionService(
   prisma: PrismaClient,
   input: ConfirmInteractionServiceInput,
-): Promise<{ confirmedVersion: number }> {
+): Promise<{ confirmedVersion: number; effectId: string; idempotencyKey: string }> {
   const current = await getInteraction(prisma, input.interactionId);
   if (!current || current.threadId !== input.threadId) {
     throw new InteractionNotFoundError(input.interactionId);
   }
   const plan = current.plan as InteractionPlan;
-  const slots =
-    current.slots && typeof current.slots === "object" && !Array.isArray(current.slots)
-      ? (current.slots as Record<string, unknown>)
-      : {};
+  const slots = interactionSlots(current.slots);
   const confirmed = confirmInteractionDraftState(
     {
       status: current.status as InteractionLifecycleStatus,
@@ -385,14 +425,47 @@ export async function confirmInteractionService(
     throw new Error(confirmed.message);
   }
 
-  await withTransactionRetry(() =>
+  const runId = await resolveEffectRunId(prisma, current, input.threadId, input.spaceId);
+  const idempotencyKey = interactionConfirmIdempotencyKey(
+    input.interactionId,
+    confirmed.confirmedVersion,
+  );
+  const request = interactionConfirmEffectRequest({
+    interactionId: input.interactionId,
+    intent: plan.intent,
+    draftVersion: current.draftVersion,
+    confirmedVersion: confirmed.confirmedVersion,
+    slots,
+  });
+  const kind = interactionEffectKind(plan.intent);
+
+  const effectId = await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
+      const existing = await tx.externalEffect.findUnique({ where: { idempotencyKey } });
+      const effect =
+        existing ??
+        (await tx.externalEffect.create({
+          data: {
+            spaceId: input.spaceId,
+            runId,
+            kind,
+            idempotencyKey,
+            status: "intended",
+            request: request as Prisma.InputJsonValue,
+            reviewDecision: "allow",
+            reviewReason: "user confirmed draft",
+          },
+        }));
+      if (effect.spaceId !== input.spaceId || effect.runId !== runId) {
+        throw new Error("Stored effect does not belong to this interaction");
+      }
+      const approvalEffectId = effect.id;
       const updated = await tx.interaction.updateMany({
         where: { id: input.interactionId, draftVersion: input.draftVersion },
         data: {
           confirmedVersion: confirmed.confirmedVersion,
           status: confirmed.status,
-          ...(input.approvalEffectId ? { approvalEffectId: input.approvalEffectId } : {}),
+          approvalEffectId,
         },
       });
       if (updated.count !== 1) {
@@ -402,17 +475,27 @@ export async function confirmInteractionService(
           current.draftVersion,
         );
       }
+      await projectConfirmedSurface(tx, {
+        interaction: current,
+        plan,
+        confirmedVersion: confirmed.confirmedVersion,
+        draftVersion: current.draftVersion,
+        runId,
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: input.botId,
+      });
       await appendEventInTransaction(tx, {
         spaceId: input.spaceId,
         threadId: input.threadId,
         botId: input.botId,
         type: "thread.interaction.updated",
-        runId: current.runId ?? undefined,
+        runId,
         payload: {
           interactionId: input.interactionId,
           draftVersion: current.draftVersion,
           confirmedVersion: confirmed.confirmedVersion,
-          approvalEffectId: input.approvalEffectId,
+          approvalEffectId,
           messageId: current.messageId ?? undefined,
         },
       });
@@ -421,17 +504,178 @@ export async function confirmInteractionService(
         threadId: input.threadId,
         botId: input.botId,
         type: "thread.interaction.approval_requested",
-        runId: current.runId ?? undefined,
+        runId,
         payload: {
           interactionId: input.interactionId,
           draftVersion: current.draftVersion,
           confirmedVersion: confirmed.confirmedVersion,
-          approvalEffectId: input.approvalEffectId,
+          approvalEffectId,
           messageId: current.messageId ?? undefined,
         },
       });
+      return approvalEffectId;
     }),
   );
 
-  return { confirmedVersion: confirmed.confirmedVersion };
+  return { confirmedVersion: confirmed.confirmedVersion, effectId, idempotencyKey };
+}
+
+async function projectConfirmedSurface(
+  tx: Prisma.TransactionClient,
+  input: {
+    interaction: {
+      id: string;
+      messageId: string | null;
+      title: string | null;
+      summary: string | null;
+    };
+    plan: InteractionPlan;
+    confirmedVersion: number;
+    draftVersion: number;
+    runId: string;
+    spaceId: string;
+    threadId: string;
+    botId: string;
+  },
+): Promise<void> {
+  const surfaceRow = await tx.interactionSurface.findFirst({
+    where: { interactionId: input.interaction.id },
+    orderBy: { updatedAt: "desc" },
+  });
+  if (!surfaceRow || !input.interaction.messageId) return;
+  const protocolFamily =
+    surfaceRow.protocolFamily === "v1_0" || surfaceRow.protocolFamily === "v0_9"
+      ? surfaceRow.protocolFamily
+      : "v0_9";
+  const documentRef = a2uiSurfaceDocumentRef({
+    interactionId: input.interaction.id,
+    surfaceId: surfaceRow.surfaceId,
+  });
+  const block: MessageBlock = {
+    kind: "a2ui_surface",
+    interactionId: input.interaction.id,
+    surfaceId: surfaceRow.surfaceId,
+    protocolFamily,
+    draftVersion: input.draftVersion,
+    confirmedVersion: input.confirmedVersion,
+    title: input.interaction.title ?? input.plan.title,
+    ...(input.interaction.summary || input.plan.summary
+      ? { summary: input.interaction.summary ?? input.plan.summary }
+      : {}),
+    documentRef,
+  };
+  const message = await tx.message.findUnique({ where: { id: input.interaction.messageId } });
+  if (!message) return;
+  const existing = Array.isArray(message.blocks) ? (message.blocks as MessageBlock[]) : [];
+  const blocks = existing.map((entry) =>
+    entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId ? block : entry,
+  );
+  const has = blocks.some(
+    (entry) => entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId,
+  );
+  const nextBlocks = has ? blocks : [...blocks, block];
+  await tx.message.update({
+    where: { id: input.interaction.messageId },
+    data: { blocks: nextBlocks as Prisma.InputJsonValue },
+  });
+  await appendEventInTransaction(tx, {
+    spaceId: input.spaceId,
+    threadId: input.threadId,
+    botId: input.botId,
+    type: "thread.message.updated",
+    runId: input.runId,
+    payload: { messageId: input.interaction.messageId, role: "bot", blocks: nextBlocks },
+  });
+  await appendEventInTransaction(tx, {
+    spaceId: input.spaceId,
+    threadId: input.threadId,
+    botId: input.botId,
+    type: "thread.surface.updated",
+    runId: input.runId,
+    payload: {
+      interactionId: input.interaction.id,
+      surfaceId: surfaceRow.surfaceId,
+      protocolFamily,
+      draftVersion: input.draftVersion,
+      confirmedVersion: input.confirmedVersion,
+      title: block.title,
+      summary: block.summary,
+      documentRef,
+      messageId: input.interaction.messageId,
+    },
+  });
+}
+
+export type ExecuteConfirmedInteractionResult = {
+  effectId: string;
+  idempotencyKey: string;
+  duplicate: boolean;
+  executed: boolean;
+};
+
+/**
+ * Gate for send. Rejects when confirmedVersion is missing or stale.
+ * Does not call a provider; a later sender completes `email.send` effects.
+ */
+export async function executeConfirmedInteractionService(
+  prisma: PrismaClient,
+  input: { spaceId: string; threadId: string; interactionId: string },
+): Promise<ExecuteConfirmedInteractionResult> {
+  const current = await getInteraction(prisma, input.interactionId);
+  if (!current || current.threadId !== input.threadId || current.spaceId !== input.spaceId) {
+    throw new InteractionNotFoundError(input.interactionId);
+  }
+  if (
+    current.confirmedVersion === null ||
+    current.confirmedVersion !== current.draftVersion ||
+    !current.approvalEffectId
+  ) {
+    throw new InteractionSendRejectedError(
+      "unconfirmed",
+      "Send requires confirmedVersion to equal draftVersion",
+    );
+  }
+  const effect = await prisma.externalEffect.findUnique({
+    where: { id: current.approvalEffectId },
+  });
+  if (!effect || effect.spaceId !== input.spaceId) {
+    throw new InteractionSendRejectedError("unconfirmed", "Send requires a confirmed effect");
+  }
+  const request =
+    effect.request && typeof effect.request === "object" && !Array.isArray(effect.request)
+      ? (effect.request as { draftVersion?: unknown; confirmedVersion?: unknown })
+      : {};
+  if (
+    !confirmedEffectMatchesDraft(request, {
+      draftVersion: current.draftVersion,
+      confirmedVersion: current.confirmedVersion,
+    })
+  ) {
+    throw new InteractionSendRejectedError(
+      "unconfirmed",
+      "Send requires confirmedVersion to equal draftVersion",
+    );
+  }
+  if (effect.status === "completed" || effect.status === "reconciled") {
+    return {
+      effectId: effect.id,
+      idempotencyKey: effect.idempotencyKey,
+      duplicate: true,
+      executed: true,
+    };
+  }
+  const gate = canExecuteConfirmedInteraction({
+    draftVersion: current.draftVersion,
+    confirmedVersion: current.confirmedVersion,
+    status: current.status as InteractionLifecycleStatus,
+  });
+  if (!gate.ok) {
+    throw new InteractionSendRejectedError(gate.error, gate.message);
+  }
+  return {
+    effectId: effect.id,
+    idempotencyKey: effect.idempotencyKey,
+    duplicate: false,
+    executed: false,
+  };
 }
