@@ -1669,10 +1669,6 @@ msgstr "請確認此瀏覽器工作階段可以存取該 URL，然後重新測�
 msgid "Confirm this draft before sending."
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Connect email"
-msgstr "連接郵箱"
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1712,6 +1708,10 @@ msgstr "連線 API 金鑰"
 #: src/pages/Shell.tsx
 msgid "Connect apps"
 msgstr "連接應用程式"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr "連接郵箱"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
@@ -5097,15 +5097,15 @@ msgstr "最近"
 msgid "Recommended"
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgctxt "mailbox"
-msgid "Reconnect"
-msgstr "重新授權"
-
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
 msgstr "重新連線"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
+msgid "Reconnect"
+msgstr "重新授權"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Reconnect OAuth"

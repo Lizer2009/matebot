@@ -1668,10 +1668,6 @@ msgstr "पुष्टि करें कि यह URL इस ब्राउ
 msgid "Confirm this draft before sending."
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Connect email"
-msgstr ""
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1711,6 +1707,10 @@ msgstr "API कुंजी कनेक्ट करें"
 #: src/pages/Shell.tsx
 msgid "Connect apps"
 msgstr "ऐप कनेक्ट करें"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
@@ -5096,13 +5096,13 @@ msgstr "हाल के"
 msgid "Recommended"
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgctxt "mailbox"
+#: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
 msgstr ""
 
-#: src/components/integrations/plugin-marketplace.tsx
-#: src/pages/VoiceSettingsOverlay.tsx
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
 msgid "Reconnect"
 msgstr ""
 

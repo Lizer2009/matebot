@@ -1668,10 +1668,6 @@ msgstr "Confirm the URL is reachable from this browser session, then test again.
 msgid "Confirm this draft before sending."
 msgstr "Confirm this draft before sending."
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Connect email"
-msgstr "Connect email"
-
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -1711,6 +1707,10 @@ msgstr "Connect API key"
 #: src/pages/Shell.tsx
 msgid "Connect apps"
 msgstr "Connect apps"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connect email"
+msgstr "Connect email"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
@@ -5096,13 +5096,13 @@ msgstr "Recent"
 msgid "Recommended"
 msgstr "Recommended"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgctxt "mailbox"
+#: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/VoiceSettingsOverlay.tsx
 msgid "Reconnect"
 msgstr "Reconnect"
 
-#: src/components/integrations/plugin-marketplace.tsx
-#: src/pages/VoiceSettingsOverlay.tsx
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgctxt "mailbox"
 msgid "Reconnect"
 msgstr "Reconnect"
 
