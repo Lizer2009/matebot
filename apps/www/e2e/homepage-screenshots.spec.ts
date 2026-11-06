@@ -94,6 +94,17 @@ test.describe("on an iPhone", () => {
   });
 });
 
+// Android is the only phone platform with a build to download, so its hero differs from the iPhone's.
+const { defaultBrowserType: _pixelBrowserType, ...pixel } = devices["Pixel 7"];
+test.describe("on an Android phone", () => {
+  test.use(pixel);
+
+  test("homepage screenshot", async ({ page }, testInfo) => {
+    await openHomepage(page);
+    await captureScreenshot(page, testInfo, "02-marketing-homepage-android");
+  });
+});
+
 test("plugin pages screenshots", async ({ page }, testInfo) => {
   await page.goto("/plugins/submit/");
   await captureScreenshot(page, testInfo, "07-marketing-plugin-submit");
