@@ -64,6 +64,9 @@ importers:
       '@hono/node-server':
         specifier: 2.1.5
         version: 2.1.5(hono@4.13.14)
+      '@matebot/a2ui-adapter':
+        specifier: workspace:*
+        version: link:../../packages/a2ui-adapter
       '@matebot/adapter-kit':
         specifier: workspace:*
         version: link:../../packages/adapter-kit
