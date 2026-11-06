@@ -785,6 +785,7 @@ export async function executeConfirmedInteractionService(
       "Send requires confirmedVersion to equal draftVersion",
     );
   }
+  const confirmedVersion = current.confirmedVersion;
   const effect = await prisma.externalEffect.findUnique({
     where: { id: current.approvalEffectId },
   });
@@ -798,7 +799,7 @@ export async function executeConfirmedInteractionService(
   if (
     !confirmedEffectMatchesDraft(request, {
       draftVersion: current.draftVersion,
-      confirmedVersion: current.confirmedVersion,
+      confirmedVersion,
     })
   ) {
     throw new InteractionSendRejectedError(
@@ -816,7 +817,7 @@ export async function executeConfirmedInteractionService(
   }
   const gate = canExecuteConfirmedInteraction({
     draftVersion: current.draftVersion,
-    confirmedVersion: current.confirmedVersion,
+    confirmedVersion,
     status: current.status as InteractionLifecycleStatus,
   });
   if (!gate.ok) {
@@ -880,7 +881,7 @@ export async function executeConfirmedInteractionService(
       interaction,
       plan,
       draftVersion: current.draftVersion,
-      confirmedVersion: current.confirmedVersion,
+      confirmedVersion,
       effectId: effect.id,
       runId: effect.runId,
       ...args,
@@ -892,7 +893,7 @@ export async function executeConfirmedInteractionService(
         await projectEmailSurface(tx, {
           interaction,
           plan,
-          confirmedVersion: current.confirmedVersion,
+          confirmedVersion,
           draftVersion: current.draftVersion,
           runId: effect.runId,
           spaceId: input.spaceId,
@@ -913,7 +914,7 @@ export async function executeConfirmedInteractionService(
           payload: {
             interactionId: current.id,
             draftVersion: current.draftVersion,
-            confirmedVersion: current.confirmedVersion,
+            confirmedVersion,
             progress: "executing",
             template: "action-progress-card",
             lifecycle: "executing",

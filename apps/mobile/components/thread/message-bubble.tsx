@@ -232,7 +232,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   actionProps: MessageActionProps;
   doubleTapSurface?: boolean;
   userBubble?: UserBubble;
-  onRefresh?: () => void | Promise<void>;
+  onRefresh?: () => void | Promise<unknown>;
 }) {
   const colorScheme = useResolvedAppearance();
   const tokens = withUserBubble(mobileTokens(), userBubble);
