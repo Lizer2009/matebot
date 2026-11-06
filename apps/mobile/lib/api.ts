@@ -30,6 +30,7 @@ import {
 } from "@matebot/contracts";
 import type { ThreadHistory } from "@matebot/core";
 import {
+  a2uiSurfaceBlockFromPayload,
   aiConsentTarget,
   aiDataUsesForProcedure,
   cancelResponseBody,
@@ -42,9 +43,12 @@ import {
   isRunTerminalEvent,
   isServerUnreachable,
   isUnreachableStatus,
+  mergeA2uiMessageBlocks,
+  mergeA2uiMessages,
   mergeThreadHistory,
   messagingProviderLabel,
   parseRetryAfter,
+  placeA2uiSurfaceBlock,
   prependThreadHistoryPage,
   progressMessageId,
   readBoundedJsonResponse,
@@ -1304,7 +1308,11 @@ export function mergeMobileSnapshot(
   next: MobileSnapshot,
   preserveLoadedHistory = false,
 ): MobileSnapshot {
-  return mergeThreadHistory(prev, next, preserveLoadedHistory);
+  const merged = mergeThreadHistory(prev, next, preserveLoadedHistory);
+  if (!prev || prev.threadId !== next.threadId) return merged;
+  const messages = mergeA2uiMessages(prev.messages, merged.messages);
+  const same = messages.every((message, index) => message === merged.messages[index]);
+  return same ? merged : { ...merged, messages };
 }
 
 export function prependMobileMessagePage(
@@ -1886,6 +1894,29 @@ export function applyMobileThreadEvent(
       messages: updateCloudAgentMessages(prev.messages, event.payload ?? {}),
     };
   }
+  if (event.type === "thread.surface.created" || event.type === "thread.surface.updated") {
+    const block = a2uiSurfaceBlockFromPayload(event.payload ?? {});
+    const cursor = event.seq ?? prev.cursor;
+    if (!block) return cursor === prev.cursor ? prev : { ...prev, cursor };
+    const messageId = typeof event.payload?.messageId === "string" ? event.payload.messageId : null;
+    const placed = placeA2uiSurfaceBlock(prev.messages, block, messageId);
+    const messages = placed.placed
+      ? placed.messages
+      : [
+          ...placed.messages,
+          {
+            id: messageId ?? `a2ui:${block.interactionId}:${block.surfaceId}:${event.id ?? cursor}`,
+            threadId: prev.threadId,
+            seq: cursor,
+            role: "bot" as const,
+            blocks: [block],
+            ...(event.botId ? { botId: event.botId } : {}),
+            ...(event.runId ? { runId: event.runId } : {}),
+            createdAt: event.createdAt,
+          },
+        ];
+    return { ...prev, cursor, messages };
+  }
   if (event.type === "thread.message.created" || event.type === "thread.message.updated") {
     const { remaining } = takeLiveMessage(prev.messages, progressMessageId(event));
     const id = String(event.payload?.messageId ?? event.id ?? `msg:${event.seq ?? 0}`);
@@ -1903,7 +1934,12 @@ export function applyMobileThreadEvent(
       // An update can leave the call id out — the `end_call` marker does — so keep the one
       // the message already carries instead of dropping it out of its call.
       callId: typeof event.payload?.callId === "string" ? event.payload.callId : known?.callId,
-      blocks: (event.payload?.blocks as MobileMessage["blocks"]) ?? [],
+      blocks: known
+        ? mergeA2uiMessageBlocks(
+            known.blocks,
+            (event.payload?.blocks as MobileMessage["blocks"]) ?? [],
+          )
+        : ((event.payload?.blocks as MobileMessage["blocks"]) ?? []),
       botId: event.botId ?? (event.payload?.botId ? String(event.payload.botId) : undefined),
       ...replyMetadata(event.payload ?? {}, known),
     };

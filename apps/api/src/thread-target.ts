@@ -10,6 +10,7 @@ import type {
   ThreadSnapshot,
 } from "@matebot/contracts";
 import {
+  a2uiSurfaceDocumentRef,
   GROUP_MEMBER_MIN,
   MessageBlock as MessageBlockSchema,
   resolveBotAvatarSet,
@@ -22,6 +23,7 @@ import {
   MODEL_REQUIRED_SEND_ERROR,
   messageBypassesTakeoverWait,
   messageReaction,
+  overlayAuthoritativeA2uiBlocks,
   parseMessagingCommand,
   projectMessages,
   QUEUE_HOLDING_RUN_STATUSES,
@@ -369,6 +371,42 @@ export async function resolveThreadTarget(
   throw new IsolationError();
 }
 
+async function overlayThreadA2uiSurfaces<T extends { blocks: MessageBlock[] }>(
+  tx: Prisma.TransactionClient,
+  threadId: string,
+  messages: T[],
+): Promise<T[]> {
+  if (!messages.some((message) => message.blocks.some((block) => block.kind === "a2ui_surface"))) {
+    return messages;
+  }
+  const rows = await tx.interaction.findMany({
+    where: { threadId },
+    include: { surfaces: true },
+  });
+  return overlayAuthoritativeA2uiBlocks(
+    messages,
+    rows.flatMap((row) =>
+      row.surfaces.map((surface) => {
+        const draftVersion = Math.max(row.draftVersion, surface.draftVersion);
+        return {
+          interactionId: row.id,
+          surfaceId: surface.surfaceId,
+          draftVersion,
+          confirmedVersion: row.confirmedVersion === draftVersion ? row.confirmedVersion : null,
+          intent: row.intent,
+          title: row.title,
+          summary: row.summary,
+          protocolFamily: surface.protocolFamily === "v1_0" ? ("v1_0" as const) : ("v0_9" as const),
+          documentRef: a2uiSurfaceDocumentRef({
+            interactionId: row.id,
+            surfaceId: surface.surfaceId,
+          }),
+        };
+      }),
+    ),
+  );
+}
+
 export async function threadHead(prisma: PrismaClient, target: ThreadTarget) {
   const latest = await prisma.event.findFirst({
     where: { threadId: target.threadId },
@@ -447,6 +485,11 @@ export async function threadSnapshot(
                 })
               : null;
           const currentRun = run?.status === "failed" && newestTerminal?.id !== run.id ? null : run;
+          messagePage.messages = await overlayThreadA2uiSurfaces(
+            tx,
+            target.threadId,
+            messagePage.messages,
+          );
           const liveRuns = activeRuns.filter((run) => run.trigger !== "bot_message");
           const liveEvents =
             liveRuns.length > 0
@@ -540,6 +583,11 @@ export async function threadSnapshot(
               orderBy: { seq: "asc" },
             })
           : [];
+      messagePage.messages = await overlayThreadA2uiSurfaces(
+        tx,
+        target.threadId,
+        messagePage.messages,
+      );
       return {
         messagePage,
         last,

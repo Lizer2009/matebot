@@ -1,4 +1,9 @@
 import type { MessageBlock, ThreadMessage } from "@matebot/contracts";
+import {
+  a2uiSurfaceBlockFromPayload,
+  mergeA2uiMessageBlocks,
+  placeA2uiSurfaceBlock,
+} from "./a2ui-recovery.js";
 import { cloudAgentBlockFromPayload } from "./cloud-agent.js";
 import { preserveIdentitySource } from "./identity-source.js";
 import { modelFallbackFailure, parseModelFallbackFailure } from "./run-error.js";
@@ -149,7 +154,9 @@ export function projectMessages(
         const blocks = (payload.blocks as MessageBlock[]) ?? null;
         if (blocks) {
           for (const message of messages) {
-            if (message.id === messageId) message.blocks = blocks;
+            if (message.id === messageId) {
+              message.blocks = mergeA2uiMessageBlocks(message.blocks, blocks);
+            }
           }
         }
       }
@@ -778,67 +785,14 @@ function applySurfaceProjection(
     createdAt: string;
   },
 ): void {
-  const interactionId = typeof payload.interactionId === "string" ? payload.interactionId : null;
-  const surfaceId = typeof payload.surfaceId === "string" ? payload.surfaceId : null;
-  const protocolFamily =
-    payload.protocolFamily === "v0_9" || payload.protocolFamily === "v1_0"
-      ? payload.protocolFamily
-      : null;
-  const draftVersion =
-    typeof payload.draftVersion === "number" && Number.isInteger(payload.draftVersion)
-      ? payload.draftVersion
-      : null;
-  if (!interactionId || !surfaceId || !protocolFamily || !draftVersion || draftVersion < 1) {
-    return;
-  }
-  const block: Extract<MessageBlock, { kind: "a2ui_surface" }> = {
-    kind: "a2ui_surface",
-    interactionId,
-    surfaceId,
-    protocolFamily,
-    draftVersion,
-    ...(typeof payload.intent === "string" && payload.intent.trim()
-      ? { intent: payload.intent.trim() }
-      : {}),
-    ...(typeof payload.title === "string" ? { title: payload.title } : {}),
-    ...(typeof payload.summary === "string" ? { summary: payload.summary } : {}),
-    ...(typeof payload.documentRef === "string" ? { documentRef: payload.documentRef } : {}),
-    ...(typeof payload.confirmedVersion === "number" &&
-    Number.isInteger(payload.confirmedVersion) &&
-    payload.confirmedVersion >= 1
-      ? { confirmedVersion: payload.confirmedVersion }
-      : {}),
-  };
+  const block = a2uiSurfaceBlockFromPayload(payload);
+  if (!block) return;
   const messageId = typeof payload.messageId === "string" ? payload.messageId : null;
-  if (messageId) {
-    for (const message of messages) {
-      if (message.id !== messageId) continue;
-      let replaced = false;
-      message.blocks = message.blocks.map((existing) => {
-        if (existing.kind !== "a2ui_surface" || existing.surfaceId !== surfaceId) return existing;
-        replaced = true;
-        return block;
-      });
-      if (!replaced) message.blocks = [...message.blocks, block];
-      return;
-    }
-  }
-  for (const message of messages) {
-    const index = message.blocks.findIndex(
-      (existing) =>
-        existing.kind === "a2ui_surface" &&
-        existing.interactionId === interactionId &&
-        existing.surfaceId === surfaceId,
-    );
-    if (index >= 0) {
-      const next = [...message.blocks];
-      next[index] = block;
-      message.blocks = next;
-      return;
-    }
-  }
+  const placed = placeA2uiSurfaceBlock(messages, block, messageId);
+  messages.splice(0, messages.length, ...placed.messages);
+  if (placed.placed) return;
   messages.push({
-    id: messageId ?? `a2ui:${interactionId}:${surfaceId}:${meta.eventId}`,
+    id: messageId ?? `a2ui:${block.interactionId}:${block.surfaceId}:${meta.eventId}`,
     threadId: meta.threadId,
     seq: meta.seq,
     role: "bot",

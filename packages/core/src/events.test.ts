@@ -1214,6 +1214,44 @@ describe("projectMessages A2UI surface", () => {
     });
   });
 
+  it("does not let an older surface event regress a newer draft", () => {
+    const messages = projectMessages([
+      {
+        id: "e1",
+        threadId: "t1",
+        seq: 1,
+        type: "thread.surface.updated",
+        payload: {
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 3,
+          title: "Edited",
+          messageId: "m1",
+        },
+        createdAt: "2026-01-01T00:00:01.000Z",
+      },
+      {
+        id: "e0",
+        threadId: "t1",
+        seq: 2,
+        type: "thread.surface.updated",
+        payload: {
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 2,
+          confirmedVersion: 2,
+          title: "Old",
+          messageId: "m1",
+        },
+        createdAt: "2026-01-01T00:00:02.000Z",
+      },
+    ]);
+    expect(messages[0]?.blocks[0]).toMatchObject({ draftVersion: 3, title: "Edited" });
+    expect(messages[0]?.blocks[0]).not.toHaveProperty("confirmedVersion");
+  });
+
   it("applies thread.message.updated block replacements", () => {
     const messages = projectMessages([
       {

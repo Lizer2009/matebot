@@ -10,10 +10,14 @@ import type {
 } from "@matebot/contracts";
 import { RUN_TRIGGERS } from "@matebot/contracts";
 import {
+  a2uiSurfaceBlockFromPayload,
   isActive,
   isBackgroundRunTrigger,
   isRunTerminalEvent,
+  mergeA2uiMessageBlocks,
+  mergeA2uiMessages,
   mergeThreadHistory,
+  placeA2uiSurfaceBlock,
   prependThreadHistoryPage,
   progressMessageId,
   QUEUE_HOLDING_RUN_STATUSES,
@@ -153,7 +157,11 @@ export function mergeThreadSnapshot(
   // A threads.get started before SSE caught up must not wipe newer live state
   // (e.g. ask cards applied after send's post-refresh request was already in flight).
   if (prev && prev.threadId === next.threadId && prev.cursor > next.cursor) return prev;
-  return mergeThreadHistory(prev, next, preserveLoadedHistory);
+  const merged = mergeThreadHistory(prev, next, preserveLoadedHistory);
+  if (!prev || prev.threadId !== next.threadId) return merged;
+  const messages = mergeA2uiMessages(prev.messages, merged.messages);
+  const same = messages.every((message, index) => message === merged.messages[index]);
+  return same ? merged : { ...merged, messages };
 }
 
 /**
@@ -256,6 +264,8 @@ export function isThreadSnapshotEvent(event: ProductEvent): boolean {
     event.type === "agent.tool.completed" ||
     event.type === "thread.message.created" ||
     event.type === "thread.message.updated" ||
+    event.type === "thread.surface.created" ||
+    event.type === "thread.surface.updated" ||
     event.type === "thread.message.reaction" ||
     event.type === "run.started" ||
     event.type === "run.waiting_input" ||
@@ -542,11 +552,34 @@ export function reduceThreadSnapshot(
       messages: updateCloudAgentMessages(prev.messages, event.payload ?? {}),
     };
   }
+  if (event.type === "thread.surface.created" || event.type === "thread.surface.updated") {
+    const block = a2uiSurfaceBlockFromPayload(event.payload ?? {});
+    if (!block) return { ...prev, cursor: event.seq };
+    const messageId = typeof event.payload.messageId === "string" ? event.payload.messageId : null;
+    const placed = placeA2uiSurfaceBlock(prev.messages, block, messageId);
+    const messages = placed.placed
+      ? placed.messages
+      : [
+          ...placed.messages,
+          {
+            id: messageId ?? `a2ui:${block.interactionId}:${block.surfaceId}:${event.id}`,
+            threadId: event.threadId,
+            seq: event.seq,
+            role: "bot" as const,
+            blocks: [block],
+            botId: event.botId,
+            runId: event.runId,
+            createdAt: event.createdAt,
+          },
+        ];
+    return { ...prev, cursor: event.seq, messages };
+  }
   if (event.type === "thread.message.created" || event.type === "thread.message.updated") {
     const role = (event.payload.role as ThreadMessage["role"]) ?? "bot";
-    const blocks = (event.payload.blocks as ThreadMessage["blocks"]) ?? [];
     const id = String(event.payload.messageId ?? event.id);
     const known = prev.messages.find((message) => message.id === id);
+    const incomingBlocks = (event.payload.blocks as ThreadMessage["blocks"]) ?? [];
+    const blocks = known ? mergeA2uiMessageBlocks(known.blocks, incomingBlocks) : incomingBlocks;
     const next: ThreadMessage = {
       id,
       threadId: event.threadId,
