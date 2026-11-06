@@ -106,9 +106,10 @@ describe("normalizeCalendarPlan", () => {
 
   it("normalizes either app through one entry point", () => {
     expect(normalizeInteractionPlan(emailPlan).fields.map((field) => field.name)).toContain("to");
-    expect(
-      normalizeInteractionPlan(calendarPlan).fields.map((field) => field.name),
-    ).toEqual(["name", "events"]);
+    expect(normalizeInteractionPlan(calendarPlan).fields.map((field) => field.name)).toEqual([
+      "name",
+      "events",
+    ]);
   });
 });
 
