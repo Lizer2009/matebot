@@ -27,6 +27,24 @@ const fixtureCapability =
   capabilityParam === "ready"
     ? capabilityParam
     : undefined;
+const lifecycleParam = params.get("lifecycle");
+const fixtureLifecycle =
+  lifecycleParam === "executing" ||
+  lifecycleParam === "succeeded" ||
+  lifecycleParam === "failed" ||
+  lifecycleParam === "unknown"
+    ? lifecycleParam
+    : undefined;
+const fixtureTemplate =
+  fixtureLifecycle === "executing"
+    ? "action-progress-card"
+    : fixtureLifecycle === "succeeded"
+      ? "action-result-success"
+      : fixtureLifecycle === "failed"
+        ? "action-result-failed"
+        : fixtureLifecycle === "unknown"
+          ? "action-reconcile-card"
+          : undefined;
 
 if (!flagOff) {
   localStorage.setItem(A2UI_STORAGE_KEY, "1");
@@ -78,6 +96,10 @@ function EmailComposeFixture() {
     draftVersion,
     confirmedVersion,
     ...(fixtureCapability ? { capability: fixtureCapability } : {}),
+    ...(fixtureLifecycle ? { lifecycle: fixtureLifecycle } : {}),
+    ...(fixtureTemplate ? { template: fixtureTemplate } : {}),
+    ...(fixtureLifecycle === "succeeded" ? { providerMessageId: "msg-1" } : {}),
+    ...(fixtureLifecycle === "failed" ? { error: "Could not send the email" } : {}),
   });
 
   return (
@@ -106,6 +128,7 @@ function EmailComposeFixture() {
             throw new Error("Confirm this draft before sending.");
           }
         }}
+        onCheckStatus={async () => undefined}
         onDiscard={() => undefined}
       />
     </div>

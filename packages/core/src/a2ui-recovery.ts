@@ -1,4 +1,6 @@
 import type { A2uiSurfaceBlock, MessageBlock } from "@matebot/contracts";
+import type { EmailSurfaceLifecycle, EmailSurfaceTemplate } from "./interaction-template.js";
+import { EMAIL_SURFACE_LIFECYCLES, EMAIL_SURFACE_TEMPLATES } from "./interaction-template.js";
 
 /** Server row used to correct a timeline block after a snapshot or replay. */
 export type A2uiSurfaceAuthority = {
@@ -12,6 +14,11 @@ export type A2uiSurfaceAuthority = {
   summary?: string | null;
   documentRef?: string;
   protocolFamily?: A2uiSurfaceBlock["protocolFamily"];
+  capability?: A2uiSurfaceBlock["capability"];
+  template?: A2uiSurfaceBlock["template"];
+  lifecycle?: A2uiSurfaceBlock["lifecycle"];
+  providerMessageId?: string | null;
+  error?: string | null;
 };
 
 function isSurfaceBlock(block: MessageBlock): block is A2uiSurfaceBlock {
@@ -130,6 +137,18 @@ export function a2uiSurfaceBlockFromPayload(
     payload.capability === "ready"
       ? { capability: payload.capability }
       : {}),
+    ...(typeof payload.template === "string" &&
+    (EMAIL_SURFACE_TEMPLATES as readonly string[]).includes(payload.template)
+      ? { template: payload.template as EmailSurfaceTemplate }
+      : {}),
+    ...(typeof payload.lifecycle === "string" &&
+    (EMAIL_SURFACE_LIFECYCLES as readonly string[]).includes(payload.lifecycle)
+      ? { lifecycle: payload.lifecycle as EmailSurfaceLifecycle }
+      : {}),
+    ...(typeof payload.providerMessageId === "string" && payload.providerMessageId.trim()
+      ? { providerMessageId: payload.providerMessageId.trim() }
+      : {}),
+    ...(typeof payload.error === "string" ? { error: payload.error } : {}),
   };
 }
 
@@ -208,6 +227,11 @@ export function overlayAuthoritativeA2uiBlocks<T extends { blocks: MessageBlock[
         ...(authority.title ? { title: authority.title } : {}),
         ...(authority.summary ? { summary: authority.summary } : {}),
         ...(authority.documentRef ? { documentRef: authority.documentRef } : {}),
+        ...(authority.capability ? { capability: authority.capability } : {}),
+        ...(authority.template ? { template: authority.template } : {}),
+        ...(authority.lifecycle ? { lifecycle: authority.lifecycle } : {}),
+        ...(authority.providerMessageId ? { providerMessageId: authority.providerMessageId } : {}),
+        ...(authority.error ? { error: authority.error } : {}),
       };
       const next = preferA2uiSurfaceBlock(block, withoutConfirmation(incoming), confirmed);
       if (next !== block) changed = true;

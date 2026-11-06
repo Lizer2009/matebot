@@ -1,7 +1,9 @@
 import { useLingui } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import { Button, Input, Textarea } from "@matebot/ui-web";
+import { emailSurfaceTemplateFromBlock } from "@matebot/core";
+import { Button, Input, Spinner, Textarea } from "@matebot/ui-web";
 import { useEffect, useId, useRef, useState } from "react";
+import { SuccessPop } from "../ai/primitives";
 import type { EmailDraftFields, EmailFieldName } from "./email-fields";
 import { EMAIL_DRAFT_FIELD_NAMES } from "./email-fields";
 
@@ -14,22 +16,31 @@ function mailboxNeedsConnect(
 /**
  * Review-card email draft: edit fields, then one Send gesture.
  * Server still requires confirm-before-send; Send runs confirm then execute.
- * Unbound / expired mailboxes show connect or reauth instead of Send.
+ * Surface template follows capability + lifecycle (progress / success / failed / UNKNOWN).
  */
 export function EmailComposeEditor({
   draftVersion,
   confirmedVersion,
   capability,
+  template,
+  lifecycle,
+  providerMessageId,
+  error: surfaceError,
   fields,
   onFieldChange,
   onConfirm,
   onSend,
   onConnect,
+  onCheckStatus,
   onDiscard,
 }: {
   draftVersion: number;
   confirmedVersion?: number;
   capability?: A2uiSurfaceBlock["capability"];
+  template?: A2uiSurfaceBlock["template"];
+  lifecycle?: A2uiSurfaceBlock["lifecycle"];
+  providerMessageId?: string;
+  error?: string;
   fields: EmailDraftFields;
   onFieldChange?: (
     name: EmailFieldName,
@@ -39,6 +50,7 @@ export function EmailComposeEditor({
   onConfirm?: (draftVersion: number) => Promise<void>;
   onSend?: (draftVersion: number) => Promise<void>;
   onConnect?: () => Promise<void>;
+  onCheckStatus?: () => Promise<void>;
   onDiscard?: () => void | Promise<void>;
 }) {
   const { t } = useLingui();
@@ -81,6 +93,29 @@ export function EmailComposeEditor({
 
   const effectiveConfirmedVersion = localConfirmedVersion ?? confirmedVersion;
   const confirmed = effectiveConfirmedVersion != null && effectiveConfirmedVersion === version;
+  const resolvedTemplate = emailSurfaceTemplateFromBlock({
+    template:
+      mailbox === "ready" &&
+      (template === "email-connection-card" || template === "email-reauth-card")
+        ? undefined
+        : template,
+    lifecycle,
+    capability: mailbox,
+    intent: "email.compose",
+  });
+  const phase =
+    busy &&
+    (resolvedTemplate === "email-draft-card" || resolvedTemplate === "action-submitting-card")
+      ? "action-progress-card"
+      : resolvedTemplate === "action-result-success" || sent
+        ? "action-result-success"
+        : resolvedTemplate;
+  const locked =
+    phase === "action-submitting-card" ||
+    phase === "action-progress-card" ||
+    phase === "action-result-success" ||
+    phase === "action-result-failed" ||
+    phase === "action-reconcile-card";
 
   async function commit(name: EmailFieldName, override?: string): Promise<number> {
     const inflight = pending.current[name];
@@ -144,8 +179,10 @@ export function EmailComposeEditor({
     <form
       data-testid="a2ui-email-compose"
       data-draft-version={version}
-      data-confirmed={confirmed && !sent ? "true" : "false"}
-      data-sent={sent ? "true" : "false"}
+      data-confirmed={confirmed && phase !== "action-result-success" ? "true" : "false"}
+      data-sent={phase === "action-result-success" ? "true" : "false"}
+      data-template={phase}
+      data-lifecycle={lifecycle ?? "draft"}
       className="grid gap-3"
       onSubmit={(event) => event.preventDefault()}
     >
@@ -161,6 +198,7 @@ export function EmailComposeEditor({
           data-testid="a2ui-email-subject"
           value={values.subject}
           placeholder={t`Subject`}
+          disabled={locked}
           className="border-0 bg-transparent px-0 text-[18px] font-semibold shadow-none focus-visible:ring-0"
           onChange={(event) =>
             setValues((current) => ({ ...current, subject: event.target.value }))
@@ -179,6 +217,7 @@ export function EmailComposeEditor({
           label={t`From`}
           value={values.from}
           autoComplete="email"
+          disabled={locked}
           onChange={(value) => setValues((current) => ({ ...current, from: value }))}
           onBlur={(value) => {
             void commit("from", value).catch((err: unknown) => setError(messageOf(err)));
@@ -190,6 +229,7 @@ export function EmailComposeEditor({
           label={t`To`}
           value={values.to}
           autoComplete="email"
+          disabled={locked}
           onChange={(value) => setValues((current) => ({ ...current, to: value }))}
           onBlur={(value) => {
             void commit("to", value).catch((err: unknown) => setError(messageOf(err)));
@@ -202,6 +242,7 @@ export function EmailComposeEditor({
           value={values.cc}
           autoComplete="email"
           placeholder="name@example.com"
+          disabled={locked}
           onChange={(value) => setValues((current) => ({ ...current, cc: value }))}
           onBlur={(value) => {
             void commit("cc", value).catch((err: unknown) => setError(messageOf(err)));
@@ -217,6 +258,7 @@ export function EmailComposeEditor({
           data-testid="a2ui-email-body"
           value={values.body}
           rows={6}
+          disabled={locked}
           className="min-h-[8rem] border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
           onChange={(event) => setValues((current) => ({ ...current, body: event.target.value }))}
           onBlur={(event) => {
@@ -227,37 +269,39 @@ export function EmailComposeEditor({
         />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <div
-          data-testid="a2ui-email-status"
-          className="text-[13px] text-muted-foreground"
-          aria-live="polite"
-        >
-          {sent ? t`Sent` : t`Needs approval`}
-        </div>
+        <StatusLine
+          phase={phase}
+          providerMessageId={providerMessageId}
+          surfaceError={surfaceError}
+        />
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            data-testid="a2ui-email-discard"
-            disabled={busy || sent}
-            className="text-muted-foreground"
-            onClick={() => {
-              setBusy(true);
-              setError(null);
-              void Promise.resolve(onDiscard?.())
-                .then(() => setDiscarded(true))
-                .catch((err: unknown) => setError(messageOf(err)))
-                .finally(() => setBusy(false));
-            }}
-          >
-            {t`Discard`}
-          </Button>
-          {mailboxNeedsConnect(mailbox) ? (
+          {phase === "action-submitting-card" ||
+          phase === "action-progress-card" ||
+          phase === "action-result-success" ? null : (
             <Button
               type="button"
-              data-testid={
-                mailbox === "requires_reauth" ? "a2ui-email-reauth" : "a2ui-email-connect"
-              }
+              variant="ghost"
+              data-testid="a2ui-email-discard"
+              disabled={busy}
+              className="text-muted-foreground"
+              onClick={() => {
+                setBusy(true);
+                setError(null);
+                void Promise.resolve(onDiscard?.())
+                  .then(() => setDiscarded(true))
+                  .catch((err: unknown) => setError(messageOf(err)))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              {t`Discard`}
+            </Button>
+          )}
+          {phase === "action-submitting-card" ||
+          phase === "action-progress-card" ? null : mailboxNeedsConnect(mailbox) &&
+            phase === "email-connection-card" ? (
+            <Button
+              type="button"
+              data-testid="a2ui-email-connect"
               disabled={busy}
               onClick={() => {
                 if (!onConnect) return;
@@ -269,11 +313,58 @@ export function EmailComposeEditor({
                   .finally(() => setBusy(false));
               }}
             >
-              {mailbox === "requires_reauth"
-                ? t({ message: "Reconnect", context: "mailbox" })
-                : t`Connect email`}
+              {t`Connect email`}
             </Button>
-          ) : onSend ? (
+          ) : mailboxNeedsConnect(mailbox) && phase === "email-reauth-card" ? (
+            <Button
+              type="button"
+              data-testid="a2ui-email-reauth"
+              disabled={busy}
+              onClick={() => {
+                if (!onConnect) return;
+                setBusy(true);
+                setError(null);
+                void onConnect()
+                  .then(() => setMailbox("ready"))
+                  .catch((err: unknown) => setError(messageOf(err)))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              {t({ message: "Reconnect", context: "mailbox" })}
+            </Button>
+          ) : phase === "action-result-failed" ? (
+            <Button
+              type="button"
+              data-testid="a2ui-email-retry"
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                setError(null);
+                void Promise.resolve(onSend?.(version))
+                  .then(() => setSent(true))
+                  .catch((err: unknown) => setError(messageOf(err)))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              {t`Retry`}
+            </Button>
+          ) : phase === "action-reconcile-card" ? (
+            <Button
+              type="button"
+              data-testid="a2ui-email-check-status"
+              disabled={busy || !onCheckStatus}
+              onClick={() => {
+                if (!onCheckStatus) return;
+                setBusy(true);
+                setError(null);
+                void onCheckStatus()
+                  .catch((err: unknown) => setError(messageOf(err)))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              {t`Check status`}
+            </Button>
+          ) : phase === "action-result-success" ? null : onSend ? (
             <Button
               type="button"
               data-testid="a2ui-email-send"
@@ -304,17 +395,85 @@ export function EmailComposeEditor({
           ) : null}
         </div>
       </div>
-      {error ? (
+      {error && phase !== "action-result-failed" && phase !== "action-reconcile-card" ? (
         <p data-testid="a2ui-email-error" role="alert" className="text-[13px] text-destructive">
           {error}
         </p>
       ) : null}
-      {sent ? (
+      {phase === "action-result-success" ? (
         <p data-testid="a2ui-email-sent" className="sr-only">
           {t`Sent`}
         </p>
       ) : null}
     </form>
+  );
+}
+
+function StatusLine({
+  phase,
+  providerMessageId,
+  surfaceError,
+}: {
+  phase: ReturnType<typeof emailSurfaceTemplateFromBlock>;
+  providerMessageId?: string;
+  surfaceError?: string;
+}) {
+  const { t } = useLingui();
+  if (phase === "action-submitting-card" || phase === "action-progress-card") {
+    return (
+      <div
+        data-testid="a2ui-email-progress"
+        className="flex items-center gap-2 text-[13px] text-muted-foreground"
+        aria-live="polite"
+      >
+        <Spinner className="size-3.5" aria-hidden />
+        {t`Sending`}
+      </div>
+    );
+  }
+  if (phase === "action-result-success") {
+    return (
+      <div data-testid="a2ui-email-status" className="grid gap-1" aria-live="polite">
+        <SuccessPop label={t`Sent`} />
+        {providerMessageId ? (
+          <div data-testid="a2ui-email-provider-id" className="text-[12px] text-muted-foreground">
+            {providerMessageId}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+  if (phase === "action-result-failed") {
+    return (
+      <div
+        data-testid="a2ui-email-failed"
+        className="text-[13px] text-destructive"
+        role="alert"
+        aria-live="polite"
+      >
+        {surfaceError?.trim() || t`Could not send`}
+      </div>
+    );
+  }
+  if (phase === "action-reconcile-card") {
+    return (
+      <div
+        data-testid="a2ui-email-unknown"
+        className="text-[13px] text-muted-foreground"
+        aria-live="polite"
+      >
+        {t`Don't send again`}
+      </div>
+    );
+  }
+  return (
+    <div
+      data-testid="a2ui-email-status"
+      className="text-[13px] text-muted-foreground"
+      aria-live="polite"
+    >
+      {t`Needs approval`}
+    </div>
   );
 }
 
@@ -325,6 +484,7 @@ function FieldRow({
   value,
   placeholder,
   autoComplete,
+  disabled,
   onChange,
   onBlur,
 }: {
@@ -334,6 +494,7 @@ function FieldRow({
   value: string;
   placeholder?: string;
   autoComplete?: string;
+  disabled?: boolean;
   onChange: (value: string) => void;
   onBlur: (value: string) => void;
 }) {
@@ -348,6 +509,7 @@ function FieldRow({
         value={value}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        disabled={disabled}
         className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
         onChange={(event) => onChange(event.target.value)}
         onBlur={(event) => onBlur(event.currentTarget.value)}

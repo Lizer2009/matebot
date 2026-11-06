@@ -281,6 +281,112 @@ describe("A2uiSurfaceCard", () => {
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="a2ui-email-connect"]')).toBeNull();
   });
+
+  it("shows a disabled progress card while the send is executing", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+      template: "action-progress-card",
+      lifecycle: "executing",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={vi.fn()} />,
+      ),
+    );
+    const form = container.querySelector('[data-testid="a2ui-email-compose"]') as HTMLElement;
+    expect(form.getAttribute("data-template")).toBe("action-progress-card");
+    expect(container.querySelector('[data-testid="a2ui-email-progress"]')?.textContent).toMatch(
+      /Sending/,
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    expect(
+      (container.querySelector('[data-testid="a2ui-email-subject"]') as HTMLInputElement).disabled,
+    ).toBe(true);
+  });
+
+  it("shows success with the provider message id on the same surface", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+      template: "action-result-success",
+      lifecycle: "succeeded",
+      providerMessageId: "msg-1",
+    });
+    act(() => root.render(<A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} />));
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
+    expect(container.querySelector('[data-testid="a2ui-email-provider-id"]')?.textContent).toBe(
+      "msg-1",
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+  });
+
+  it("shows a failed card with Retry and no Send", async () => {
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      confirmedVersion: 1,
+      capability: "ready",
+      template: "action-result-failed",
+      lifecycle: "failed",
+      error: "Could not send the email",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={onSend} />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-failed"]')?.textContent).toMatch(
+      /Could not send the email/,
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    const retry = container.querySelector('[data-testid="a2ui-email-retry"]') as HTMLButtonElement;
+    await act(async () => {
+      retry.click();
+    });
+    expect(onSend).toHaveBeenCalledWith(1);
+  });
+
+  it("shows UNKNOWN with Check status and no Send", async () => {
+    const onCheckStatus = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+      template: "action-reconcile-card",
+      lifecycle: "unknown",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onCheckStatus={onCheckStatus}
+          onSend={onSend}
+        />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-unknown"]')?.textContent).toMatch(
+      /Don't send again/,
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-retry"]')).toBeNull();
+    await act(async () => {
+      (
+        container.querySelector('[data-testid="a2ui-email-check-status"]') as HTMLButtonElement
+      ).click();
+    });
+    expect(onCheckStatus).toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
+  });
 });
 
 function emailSurfaceMessages(): unknown[] {

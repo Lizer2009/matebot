@@ -53,6 +53,7 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       dismissChoice: (id, question) => rowActionsRef.current.dismissChoice(id, question),
       openPeerChat: (peer) => rowActionsRef.current.openPeerChat(peer),
       layout: (id, y, index) => rowActionsRef.current.layout(id, y, index),
+      refresh: () => rowActionsRef.current.refresh?.(),
     }),
     [],
   );

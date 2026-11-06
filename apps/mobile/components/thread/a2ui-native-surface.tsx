@@ -1,4 +1,5 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
+import { emailSurfaceTemplateFromBlock } from "@matebot/core";
 import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import type { NativeCatalogNode } from "../../lib/a2ui-catalog";
@@ -29,6 +30,7 @@ export function A2uiNativeSurface({
   onConfirm,
   onSend,
   onConnect,
+  onCheckStatus,
   onDiscard,
 }: {
   block: A2uiSurfaceBlock;
@@ -42,6 +44,7 @@ export function A2uiNativeSurface({
   onConfirm?: (draftVersion: number) => Promise<void>;
   onSend?: (draftVersion: number) => Promise<void>;
   onConnect?: () => Promise<void>;
+  onCheckStatus?: () => Promise<void>;
   onDiscard?: () => void | Promise<void>;
 }) {
   const { t } = useI18n();
@@ -51,6 +54,7 @@ export function A2uiNativeSurface({
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [discarded, setDiscarded] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [mailbox, setMailbox] = useState(block.capability);
   const [localConfirmedVersion, setLocalConfirmedVersion] = useState<number | undefined>(
     block.confirmedVersion,
@@ -127,6 +131,23 @@ export function A2uiNativeSurface({
     }
     const effectiveConfirmed = localConfirmedVersion ?? block.confirmedVersion;
     const title = block.title ?? t("Send email");
+    const resolvedTemplate = emailSurfaceTemplateFromBlock({
+      template:
+        mailbox === "ready" &&
+        (block.template === "email-connection-card" || block.template === "email-reauth-card")
+          ? undefined
+          : block.template,
+      lifecycle: block.lifecycle,
+      capability: mailbox,
+      intent: block.intent,
+    });
+    const phase =
+      busy &&
+      (resolvedTemplate === "email-draft-card" || resolvedTemplate === "action-submitting-card")
+        ? "action-progress-card"
+        : resolvedTemplate === "action-result-success" || sent
+          ? "action-result-success"
+          : resolvedTemplate;
     if (discarded) {
       return (
         <View testID="a2ui-native-surface">
@@ -137,7 +158,30 @@ export function A2uiNativeSurface({
     return (
       <View testID="a2ui-native-surface" style={{ gap: 8 }}>
         <Text>{title}</Text>
-        <Text testID="a2ui-email-status">{sent ? t("Sent") : t("Needs approval")}</Text>
+        <Text
+          testID={
+            phase === "action-progress-card" || phase === "action-submitting-card"
+              ? "a2ui-email-progress"
+              : phase === "action-result-failed"
+                ? "a2ui-email-failed"
+                : phase === "action-reconcile-card"
+                  ? "a2ui-email-unknown"
+                  : "a2ui-email-status"
+          }
+        >
+          {phase === "action-progress-card" || phase === "action-submitting-card"
+            ? t("Sending")
+            : phase === "action-result-success"
+              ? t("Sent")
+              : phase === "action-result-failed"
+                ? (block.error ?? t("Could not send"))
+                : phase === "action-reconcile-card"
+                  ? t("Don't send again")
+                  : t("Needs approval")}
+        </Text>
+        {phase === "action-result-success" && block.providerMessageId ? (
+          <Text testID="a2ui-email-provider-id">{block.providerMessageId}</Text>
+        ) : null}
         <A2uiSheet label={title}>
           <A2uiTextField
             label={t("From")}
@@ -169,17 +213,23 @@ export function A2uiNativeSurface({
             testID="a2ui-email-body"
             onChangeText={setField("body")}
           />
-          <A2uiButton
-            label={t("Discard")}
-            testID="a2ui-email-discard"
-            onPress={() => {
-              setError(null);
-              void Promise.resolve(onDiscard?.())
-                .then(() => setDiscarded(true))
-                .catch((err: unknown) => setError(messageOf(err)));
-            }}
-          />
-          {mailboxNeedsConnect(mailbox) ? (
+          {phase === "action-progress-card" ||
+          phase === "action-submitting-card" ||
+          phase === "action-result-success" ? null : (
+            <A2uiButton
+              label={t("Discard")}
+              testID="a2ui-email-discard"
+              onPress={() => {
+                setError(null);
+                void Promise.resolve(onDiscard?.())
+                  .then(() => setDiscarded(true))
+                  .catch((err: unknown) => setError(messageOf(err)));
+              }}
+            />
+          )}
+          {phase === "action-progress-card" ||
+          phase === "action-submitting-card" ? null : mailboxNeedsConnect(mailbox) &&
+            (phase === "email-connection-card" || phase === "email-reauth-card") ? (
             <A2uiButton
               label={mailbox === "requires_reauth" ? t("Reconnect") : t("Connect email")}
               testID={mailbox === "requires_reauth" ? "a2ui-email-reauth" : "a2ui-email-connect"}
@@ -191,11 +241,40 @@ export function A2uiNativeSurface({
                   .catch((err: unknown) => setError(messageOf(err)));
               }}
             />
-          ) : (
+          ) : phase === "action-result-failed" ? (
+            <A2uiButton
+              label={t("Retry")}
+              testID="a2ui-email-retry"
+              onPress={() => {
+                if (busy) return;
+                setBusy(true);
+                setError(null);
+                void Promise.resolve(onSend?.(versionRef.current))
+                  .then(() => setSent(true))
+                  .catch((err: unknown) => setError(messageOf(err)))
+                  .finally(() => setBusy(false));
+              }}
+            />
+          ) : phase === "action-reconcile-card" ? (
+            <A2uiButton
+              label={t("Check status")}
+              testID="a2ui-email-check-status"
+              onPress={() => {
+                if (!onCheckStatus || busy) return;
+                setBusy(true);
+                setError(null);
+                void onCheckStatus()
+                  .catch((err: unknown) => setError(messageOf(err)))
+                  .finally(() => setBusy(false));
+              }}
+            />
+          ) : phase === "action-result-success" ? null : (
             <A2uiButton
               label={t("Send")}
               testID="a2ui-email-send"
               onPress={() => {
+                if (busy) return;
+                setBusy(true);
                 setError(null);
                 void flush()
                   .then(async (next) => {
@@ -210,13 +289,16 @@ export function A2uiNativeSurface({
                     await onSend?.(next);
                     setSent(true);
                   })
-                  .catch((err: unknown) => setError(messageOf(err)));
+                  .catch((err: unknown) => setError(messageOf(err)))
+                  .finally(() => setBusy(false));
               }}
             />
           )}
         </A2uiSheet>
         {error ? <Text testID="a2ui-email-error">{error}</Text> : null}
-        {sent ? <Text testID="a2ui-email-sent">{t("Sent")}</Text> : null}
+        {phase === "action-result-success" ? (
+          <Text testID="a2ui-email-sent">{t("Sent")}</Text>
+        ) : null}
       </View>
     );
   }

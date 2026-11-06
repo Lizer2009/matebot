@@ -14,6 +14,7 @@ export type InteractionStatus =
   | "executing"
   | "succeeded"
   | "failed"
+  | "unknown"
   | "needs_connection"
   | "cancelled";
 

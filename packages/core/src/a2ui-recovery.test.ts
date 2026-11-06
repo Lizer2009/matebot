@@ -61,6 +61,20 @@ describe("preferA2uiSurfaceBlock", () => {
       capability: "not_connected",
     });
   });
+
+  it("applies a same-version lifecycle stamp so Send progress replaces the draft card", () => {
+    const current = surface({ capability: "ready", template: "email-draft-card" });
+    const incoming = surface({
+      capability: "ready",
+      template: "action-progress-card",
+      lifecycle: "executing",
+    });
+    expect(preferA2uiSurfaceBlock(current, incoming)).toMatchObject({
+      template: "action-progress-card",
+      lifecycle: "executing",
+      capability: "ready",
+    });
+  });
 });
 
 describe("mergeA2uiMessageBlocks", () => {
@@ -137,6 +151,34 @@ describe("overlayAuthoritativeA2uiBlocks", () => {
       },
     ]);
     expect(overlaid[0]?.blocks[0]).toMatchObject({ draftVersion: 2, confirmedVersion: 2 });
+  });
+
+  it("applies an authoritative execution lifecycle onto a stale draft card", () => {
+    const messages = [
+      {
+        id: "m1",
+        blocks: [
+          surface({ capability: "ready", template: "email-draft-card", lifecycle: "draft" }),
+        ],
+      },
+    ];
+    const overlaid = overlayAuthoritativeA2uiBlocks(messages, [
+      {
+        interactionId: "ix-1",
+        surfaceId: "surf-1",
+        draftVersion: 2,
+        confirmedVersion: 2,
+        template: "action-result-success",
+        lifecycle: "succeeded",
+        providerMessageId: "msg-1",
+      },
+    ]);
+    expect(overlaid[0]?.blocks[0]).toMatchObject({
+      template: "action-result-success",
+      lifecycle: "succeeded",
+      providerMessageId: "msg-1",
+      capability: "ready",
+    });
   });
 
   it("leaves messages alone when no surface block is present", () => {

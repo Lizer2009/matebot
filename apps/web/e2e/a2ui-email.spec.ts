@@ -38,3 +38,33 @@ test("expired email card shows reauth and no Send", async ({ page }) => {
   await expect(page.getByTestId("a2ui-email-reauth")).toBeVisible();
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
 });
+
+test("executing email card shows Sending and no Send", async ({ page }, testInfo) => {
+  await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=executing");
+  await expect(page.getByTestId("a2ui-email-progress")).toContainText("Sending");
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-email-progress");
+});
+
+test("succeeded email card shows the provider message id", async ({ page }, testInfo) => {
+  await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=succeeded");
+  await expect(page.getByTestId("a2ui-email-sent")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-provider-id")).toHaveText("msg-1");
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-email-success");
+});
+
+test("failed email card shows Retry and no Send", async ({ page }) => {
+  await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=failed");
+  await expect(page.getByTestId("a2ui-email-failed")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-retry")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+});
+
+test("unknown email card shows Check status and no Send", async ({ page }) => {
+  await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=unknown");
+  await expect(page.getByTestId("a2ui-email-unknown")).toContainText("Don't send again");
+  await expect(page.getByTestId("a2ui-email-check-status")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-retry")).toHaveCount(0);
+});

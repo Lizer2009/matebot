@@ -1189,6 +1189,59 @@ describe("projectMessages A2UI surface", () => {
     });
   });
 
+  it("stamps send lifecycle onto an existing surface on thread.surface.updated", () => {
+    const messages = projectMessages([
+      {
+        id: "e0",
+        threadId: "t1",
+        seq: 0,
+        type: "thread.message.created",
+        payload: {
+          messageId: "m1",
+          role: "bot",
+          blocks: [
+            {
+              kind: "a2ui_surface",
+              interactionId: "ix-1",
+              surfaceId: "surf-1",
+              protocolFamily: "v0_9",
+              draftVersion: 1,
+              intent: "email.compose",
+              capability: "ready",
+              template: "email-draft-card",
+            },
+          ],
+        },
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: "e1",
+        threadId: "t1",
+        seq: 1,
+        type: "thread.surface.updated",
+        payload: {
+          interactionId: "ix-1",
+          surfaceId: "surf-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          messageId: "m1",
+          capability: "ready",
+          template: "action-result-success",
+          lifecycle: "succeeded",
+          providerMessageId: "msg-1",
+        },
+        createdAt: "2026-01-01T00:00:01.000Z",
+      },
+    ]);
+    expect(messages[0]?.blocks[0]).toMatchObject({
+      kind: "a2ui_surface",
+      template: "action-result-success",
+      lifecycle: "succeeded",
+      providerMessageId: "msg-1",
+      capability: "ready",
+    });
+  });
+
   it("keeps confirmedVersion on a surface update that records it", () => {
     const messages = projectMessages([
       {

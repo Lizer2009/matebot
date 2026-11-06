@@ -10,7 +10,7 @@ export type InteractionEmailDraft = {
 
 export type InteractionEmailDelivery =
   | { ok: true; deliveryId: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; outcome?: "failed" | "unknown" };
 
 /** Injected sender. Tests pass Fake explicitly; production never default-constructs it. */
 export type InteractionEmailSender =
@@ -78,7 +78,9 @@ async function executeViaConnector(
     if (event.type === "result") lastResult = event.data;
   }
   if (lastError) return { ok: false, error: lastError || "Could not send the email" };
-  if (lastResult === undefined) return { ok: false, error: "Could not send the email" };
+  if (lastResult === undefined) {
+    return { ok: false, error: "Could not send the email", outcome: "unknown" };
+  }
   return { ok: true, deliveryId: deliveryIdFromUnknown(lastResult, draft.idempotencyKey) };
 }
 

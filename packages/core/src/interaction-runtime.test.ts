@@ -102,5 +102,43 @@ describe("interaction-runtime", () => {
         status: "awaiting_approval",
       }).ok,
     ).toBe(false);
+    expect(
+      canExecuteConfirmedInteraction({
+        draftVersion: 4,
+        confirmedVersion: 4,
+        status: "unknown",
+      }),
+    ).toMatchObject({ error: "unknown" });
+    expect(
+      canExecuteConfirmedInteraction({
+        draftVersion: 4,
+        confirmedVersion: 4,
+        status: "failed",
+      }),
+    ).toEqual({ ok: true });
+    expect(
+      canExecuteConfirmedInteraction({
+        draftVersion: 4,
+        confirmedVersion: 4,
+        status: "executing",
+      }),
+    ).toMatchObject({ error: "unconfirmed" });
+  });
+
+  it("rejects field edits after send starts, fails, or goes unknown", () => {
+    const ready = {
+      draftVersion: 4,
+      confirmedVersion: 4,
+      plan,
+      slots: { to: "a@example.com", subject: "Hi", body: "Hello" },
+    };
+    for (const status of ["executing", "failed", "unknown", "succeeded"] as const) {
+      expect(
+        applyInteractionFieldChange(
+          { ...ready, status },
+          { expectedDraftVersion: 4, name: "subject", value: "Nope" },
+        ),
+      ).toMatchObject({ error: "terminal" });
+    }
   });
 });

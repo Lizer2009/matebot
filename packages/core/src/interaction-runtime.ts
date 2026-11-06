@@ -8,6 +8,7 @@ export type InteractionLifecycleStatus =
   | "executing"
   | "succeeded"
   | "failed"
+  | "unknown"
   | "needs_connection"
   | "cancelled";
 
@@ -31,6 +32,12 @@ export type FieldChangeResult =
   | { ok: false; error: "version_conflict" | "terminal" | "unknown_field"; message: string };
 
 const TERMINAL: ReadonlySet<InteractionLifecycleStatus> = new Set(["succeeded", "cancelled"]);
+const LOCKED: ReadonlySet<InteractionLifecycleStatus> = new Set([
+  "executing",
+  "failed",
+  "unknown",
+  ...TERMINAL,
+]);
 
 export function interactionSlotsFromPlan(plan: InteractionPlan): Record<string, unknown> {
   const slots: Record<string, unknown> = {};
@@ -59,7 +66,7 @@ export function deriveCollectingStatus(
   slots: Record<string, unknown>,
   current: InteractionLifecycleStatus,
 ): InteractionLifecycleStatus {
-  if (current === "needs_connection" || current === "executing" || TERMINAL.has(current)) {
+  if (current === "needs_connection" || LOCKED.has(current)) {
     return current;
   }
   if (current === "awaiting_approval") {
@@ -73,7 +80,7 @@ export function applyInteractionFieldChange(
   state: InteractionDraftState,
   input: { expectedDraftVersion: number; name: string; value: unknown },
 ): FieldChangeResult {
-  if (TERMINAL.has(state.status) || state.status === "executing") {
+  if (LOCKED.has(state.status)) {
     return {
       ok: false,
       error: "terminal",
@@ -131,7 +138,7 @@ export function confirmInteractionDraftState(
   state: InteractionDraftState,
   draftVersion: number,
 ): ConfirmDraftResult {
-  if (TERMINAL.has(state.status) || state.status === "executing") {
+  if (LOCKED.has(state.status)) {
     return {
       ok: false,
       error: "terminal",
@@ -160,7 +167,21 @@ export function canExecuteConfirmedInteraction(state: {
   draftVersion: number;
   confirmedVersion: number | null;
   status: InteractionLifecycleStatus;
-}): { ok: true } | { ok: false; error: "unconfirmed" | "terminal"; message: string } {
+}): { ok: true } | { ok: false; error: "unconfirmed" | "terminal" | "unknown"; message: string } {
+  if (state.status === "unknown") {
+    return {
+      ok: false,
+      error: "unknown",
+      message: "Send result is unknown; do not send again",
+    };
+  }
+  if (state.status === "executing") {
+    return {
+      ok: false,
+      error: "unconfirmed",
+      message: "Send is already in progress",
+    };
+  }
   if (TERMINAL.has(state.status)) {
     return { ok: false, error: "terminal", message: `Interaction is ${state.status}` };
   }

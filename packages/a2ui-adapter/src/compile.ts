@@ -1,4 +1,10 @@
-import type { A2uiProtocolFamily, InteractionPlan } from "@matebot/contracts";
+import type {
+  A2uiProtocolFamily,
+  EmailSurfaceCapability,
+  EmailSurfaceLifecycle,
+  EmailSurfaceTemplate,
+  InteractionPlan,
+} from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
 import { basicCatalogId, DEFAULT_PROTOCOL_FAMILY, protocolWireVersion } from "./protocol.js";
 import { validateA2uiMessages } from "./validate.js";
@@ -8,6 +14,11 @@ export type CompileInteractionPlanInput = {
   surfaceId: string;
   /** Defaults to v0_9 (Phase 1 render pin). v1_0 is reserved dual-track. */
   protocolFamily?: A2uiProtocolFamily;
+  capability?: EmailSurfaceCapability;
+  lifecycle?: EmailSurfaceLifecycle;
+  template?: EmailSurfaceTemplate;
+  providerMessageId?: string;
+  error?: string;
 };
 
 export type CompileInteractionPlanResult =
@@ -69,6 +80,11 @@ export async function compileInteractionPlan(
     nextStep: plan.nextStep,
     riskLevel: plan.riskLevel,
     fields: fieldRows,
+    ...(input.capability ? { capability: input.capability } : {}),
+    ...(input.lifecycle ? { lifecycle: input.lifecycle } : {}),
+    ...(input.template ? { template: input.template } : {}),
+    ...(input.providerMessageId ? { providerMessageId: input.providerMessageId } : {}),
+    ...(input.error ? { error: input.error } : {}),
   };
 
   const components = buildDraftComponents(protocolFamily);

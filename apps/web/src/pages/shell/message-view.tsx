@@ -544,6 +544,13 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
+                  onCheckStatus={
+                    botId || groupId
+                      ? async () => {
+                          await onRefresh();
+                        }
+                      : undefined
+                  }
                   onDiscard={() => undefined}
                 />
               </div>

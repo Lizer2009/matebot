@@ -1672,6 +1672,22 @@ msgstr "Confirm this draft before sending."
 msgid "Connect email"
 msgstr "Connect email"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Sending"
+msgstr "Sending"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Could not send"
+msgstr "Could not send"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Check status"
+msgstr "Check status"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Don't send again"
+msgstr "Don't send again"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx

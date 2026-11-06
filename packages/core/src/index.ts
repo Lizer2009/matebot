@@ -49,6 +49,7 @@ export * from "./instruction-diff.js";
 export * from "./interaction-effect.js";
 export * from "./interaction-preflight.js";
 export * from "./interaction-runtime.js";
+export * from "./interaction-template.js";
 export * from "./list-search.js";
 export * from "./logo-avatar-activity.js";
 export * from "./logo-avatar-activity-store.js";

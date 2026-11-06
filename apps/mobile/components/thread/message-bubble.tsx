@@ -202,6 +202,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   actionProps,
   doubleTapSurface = false,
   userBubble,
+  onRefresh,
 }: {
   onHelperToggle?: MessageRowActions["helperToggle"];
   botId: string;
@@ -231,6 +232,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   actionProps: MessageActionProps;
   doubleTapSurface?: boolean;
   userBubble?: UserBubble;
+  onRefresh?: () => void | Promise<void>;
 }) {
   const colorScheme = useResolvedAppearance();
   const tokens = withUserBubble(mobileTokens(), userBubble);
@@ -754,6 +756,13 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                 signal: controller.signal,
               });
             }}
+            onCheckStatus={
+              onRefresh
+                ? async () => {
+                    await onRefresh();
+                  }
+                : undefined
+            }
             onDiscard={() => undefined}
           />
         );

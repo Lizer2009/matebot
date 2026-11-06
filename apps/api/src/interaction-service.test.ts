@@ -19,6 +19,7 @@ vi.mock("@matebot/adapters", async () => {
 });
 
 import { deliverInteractionEmail } from "@matebot/adapters";
+import { appendEventInTransaction } from "@matebot/db";
 import {
   confirmInteractionService,
   executeConfirmedInteractionService,
@@ -69,9 +70,17 @@ type EffectRecord = {
   result?: Record<string, unknown> | null;
 };
 
-function memoryPrisma(interaction: InteractionRecord) {
+function memoryPrisma(
+  interaction: InteractionRecord,
+  extras?: {
+    surface?: { surfaceId: string; protocolFamily: string };
+    message?: { id: string; blocks: unknown[] };
+  },
+) {
   const interactions = new Map<string, InteractionRecord>([[interaction.id, interaction]]);
   const effects = new Map<string, EffectRecord>();
+  const messages = new Map<string, { id: string; blocks: unknown[] }>();
+  if (extras?.message) messages.set(extras.message.id, extras.message);
   let effectSeq = 0;
   const tx = {
     interaction: {
@@ -91,12 +100,22 @@ function memoryPrisma(interaction: InteractionRecord) {
       },
     },
     interactionSurface: {
-      findFirst: async () => null,
+      findFirst: async () =>
+        extras?.surface
+          ? {
+              interactionId: interaction.id,
+              surfaceId: extras.surface.surfaceId,
+              protocolFamily: extras.surface.protocolFamily,
+            }
+          : null,
     },
     message: {
-      findUnique: async () => null,
-      update: async () => {
-        throw new Error("message update was not expected");
+      findUnique: async ({ where }: { where: { id: string } }) => messages.get(where.id) ?? null,
+      update: async ({ where, data }: { where: { id: string }; data: { blocks: unknown[] } }) => {
+        const row = messages.get(where.id);
+        if (!row) throw new Error("message update was not expected");
+        row.blocks = data.blocks;
+        return row;
       },
     },
     externalEffect: {
@@ -142,7 +161,52 @@ function memoryPrisma(interaction: InteractionRecord) {
     ...tx,
     $transaction: async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx),
   };
-  return { prisma: prisma as unknown as PrismaClient, interactions, effects };
+  return { prisma: prisma as unknown as PrismaClient, interactions, effects, messages };
+}
+
+function eventTypes(): string[] {
+  return vi
+    .mocked(appendEventInTransaction)
+    .mock.calls.map((call) => (call[1] as { type: string }).type);
+}
+
+function lastSurfacePayload(): Record<string, unknown> | undefined {
+  const calls = vi
+    .mocked(appendEventInTransaction)
+    .mock.calls.filter((call) => (call[1] as { type: string }).type === "thread.surface.updated");
+  const last = calls.at(-1);
+  return last ? (last[1] as { payload: Record<string, unknown> }).payload : undefined;
+}
+
+function confirmedDraft(extras?: {
+  surface?: { surfaceId: string; protocolFamily: string };
+  message?: { id: string; blocks: unknown[] };
+}) {
+  const interaction = readyInteraction({
+    status: "awaiting_approval",
+    confirmedVersion: 2,
+    approvalEffectId: "effect-1",
+    messageId: extras?.message?.id ?? null,
+  });
+  const db = memoryPrisma(interaction, extras);
+  db.effects.set("a2ui:interaction:ix-1:confirm:2", {
+    id: "effect-1",
+    spaceId: "space-1",
+    runId: "run-1",
+    kind: "email.send",
+    idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
+    status: "intended",
+    request: {
+      interactionId: "ix-1",
+      intent: "email.compose",
+      draftVersion: 2,
+      confirmedVersion: 2,
+      slots: { to: "a@example.com", subject: "Hi", body: "Hello" },
+    },
+    reviewDecision: "allow",
+    reviewReason: "user confirmed draft",
+  });
+  return db;
 }
 
 const readyMailbox = {
@@ -376,6 +440,7 @@ describe("executeConfirmedInteractionService", () => {
       idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
       duplicate: false,
       executed: true,
+      providerMessageId: "msg-1",
     });
     expect(deliverInteractionEmail).toHaveBeenCalledWith(
       {
@@ -437,7 +502,7 @@ describe("executeConfirmedInteractionService", () => {
     expect(db.interactions.get("ix-1")?.status).toBe("failed");
   });
 
-  it("reconciles an in-flight email effect on a later send", async () => {
+  it("does not resend an in-flight effect; E′ reconciles ambiguous outcomes", async () => {
     const db = memoryPrisma(
       readyInteraction({
         status: "executing",
@@ -468,8 +533,9 @@ describe("executeConfirmedInteractionService", () => {
         interactionId: "ix-1",
         ...readyMailbox,
       }),
-    ).resolves.toMatchObject({ executed: true, duplicate: false });
-    expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("reconciled");
+    ).rejects.toMatchObject({ code: "unconfirmed" });
+    expect(deliverInteractionEmail).not.toHaveBeenCalled();
+    expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("ambiguous");
   });
 
   it("does not execute a completed effect again", async () => {
@@ -573,6 +639,195 @@ describe("executeConfirmedInteractionService", () => {
         ],
       }),
     ).rejects.toMatchObject({ code: "needs_connection" });
+    expect(deliverInteractionEmail).not.toHaveBeenCalled();
+  });
+
+  it("patches the existing surface through progress then success", async () => {
+    const db = confirmedDraft({
+      surface: { surfaceId: "surf-1", protocolFamily: "v0_9" },
+      message: {
+        id: "msg-surface",
+        blocks: [
+          {
+            kind: "a2ui_surface",
+            interactionId: "ix-1",
+            surfaceId: "surf-1",
+            protocolFamily: "v0_9",
+            draftVersion: 2,
+            confirmedVersion: 2,
+            intent: "email.compose",
+            capability: "ready",
+            template: "email-draft-card",
+          },
+        ],
+      },
+    });
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+      }),
+    ).resolves.toMatchObject({ executed: true, providerMessageId: "msg-1" });
+    expect(eventTypes()).toContain("thread.interaction.action_started");
+    expect(eventTypes()).toContain("thread.interaction.action_progress");
+    expect(eventTypes()).toContain("thread.interaction.action_succeeded");
+    expect(lastSurfacePayload()).toMatchObject({
+      template: "action-result-success",
+      lifecycle: "succeeded",
+      providerMessageId: "msg-1",
+      capability: "ready",
+    });
+    expect(db.messages.get("msg-surface")?.blocks[0]).toMatchObject({
+      kind: "a2ui_surface",
+      template: "action-result-success",
+      lifecycle: "succeeded",
+      providerMessageId: "msg-1",
+    });
+    expect(db.interactions.get("ix-1")?.status).toBe("succeeded");
+  });
+
+  it("patches a failed send onto the same surface with a retryable failed template", async () => {
+    vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({
+      ok: false,
+      error: "Could not send the email",
+    });
+    const db = confirmedDraft({
+      surface: { surfaceId: "surf-1", protocolFamily: "v0_9" },
+      message: {
+        id: "msg-surface",
+        blocks: [
+          {
+            kind: "a2ui_surface",
+            interactionId: "ix-1",
+            surfaceId: "surf-1",
+            protocolFamily: "v0_9",
+            draftVersion: 2,
+            capability: "ready",
+          },
+        ],
+      },
+    });
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+      }),
+    ).rejects.toBeInstanceOf(InteractionEmailDeliveryError);
+    expect(eventTypes()).toContain("thread.interaction.action_failed");
+    expect(lastSurfacePayload()).toMatchObject({
+      template: "action-result-failed",
+      lifecycle: "failed",
+    });
+    expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("failed");
+    expect(db.interactions.get("ix-1")?.status).toBe("failed");
+  });
+
+  it("keeps an ambiguous effect and UNKNOWN surface on timeout", async () => {
+    vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({
+      ok: false,
+      error: "Request timed out",
+      outcome: "unknown",
+    });
+    const db = confirmedDraft({
+      surface: { surfaceId: "surf-1", protocolFamily: "v0_9" },
+      message: {
+        id: "msg-surface",
+        blocks: [
+          {
+            kind: "a2ui_surface",
+            interactionId: "ix-1",
+            surfaceId: "surf-1",
+            protocolFamily: "v0_9",
+            draftVersion: 2,
+            capability: "ready",
+          },
+        ],
+      },
+    });
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+      }),
+    ).rejects.toMatchObject({ outcome: "unknown" });
+    expect(lastSurfacePayload()).toMatchObject({
+      template: "action-reconcile-card",
+      lifecycle: "unknown",
+    });
+    expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("ambiguous");
+    expect(db.interactions.get("ix-1")?.status).toBe("unknown");
+  });
+
+  it("retries a failed send on the same confirmed effect", async () => {
+    vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({
+      ok: false,
+      error: "Could not send the email",
+    });
+    const db = confirmedDraft({
+      surface: { surfaceId: "surf-1", protocolFamily: "v0_9" },
+      message: {
+        id: "msg-surface",
+        blocks: [
+          {
+            kind: "a2ui_surface",
+            interactionId: "ix-1",
+            surfaceId: "surf-1",
+            protocolFamily: "v0_9",
+            draftVersion: 2,
+            confirmedVersion: 2,
+            capability: "ready",
+          },
+        ],
+      },
+    });
+    const input = {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      ...readyMailbox,
+    };
+    await expect(executeConfirmedInteractionService(db.prisma, input)).rejects.toBeInstanceOf(
+      InteractionEmailDeliveryError,
+    );
+    vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({
+      ok: true,
+      deliveryId: "msg-retry",
+    });
+    await expect(executeConfirmedInteractionService(db.prisma, input)).resolves.toMatchObject({
+      executed: true,
+      providerMessageId: "msg-retry",
+    });
+    expect(lastSurfacePayload()).toMatchObject({
+      template: "action-result-success",
+      lifecycle: "succeeded",
+      providerMessageId: "msg-retry",
+    });
+    expect(db.interactions.get("ix-1")?.status).toBe("succeeded");
+  });
+
+  it("refuses a second send after UNKNOWN so the user cannot resend", async () => {
+    const db = confirmedDraft();
+    db.interactions.get("ix-1")!.status = "unknown";
+    db.effects.get("a2ui:interaction:ix-1:confirm:2")!.status = "ambiguous";
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        ...readyMailbox,
+      }),
+    ).rejects.toMatchObject({ code: "unknown" });
     expect(deliverInteractionEmail).not.toHaveBeenCalled();
   });
 });

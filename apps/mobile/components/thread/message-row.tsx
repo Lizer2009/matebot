@@ -58,6 +58,8 @@ export type MessageRowActions = {
   dismissChoice: (messageId: string, question: string) => void;
   openPeerChat: (peer: { peerBotId: string; peerBotName: string }) => void;
   layout: (messageId: string, y: number, index: number) => void;
+  /** Reload the thread so UNKNOWN can pick up an E′ reconcile stamp. */
+  refresh?: () => void | Promise<void>;
 };
 
 type MessageRowProps = {
@@ -451,6 +453,7 @@ export const MessageRow = memo(function MessageRow({
                 doubleTapSurface={Boolean(likeMessage)}
                 onHelperToggle={actions.helperToggle}
                 userBubble={userBubble}
+                onRefresh={actions.refresh}
               />
             </ThreadReadOnlyContext.Provider>
           </MessageContextMenu>

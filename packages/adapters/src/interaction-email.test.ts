@@ -57,6 +57,33 @@ describe("deliverInteractionEmail", () => {
     expect(result).toEqual({ ok: true, deliveryId: "prov-99" });
   });
 
+  it("classifies a connector that never returns a result as UNKNOWN", async () => {
+    const connector: Pick<ConnectorProvider, "execute"> = {
+      async *execute() {
+        yield { type: "log", message: "queued" };
+      },
+    };
+    const context = {
+      operationId: "interaction.email.send",
+      traceId: "interaction.email.send",
+      spaceId: "space-1",
+      userId: "user-1",
+      signal: new AbortController().signal,
+    } satisfies AdapterContext;
+    await expect(
+      deliverInteractionEmail(draft, {
+        kind: "connector",
+        context,
+        connector,
+        connectionId: "conn-gmail",
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      error: "Could not send the email",
+      outcome: "unknown",
+    });
+  });
+
   it("rejects a draft that has no recipient without calling the client", async () => {
     const client = new FakeComposioClient();
     await expect(

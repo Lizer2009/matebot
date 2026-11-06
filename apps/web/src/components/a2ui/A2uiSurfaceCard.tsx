@@ -19,6 +19,7 @@ export function A2uiSurfaceCard({
   onConfirm,
   onSend,
   onConnect,
+  onCheckStatus,
   onDiscard,
 }: {
   block: A2uiSurfaceBlock;
@@ -34,6 +35,7 @@ export function A2uiSurfaceCard({
   onConfirm?: (draftVersion: number) => Promise<void>;
   onSend?: (draftVersion: number) => Promise<void>;
   onConnect?: () => Promise<void>;
+  onCheckStatus?: () => Promise<void>;
   onDiscard?: () => void | Promise<void>;
 }) {
   const document = useA2uiSurfaceDocument({
@@ -83,11 +85,16 @@ export function A2uiSurfaceCard({
             draftVersion={block.draftVersion}
             confirmedVersion={block.confirmedVersion}
             capability={block.capability}
+            template={block.template}
+            lifecycle={block.lifecycle}
+            providerMessageId={block.providerMessageId}
+            error={block.error}
             fields={emailFieldsFromSurfaceMessages(document.messages)}
             onFieldChange={onFieldChange}
             onConfirm={onConfirm}
             onSend={onSend}
             onConnect={onConnect}
+            onCheckStatus={onCheckStatus}
             onDiscard={onDiscard}
           />
         ) : document.messages ? (

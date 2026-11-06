@@ -139,7 +139,13 @@ describe("publishInteractionSurface", () => {
     expect(createThreadMessageInTransaction).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        blocks: [expect.objectContaining({ capability: "not_connected" })],
+        blocks: [
+          expect.objectContaining({
+            capability: "not_connected",
+            template: "email-connection-card",
+            lifecycle: "draft",
+          }),
+        ],
       }),
     );
   });

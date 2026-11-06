@@ -1311,6 +1311,10 @@ export const ES_MESSAGES: Record<string, string> = {
   CC: "CC",
   "Confirm this draft before sending.": "Confirma este borrador antes de enviarlo.",
   "Connect email": "Conectar correo",
+  Sending: "Enviando",
+  "Could not send": "No se pudo enviar",
+  "Check status": "Comprobar estado",
+  "Don't send again": "No vuelvas a enviar",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

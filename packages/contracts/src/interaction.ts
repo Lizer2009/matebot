@@ -50,6 +50,34 @@ export type InteractionPlan = z.infer<typeof InteractionPlanSchema>;
 export const A2uiProtocolFamily = z.enum(["v0_9", "v1_0"]);
 export type A2uiProtocolFamily = z.infer<typeof A2uiProtocolFamily>;
 
+/** Mailbox preflight stamp on email.compose surfaces. */
+export const EmailSurfaceCapability = z.enum(["not_connected", "requires_reauth", "ready"]);
+export type EmailSurfaceCapability = z.infer<typeof EmailSurfaceCapability>;
+
+/** State-driven template id. Hosts prefer this over intent-only switching. */
+export const EmailSurfaceTemplate = z.enum([
+  "email-connection-card",
+  "email-reauth-card",
+  "email-draft-card",
+  "action-submitting-card",
+  "action-progress-card",
+  "action-result-success",
+  "action-result-failed",
+  "action-reconcile-card",
+]);
+export type EmailSurfaceTemplate = z.infer<typeof EmailSurfaceTemplate>;
+
+/** Execution lifecycle on the same surface. Omitted means draft. */
+export const EmailSurfaceLifecycle = z.enum([
+  "draft",
+  "submitting",
+  "executing",
+  "succeeded",
+  "failed",
+  "unknown",
+]);
+export type EmailSurfaceLifecycle = z.infer<typeof EmailSurfaceLifecycle>;
+
 /**
  * Timeline projection for a declarative interaction surface.
  * Prefer this single kind over proliferating business-specific draft cards.
@@ -71,7 +99,18 @@ export const A2uiSurfaceBlockSchema = z.object({
    * Mailbox preflight for email.compose surfaces.
    * Omitted on older events; hosts treat that as ready.
    */
-  capability: z.enum(["not_connected", "requires_reauth", "ready"]).optional(),
+  capability: EmailSurfaceCapability.optional(),
+  /**
+   * State-driven template id. Hosts prefer this over intent-only switching.
+   * Omitted on older events; derive from capability + lifecycle.
+   */
+  template: EmailSurfaceTemplate.optional(),
+  /** Execution lifecycle on the same surface. Omitted means draft. */
+  lifecycle: EmailSurfaceLifecycle.optional(),
+  /** Provider message id after a successful send. D′/E′ consume this. */
+  providerMessageId: z.string().trim().min(1).optional(),
+  /** Last send error when lifecycle is failed or unknown. */
+  error: z.string().optional(),
   /** Short label for the timeline before/without the full catalog document. */
   title: z.string().optional(),
   summary: z.string().optional(),
@@ -124,6 +163,9 @@ export const InteractionProductEventPayloadSchema = z.object({
   fieldName: z.string().trim().min(1).optional(),
   progress: z.string().optional(),
   error: z.string().optional(),
+  template: z.string().trim().min(1).optional(),
+  lifecycle: z.string().trim().min(1).optional(),
+  providerMessageId: z.string().trim().min(1).optional(),
 });
 export type InteractionProductEventPayload = z.infer<typeof InteractionProductEventPayloadSchema>;
 
@@ -139,6 +181,11 @@ export const SurfaceProductEventPayloadSchema = z.object({
   summary: z.string().optional(),
   documentRef: z.string().trim().min(1).optional(),
   messageId: Id.optional(),
+  capability: EmailSurfaceCapability.optional(),
+  template: EmailSurfaceTemplate.optional(),
+  lifecycle: EmailSurfaceLifecycle.optional(),
+  providerMessageId: z.string().trim().min(1).optional(),
+  error: z.string().optional(),
 });
 export type SurfaceProductEventPayload = z.infer<typeof SurfaceProductEventPayloadSchema>;
 
@@ -223,6 +270,8 @@ export const ThreadsExecuteInteractionOutput = z.object({
   duplicate: z.boolean(),
   /** True once the effect's sender finished. False for kinds with no sender yet. */
   executed: z.boolean(),
+  /** Present on a successful send so D′ can show the provider id without a second fetch. */
+  providerMessageId: z.string().trim().min(1).optional(),
 });
 export type ThreadsExecuteInteractionOutput = z.infer<typeof ThreadsExecuteInteractionOutput>;
 

@@ -13,13 +13,15 @@ import {
 } from "@matebot/adapters";
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
-import type { InteractionLifecycleStatus } from "@matebot/core";
+import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
 import {
   applyInteractionFieldChange,
   canExecuteConfirmedInteraction,
   confirmedEffectMatchesDraft,
   confirmInteractionDraftState,
   emailCapabilityAllowsSend,
+  emailDeliveryOutcome,
+  emailSurfaceBlockFields,
   interactionConfirmEffectRequest,
   interactionConfirmIdempotencyKey,
   interactionEffectKind,
@@ -37,21 +39,58 @@ import {
 export type { PublishInteractionSurfaceInput } from "@matebot/adapters";
 export { publishInteractionSurface } from "@matebot/adapters";
 
+function isEmailPlan(plan: InteractionPlan): boolean {
+  return plan.intent === "email.compose" || plan.intent === "email.send";
+}
+
 async function compilePlanSurface(input: {
   plan: InteractionPlan;
   surfaceId: string;
   protocolFamily?: A2uiProtocolFamily;
+  capability?: EmailSurfaceCapability;
+  interactionStatus: InteractionLifecycleStatus;
+  effectStatus?: string | null;
+  providerMessageId?: string | null;
+  error?: string | null;
 }): Promise<{ protocolFamily: A2uiProtocolFamily; messages: unknown[] }> {
+  const stamps = isEmailPlan(input.plan)
+    ? emailSurfaceBlockFields({
+        intent: input.plan.intent,
+        capability: input.capability,
+        interactionStatus: input.interactionStatus,
+        effectStatus: input.effectStatus,
+        providerMessageId: input.providerMessageId,
+        error: input.error,
+      })
+    : {};
   const { compileInteractionPlan } = await import("@matebot/a2ui-adapter");
   const compiled = await compileInteractionPlan({
     plan: input.plan,
     surfaceId: input.surfaceId,
     protocolFamily: input.protocolFamily ?? "v0_9",
+    ...stamps,
   });
   if (!compiled.ok) {
     throw new Error(compiled.error);
   }
   return { protocolFamily: compiled.protocolFamily, messages: compiled.messages };
+}
+
+function capabilityFromBlocks(
+  blocks: MessageBlock[] | undefined,
+  surfaceId?: string,
+): EmailSurfaceCapability | undefined {
+  if (!blocks) return undefined;
+  for (const entry of blocks) {
+    if (entry.kind !== "a2ui_surface") continue;
+    if (surfaceId && entry.surfaceId !== surfaceId) continue;
+    if (entry.capability) return entry.capability;
+  }
+  return undefined;
+}
+
+function protocolFamilyOf(value: string): A2uiProtocolFamily {
+  return value === "v1_0" || value === "v0_9" ? value : "v0_9";
 }
 
 export type UpdateInteractionFieldServiceInput = {
@@ -109,14 +148,27 @@ export async function updateInteractionFieldService(
   });
   if (!surfaceRow) throw new Error("Interaction has no surface");
 
+  const currentMessage = current.messageId
+    ? await prisma.message.findUnique({ where: { id: current.messageId } })
+    : null;
+  const currentBlocks = Array.isArray(currentMessage?.blocks)
+    ? (currentMessage.blocks as MessageBlock[])
+    : undefined;
+  const capability = capabilityFromBlocks(currentBlocks, surfaceRow.surfaceId);
   const compiled = await compilePlanSurface({
     plan: changed.plan,
     surfaceId: surfaceRow.surfaceId,
-    protocolFamily:
-      surfaceRow.protocolFamily === "v1_0" || surfaceRow.protocolFamily === "v0_9"
-        ? surfaceRow.protocolFamily
-        : "v0_9",
+    protocolFamily: protocolFamilyOf(surfaceRow.protocolFamily),
+    capability,
+    interactionStatus: changed.status,
   });
+  const stamps = isEmailPlan(changed.plan)
+    ? emailSurfaceBlockFields({
+        intent: changed.plan.intent,
+        capability,
+        interactionStatus: changed.status,
+      })
+    : {};
 
   await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
@@ -159,6 +211,7 @@ export async function updateInteractionFieldService(
         title: changed.plan.title,
         summary: changed.plan.summary,
         documentRef,
+        ...stamps,
       };
       if (current.messageId) {
         const message = await tx.message.findUnique({ where: { id: current.messageId } });
@@ -234,6 +287,7 @@ export async function updateInteractionFieldService(
             surfaceId: surfaceRow.surfaceId,
           }),
           messageId: current.messageId ?? undefined,
+          ...stamps,
         },
       });
     }),
@@ -273,16 +327,18 @@ export class InteractionEffectRunMissingError extends Error {
 /** The mailbox rejected the confirmed draft. The effect stays failed so a later send can retry. */
 export class InteractionEmailDeliveryError extends Error {
   readonly code = "INTERACTION_EMAIL_DELIVERY_FAILED" as const;
-  constructor(message: string) {
+  readonly outcome: "failed" | "unknown";
+  constructor(message: string, outcome: "failed" | "unknown" = "failed") {
     super(message);
     this.name = "InteractionEmailDeliveryError";
+    this.outcome = outcome;
   }
 }
 
 /** Send was refused because the draft is not the confirmed version (or the run is finished). */
 export class InteractionSendRejectedError extends Error {
-  readonly code: "unconfirmed" | "terminal" | "needs_connection";
-  constructor(code: "unconfirmed" | "terminal" | "needs_connection", message: string) {
+  readonly code: "unconfirmed" | "terminal" | "needs_connection" | "unknown";
+  constructor(code: "unconfirmed" | "terminal" | "needs_connection" | "unknown", message: string) {
     super(message);
     this.name = "InteractionSendRejectedError";
     this.code = code;
@@ -429,7 +485,7 @@ export async function confirmInteractionService(
           current.draftVersion,
         );
       }
-      await projectConfirmedSurface(tx, {
+      await projectEmailSurface(tx, {
         interaction: current,
         plan,
         confirmedVersion: confirmed.confirmedVersion,
@@ -438,20 +494,8 @@ export async function confirmInteractionService(
         spaceId: input.spaceId,
         threadId: input.threadId,
         botId: input.botId,
-      });
-      await appendEventInTransaction(tx, {
-        spaceId: input.spaceId,
-        threadId: input.threadId,
-        botId: input.botId,
-        type: "thread.interaction.updated",
-        runId,
-        payload: {
-          interactionId: input.interactionId,
-          draftVersion: current.draftVersion,
-          confirmedVersion: confirmed.confirmedVersion,
-          approvalEffectId,
-          messageId: current.messageId ?? undefined,
-        },
+        interactionStatus: confirmed.status,
+        approvalEffectId,
       });
       await appendEventInTransaction(tx, {
         spaceId: input.spaceId,
@@ -474,7 +518,7 @@ export async function confirmInteractionService(
   return { confirmedVersion: confirmed.confirmedVersion, effectId, idempotencyKey };
 }
 
-async function projectConfirmedSurface(
+async function projectEmailSurface(
   tx: Prisma.TransactionClient,
   input: {
     interaction: {
@@ -490,76 +534,137 @@ async function projectConfirmedSurface(
     spaceId: string;
     threadId: string;
     botId: string;
+    interactionStatus: InteractionLifecycleStatus;
+    effectStatus?: string | null;
+    providerMessageId?: string | null;
+    error?: string | null;
+    approvalEffectId?: string;
+    actionEvent?:
+      | "thread.interaction.action_started"
+      | "thread.interaction.action_progress"
+      | "thread.interaction.action_succeeded"
+      | "thread.interaction.action_failed";
+    progress?: string;
   },
 ): Promise<void> {
   const surfaceRow = await tx.interactionSurface.findFirst({
     where: { interactionId: input.interaction.id },
     orderBy: { updatedAt: "desc" },
   });
-  if (!surfaceRow || !input.interaction.messageId) return;
-  const protocolFamily =
-    surfaceRow.protocolFamily === "v1_0" || surfaceRow.protocolFamily === "v0_9"
-      ? surfaceRow.protocolFamily
-      : "v0_9";
-  const documentRef = a2uiSurfaceDocumentRef({
-    interactionId: input.interaction.id,
-    surfaceId: surfaceRow.surfaceId,
-  });
-  const block: MessageBlock = {
-    kind: "a2ui_surface",
-    interactionId: input.interaction.id,
-    surfaceId: surfaceRow.surfaceId,
-    protocolFamily,
-    draftVersion: input.draftVersion,
-    confirmedVersion: input.confirmedVersion,
+  const message = input.interaction.messageId
+    ? await tx.message.findUnique({ where: { id: input.interaction.messageId } })
+    : null;
+  const existing = Array.isArray(message?.blocks) ? (message.blocks as MessageBlock[]) : [];
+  const capability = capabilityFromBlocks(existing, surfaceRow?.surfaceId);
+  const stamps = emailSurfaceBlockFields({
     intent: input.plan.intent,
-    title: input.interaction.title ?? input.plan.title,
-    ...(input.interaction.summary || input.plan.summary
-      ? { summary: input.interaction.summary ?? input.plan.summary }
-      : {}),
-    documentRef,
-  };
-  const message = await tx.message.findUnique({ where: { id: input.interaction.messageId } });
-  if (!message) return;
-  const existing = Array.isArray(message.blocks) ? (message.blocks as MessageBlock[]) : [];
-  const blocks = existing.map((entry) =>
-    entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId ? block : entry,
-  );
-  const has = blocks.some(
-    (entry) => entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId,
-  );
-  const nextBlocks = has ? blocks : [...blocks, block];
-  await tx.message.update({
-    where: { id: input.interaction.messageId },
-    data: { blocks: nextBlocks as Prisma.InputJsonValue },
+    capability,
+    interactionStatus: input.interactionStatus,
+    effectStatus: input.effectStatus,
+    providerMessageId: input.providerMessageId,
+    error: input.error,
   });
-  await appendEventInTransaction(tx, {
-    spaceId: input.spaceId,
-    threadId: input.threadId,
-    botId: input.botId,
-    type: "thread.message.updated",
-    runId: input.runId,
-    payload: { messageId: input.interaction.messageId, role: "bot", blocks: nextBlocks },
-  });
-  await appendEventInTransaction(tx, {
-    spaceId: input.spaceId,
-    threadId: input.threadId,
-    botId: input.botId,
-    type: "thread.surface.updated",
-    runId: input.runId,
-    payload: {
+  if (surfaceRow && message && input.interaction.messageId) {
+    const protocolFamily = protocolFamilyOf(surfaceRow.protocolFamily);
+    const documentRef = a2uiSurfaceDocumentRef({
+      interactionId: input.interaction.id,
+      surfaceId: surfaceRow.surfaceId,
+    });
+    const block: MessageBlock = {
+      kind: "a2ui_surface",
       interactionId: input.interaction.id,
       surfaceId: surfaceRow.surfaceId,
       protocolFamily,
       draftVersion: input.draftVersion,
       confirmedVersion: input.confirmedVersion,
       intent: input.plan.intent,
-      title: block.title,
-      summary: block.summary,
+      title: input.interaction.title ?? input.plan.title,
+      ...(input.interaction.summary || input.plan.summary
+        ? { summary: input.interaction.summary ?? input.plan.summary }
+        : {}),
       documentRef,
-      messageId: input.interaction.messageId,
+      ...stamps,
+    };
+    const blocks = existing.map((entry) =>
+      entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId ? block : entry,
+    );
+    const has = blocks.some(
+      (entry) => entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId,
+    );
+    const nextBlocks = has ? blocks : [...blocks, block];
+    await tx.message.update({
+      where: { id: input.interaction.messageId },
+      data: { blocks: nextBlocks as Prisma.InputJsonValue },
+    });
+    await appendEventInTransaction(tx, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: input.botId,
+      type: "thread.message.updated",
+      runId: input.runId,
+      payload: { messageId: input.interaction.messageId, role: "bot", blocks: nextBlocks },
+    });
+    await appendEventInTransaction(tx, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: input.botId,
+      type: "thread.surface.updated",
+      runId: input.runId,
+      payload: {
+        interactionId: input.interaction.id,
+        surfaceId: surfaceRow.surfaceId,
+        protocolFamily,
+        draftVersion: input.draftVersion,
+        confirmedVersion: input.confirmedVersion,
+        intent: input.plan.intent,
+        title: block.title,
+        summary: block.summary,
+        documentRef,
+        messageId: input.interaction.messageId,
+        ...stamps,
+      },
+    });
+  }
+  await appendEventInTransaction(tx, {
+    spaceId: input.spaceId,
+    threadId: input.threadId,
+    botId: input.botId,
+    type: "thread.interaction.updated",
+    runId: input.runId,
+    payload: {
+      interactionId: input.interaction.id,
+      intent: input.plan.intent,
+      draftVersion: input.draftVersion,
+      confirmedVersion: input.confirmedVersion,
+      progress: input.progress ?? stamps.lifecycle,
+      error: stamps.error,
+      template: stamps.template,
+      lifecycle: stamps.lifecycle,
+      providerMessageId: stamps.providerMessageId,
+      approvalEffectId: input.approvalEffectId,
+      messageId: input.interaction.messageId ?? undefined,
     },
   });
+  if (input.actionEvent) {
+    await appendEventInTransaction(tx, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: input.botId,
+      type: input.actionEvent,
+      runId: input.runId,
+      payload: {
+        interactionId: input.interaction.id,
+        draftVersion: input.draftVersion,
+        confirmedVersion: input.confirmedVersion,
+        progress: input.progress ?? stamps.lifecycle,
+        error: stamps.error,
+        template: stamps.template,
+        lifecycle: stamps.lifecycle,
+        providerMessageId: stamps.providerMessageId,
+        messageId: input.interaction.messageId ?? undefined,
+      },
+    });
+  }
 }
 
 export type ExecuteConfirmedInteractionResult = {
@@ -567,6 +672,7 @@ export type ExecuteConfirmedInteractionResult = {
   idempotencyKey: string;
   duplicate: boolean;
   executed: boolean;
+  providerMessageId?: string;
 };
 
 function emailSlots(request: unknown): { to: string; subject: string; body: string } {
@@ -588,16 +694,35 @@ async function finishEmailSend(
     spaceId: string;
     threadId: string;
     botId: string;
-    interactionId: string;
+    interaction: {
+      id: string;
+      messageId: string | null;
+      title: string | null;
+      summary: string | null;
+    };
+    plan: InteractionPlan;
     draftVersion: number;
     confirmedVersion: number;
     effectId: string;
     runId: string;
-    effectStatus: "completed" | "reconciled" | "failed";
-    interactionStatus: "succeeded" | "failed";
+    effectStatus: "completed" | "reconciled" | "failed" | "ambiguous";
+    interactionStatus: "succeeded" | "failed" | "unknown";
     result: Record<string, unknown>;
   },
 ): Promise<void> {
+  const providerMessageId =
+    typeof input.result.providerMessageId === "string"
+      ? input.result.providerMessageId
+      : typeof input.result.deliveryId === "string"
+        ? input.result.deliveryId
+        : undefined;
+  const error = typeof input.result.error === "string" ? input.result.error : undefined;
+  const actionEvent =
+    input.interactionStatus === "succeeded"
+      ? ("thread.interaction.action_succeeded" as const)
+      : input.interactionStatus === "unknown"
+        ? ("thread.interaction.action_progress" as const)
+        : ("thread.interaction.action_failed" as const);
   await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
       await tx.externalEffect.updateMany({
@@ -608,23 +733,25 @@ async function finishEmailSend(
         },
       });
       await tx.interaction.updateMany({
-        where: { id: input.interactionId, draftVersion: input.draftVersion },
+        where: { id: input.interaction.id, draftVersion: input.draftVersion },
         data: { status: input.interactionStatus },
       });
-      if (input.interactionStatus !== "succeeded") return;
-      await appendEventInTransaction(tx, {
+      await projectEmailSurface(tx, {
+        interaction: input.interaction,
+        plan: input.plan,
+        confirmedVersion: input.confirmedVersion,
+        draftVersion: input.draftVersion,
+        runId: input.runId,
         spaceId: input.spaceId,
         threadId: input.threadId,
         botId: input.botId,
-        type: "thread.interaction.updated",
-        runId: input.runId,
-        payload: {
-          interactionId: input.interactionId,
-          draftVersion: input.draftVersion,
-          confirmedVersion: input.confirmedVersion,
-          approvalEffectId: input.effectId,
-          progress: "succeeded",
-        },
+        interactionStatus: input.interactionStatus,
+        effectStatus: input.effectStatus,
+        providerMessageId,
+        error,
+        approvalEffectId: input.effectId,
+        actionEvent,
+        progress: input.interactionStatus,
       });
     }),
   );
@@ -633,7 +760,7 @@ async function finishEmailSend(
 /**
  * Gate for send. Rejects when confirmedVersion is missing or stale.
  * `email.send` delivers through the actor's bound mailbox connection.
- * A second call finishes an effect left `ambiguous` (reconcile) without a worker.
+ * In-flight (`executing`) and UNKNOWN do not resend; E′ reconciles `ambiguous`.
  */
 export async function executeConfirmedInteractionService(
   prisma: PrismaClient,
@@ -734,6 +861,49 @@ export async function executeConfirmedInteractionService(
     data: { status: "executing" },
   });
 
+  const plan = current.plan as InteractionPlan;
+  const interaction = {
+    id: current.id,
+    messageId: current.messageId,
+    title: current.title,
+    summary: current.summary,
+  };
+  await withTransactionRetry(() =>
+    prisma.$transaction(async (tx) => {
+      await projectEmailSurface(tx, {
+        interaction,
+        plan,
+        confirmedVersion: current.confirmedVersion,
+        draftVersion: current.draftVersion,
+        runId: effect.runId,
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: input.botId,
+        interactionStatus: "executing",
+        effectStatus: "ambiguous",
+        approvalEffectId: effect.id,
+        actionEvent: "thread.interaction.action_started",
+        progress: "executing",
+      });
+      await appendEventInTransaction(tx, {
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: input.botId,
+        type: "thread.interaction.action_progress",
+        runId: effect.runId,
+        payload: {
+          interactionId: current.id,
+          draftVersion: current.draftVersion,
+          confirmedVersion: current.confirmedVersion,
+          progress: "executing",
+          template: "action-progress-card",
+          lifecycle: "executing",
+          messageId: current.messageId ?? undefined,
+        },
+      });
+    }),
+  );
+
   const draft = emailSlots(effect.request);
   const sender: InteractionEmailSender = {
     kind: "connector",
@@ -741,6 +911,24 @@ export async function executeConfirmedInteractionService(
     connector: input.connector,
     connectionId: connection.id,
   };
+  const finish = (args: {
+    effectStatus: "completed" | "reconciled" | "failed" | "ambiguous";
+    interactionStatus: "succeeded" | "failed" | "unknown";
+    result: Record<string, unknown>;
+  }) =>
+    finishEmailSend(prisma, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: input.botId,
+      interaction,
+      plan,
+      draftVersion: current.draftVersion,
+      confirmedVersion: current.confirmedVersion,
+      effectId: effect.id,
+      runId: effect.runId,
+      ...args,
+    });
+
   let delivery: InteractionEmailDelivery;
   try {
     delivery = await deliverInteractionEmail(
@@ -753,55 +941,34 @@ export async function executeConfirmedInteractionService(
   } catch (error) {
     const message =
       error instanceof Error && error.message ? error.message : "Could not send the email";
-    await finishEmailSend(prisma, {
-      spaceId: input.spaceId,
-      threadId: input.threadId,
-      botId: input.botId,
-      interactionId: current.id,
-      draftVersion: current.draftVersion,
-      confirmedVersion: current.confirmedVersion,
-      effectId: effect.id,
-      runId: effect.runId,
-      effectStatus: "failed",
-      interactionStatus: "failed",
+    const outcome = emailDeliveryOutcome({ error: message });
+    await finish({
+      effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
+      interactionStatus: outcome,
       result: { error: message },
     });
-    throw new InteractionEmailDeliveryError("Could not send the email");
+    throw new InteractionEmailDeliveryError("Could not send the email", outcome);
   }
   if (!delivery.ok) {
-    await finishEmailSend(prisma, {
-      spaceId: input.spaceId,
-      threadId: input.threadId,
-      botId: input.botId,
-      interactionId: current.id,
-      draftVersion: current.draftVersion,
-      confirmedVersion: current.confirmedVersion,
-      effectId: effect.id,
-      runId: effect.runId,
-      effectStatus: "failed",
-      interactionStatus: "failed",
+    const outcome = emailDeliveryOutcome(delivery);
+    await finish({
+      effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
+      interactionStatus: outcome,
       result: { error: delivery.error },
     });
-    throw new InteractionEmailDeliveryError(delivery.error);
+    throw new InteractionEmailDeliveryError(delivery.error, outcome);
   }
 
-  await finishEmailSend(prisma, {
-    spaceId: input.spaceId,
-    threadId: input.threadId,
-    botId: input.botId,
-    interactionId: current.id,
-    draftVersion: current.draftVersion,
-    confirmedVersion: current.confirmedVersion,
-    effectId: effect.id,
-    runId: effect.runId,
+  await finish({
     effectStatus: reconciling ? "reconciled" : "completed",
     interactionStatus: "succeeded",
-    result: { deliveryId: delivery.deliveryId },
+    result: { deliveryId: delivery.deliveryId, providerMessageId: delivery.deliveryId },
   });
   return {
     effectId: effect.id,
     idempotencyKey: effect.idempotencyKey,
     duplicate: false,
     executed: true,
+    providerMessageId: delivery.deliveryId,
   };
 }

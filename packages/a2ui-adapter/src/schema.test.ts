@@ -113,4 +113,24 @@ describe("compileInteractionPlan", () => {
     const result = await compileInteractionPlan({ plan, surfaceId: "  " });
     expect(result.ok).toBe(false);
   });
+
+  it("embeds preflight and lifecycle stamps in the data model", async () => {
+    const result = await compileInteractionPlan({
+      plan,
+      surfaceId: "interaction-surface-lifecycle",
+      capability: "ready",
+      lifecycle: "executing",
+      template: "action-progress-card",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const model = result.messages.find(
+      (message) => message && typeof message === "object" && "updateDataModel" in message,
+    ) as { updateDataModel?: { value?: Record<string, unknown> } } | undefined;
+    expect(model?.updateDataModel?.value).toMatchObject({
+      capability: "ready",
+      lifecycle: "executing",
+      template: "action-progress-card",
+    });
+  });
 });

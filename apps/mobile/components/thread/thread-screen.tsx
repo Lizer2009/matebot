@@ -470,6 +470,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       });
     },
     layout: scroll.layoutJumpRow,
+    refresh,
   });
 
   const { liveItems, renderMessageRow, renderItem } = useThreadRows({

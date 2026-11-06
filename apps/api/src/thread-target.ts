@@ -19,6 +19,7 @@ import {
   ACTIVE_RUN_STATUSES,
   BACKGROUND_RUN_TRIGGERS,
   callIdFromClientNonce,
+  emailExecutionSurfaceFields,
   isConversationalRun,
   MODEL_REQUIRED_SEND_ERROR,
   messageBypassesTakeoverWait,
@@ -400,6 +401,10 @@ async function overlayThreadA2uiSurfaces<T extends { blocks: MessageBlock[] }>(
           documentRef: a2uiSurfaceDocumentRef({
             interactionId: row.id,
             surfaceId: surface.surfaceId,
+          }),
+          ...emailExecutionSurfaceFields({
+            intent: row.intent,
+            status: row.status,
           }),
         };
       }),

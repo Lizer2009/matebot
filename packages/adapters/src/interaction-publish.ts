@@ -1,6 +1,6 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
-import { interactionSlotsFromPlan } from "@matebot/core";
+import { emailSurfaceBlockFields, interactionSlotsFromPlan } from "@matebot/core";
 import type { PrismaClient, RunLease } from "@matebot/db";
 import {
   appendEventInTransaction,
@@ -14,12 +14,23 @@ async function compilePlanSurface(input: {
   plan: InteractionPlan;
   surfaceId: string;
   protocolFamily?: A2uiProtocolFamily;
+  capability?: EmailSurfaceCapability;
+  status?: InteractionLifecycleStatus;
 }): Promise<{ protocolFamily: A2uiProtocolFamily; messages: unknown[] }> {
+  const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
+  const stamps = emailIntent
+    ? emailSurfaceBlockFields({
+        intent: input.plan.intent,
+        capability: input.capability,
+        interactionStatus: input.status ?? "collecting",
+      })
+    : {};
   const { compileInteractionPlan } = await import("@matebot/a2ui-adapter");
   const compiled = await compileInteractionPlan({
     plan: input.plan,
     surfaceId: input.surfaceId,
     protocolFamily: input.protocolFamily ?? "v0_9",
+    ...stamps,
   });
   if (!compiled.ok) {
     throw new Error(compiled.error);
@@ -55,10 +66,20 @@ export async function publishInteractionSurface(
   eventSeq: number;
 }> {
   const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
+  const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
+  const stamps = emailIntent
+    ? emailSurfaceBlockFields({
+        intent: input.plan.intent,
+        capability: input.capability,
+        interactionStatus: input.status ?? "collecting",
+      })
+    : {};
   const compiled = await compilePlanSurface({
     plan: input.plan,
     surfaceId,
     protocolFamily: input.protocolFamily,
+    capability: emailIntent ? input.capability : undefined,
+    status: input.status,
   });
   const slots = interactionSlotsFromPlan(input.plan);
 
@@ -92,7 +113,7 @@ export async function publishInteractionSurface(
         title: input.plan.title,
         summary: input.plan.summary,
         documentRef,
-        ...(input.capability ? { capability: input.capability } : {}),
+        ...stamps,
       };
       const message = await createThreadMessageInTransaction(tx, {
         threadId: input.threadId,
@@ -148,7 +169,7 @@ export async function publishInteractionSurface(
           summary: input.plan.summary,
           documentRef,
           messageId: message.id,
-          ...(input.capability ? { capability: input.capability } : {}),
+          ...stamps,
         },
       });
       return {

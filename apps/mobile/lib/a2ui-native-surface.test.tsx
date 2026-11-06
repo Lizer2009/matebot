@@ -178,6 +178,84 @@ describe("native A2UI surface", () => {
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 
+  it("shows progress without Send", () => {
+    render(
+      <A2uiNativeSurface
+        block={{
+          ...block,
+          capability: "ready",
+          template: "action-progress-card",
+          lifecycle: "executing",
+        }}
+        onSend={vi.fn(async () => undefined)}
+      />,
+    );
+    expect(text("a2ui-email-progress")).toBe("Sending");
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+  });
+
+  it("shows success with the provider message id", () => {
+    render(
+      <A2uiNativeSurface
+        block={{
+          ...block,
+          template: "action-result-success",
+          lifecycle: "succeeded",
+          providerMessageId: "msg-1",
+        }}
+      />,
+    );
+    expect(text("a2ui-email-sent")).toBe("Sent");
+    expect(text("a2ui-email-provider-id")).toBe("msg-1");
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+  });
+
+  it("shows failed with Retry and no Send", async () => {
+    const onSend = vi.fn(async () => undefined);
+    render(
+      <A2uiNativeSurface
+        block={{
+          ...block,
+          template: "action-result-failed",
+          lifecycle: "failed",
+          error: "Could not send the email",
+        }}
+        onSend={onSend}
+      />,
+    );
+    expect(text("a2ui-email-failed")).toBe("Could not send the email");
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    await act(async () => {
+      click("a2ui-email-retry");
+      await Promise.resolve();
+    });
+    expect(onSend).toHaveBeenCalled();
+  });
+
+  it("shows UNKNOWN with Check status and no Send", async () => {
+    const onCheckStatus = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    render(
+      <A2uiNativeSurface
+        block={{
+          ...block,
+          template: "action-reconcile-card",
+          lifecycle: "unknown",
+        }}
+        onCheckStatus={onCheckStatus}
+        onSend={onSend}
+      />,
+    );
+    expect(text("a2ui-email-unknown")).toBe("Don't send again");
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    await act(async () => {
+      click("a2ui-email-check-status");
+      await Promise.resolve();
+    });
+    expect(onCheckStatus).toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
   it("discards without sending", async () => {
     const onDiscard = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);

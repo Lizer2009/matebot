@@ -1366,6 +1366,10 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   CC: "副本",
   "Confirm this draft before sending.": "傳送前請確認此草稿。",
   "Connect email": "連接郵箱",
+  Sending: "傳送中",
+  "Could not send": "無法傳送",
+  "Check status": "檢查狀態",
+  "Don't send again": "請勿再次傳送",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "與{peer}的 {count} 則訊息" };

@@ -111,6 +111,28 @@ describe("a2ui_surface MessageBlock", () => {
     expect(A2uiSurfaceBlockSchema.parse(surface).capability).toBeUndefined();
   });
 
+  it("accepts lifecycle, template, and providerMessageId stamps", () => {
+    expect(
+      A2uiSurfaceBlockSchema.parse({
+        ...surface,
+        template: "action-result-success",
+        lifecycle: "succeeded",
+        providerMessageId: "msg-1",
+      }),
+    ).toMatchObject({
+      template: "action-result-success",
+      lifecycle: "succeeded",
+      providerMessageId: "msg-1",
+    });
+    expect(
+      A2uiSurfaceBlockSchema.parse({
+        ...surface,
+        template: "action-reconcile-card",
+        lifecycle: "unknown",
+      }).lifecycle,
+    ).toBe("unknown");
+  });
+
   it("requires interactionId, surfaceId, protocolFamily, and draftVersion", () => {
     expect(MessageBlock.safeParse({ kind: "a2ui_surface" }).success).toBe(false);
     expect(
