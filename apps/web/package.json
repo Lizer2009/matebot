@@ -19,6 +19,7 @@
     "@better-auth/passkey": "1.7.16",
     "@lingui/core": "6.6.0",
     "@lingui/react": "6.6.0",
+    "@matebot/a2ui-adapter": "workspace:*",
     "@matebot/chat-ui": "workspace:*",
     "@matebot/contracts": "workspace:*",
     "@matebot/core": "workspace:*",

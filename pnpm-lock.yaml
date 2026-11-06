@@ -355,6 +355,9 @@ importers:
       '@lingui/react':
         specifier: 6.6.0
         version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(react@19.2.3)
+      '@matebot/a2ui-adapter':
+        specifier: workspace:*
+        version: link:../../packages/a2ui-adapter
       '@matebot/chat-ui':
         specifier: workspace:*
         version: link:../../packages/chat-ui
@@ -16094,7 +16097,9 @@ snapshots:
       metro-runtime: 0.84.5
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

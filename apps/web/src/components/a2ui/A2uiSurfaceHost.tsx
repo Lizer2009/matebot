@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { guardA2uiCatalogMessages } from "./catalog-guard";
-import type { A2uiRendererModules } from "./load-a2ui";
-import { loadA2uiRenderer, safePlainMarkdown } from "./load-a2ui";
+import type { A2uiActionListener, A2uiRendererModules } from "./load-a2ui";
+import { createA2uiProcessor, loadA2uiRenderer, safePlainMarkdown } from "./load-a2ui";
 import "./a2ui-theme.css";
 
 type HostState =
@@ -20,13 +20,20 @@ type HostState =
  * Renders a single A2UI v0.9 surface from protocol messages via `@a2ui/react`.
  * Unknown catalog components are refused before the processor runs — no
  * arbitrary HTML/JSX from the model.
+ *
+ * When `onAction` is supplied the processor is built with it, so every
+ * `action.event` in the tree reaches one server dispatch instead of drawing a
+ * control that does nothing. A surface rendered without a listener says so in
+ * the DOM rather than presenting dead buttons.
  */
 export function A2uiSurfaceHost({
   surfaceId,
   messages,
+  onAction,
 }: {
   surfaceId: string;
   messages: unknown[];
+  onAction?: A2uiActionListener;
 }) {
   const [state, setState] = useState<HostState>({ kind: "loading" });
 
@@ -44,7 +51,8 @@ export function A2uiSurfaceHost({
       try {
         const mods = await loadA2uiRenderer();
         if (cancelled) return;
-        const processor = new mods.MessageProcessor([mods.basicCatalog]);
+        // A surface with no listener would render buttons that go nowhere.
+        const processor = createA2uiProcessor(mods, onAction ?? (() => undefined));
         processor.processMessages(messages as never[]);
         const surface = processor.model.surfacesMap.get(surfaceId);
         if (!surface) {
@@ -65,7 +73,7 @@ export function A2uiSurfaceHost({
     return () => {
       cancelled = true;
     };
-  }, [messages, surfaceId]);
+  }, [messages, surfaceId, onAction]);
 
   if (state.kind === "loading") {
     return (
