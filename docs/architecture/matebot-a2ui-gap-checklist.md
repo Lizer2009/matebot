@@ -44,7 +44,9 @@
 
 ## 建议的下一文档修订（仍属设计，非本仓库运行时）
 
-1. 更新集成方案 §0.2 / §4.1 版本策略（v1.0 current + renderer 现实）。  
-2. 更新 §11 数据模型：Thread/Event/Run/ExternalEffect 优先。  
-3. 更新 §14 包结构：Extend-first + page-kit 共存。  
-4. 增加「草稿版本 × 现有审批」状态图。
+> **已完成：** 审计对齐设计见 [`matebot-a2ui-integration-design.md`](./matebot-a2ui-integration-design.md)（v1.1）。
+
+1. ~~更新集成方案 §0.2 / §4.1 版本策略（v1.0 current + renderer 现实）。~~  
+2. ~~更新 §11 数据模型：Thread/Event/Run/ExternalEffect 优先。~~  
+3. ~~更新 §14 包结构：Extend-first + page-kit 共存。~~  
+4. ~~增加「草稿版本 × 现有审批」状态图。~~
