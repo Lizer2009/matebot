@@ -1,3 +1,4 @@
+export * from "./a2ui-recovery.js";
 export * from "./action-approval.js";
 export * from "./activity-sections.js";
 export * from "./agent-import/index.js";
