@@ -1119,6 +1119,7 @@ describe("projectMessages A2UI surface", () => {
           surfaceId: "surf-1",
           protocolFamily: "v0_9",
           draftVersion: 1,
+          intent: "email.compose",
           title: "Email draft",
           documentRef: "a2ui:interaction:ix-1:surface:surf-1",
           messageId: "m-surface",
@@ -1133,6 +1134,7 @@ describe("projectMessages A2UI surface", () => {
       interactionId: "ix-1",
       surfaceId: "surf-1",
       draftVersion: 1,
+      intent: "email.compose",
       documentRef: "a2ui:interaction:ix-1:surface:surf-1",
     });
   });

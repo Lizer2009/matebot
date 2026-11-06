@@ -95,6 +95,7 @@ export async function publishInteractionSurface(
         surfaceId,
         protocolFamily: compiled.protocolFamily,
         draftVersion: interaction.draftVersion,
+        intent: input.plan.intent,
         title: input.plan.title,
         summary: input.plan.summary,
         documentRef,
@@ -144,6 +145,7 @@ export async function publishInteractionSurface(
           surfaceId,
           protocolFamily: compiled.protocolFamily,
           draftVersion: interaction.draftVersion,
+          intent: input.plan.intent,
           title: input.plan.title,
           summary: input.plan.summary,
           documentRef,
@@ -262,6 +264,7 @@ export async function updateInteractionFieldService(
         surfaceId: surfaceRow.surfaceId,
         protocolFamily: compiled.protocolFamily,
         draftVersion: changed.draftVersion,
+        intent: changed.plan.intent,
         title: changed.plan.title,
         summary: changed.plan.summary,
         documentRef,
@@ -332,6 +335,7 @@ export async function updateInteractionFieldService(
           surfaceId: surfaceRow.surfaceId,
           protocolFamily: compiled.protocolFamily,
           draftVersion: changed.draftVersion,
+          intent: changed.plan.intent,
           title: changed.plan.title,
           summary: changed.plan.summary,
           documentRef: a2uiSurfaceDocumentRef({
@@ -558,6 +562,7 @@ async function projectConfirmedSurface(
     protocolFamily,
     draftVersion: input.draftVersion,
     confirmedVersion: input.confirmedVersion,
+    intent: input.plan.intent,
     title: input.interaction.title ?? input.plan.title,
     ...(input.interaction.summary || input.plan.summary
       ? { summary: input.interaction.summary ?? input.plan.summary }
@@ -598,6 +603,7 @@ async function projectConfirmedSurface(
       protocolFamily,
       draftVersion: input.draftVersion,
       confirmedVersion: input.confirmedVersion,
+      intent: input.plan.intent,
       title: block.title,
       summary: block.summary,
       documentRef,

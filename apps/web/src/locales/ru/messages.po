@@ -1639,6 +1639,10 @@ msgstr "Компьютеры выключены. Установите SANDBOX_PR
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Confirm"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
 msgstr "Подтвердить удаление"
@@ -1659,6 +1663,10 @@ msgstr ""
 #: src/lib/model-connection-preflight.ts
 msgid "Confirm the URL is reachable from this browser session, then test again."
 msgstr "Убедитесь, что URL доступен из этого сеанса браузера, и повторите тест."
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Confirm this draft before sending."
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
@@ -2398,6 +2406,10 @@ msgstr "Не удалось обновить реакцию"
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not update the default memory scope"
 msgstr "Не удалось обновить область памяти по умолчанию."
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Could not update the draft"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
@@ -3990,6 +4002,7 @@ msgstr "Упоминает функции OpenClaw"
 msgid "Mentions: {mentions}"
 msgstr "Упоминает: {mentions}"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
 #: src/pages/SpaceSearch.tsx
@@ -5710,6 +5723,7 @@ msgstr "Выберите бота"
 msgid "Self-hosted"
 msgstr "Свой сервер"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/shell/composer.tsx
 msgid "Send"
 msgstr "Отправить"
@@ -5756,6 +5770,7 @@ msgstr "Отправлять по Enter"
 msgid "Sending…"
 msgstr "Отправка…"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
@@ -6169,6 +6184,10 @@ msgstr "Потоковые ответы"
 msgid "subagent"
 msgstr "субагент"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Subject"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Submit"
@@ -6569,6 +6588,7 @@ msgstr "Время запуска может отличаться"
 msgid "Title"
 msgstr "Заголовок"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/ActivityList.tsx
 msgid "To"
 msgstr ""

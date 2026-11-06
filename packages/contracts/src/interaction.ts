@@ -65,6 +65,8 @@ export const A2uiSurfaceBlockSchema = z.object({
    * Absent or unequal to draftVersion means the draft is not sendable.
    */
   confirmedVersion: z.number().int().positive().optional(),
+  /** Plan intent, such as email.compose, so hosts can show a purpose-built editor. */
+  intent: z.string().trim().min(1).optional(),
   /** Short label for the timeline before/without the full catalog document. */
   title: z.string().optional(),
   summary: z.string().optional(),
@@ -127,6 +129,7 @@ export const SurfaceProductEventPayloadSchema = z.object({
   protocolFamily: A2uiProtocolFamily,
   draftVersion: z.number().int().positive(),
   confirmedVersion: z.number().int().positive().optional(),
+  intent: z.string().trim().min(1).optional(),
   title: z.string().optional(),
   summary: z.string().optional(),
   documentRef: z.string().trim().min(1).optional(),

@@ -1639,6 +1639,10 @@ msgstr "Computers staan uit. Stel SANDBOX_PROVIDER=docker in met SANDBOX_SUPERVI
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "Configureer een plugincatalogus op de server om apps te koppelen."
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Confirm"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
 msgstr "Verwijderen bevestigen"
@@ -1659,6 +1663,10 @@ msgstr ""
 #: src/lib/model-connection-preflight.ts
 msgid "Confirm the URL is reachable from this browser session, then test again."
 msgstr "Bevestig dat de URL vanuit deze browsersessie bereikbaar is en test daarna opnieuw."
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Confirm this draft before sending."
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
@@ -2398,6 +2406,10 @@ msgstr "Reactie bijwerken mislukt"
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not update the default memory scope"
 msgstr "Het standaardgeheugenbereik bijwerken mislukt"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Could not update the draft"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
@@ -3990,6 +4002,7 @@ msgstr "Noemt OpenClaw-functies"
 msgid "Mentions: {mentions}"
 msgstr "Noemt: {mentions}"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
 #: src/pages/SpaceSearch.tsx
@@ -5710,6 +5723,7 @@ msgstr "Selecteer een bot"
 msgid "Self-hosted"
 msgstr "Zelf gehost"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/shell/composer.tsx
 msgid "Send"
 msgstr "Verzenden"
@@ -5756,6 +5770,7 @@ msgstr "Verzenden met Enter"
 msgid "Sending…"
 msgstr "Bezig met verzenden…"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
@@ -6169,6 +6184,10 @@ msgstr "Antwoorden streamen"
 msgid "subagent"
 msgstr "subagent"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Subject"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Submit"
@@ -6569,6 +6588,7 @@ msgstr "Het tijdstip kan afwijken"
 msgid "Title"
 msgstr "Titel"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/pages/ActivityList.tsx
 msgid "To"
 msgstr "Aan"

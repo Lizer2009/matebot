@@ -1,5 +1,7 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import { A2uiSurfaceHost } from "./A2uiSurfaceHost";
+import { EmailComposeEditor } from "./EmailComposeEditor";
+import { emailFieldsFromSurfaceMessages, isEmailComposeIntent } from "./email-fields";
 import { useA2uiSurfaceDocument } from "./use-a2ui-surface-document";
 
 /**
@@ -12,12 +14,22 @@ export function A2uiSurfaceCard({
   block,
   messages,
   fetchDocument,
+  onFieldChange,
+  onConfirm,
+  onSend,
 }: {
   block: A2uiSurfaceBlock;
   /** Optional protocol messages; fixture documentRef fills this when omitted. */
   messages?: unknown[];
   /** Load a persisted documentRef from the API when not a fixture. */
   fetchDocument?: (documentRef: string) => Promise<unknown[] | undefined>;
+  onFieldChange?: (
+    name: "to" | "subject" | "body",
+    value: string,
+    expectedDraftVersion: number,
+  ) => Promise<{ draftVersion: number } | undefined>;
+  onConfirm?: (draftVersion: number) => Promise<void>;
+  onSend?: (draftVersion: number) => Promise<void>;
 }) {
   const document = useA2uiSurfaceDocument({
     documentRef: block.documentRef,
@@ -58,7 +70,16 @@ export function A2uiSurfaceCard({
         ) : null}
       </div>
       <div className="px-5 py-4">
-        {document.messages ? (
+        {isEmailComposeIntent(block.intent) ? (
+          <EmailComposeEditor
+            draftVersion={block.draftVersion}
+            confirmedVersion={block.confirmedVersion}
+            fields={emailFieldsFromSurfaceMessages(document.messages)}
+            onFieldChange={onFieldChange}
+            onConfirm={onConfirm}
+            onSend={onSend}
+          />
+        ) : document.messages ? (
           <A2uiSurfaceHost surfaceId={block.surfaceId} messages={document.messages} />
         ) : (
           <div

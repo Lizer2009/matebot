@@ -797,6 +797,9 @@ function applySurfaceProjection(
     surfaceId,
     protocolFamily,
     draftVersion,
+    ...(typeof payload.intent === "string" && payload.intent.trim()
+      ? { intent: payload.intent.trim() }
+      : {}),
     ...(typeof payload.title === "string" ? { title: payload.title } : {}),
     ...(typeof payload.summary === "string" ? { summary: payload.summary } : {}),
     ...(typeof payload.documentRef === "string" ? { documentRef: payload.documentRef } : {}),
