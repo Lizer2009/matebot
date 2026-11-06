@@ -171,6 +171,44 @@ describe("A2uiSurfaceCard", () => {
     expect(onSend).toHaveBeenCalledWith(1);
     expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
   });
+
+  it("keeps Send gated after Confirm when block props omit confirmedVersion", async () => {
+    const onConfirm = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      // Timeline props often lag SSE after confirmInteraction.
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onConfirm={onConfirm}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const form = container.querySelector('[data-testid="a2ui-email-compose"]') as HTMLElement;
+    expect(form.getAttribute("data-confirmed")).toBe("false");
+    const confirm = container.querySelector(
+      '[data-testid="a2ui-email-confirm"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      confirm.click();
+    });
+    expect(onConfirm).toHaveBeenCalledWith(1);
+    expect(form.getAttribute("data-confirmed")).toBe("true");
+    const send = container.querySelector('[data-testid="a2ui-email-send"]') as HTMLButtonElement;
+    await act(async () => {
+      send.click();
+    });
+    expect(onSend).toHaveBeenCalledWith(1);
+    expect(container.querySelector('[data-testid="a2ui-email-error"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
+  });
 });
 
 function emailSurfaceMessages(): unknown[] {

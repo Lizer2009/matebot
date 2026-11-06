@@ -84,6 +84,44 @@ describe("content ciphertext", () => {
     expect(openJson(sealed, (value) => decryptText(key, location, value))).toEqual(blocks);
   });
 
+  it("keeps A2UI surface confirm keys queryable on sealed message blocks", () => {
+    const blocks = [
+      {
+        kind: "a2ui_surface",
+        interactionId: "ix-1",
+        surfaceId: "surface-1",
+        draftVersion: 2,
+        confirmedVersion: 2,
+        title: "secret title",
+        documentRef: "a2ui:interaction:ix-1:surface:surface-1",
+      },
+    ];
+    const plain = new Set([
+      "kind",
+      "status",
+      "channelId",
+      "serverId",
+      "artifactId",
+      "interactionId",
+      "surfaceId",
+      "draftVersion",
+      "confirmedVersion",
+    ]);
+    const sealed = sealJson(blocks, plain, (plaintext) =>
+      encryptText(key, location, plaintext),
+    ) as Array<Record<string, unknown>>;
+    expect(JSON.stringify(sealed)).not.toContain("secret title");
+    expect(sealed[0]).toMatchObject({
+      kind: "a2ui_surface",
+      interactionId: "ix-1",
+      surfaceId: "surface-1",
+      draftVersion: 2,
+      confirmedVersion: 2,
+    });
+    expect(sealed[0]).not.toHaveProperty("title");
+    expect(openJson(sealed, (value) => decryptText(key, location, value))).toEqual(blocks);
+  });
+
   it("reads plaintext JSON unchanged", () => {
     const payload = { messageId: "m1", $sealed: "not ciphertext" };
     expect(openJson(payload, () => "unused")).toBe(payload);

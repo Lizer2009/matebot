@@ -30,6 +30,10 @@ export function EmailComposeEditor({
   const bodyId = useId();
   const [values, setValues] = useState(fields);
   const [version, setVersion] = useState(draftVersion);
+  /** Optimistic confirm: props lag SSE/snapshot; fixture keeps local confirmedVersion too. */
+  const [localConfirmedVersion, setLocalConfirmedVersion] = useState<number | undefined>(
+    confirmedVersion,
+  );
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -46,7 +50,12 @@ export function EmailComposeEditor({
     setVersion(draftVersion);
   }, [draftVersion, fields.to, fields.subject, fields.body]);
 
-  const confirmed = confirmedVersion != null && confirmedVersion === version;
+  useEffect(() => {
+    setLocalConfirmedVersion(confirmedVersion);
+  }, [confirmedVersion]);
+
+  const effectiveConfirmedVersion = localConfirmedVersion ?? confirmedVersion;
+  const confirmed = effectiveConfirmedVersion != null && effectiveConfirmedVersion === version;
 
   async function commit(name: EmailFieldName, override?: string): Promise<number> {
     const inflight = pending.current[name];
@@ -66,6 +75,7 @@ export function EmailComposeEditor({
         const next = result?.draftVersion ?? versionRef.current + 1;
         versionRef.current = next;
         setVersion(next);
+        setLocalConfirmedVersion(undefined);
         setSent(false);
         return next;
       } catch (err) {
@@ -163,7 +173,11 @@ export function EmailComposeEditor({
             setBusy(true);
             setError(null);
             void flush()
-              .then((next) => onConfirm?.(next))
+              .then(async (next) => {
+                await onConfirm?.(next);
+                // Keep Send gated even if timeline props lag behind confirmInteraction.
+                setLocalConfirmedVersion(next);
+              })
               .catch((err: unknown) => setError(messageOf(err)))
               .finally(() => setBusy(false));
           }}
@@ -181,7 +195,7 @@ export function EmailComposeEditor({
               setError(null);
               void flush()
                 .then(async (next) => {
-                  if (confirmedVersion !== next) {
+                  if (effectiveConfirmedVersion !== next) {
                     setError(t`Confirm this draft before sending.`);
                     return;
                   }

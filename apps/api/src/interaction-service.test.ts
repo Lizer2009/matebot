@@ -228,6 +228,21 @@ describe("confirmInteractionService", () => {
     ).rejects.toBeInstanceOf(InteractionEffectRunMissingError);
     expect(db.effects.size).toBe(0);
   });
+
+  it("refuses a terminal interaction with a confirm-not-allowed message", async () => {
+    const db = memoryPrisma(
+      readyInteraction({ status: "succeeded", confirmedVersion: 2, approvalEffectId: "effect-1" }),
+    );
+    await expect(
+      confirmInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        draftVersion: 2,
+      }),
+    ).rejects.toThrow(/cannot be confirmed/);
+  });
 });
 
 describe("executeConfirmedInteractionService", () => {
