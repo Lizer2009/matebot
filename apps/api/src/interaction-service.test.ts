@@ -10,10 +10,16 @@ vi.mock("@matebot/db", async () => {
   };
 });
 
+vi.mock("@matebot/adapters", () => ({
+  deliverInteractionEmail: vi.fn(async () => ({ ok: true, deliveryId: "msg-1" })),
+}));
+
+import { deliverInteractionEmail } from "@matebot/adapters";
 import {
   confirmInteractionService,
   executeConfirmedInteractionService,
   InteractionEffectRunMissingError,
+  InteractionEmailDeliveryError,
   InteractionSendRejectedError,
 } from "./interaction-service.js";
 
@@ -56,6 +62,7 @@ type EffectRecord = {
   request: Record<string, unknown>;
   reviewDecision: string | null;
   reviewReason: string | null;
+  result?: Record<string, unknown> | null;
 };
 
 function memoryPrisma(interaction: InteractionRecord) {
@@ -106,6 +113,21 @@ function memoryPrisma(interaction: InteractionRecord) {
         const effect: EffectRecord = { id: `effect-${effectSeq}`, ...data };
         effects.set(effect.idempotencyKey, effect);
         return effect;
+      },
+      updateMany: async ({
+        where,
+        data,
+      }: {
+        where: { id: string; status?: string };
+        data: Partial<EffectRecord>;
+      }) => {
+        const effect = [...effects.values()].find(
+          (row) =>
+            row.id === where.id && (where.status === undefined || row.status === where.status),
+        );
+        if (!effect) return { count: 0 };
+        Object.assign(effect, data);
+        return { count: 1 };
       },
     },
     run: {
@@ -215,6 +237,7 @@ describe("executeConfirmedInteractionService", () => {
       executeConfirmedInteractionService(db.prisma, {
         spaceId: "space-1",
         threadId: "thread-1",
+        botId: "bot-1",
         interactionId: "ix-1",
       }),
     ).rejects.toBeInstanceOf(InteractionSendRejectedError);
@@ -244,12 +267,13 @@ describe("executeConfirmedInteractionService", () => {
       executeConfirmedInteractionService(db.prisma, {
         spaceId: "space-1",
         threadId: "thread-1",
+        botId: "bot-1",
         interactionId: "ix-1",
       }),
     ).rejects.toMatchObject({ code: "unconfirmed" });
   });
 
-  it("accepts a confirmed draft without running a provider", async () => {
+  it("sends a confirmed email draft and completes the effect", async () => {
     const db = memoryPrisma(
       readyInteraction({
         status: "awaiting_approval",
@@ -269,7 +293,7 @@ describe("executeConfirmedInteractionService", () => {
         intent: "email.compose",
         draftVersion: 2,
         confirmedVersion: 2,
-        slots: {},
+        slots: { to: "a@example.com", subject: "Hi", body: "Hello" },
       },
       reviewDecision: "allow",
       reviewReason: "user confirmed draft",
@@ -278,14 +302,99 @@ describe("executeConfirmedInteractionService", () => {
       executeConfirmedInteractionService(db.prisma, {
         spaceId: "space-1",
         threadId: "thread-1",
+        botId: "bot-1",
         interactionId: "ix-1",
       }),
     ).resolves.toEqual({
       effectId: "effect-1",
       idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
       duplicate: false,
-      executed: false,
+      executed: true,
     });
+    expect(deliverInteractionEmail).toHaveBeenCalledWith({
+      to: "a@example.com",
+      subject: "Hi",
+      body: "Hello",
+      idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
+    });
+    expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")).toMatchObject({
+      status: "completed",
+      result: { deliveryId: "msg-1" },
+    });
+    expect(db.interactions.get("ix-1")?.status).toBe("succeeded");
+  });
+
+  it("rejects a confirmed draft that has no recipient and keeps the effect failed", async () => {
+    vi.mocked(deliverInteractionEmail).mockResolvedValueOnce({
+      ok: false,
+      error: "A recipient is required",
+    });
+    const db = memoryPrisma(
+      readyInteraction({
+        status: "awaiting_approval",
+        confirmedVersion: 2,
+        approvalEffectId: "effect-1",
+      }),
+    );
+    db.effects.set("a2ui:interaction:ix-1:confirm:2", {
+      id: "effect-1",
+      spaceId: "space-1",
+      runId: "run-1",
+      kind: "email.send",
+      idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
+      status: "intended",
+      request: {
+        draftVersion: 2,
+        confirmedVersion: 2,
+        slots: { to: "", subject: "Hi", body: "Hello" },
+      },
+      reviewDecision: "allow",
+      reviewReason: "user confirmed draft",
+    });
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+      }),
+    ).rejects.toBeInstanceOf(InteractionEmailDeliveryError);
+    expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("failed");
+    expect(db.interactions.get("ix-1")?.status).toBe("failed");
+  });
+
+  it("reconciles an in-flight email effect on a later send", async () => {
+    const db = memoryPrisma(
+      readyInteraction({
+        status: "executing",
+        confirmedVersion: 2,
+        approvalEffectId: "effect-1",
+      }),
+    );
+    db.effects.set("a2ui:interaction:ix-1:confirm:2", {
+      id: "effect-1",
+      spaceId: "space-1",
+      runId: "run-1",
+      kind: "email.send",
+      idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
+      status: "ambiguous",
+      request: {
+        draftVersion: 2,
+        confirmedVersion: 2,
+        slots: { to: "a@example.com", subject: "Hi", body: "Hello" },
+      },
+      reviewDecision: "allow",
+      reviewReason: "user confirmed draft",
+    });
+    await expect(
+      executeConfirmedInteractionService(db.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+      }),
+    ).resolves.toMatchObject({ executed: true, duplicate: false });
+    expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("reconciled");
   });
 
   it("does not execute a completed effect again", async () => {
@@ -311,6 +420,7 @@ describe("executeConfirmedInteractionService", () => {
       executeConfirmedInteractionService(db.prisma, {
         spaceId: "space-1",
         threadId: "thread-1",
+        botId: "bot-1",
         interactionId: "ix-1",
       }),
     ).resolves.toMatchObject({ duplicate: true, executed: true, effectId: "effect-1" });

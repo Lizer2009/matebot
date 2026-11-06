@@ -751,7 +751,7 @@ export const appContract = {
       .output(ThreadsConfirmInteractionOutput),
     /**
      * Run the confirmed draft's ExternalEffect. Rejects when the draft is not
-     * confirmed, and does not re-run an effect that already completed.
+     * confirmed. Email send completes the effect; a completed effect is not sent again.
      */
     executeInteraction: oc
       .input(ThreadsExecuteInteractionInput)

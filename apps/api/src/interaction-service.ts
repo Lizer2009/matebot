@@ -1,3 +1,5 @@
+import type { InteractionEmailDelivery } from "@matebot/adapters";
+import { deliverInteractionEmail } from "@matebot/adapters";
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
 import type { InteractionLifecycleStatus } from "@matebot/core";
@@ -367,6 +369,15 @@ export class InteractionEffectRunMissingError extends Error {
   }
 }
 
+/** The mailbox rejected the confirmed draft. The effect stays failed so a later send can retry. */
+export class InteractionEmailDeliveryError extends Error {
+  readonly code = "INTERACTION_EMAIL_DELIVERY_FAILED" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "InteractionEmailDeliveryError";
+  }
+}
+
 /** Send was refused because the draft is not the confirmed version (or the run is finished). */
 export class InteractionSendRejectedError extends Error {
   readonly code: "unconfirmed" | "terminal";
@@ -619,13 +630,75 @@ export type ExecuteConfirmedInteractionResult = {
   executed: boolean;
 };
 
+function emailSlots(request: unknown): { to: string; subject: string; body: string } {
+  const record =
+    request && typeof request === "object" && !Array.isArray(request)
+      ? (request as { slots?: unknown }).slots
+      : undefined;
+  const slots =
+    record && typeof record === "object" && !Array.isArray(record)
+      ? (record as Record<string, unknown>)
+      : {};
+  const text = (name: string) => (typeof slots[name] === "string" ? slots[name] : "");
+  return { to: text("to"), subject: text("subject"), body: text("body") };
+}
+
+async function finishEmailSend(
+  prisma: PrismaClient,
+  input: {
+    spaceId: string;
+    threadId: string;
+    botId: string;
+    interactionId: string;
+    draftVersion: number;
+    confirmedVersion: number;
+    effectId: string;
+    runId: string;
+    effectStatus: "completed" | "reconciled" | "failed";
+    interactionStatus: "succeeded" | "failed";
+    result: Record<string, unknown>;
+  },
+): Promise<void> {
+  await withTransactionRetry(() =>
+    prisma.$transaction(async (tx) => {
+      await tx.externalEffect.updateMany({
+        where: { id: input.effectId },
+        data: {
+          status: input.effectStatus,
+          result: input.result as Prisma.InputJsonValue,
+        },
+      });
+      await tx.interaction.updateMany({
+        where: { id: input.interactionId, draftVersion: input.draftVersion },
+        data: { status: input.interactionStatus },
+      });
+      if (input.interactionStatus !== "succeeded") return;
+      await appendEventInTransaction(tx, {
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: input.botId,
+        type: "thread.interaction.updated",
+        runId: input.runId,
+        payload: {
+          interactionId: input.interactionId,
+          draftVersion: input.draftVersion,
+          confirmedVersion: input.confirmedVersion,
+          approvalEffectId: input.effectId,
+          progress: "succeeded",
+        },
+      });
+    }),
+  );
+}
+
 /**
  * Gate for send. Rejects when confirmedVersion is missing or stale.
- * Does not call a provider; a later sender completes `email.send` effects.
+ * `email.send` delivers through the offline mailbox and records the effect.
+ * A second call finishes an effect left `ambiguous` (reconcile) without a worker.
  */
 export async function executeConfirmedInteractionService(
   prisma: PrismaClient,
-  input: { spaceId: string; threadId: string; interactionId: string },
+  input: { spaceId: string; threadId: string; botId: string; interactionId: string },
 ): Promise<ExecuteConfirmedInteractionResult> {
   const current = await getInteraction(prisma, input.interactionId);
   if (!current || current.threadId !== input.threadId || current.spaceId !== input.spaceId) {
@@ -678,10 +751,97 @@ export async function executeConfirmedInteractionService(
   if (!gate.ok) {
     throw new InteractionSendRejectedError(gate.error, gate.message);
   }
+  if (effect.kind !== "email.send") {
+    return {
+      effectId: effect.id,
+      idempotencyKey: effect.idempotencyKey,
+      duplicate: false,
+      executed: false,
+    };
+  }
+
+  const reconciling = effect.status === "ambiguous";
+  const claimed = await prisma.externalEffect.updateMany({
+    where: { id: effect.id, status: effect.status },
+    data: { status: "ambiguous" },
+  });
+  if (claimed.count !== 1) {
+    const latest = await prisma.externalEffect.findUnique({ where: { id: effect.id } });
+    if (latest && (latest.status === "completed" || latest.status === "reconciled")) {
+      return {
+        effectId: latest.id,
+        idempotencyKey: latest.idempotencyKey,
+        duplicate: true,
+        executed: true,
+      };
+    }
+    throw new InteractionSendRejectedError("unconfirmed", "Send is already in progress");
+  }
+
+  await prisma.interaction.updateMany({
+    where: { id: current.id, draftVersion: current.draftVersion },
+    data: { status: "executing" },
+  });
+
+  const draft = emailSlots(effect.request);
+  let delivery: InteractionEmailDelivery;
+  try {
+    delivery = await deliverInteractionEmail({
+      ...draft,
+      idempotencyKey: effect.idempotencyKey,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message ? error.message : "Could not send the email";
+    await finishEmailSend(prisma, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: input.botId,
+      interactionId: current.id,
+      draftVersion: current.draftVersion,
+      confirmedVersion: current.confirmedVersion,
+      effectId: effect.id,
+      runId: effect.runId,
+      effectStatus: "failed",
+      interactionStatus: "failed",
+      result: { error: message },
+    });
+    throw new InteractionEmailDeliveryError("Could not send the email");
+  }
+  if (!delivery.ok) {
+    await finishEmailSend(prisma, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: input.botId,
+      interactionId: current.id,
+      draftVersion: current.draftVersion,
+      confirmedVersion: current.confirmedVersion,
+      effectId: effect.id,
+      runId: effect.runId,
+      effectStatus: "failed",
+      interactionStatus: "failed",
+      result: { error: delivery.error },
+    });
+    throw new InteractionEmailDeliveryError(delivery.error);
+  }
+
+  await finishEmailSend(prisma, {
+    spaceId: input.spaceId,
+    threadId: input.threadId,
+    botId: input.botId,
+    interactionId: current.id,
+    draftVersion: current.draftVersion,
+    confirmedVersion: current.confirmedVersion,
+    effectId: effect.id,
+    runId: effect.runId,
+    effectStatus: reconciling ? "reconciled" : "completed",
+    interactionStatus: "succeeded",
+    result: { deliveryId: delivery.deliveryId },
+  });
   return {
     effectId: effect.id,
     idempotencyKey: effect.idempotencyKey,
     duplicate: false,
-    executed: false,
+    executed: true,
   };
 }
