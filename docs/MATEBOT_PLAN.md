@@ -52,6 +52,8 @@ matebot/                          # 根 package: matebot@0.1.0
 
 **pnpm workspace**（`pnpm-workspace.yaml`）：`apps/*`、`packages/*`，外加 `infra/sandboxes/supervisor` 与 `infra/updater`。
 
+另有文档型包外模块：`packages/page-kit`（对话内 Page 工件）。若规划 **Google A2UI** 集成，先读只读源码审计 [`architecture/matebot-a2ui-source-audit.md`](./architecture/matebot-a2ui-source-audit.md) 与缺口清单 [`architecture/matebot-a2ui-gap-checklist.md`](./architecture/matebot-a2ui-gap-checklist.md)；当前主线（v0.6.0）不含 A2UI 运行时。
+
 ### 2.2 运行时数据流（简化）
 
 ```mermaid
