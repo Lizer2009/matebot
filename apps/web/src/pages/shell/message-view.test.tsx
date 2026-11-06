@@ -293,6 +293,44 @@ it("opens one counted peer line without an inline reply toggle", () => {
   expect(open).toHaveBeenCalledWith({ peerBotId: "peer", peerBotName: "Researcher" });
 });
 
+it("hides a2ui_surface blocks when the a2ui feature flag is off", () => {
+  renderView("bot", [
+    {
+      kind: "a2ui_surface",
+      interactionId: "interaction-1",
+      surfaceId: "surface-1",
+      protocolFamily: "v0_9",
+      draftVersion: 1,
+      title: "Hidden surface",
+    },
+  ]);
+  expect(container.querySelector('[data-testid="a2ui-surface-card"]')).toBeNull();
+  expect(container.textContent).not.toContain("Hidden surface");
+});
+
+it("renders a2ui_surface as a timeline card when the a2ui flag is on", async () => {
+  const { A2UI_STORAGE_KEY } = await import("../../lib/feature-flags");
+  localStorage.setItem(A2UI_STORAGE_KEY, "1");
+  try {
+    renderView("bot", [
+      {
+        kind: "a2ui_surface",
+        interactionId: "interaction-1",
+        surfaceId: "surface-1",
+        protocolFamily: "v0_9",
+        draftVersion: 1,
+        title: "Visible surface",
+        summary: "Fixture card",
+      },
+    ]);
+    expect(container.querySelector('[data-testid="a2ui-surface-card"]')?.textContent).toContain(
+      "Visible surface",
+    );
+  } finally {
+    localStorage.removeItem(A2UI_STORAGE_KEY);
+  }
+});
+
 it("sends a settings Undo through the chat's space client", async () => {
   const spaceRpc = { bots: { update: vi.fn(async () => ({})) } };
   renderView(

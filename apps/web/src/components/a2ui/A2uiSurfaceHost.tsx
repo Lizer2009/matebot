@@ -1,0 +1,101 @@
+import { useEffect, useState } from "react";
+import { guardA2uiCatalogMessages } from "./catalog-guard";
+import type { A2uiRendererModules } from "./load-a2ui";
+import { loadA2uiRenderer, safePlainMarkdown } from "./load-a2ui";
+import "./a2ui-theme.css";
+
+type HostState =
+  | { kind: "loading" }
+  | { kind: "refused"; reason: string }
+  | { kind: "error"; reason: string }
+  | {
+      kind: "ready";
+      mods: A2uiRendererModules;
+      /** Keep the processor rooted so the surface model stays live. */
+      processor: InstanceType<A2uiRendererModules["MessageProcessor"]>;
+      surface: unknown;
+    };
+
+/**
+ * Renders a single A2UI v0.9 surface from protocol messages via `@a2ui/react`.
+ * Unknown catalog components are refused before the processor runs — no
+ * arbitrary HTML/JSX from the model.
+ */
+export function A2uiSurfaceHost({
+  surfaceId,
+  messages,
+}: {
+  surfaceId: string;
+  messages: unknown[];
+}) {
+  const [state, setState] = useState<HostState>({ kind: "loading" });
+
+  useEffect(() => {
+    const guard = guardA2uiCatalogMessages(messages);
+    if (!guard.ok) {
+      setState({ kind: "refused", reason: guard.reason });
+      return;
+    }
+
+    let cancelled = false;
+    setState({ kind: "loading" });
+
+    void (async () => {
+      try {
+        const mods = await loadA2uiRenderer();
+        if (cancelled) return;
+        const processor = new mods.MessageProcessor([mods.basicCatalog]);
+        processor.processMessages(messages as never[]);
+        const surface = processor.model.surfacesMap.get(surfaceId);
+        if (!surface) {
+          setState({
+            kind: "error",
+            reason: `Surface "${surfaceId}" was not created by the message list`,
+          });
+          return;
+        }
+        setState({ kind: "ready", mods, processor, surface });
+      } catch (cause) {
+        if (cancelled) return;
+        const reason = cause instanceof Error ? cause.message : "Failed to load A2UI renderer";
+        setState({ kind: "error", reason });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [messages, surfaceId]);
+
+  if (state.kind === "loading") {
+    return (
+      <div
+        data-testid="a2ui-surface-loading"
+        className="matebot-a2ui-theme px-1 py-2 text-[14px] text-muted-foreground"
+      />
+    );
+  }
+
+  if (state.kind === "refused" || state.kind === "error") {
+    return (
+      <div
+        data-testid="a2ui-surface-refused"
+        role="status"
+        className="matebot-a2ui-theme rounded-[12px] border border-border bg-muted px-4 py-3 text-[14px] text-muted-foreground"
+      >
+        {state.reason}
+      </div>
+    );
+  }
+
+  // Retain processor on the ready state so the surface model is not GC'd.
+  void state.processor;
+  const { A2uiSurface, MarkdownContext } = state.mods;
+  return (
+    <div data-testid="a2ui-surface-host" className="matebot-a2ui-theme min-w-0">
+      <MarkdownContext.Provider value={safePlainMarkdown}>
+        <A2uiSurface surface={state.surface as never} />
+      </MarkdownContext.Provider>
+    </div>
+  );
+}

@@ -1,0 +1,21 @@
+/**
+ * Map A2UI basic-catalog CSS variables onto Matebot semantic tokens
+ * (`@matebot/ui-tokens`). Scope to the surface host so page-kit and the rest
+ * of the shell stay untouched.
+ */
+.matebot-a2ui-theme {
+  --a2ui-color-background: var(--background);
+  --a2ui-color-on-background: var(--foreground);
+  --a2ui-color-surface: var(--card);
+  --a2ui-color-on-surface: var(--card-foreground);
+  --a2ui-color-primary: var(--primary);
+  --a2ui-color-on-primary: var(--primary-foreground);
+  --a2ui-color-secondary: var(--secondary);
+  --a2ui-color-on-secondary: var(--secondary-foreground);
+  --a2ui-color-border: var(--border);
+  --a2ui-color-input: var(--background);
+  --a2ui-color-on-input: var(--foreground);
+  --a2ui-border-radius: var(--radius);
+  --a2ui-border: 1px solid var(--border);
+  color: var(--foreground);
+}
