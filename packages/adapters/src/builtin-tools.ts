@@ -808,11 +808,33 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "present_result",
     description:
-      "Show a read-only result card from data you already have, when the user asks to see numbers, a summary, or a trend. Pass provenance (source, asOf, optional window/units/timezone) and computed rows — never invent values. It displays only; it sends and changes nothing. With no real data, ask for the source instead. After it publishes, reply in one short sentence.",
+      "Show a read-only result card in the chat, when the user asks to see numbers, a summary, or a trend. Prefer naming a registered sourceId with from/to and optional metrics: the server then reads the data itself and computes sums and averages, so nothing is invented. Only pass rows yourself when you already have real numbers from a tool result in this turn; those rows are labelled on the card as not coming from a data source. With no real data, ask the user where the numbers should come from instead. It displays only; it sends and changes nothing. After it publishes, reply in one short sentence.",
     inputSchema: {
       type: "object",
       properties: {
         title: { type: "string", description: "Short heading for the card." },
+        sourceId: {
+          type: "string",
+          description:
+            "Registered source to read, e.g. calendar-events or csv-upload. Preferred over rows.",
+        },
+        from: { type: "string", description: "Window start for sourceId, ISO 8601 or date." },
+        to: { type: "string", description: "Window end for sourceId, ISO 8601 or date." },
+        groupBy: { type: "string", description: "Optional column to group a source read by." },
+        metrics: {
+          type: "array",
+          description:
+            "Optional deterministic aggregation the server computes over the read rows.",
+          items: {
+            type: "object",
+            properties: {
+              key: { type: "string", description: "Output column key." },
+              op: { type: "string", enum: ["sum", "count", "avg", "min", "max"] },
+              of: { type: "string", description: "Input column; not needed for count." },
+            },
+            required: ["key", "op"],
+          },
+        },
         source: {
           type: "string",
           description: "Where the numbers came from, such as a file or a query.",
@@ -842,11 +864,12 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
         rows: {
           type: "array",
-          description: "Computed rows of scalar values; at most 200 are shown.",
+          description:
+            "Rows you already have from a tool result in this turn; at most 200 are shown. Never invent values.",
           items: { type: "object" },
         },
       },
-      required: ["title", "source", "asOf", "rows"],
+      required: ["title"],
     },
   },
   {

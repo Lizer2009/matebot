@@ -16,6 +16,9 @@ export type ResultSourceReadInput = {
   timezone: string;
 };
 
+/** The shape a caller-supplied reader has; see `queryResultSource`. */
+export type ResultSourceRead = ResultSource["read"];
+
 export type ResultSourceReadResult =
   | {
       ok: true;
@@ -53,8 +56,15 @@ const csvUpload: ResultSource = {
 };
 
 /**
- * The user's calendar as a read source. It needs the calendar connection, which
- * is why the connection requirement lives here rather than in the caller.
+ * The user's calendar as a read source.
+ *
+ * A source is registered as a description of *where* data may come from; the
+ * reader that can actually reach a provider belongs to one turn, because it
+ * needs that user's connector and that user's connection. The caller supplies it
+ * per query (`queryResultSource`'s `read` dep) instead of the source holding it,
+ * so one turn's credentials can never serve another turn's read. With no reader
+ * supplied the read says so rather than returning an empty calendar, which a
+ * reader would take to mean "you have no events".
  */
 const calendarEvents: ResultSource = {
   id: "calendar-events",
@@ -113,7 +123,17 @@ export type QueryResultSourceOutput =
  */
 export async function queryResultSource(
   input: QueryResultSourceInput,
-  deps: { connectionId: string | null },
+  deps: {
+    connectionId: string | null;
+    /**
+     * A reader for one source id, used instead of the registered `read`. This is
+     * how a source that needs the user's own provider connection is read without
+     * the registry ever holding credentials shared between users. Returning
+     * undefined for an id means "use the registered reader", so a turn's calendar
+     * reader can never stand in for a source it does not represent.
+     */
+    readFor?: (sourceId: string) => ResultSource["read"] | undefined;
+  },
 ): Promise<QueryResultSourceOutput> {
   const source = findResultSource(input.sourceId);
   if (!source) return { ok: false, error: "unknown_source" };
@@ -125,7 +145,8 @@ export async function queryResultSource(
     return { ok: false, error: "needs_connection" };
   }
 
-  const read = await source.read({
+  const reader = deps.readFor?.(input.sourceId) ?? source.read;
+  const read = await reader({
     window: window.window,
     connectionId: deps.connectionId,
     timezone: input.timezone ?? "UTC",

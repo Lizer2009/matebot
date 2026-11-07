@@ -123,6 +123,12 @@ export const ResultProvenanceSchema = z.object({
   year: z.number().int().min(1900).max(2999).optional(),
   /** When the source itself was last updated; distinct from asOf. */
   freshness: z.string().trim().min(1).optional(),
+  /**
+   * `source` when the server read the rows itself; `model` when the model wrote
+   * them and nothing verified them. The card says which, so a figure that never
+   * came from a data source is never shown as if it did.
+   */
+  attribution: z.enum(["source", "model"]).optional(),
 });
 export type ResultProvenance = z.infer<typeof ResultProvenanceSchema>;
 

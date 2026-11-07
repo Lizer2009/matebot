@@ -1,6 +1,8 @@
+import type { ResultSourceRead } from "@matebot/core";
 import { queryResultSource } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import type { publishResultSurface } from "./interaction-result-publish.js";
+import { calendarResultReader } from "./result-source-calendar.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 
@@ -41,6 +43,8 @@ export type RefreshResultServices = {
   }) => Promise<Array<{ taskId: string; label: string }>>;
   /** The user's connection for the source, when it needs one. */
   connectionFor: (app: "email" | "calendar") => Promise<string | null>;
+  /** A per-turn reader for a source that reads through the user's provider. */
+  read?: ResultSourceRead;
   /** Republish the same interaction's surface with the new result. */
   republish: (input: {
     interactionId: string;
@@ -121,7 +125,9 @@ export async function refreshResult(
     : null;
   const queried = await queryResultSource(
     { sourceId, window: { from, to }, ...(timezone ? { timezone } : {}) },
-    { connectionId },
+    { connectionId, ...(services.read
+        ? { readFor: (id: string) => (id === "calendar-events" ? services.read : undefined) }
+        : {}) },
   );
   if (!queried.ok) {
     const reply =
@@ -168,6 +174,20 @@ export async function refreshResult(
 export function refreshResultServices(ctx: RunContext): RefreshResultServices {
   const { deps, run } = ctx;
   const prisma = deps.prisma;
+  const connectionForApp = async (app: "email" | "calendar") => {
+    const { loadOwnerEmailConnections } = await import("./interaction-email-capability.js");
+    const connections = await loadOwnerEmailConnections(prisma, {
+      spaceId: run.spaceId,
+      userId: run.userId,
+    });
+    // Only a connected row counts; a pending or revoked one is not a read source.
+    const match = connections.find(
+      (row) =>
+        row.status === "connected" &&
+        (app === "calendar" ? /calendar/i.test(row.provider) : /gmail|mail/i.test(row.provider)),
+    );
+    return match?.id ?? null;
+  };
   return {
     loadInteraction: async (interactionId) => {
       const row = await prisma.interaction.findUnique({ where: { id: interactionId } });
@@ -195,20 +215,27 @@ export function refreshResultServices(ctx: RunContext): RefreshResultServices {
         .filter((row) => row.intent === "interaction.result")
         .map((row) => ({ taskId: row.id, label: row.title ?? row.id }));
     },
-    connectionFor: async (app) => {
-      const { loadOwnerEmailConnections } = await import("./interaction-email-capability.js");
-      const connections = await loadOwnerEmailConnections(prisma, {
-        spaceId: run.spaceId,
-        userId: run.userId,
+    read: async (input) => {
+      const connector = deps.connector ?? deps.connectors?.managed("composio");
+      const connectionId = input.connectionId ?? (await connectionForApp("calendar"));
+      if (!connector || !connectionId) {
+        return { ok: false, error: "needs_connection", outcome: "unavailable" };
+      }
+      const reader = calendarResultReader({
+        connector,
+        context: {
+          operationId: "interaction.calendar.read",
+          traceId: "interaction.calendar.read",
+          spaceId: run.spaceId,
+          userId: run.userId,
+          signal: new AbortController().signal,
+        },
+        connectionId,
       });
-      // Only a connected row counts; a pending or revoked one is not a read source.
-      const match = connections.find(
-        (row) =>
-          row.status === "connected" &&
-          (app === "calendar" ? /calendar/i.test(row.provider) : /gmail|mail/i.test(row.provider)),
-      );
-      return match?.id ?? null;
+      if (!reader) return { ok: false, error: "needs_connection", outcome: "unavailable" };
+      return reader(input);
     },
+    connectionFor: connectionForApp,
     republish: async (input) => {
       const { republishResultSurface } = await import("./interaction-result-publish.js");
       const republished = await republishResultSurface(

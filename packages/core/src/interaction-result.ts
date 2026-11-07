@@ -32,6 +32,12 @@ export type ResultProvenance = {
   year?: number;
   /** Optional: when the source itself was last updated. Not the same as asOf. */
   freshness?: string;
+  /**
+   * `source` when the server read these rows itself, `model` when the model
+   * wrote them and no data source vouched for them. Absent means the caller did
+   * not say, which the card treats as unattributed rather than trusted.
+   */
+  attribution?: "source" | "model";
 };
 
 export type ResultProvenanceError =
@@ -117,6 +123,11 @@ export function validateResultProvenance(input: unknown): ResultProvenanceValida
     return { ok: false, error: "invalid_freshness" };
   }
 
+  const attribution =
+    record.attribution === "source" || record.attribution === "model"
+      ? record.attribution
+      : undefined;
+
   return {
     ok: true,
     provenance: {
@@ -127,6 +138,7 @@ export function validateResultProvenance(input: unknown): ResultProvenanceValida
       ...(timezone ? { timezone } : {}),
       ...(year !== undefined ? { year } : {}),
       ...(freshnessText ? { freshness: freshnessText } : {}),
+      ...(attribution ? { attribution } : {}),
     },
   };
 }
@@ -251,6 +263,9 @@ export function provenanceLine(provenance: ResultProvenance): string {
   if (provenance.units) parts.push(provenance.units);
   parts.push(`as of ${provenance.asOf.slice(0, 10)}`);
   if (provenance.freshness) parts.push(`fresh ${provenance.freshness.slice(0, 10)}`);
+  // An unattributed result says so, in the same line, so a reader never has to
+  // guess whether a figure was read from a source or written by the model.
+  if (provenance.attribution !== "source") parts.push("not from a data source");
   return parts.join(" · ");
 }
 
