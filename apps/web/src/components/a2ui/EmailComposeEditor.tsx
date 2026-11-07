@@ -79,10 +79,10 @@ export function EmailComposeEditor({
   valuesRef.current = values;
 
   useEffect(() => {
-    // A field the person is editing here wins over a stale snapshot. The props
-    // arrive from the server and can lag the commit this editor just made — or an
-    // edit for another field — so adopting them wholesale would overwrite what was
-    // typed. A field stops being protected once the server's value is the typed one.
+    // A field the person typed here is theirs until the server echoes that text
+    // back. A snapshot can arrive before the commit lands, or out of order with a
+    // republish, and React would then render the old value over what is on screen.
+    // Every other field follows the server, so a model's edit still applies.
     const next = { ...fields };
     for (const [name, typed] of Object.entries(dirty.current) as Array<
       [EmailFieldName, string]
@@ -119,6 +119,19 @@ export function EmailComposeEditor({
     error: surfaceError,
     busy,
   });
+
+  /**
+   * Record a keystroke as the person's own text.
+   *
+   * Marking it here rather than on blur is what keeps the value on screen: a
+   * snapshot that arrives mid-typing would otherwise re-render the old value.
+   */
+  function typed(name: EmailFieldName, value: string) {
+    dirty.current[name] = value;
+    const next = { ...valuesRef.current, [name]: value };
+    valuesRef.current = next;
+    setValues(next);
+  }
 
   async function commit(name: EmailFieldName, override?: string): Promise<number> {
     const inflight = pending.current[name];
@@ -204,9 +217,7 @@ export function EmailComposeEditor({
           placeholder={t`Subject`}
           disabled={locked}
           className="border-0 bg-transparent px-0 text-[18px] font-semibold shadow-none focus-visible:ring-0"
-          onChange={(event) =>
-            setValues((current) => ({ ...current, subject: event.target.value }))
-          }
+          onChange={(event) => typed("subject", event.target.value)}
           onBlur={(event) => {
             void commit("subject", event.currentTarget.value).catch((err: unknown) =>
               setError(messageOf(err)),
@@ -222,7 +233,7 @@ export function EmailComposeEditor({
           value={values.from}
           autoComplete="email"
           disabled={locked}
-          onChange={(value) => setValues((current) => ({ ...current, from: value }))}
+          onChange={(value) => typed("from", value)}
           onBlur={(value) => {
             void commit("from", value).catch((err: unknown) => setError(messageOf(err)));
           }}
@@ -234,7 +245,7 @@ export function EmailComposeEditor({
           value={values.to}
           autoComplete="email"
           disabled={locked}
-          onChange={(value) => setValues((current) => ({ ...current, to: value }))}
+          onChange={(value) => typed("to", value)}
           onBlur={(value) => {
             void commit("to", value).catch((err: unknown) => setError(messageOf(err)));
           }}
@@ -247,7 +258,7 @@ export function EmailComposeEditor({
           autoComplete="email"
           placeholder="name@example.com"
           disabled={locked}
-          onChange={(value) => setValues((current) => ({ ...current, cc: value }))}
+          onChange={(value) => typed("cc", value)}
           onBlur={(value) => {
             void commit("cc", value).catch((err: unknown) => setError(messageOf(err)));
           }}
@@ -264,7 +275,7 @@ export function EmailComposeEditor({
           rows={6}
           disabled={locked}
           className="min-h-[8rem] border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-          onChange={(event) => setValues((current) => ({ ...current, body: event.target.value }))}
+          onChange={(event) => typed("body", event.target.value)}
           onBlur={(event) => {
             void commit("body", event.currentTarget.value).catch((err: unknown) =>
               setError(messageOf(err)),

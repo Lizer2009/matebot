@@ -783,18 +783,33 @@ test("a calendar draft draws its schema fields and edits on the same card", asyn
   });
   const editBody = await edited.text();
   expect(edited.status(), editBody).toBe(200);
-  // The new value is in the control, which is where a person would see it.
+  expect(JSON.parse(editBody).json).toMatchObject({
+    ok: true,
+    interactionId,
+    // The edit wrote a new revision of the same card, not a new one.
+    draftVersion: 2,
+  });
+
+  // Reload: the card a person gets on a fresh read is the same interaction, at the
+  // new revision, with the edited value in its control. Live event delivery to an
+  // already-finished run is covered by the email-edit test; this asserts what was
+  // persisted, which is what a reload or another device sees.
+  await page.reload();
+  const reloaded = page.getByTestId("a2ui-surface-card").first();
+  await expect(reloaded).toBeVisible({ timeout: 45_000 });
+  await expect(reloaded).toHaveAttribute("data-draft-version", "2", { timeout: 30_000 });
+  expect(await cardInteractionId(page)).toBe(interactionId);
   await expect
     .poll(
       async () =>
-        card
+        reloaded
           .locator("input")
           .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
       { timeout: 30_000 },
     )
     .toContain("Weekly sync (renamed)");
+  // Still one card, and no second draft was created.
   await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(1);
-  expect(await cardInteractionId(page)).toBe(interactionId);
   await captureScreenshot(page, testInfo, "a2ui-e2e-12-calendar-same-card-edit");
 });
 
