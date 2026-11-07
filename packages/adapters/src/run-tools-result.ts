@@ -5,7 +5,7 @@ import type {
   ResultColumn,
   ResultSourceRead,
 } from "@matebot/core";
-import { buildResultSurface, validateResultProvenance } from "@matebot/core";
+import { buildResultSurface, validateResultProvenance, windowWasDefaulted } from "@matebot/core";
 import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { loadOwnerEmailConnections } from "./interaction-email-capability.js";
@@ -105,6 +105,11 @@ export type PresentResultDeps = {
   /** The user's own connection for a source that needs one. */
   connectionFor: (app: "email" | "calendar") => Promise<string | null>;
   /**
+   * What the person actually asked, so the server can decide whether the period
+   * was theirs or the assistant's. Absent in a test that does not care.
+   */
+  userPrompt?: string | null;
+  /**
    * A per-turn reader, asked for by source id. Each source that cannot be read
    * from a shared registry (the calendar through a connector, a file through this
    * turn's artifacts) supplies one; anything else uses the registered reader.
@@ -130,6 +135,7 @@ export function presentResultDeps(ctx: RunContext): PresentResultDeps {
 
   return {
     connectionFor,
+    userPrompt: ctx.task?.prompt ?? null,
     // The calendar is the one source that reads through the provider. Its reader
     // is built from this run's connector so a read happens with this user's own
     // connection and nothing outlives the turn.
@@ -232,7 +238,15 @@ export async function surfaceFromArgs(
         ...(parseMetrics(args.metrics) ? { metrics: parseMetrics(args.metrics) } : {}),
         ...(parseColumns(args.columns) ? { columns: parseColumns(args.columns) } : {}),
         ...(text(args.artifactId) ? { artifactId: text(args.artifactId) } : {}),
-        ...(args.defaultedWindow === true ? { defaultedWindow: true } : {}),
+        // The server decides, from the person's own words: a model that reports an
+        // invented period as their choice is the defect, so its own claim is not the
+        // final word.
+        ...(windowWasDefaulted({
+          claimedByModel: args.defaultedWindow === true,
+          userPrompt: deps.userPrompt,
+        })
+          ? { defaultedWindow: true }
+          : {}),
       },
       deps,
     );

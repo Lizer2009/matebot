@@ -1894,6 +1894,25 @@ describe("dockerComputerToolInstruction", () => {
     expect(dockerComputerToolInstruction("e2b")).toBeUndefined();
   });
 
+  /**
+   * Looking an account up by its email address is a request the audit saw, and the
+   * answer overstated what the evidence supports. The boundary belongs where the
+   * lookup happens, which is this instruction, and it must be present exactly when
+   * the browser tools that reach GitHub are.
+   */
+  it("states the GitHub identity boundary where the lookup happens", () => {
+    const instruction = dockerComputerToolInstruction("docker") ?? "";
+    expect(instruction).toContain("an association, not proof of ownership");
+    expect(instruction).toContain("public repositories only");
+    expect(instruction).toContain("do not present it as all their projects");
+    // Without a browser there is no GitHub lookup, so the paragraph is not noise.
+    const noBrowser = dockerComputerToolInstruction(
+      "docker",
+      new Set(["browser_navigate", "browser_act"]),
+    );
+    expect(noBrowser ?? "").not.toContain("an association, not proof of ownership");
+  });
+
   it("documents gh CLI device-flow login without token injection", () => {
     const instruction = dockerComputerToolInstruction("docker");
     expect(instruction).toContain("gh auth login");

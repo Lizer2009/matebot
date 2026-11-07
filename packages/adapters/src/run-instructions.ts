@@ -142,6 +142,13 @@ export function dockerComputerToolInstruction(
     parts.push(
       'To authenticate `gh`, run `LOG=$(mktemp /tmp/gh-login.XXXXXX); nohup script -qec \'gh auth login --hostname github.com --web --git-protocol https\' "$LOG" >/dev/null 2>&1 & echo "$LOG"` — keep that printed path, read the one-time code from it, browser_navigate to https://github.com/login/device, and browser_act the code. Completing that page authorizes the CLI OAuth app and stores the credential under the persistent home; it does not by itself create a Chromium github.com session.',
     );
+    // Looking someone up by an address is a common request, and the answer is easy
+    // to overstate: an email in a commit says which account authored it, not who
+    // owns it, and a public repository count is not a project count. State the
+    // limit where the lookup actually happens.
+    parts.push(
+      "When you look up a GitHub account from an email address, say exactly what the evidence is: the address appears as the author of commits, which ties it to an account. That is an association, not proof of ownership — do not say the person owns, controls, or has access to the account. Do not guess. A repo count from `gh` covers public repositories only unless that account has authorized this machine; label it as public, and do not present it as all their projects. Same rule for anything else you read from a second-hand source: name the source and its date, and if either is missing, say the figure is unverified instead of repeating it as fact.",
+    );
   }
   if (takeover) {
     parts.push(

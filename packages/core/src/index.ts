@@ -100,6 +100,7 @@ export * from "./product-analytics.js";
 export * from "./product-brand.js";
 export * from "./product-docs.js";
 export * from "./prompt-data.js";
+export * from "./query-window.js";
 export * from "./refresh-coalescer.js";
 export * from "./remote-images.js";
 export * from "./response-bytes.js";
