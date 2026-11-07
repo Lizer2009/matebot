@@ -29,16 +29,36 @@ describe("capability registry", () => {
     );
   });
 
-  // Calendar is registered so a plan cannot silently become a text-only card,
-  // but Phase 1 owns its editor. It is recognised, not executable.
-  it("registers calendar as known but not yet implemented", () => {
+  // Phase 1: calendar create is a real form with a real submit on the shared
+  // pipeline, and it never collects attendees, so a create cannot invite anyone.
+  it("registers calendar create as an implemented form with a create action", () => {
     const calendar = findInteractionCapability("calendar.create");
     expect(calendar).toMatchObject({
       requiresConnection: "calendar",
       effectKind: "calendar.create",
-      implemented: false,
+      implemented: true,
     });
-    expect(calendar?.schema.action).toBeNull();
+    expect(calendar?.schema.presentation).toBe("form");
+    expect(calendar?.schema.action).toMatchObject({ id: "create" });
+    expect(calendar?.schema.fields.map((field) => field.name)).toEqual([
+      "name",
+      "start",
+      "end",
+      "timezone",
+      "allDay",
+    ]);
+    // No attendee field exists, so no create can invite anyone.
+    expect(calendar?.schema.fields.some((field) => /attendee|guest|invite/i.test(field.name))).toBe(
+      false,
+    );
+  });
+
+  // Reading a schedule must be a result, not a draft: "next week" is a query.
+  it("registers calendar query as a read-only result with no action", () => {
+    const query = findInteractionCapability("calendar.query");
+    expect(query).toMatchObject({ readOnly: true, effectKind: null, implemented: true });
+    expect(query?.schema.presentation).toBe("result");
+    expect(query?.schema.action).toBeNull();
   });
 
   it("returns nothing for an unregistered intent, so callers can fall back", () => {

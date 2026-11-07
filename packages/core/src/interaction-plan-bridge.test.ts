@@ -20,10 +20,16 @@ describe("surfacePlanForCapability", () => {
     });
   });
 
-  it("refuses a registered but unimplemented capability so no dead button ships", () => {
-    expect(surfacePlanForCapability("calendar.create")).toMatchObject({
+  // Phase 1 shipped the calendar, so this now renders. The unimplemented guard
+  // is still covered below with a capability the registry marks incomplete.
+  it("renders the calendar create capability now that Phase 1 ships it", () => {
+    expect(surfacePlanForCapability("calendar.create")).toMatchObject({ ok: true });
+  });
+
+  it("still refuses an intent the registry has not registered", () => {
+    expect(surfacePlanForCapability("github.clone")).toMatchObject({
       ok: false,
-      reason: "not_implemented",
+      reason: "unregistered_intent",
     });
   });
 });

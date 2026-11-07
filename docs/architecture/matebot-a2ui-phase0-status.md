@@ -4,7 +4,15 @@ Status of the approved v1.1 spec ([`matebot-a2ui-best-practices-v1.1.md`](./mate
 This file records **what is actually implemented**; the spec records what is required.
 It is updated as each stage lands, and deliberately marks work as deferred rather than done.
 
-Last updated for the third foundation PR (base: PR #35 tip `1205da088`).
+Last updated for the Phase 1 calendar PR (base: PR #37 tip `b2085954`).
+
+> **P0 is NOT fully passed.** One pre-release gate remains: a real DeepSeek
+> multi-turn run covering **mail and calendar** has not been executed, because no
+> task-authorised DeepSeek credential exists in this workspace. Deterministic tool
+> tests, an in-memory database, real Postgres, and DOM tests are **not** live-model
+> evidence, and the twelve-scenario corpus is a data gate, not an end-to-end run.
+> This is an outstanding gate, not a waiver; reproduction instructions are in
+> [`matebot-a2ui-phase0-validation.md`](./matebot-a2ui-phase0-validation.md).
 
 ---
 
@@ -31,7 +39,6 @@ Last updated for the third foundation PR (base: PR #35 tip `1205da088`).
 | Calendar draft + real create (Phase 1) | **Deferred** | Registry marks `calendar.create` `implemented: false`, so no dead button ships |
 | Result/view surfaces with provenance (Phase 2) | **Deferred** | Corpus rows 1–3 and 6 stay `deferred` with explicit safe fallbacks |
 | The 12 scenarios as an executed end-to-end run | **Data gate only** | Registry and invariants are tested, and the sim reports each row; the scenarios are not driven against a live model |
-| Real-database route test | **Blocked** | No Postgres, Docker, or root here; see below |
 | VegaChart catalog | **Not adopted** | npm 404 at audit; needs license/build/size review |
 | Performance targets (p95 ≤ 1s) | **Not measured** | Spec calls these proposals |
 

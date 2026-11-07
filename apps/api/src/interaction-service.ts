@@ -5,16 +5,19 @@ import type {
 } from "@matebot/adapter-kit";
 import type {
   EmailCapabilityRow,
+  InteractionCalendarSender,
   InteractionEmailDelivery,
   InteractionEmailSender,
 } from "@matebot/adapters";
 import {
+  createCalendarEvent,
   deliverInteractionEmail,
   emailCapabilityFromRows,
   emailDraftSlots,
   emailSendAdapterContext,
   enqueueEmailReconcile,
   finishInteractionEmailSend,
+  interactionCapabilityFromRows,
   loadEmailReconnectRefs,
   loadOwnerEmailConnections,
   loadProviderReadiness,
@@ -36,6 +39,9 @@ import {
   interactionConfirmEffectRequest,
   interactionConfirmIdempotencyKey,
   interactionEffectKind,
+  interactionRequiredApp,
+  normalizeCalendarFields,
+  validateCalendarEvent,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
@@ -199,6 +205,104 @@ async function resolveMailboxCapability(
   return emailCapabilityFromRows(connections, reconnectRefs, providerReady);
 }
 
+/**
+ * The connection a capability acts through.
+ *
+ * Email uses the mailbox preflight it always did; calendar uses the calendar
+ * three-state. Keeping one entry point means the execute path does not grow a
+ * branch per domain, and an unregistered intent resolves to nothing rather than
+ * borrowing a mailbox.
+ */
+async function resolveCapabilityConnection(
+  prisma: PrismaClient,
+  input: InteractionMailboxDeps & { spaceId: string; threadId?: string; botId?: string },
+  intent: string,
+  connector: InteractionMailboxDeps["connector"],
+  interactionId?: string,
+): Promise<{
+  connection: EmailCapabilityRow | undefined;
+  surfaceCapability: EmailSurfaceCapability;
+}> {
+  const app = interactionRequiredApp(intent);
+  if (app === "calendar") {
+    const connections =
+      input.emailConnections ??
+      (await loadOwnerEmailConnections(prisma, { spaceId: input.spaceId, userId: input.userId }));
+    const managed = connector?.managed?.("composio") ?? connector;
+    const context = {
+      operationId: "interaction.calendar.preflight",
+      traceId: "interaction.calendar.preflight",
+      spaceId: input.spaceId,
+      userId: input.userId,
+      signal: new AbortController().signal,
+    };
+    const reconnectRefs =
+      input.reconnectRefs ??
+      (await loadEmailReconnectRefs(
+        connector?.listReconnectRefs ?? managed?.listReconnectRefs,
+        context,
+      ));
+    const providerReady =
+      input.providerReady ??
+      (await loadProviderReadiness(
+        connector?.connectionReady ? connector : managed,
+        context,
+        connections,
+      ));
+    const snapshot = interactionCapabilityFromRows(
+      intent,
+      connections,
+      reconnectRefs,
+      providerReady,
+    );
+    // A calendar that is not usable refreshes the same card into its
+    // connection/reconnect template, exactly as the mailbox path does, so the
+    // user is never left with a dead end. Then the send is refused.
+    if (!emailCapabilityAllowsSend(snapshot.status)) {
+      if (interactionId && input.threadId && input.botId) {
+        await projectCapabilityGate(
+          prisma,
+          {
+            spaceId: input.spaceId,
+            threadId: input.threadId,
+            botId: input.botId,
+            interactionId,
+          },
+          snapshot.surfaceCapability,
+        ).catch(() => undefined);
+      }
+      throw new InteractionSendRejectedError(
+        "needs_connection",
+        snapshot.status === "REQUIRES_REAUTH"
+          ? "Reconnect the calendar before creating an event"
+          : "Connect a calendar before creating an event",
+      );
+    }
+    return {
+      connection: snapshot.connection,
+      surfaceCapability: snapshot.surfaceCapability,
+    };
+  }
+  const mailbox = await resolveMailboxCapability(prisma, input);
+  if (emailCapabilityAllowsSend(mailbox.status)) {
+    return { connection: mailbox.connection, surfaceCapability: mailbox.surfaceCapability };
+  }
+  if (interactionId && input.threadId && input.botId) {
+    await projectMailboxGate(
+      prisma,
+      {
+        spaceId: input.spaceId,
+        threadId: input.threadId ?? "",
+        botId: input.botId ?? "",
+        interactionId,
+      },
+      mailbox,
+    ).catch(() => undefined);
+  }
+  rejectUnlessMailboxReady(mailbox);
+  return { connection: mailbox.connection, surfaceCapability: mailbox.surfaceCapability };
+}
+
 function rejectUnlessMailboxReady(
   snapshot: ReturnType<typeof emailCapabilityFromRows>,
 ): asserts snapshot is ReturnType<typeof emailCapabilityFromRows> & {
@@ -217,6 +321,40 @@ function rejectUnlessMailboxReady(
  * A preflight miss must land on the card, not in prose: refresh the same surface
  * into its connection/reconnect template so the user has a button to press.
  */
+async function projectCapabilityGate(
+  prisma: PrismaClient,
+  target: { spaceId: string; threadId: string; botId: string; interactionId: string },
+  capability: EmailSurfaceCapability,
+): Promise<void> {
+  const current = await getInteraction(prisma, target.interactionId);
+  if (!current) return;
+  await withTransactionRetry(() =>
+    prisma.$transaction(async (tx) => {
+      await tx.interaction.updateMany({
+        where: { id: current.id, draftVersion: current.draftVersion },
+        data: { status: "needs_connection" },
+      });
+      await projectInteractionEmailSurface(tx, {
+        interaction: {
+          id: current.id,
+          messageId: current.messageId,
+          title: current.title,
+          summary: current.summary,
+        },
+        plan: current.plan as InteractionPlan,
+        confirmedVersion: current.confirmedVersion,
+        draftVersion: current.draftVersion,
+        runId: current.runId ?? undefined,
+        spaceId: target.spaceId,
+        threadId: target.threadId,
+        botId: target.botId,
+        interactionStatus: "needs_connection",
+        capability,
+      });
+    }),
+  );
+}
+
 async function projectMailboxGate(
   prisma: PrismaClient,
   input: { spaceId: string; threadId: string; botId: string; interactionId: string },
@@ -480,7 +618,10 @@ export async function executeConfirmedInteractionService(
   if (effect.status === "ambiguous") {
     throw new InteractionSendRejectedError("unknown", "Send result is unknown; do not send again");
   }
-  if (effect.kind !== "email.send") {
+  // Which capability does this effect belong to? Calendar create runs the same
+  // claim/finish lifecycle as email, with its own sender and its own connection.
+  const isCalendar = effect.kind === "calendar.create";
+  if (effect.kind !== "email.send" && !isCalendar) {
     return {
       effectId: effect.id,
       idempotencyKey: effect.idempotencyKey,
@@ -489,10 +630,21 @@ export async function executeConfirmedInteractionService(
     };
   }
 
-  const mailbox = await requireReadyMailbox(prisma, input, current.id);
+  const mailbox = await resolveCapabilityConnection(
+    prisma,
+    input,
+    current.intent,
+    input.connector,
+    current.id,
+  );
   const connection = mailbox.connection;
   if (!connection || !input.connector) {
-    throw new InteractionSendRejectedError("needs_connection", "Connect a mailbox before sending");
+    throw new InteractionSendRejectedError(
+      "needs_connection",
+      isCalendar
+        ? "Connect a calendar before creating an event"
+        : "Connect a mailbox before sending",
+    );
   }
 
   const claimed = await prisma.externalEffect.updateMany({
@@ -587,6 +739,77 @@ export async function executeConfirmedInteractionService(
         });
       }),
     );
+
+    if (isCalendar) {
+      // Calendar: validate the confirmed slots, then create through the user's
+      // own connection. A failure is classified exactly as an email failure is,
+      // so UNKNOWN reconciliation and no-auto-retry behave identically.
+      const slots = interactionSlots(
+        effect.request && (effect.request as { slots?: unknown }).slots,
+      );
+      const normalized = normalizeCalendarFields(slots);
+      const validated = validateCalendarEvent(normalized);
+      if (!validated.ok) {
+        await finish({
+          effectStatus: "failed",
+          interactionStatus: "failed",
+          result: { error: validated.error },
+        });
+        throw new InteractionEmailDeliveryError(
+          `Calendar event rejected: ${validated.error}`,
+          "failed",
+        );
+      }
+      const calendarSender: InteractionCalendarSender = {
+        kind: "connector",
+        context: emailSendAdapterContext(
+          { spaceId: input.spaceId, userId: input.userId },
+          connection,
+        ),
+        connector: input.connector,
+        connectionId: connection.id,
+      };
+      let created: Awaited<ReturnType<typeof createCalendarEvent>>;
+      try {
+        created = await createCalendarEvent(
+          { event: validated.event, idempotencyKey: effect.idempotencyKey },
+          calendarSender,
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message ? error.message : "Could not create the event";
+        const outcome = emailDeliveryOutcome({ error: message });
+        await finish({
+          effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
+          interactionStatus: outcome,
+          result: { error: message },
+        });
+        if (outcome === "unknown") await scheduleReconcile();
+        throw new InteractionEmailDeliveryError("Could not create the event", outcome);
+      }
+      if (!created.ok) {
+        const outcome = emailDeliveryOutcome(created);
+        await finish({
+          effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
+          interactionStatus: outcome,
+          result: { error: created.error },
+        });
+        if (outcome === "unknown") await scheduleReconcile();
+        throw new InteractionEmailDeliveryError(created.error, outcome);
+      }
+      await finish({
+        effectStatus: "completed",
+        interactionStatus: "succeeded",
+        result: { providerMessageId: created.eventId, deliveryId: created.eventId },
+      });
+      return {
+        effectId: effect.id,
+        idempotencyKey: effect.idempotencyKey,
+        duplicate: false,
+        executed: true,
+        providerMessageId: created.eventId,
+      };
+    }
 
     const draft = emailDraftSlots(effect.request);
     const sender: InteractionEmailSender = {
