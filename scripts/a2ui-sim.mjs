@@ -26,6 +26,7 @@ const nudgeModule = join(root, "packages/core/src/interaction-nudge.ts");
 const capabilityModule = join(root, "packages/core/src/interaction-capability.ts");
 const planBridgeModule = join(root, "packages/core/src/interaction-plan-bridge.ts");
 const corpusModule = join(root, "packages/core/src/corpus.ts");
+const resultModule = join(root, "packages/core/src/interaction-result.ts");
 const toolNamesModule = join(root, "packages/contracts/src/builtin-tools.ts");
 
 if (!existsSync(simModule)) {
@@ -61,6 +62,7 @@ import {
   surfacePlanForCapability,
 } from ${JSON.stringify(planBridgeModule)};
 import { readFileSync } from "node:fs";
+import { buildResultSurface, refreshResultSurface } from ${JSON.stringify(resultModule)};
 import { MULTI_TURN_CORPUS } from ${JSON.stringify(corpusModule)};
 import { BUILTIN_TOOL_NAMES } from ${JSON.stringify(toolNamesModule)};
 
@@ -363,6 +365,86 @@ function buildEditToolScenario() {
   };
 }
 
+/**
+ * P2: a result card carries provenance, and the same card can be re-queried for a
+ * different window without becoming a second card or inventing a source.
+ */
+function buildResultScenario() {
+  const provenance = {
+    source: "user-provided CSV",
+    asOf: "2026-11-06T00:00:00.000Z",
+    window: { from: "2026-01-01", to: "2026-12-31" },
+    units: "CNY",
+  };
+  const base = buildResultSurface({
+    title: "Annual sales",
+    provenance,
+    columns: [{ key: "quarter", label: "Quarter" }],
+    rows: [{ quarter: "Q1" }, { quarter: "Q2" }],
+  });
+  const baseSurface = base.ok ? base.surface : null;
+
+  const rows = [
+    {
+      case: "no provenance",
+      // The contract passes only when the refusal happens.
+      ok: buildResultSurface({ title: "Sales", provenance: { source: "" }, rows: [] }).ok === false,
+      detail: "refused: a result must say where it came from",
+      expect: "refused",
+    },
+    {
+      case: "empty window",
+      ok: buildResultSurface({ title: "Sales", provenance, rows: [] }).ok,
+      detail: "flagged empty, never zero",
+      expect: "empty",
+    },
+    {
+      case: "oversized dataset",
+      ok: buildResultSurface({
+        title: "Big",
+        provenance,
+        rows: Array.from({ length: 260 }, (_, i) => ({ n: String(i) })),
+      }).ok,
+      detail: "truncated to a bounded row count",
+      expect: "truncated",
+    },
+  ];
+
+  if (baseSurface) {
+    const refreshed = refreshResultSurface(baseSurface, {
+      revision: 2,
+      window: { from: "2026-07-01", to: "2026-09-30" },
+      rows: [{ quarter: "Q3" }],
+    });
+    const changed = refreshResultSurface(baseSurface, {
+      revision: 2,
+      window: { from: "2026-07-01", to: "2026-09-30" },
+      rows: [],
+      source: "another sheet",
+    });
+    rows.push({
+      case: "same-card re-query",
+      ok: refreshed.ok && refreshed.surface.provenance.units === "CNY",
+      detail: "keeps source and units on the same card",
+      expect: "refresh",
+    });
+    rows.push({
+      case: "silent source change",
+      ok: !changed.ok,
+      detail: "refused: switching source is a new query",
+      expect: "refused",
+    });
+  }
+
+  return {
+    id: "result-surface",
+    title: "result cards carry provenance and refresh in place",
+    rows,
+    check: (row) => row.ok === true,
+    invariant: "a result states its source, never fakes a zero, and cannot swap its source silently",
+  };
+}
+
 const scenarios = [
   {
     id: "connection-states",
@@ -458,6 +540,7 @@ const scenarios = [
   buildCapabilityScenario(),
   buildCorpusScenario(),
   buildEditToolScenario(),
+  buildResultScenario(),
 ];
 
 const nudges = Object.entries(A2UI_SURFACE_NUDGE).map(([state, text]) => ({
@@ -492,7 +575,7 @@ if (args.includes("--help") || args.includes("-h")) {
       "  node scripts/a2ui-sim.mjs --json       print the raw rows",
       "  node scripts/a2ui-sim.mjs --list       list scenario ids",
       "",
-      "Scenarios: connection-states, send-outcomes, unknown-reconcile, calendar-resume, dialogue-prompts, capability-registry, corpus-gate, edit-tool",
+      "Scenarios: connection-states, send-outcomes, unknown-reconcile, calendar-resume, dialogue-prompts, capability-registry, corpus-gate, edit-tool, result-surface",
     ].join("\n"),
   );
   process.exit(0);

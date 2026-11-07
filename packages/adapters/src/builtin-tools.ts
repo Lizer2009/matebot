@@ -806,6 +806,45 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "present_result",
+    description:
+      "Show a read-only result card from data you already have, when the user asks to see numbers, a summary, or a trend. Pass provenance (source, asOf, optional window/units/timezone) and computed rows — never invent values. It displays only; it sends and changes nothing. With no real data, ask for the source instead. After it publishes, reply in one short sentence.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short heading for the card." },
+        source: {
+          type: "string",
+          description: "Where the numbers came from, such as a file or a query.",
+        },
+        asOf: { type: "string", description: "ISO 8601 time the data was measured." },
+        window: {
+          type: "object",
+          description: "Optional period: from/to.",
+          properties: { from: { type: "string" }, to: { type: "string" } },
+          required: ["from", "to"],
+        },
+        units: { type: "string", description: "Optional unit, such as CNY or count." },
+        timezone: { type: "string", description: "Optional IANA zone for the window." },
+        columns: {
+          type: "array",
+          description: "Optional column order and labels; defaults to the first row's keys.",
+          items: {
+            type: "object",
+            properties: { key: { type: "string" }, label: { type: "string" } },
+            required: ["key", "label"],
+          },
+        },
+        rows: {
+          type: "array",
+          description: "Computed rows of scalar values; at most 200 are shown.",
+          items: { type: "object" },
+        },
+      },
+      required: ["title", "source", "asOf", "rows"],
+    },
+  },
+  {
     name: "add_mcp_server",
     description:
       "Connect a remote MCP tool server to this Space when the user asks you to add one and provides the details (URL, optional token/headers). The server is created immediately and an approval card appears in the chat; its tools reach you once the user approves it there. Do not invent endpoints; only use details the user provided. Local (stdio) servers can only be added by an admin in Settings.",

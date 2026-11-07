@@ -2,6 +2,7 @@ import type {
   A2uiProtocolFamily,
   InteractionFieldSpec,
   InteractionSurfaceSchema,
+  ResultSurface,
 } from "@matebot/contracts";
 import { InteractionSurfaceSchema as InteractionSurfaceSchemaZ } from "@matebot/contracts";
 import { basicCatalogId, DEFAULT_PROTOCOL_FAMILY, protocolWireVersion } from "./protocol.js";
@@ -36,6 +37,10 @@ const ACTION_ID = "action";
 const TITLE_ID = "title";
 const SUMMARY_ID = "summary";
 const RESULT_IDS = (index: number) => `result_${index}`;
+const HEADER_ID = "result_header";
+const EMPTY_ID = "result_empty";
+const TRUNCATED_ID = "result_truncated";
+const PROVENANCE_ID = "result_provenance";
 
 export type CompileInteractionSurfaceInput = {
   schema: InteractionSurfaceSchema;
@@ -46,8 +51,12 @@ export type CompileInteractionSurfaceInput = {
   /** Optimistic concurrency stamp shown to the host so it can reject stale submits. */
   revision?: number;
   protocolFamily?: A2uiProtocolFamily;
-  /** For `result` surfaces: title plus pre-formatted lines or table rows. */
-  result?: { title?: string; rows: Array<string | Record<string, unknown>> };
+  /**
+   * For `result` surfaces: a bounded, provenance-carrying surface from
+   * `buildResultSurface`. Loose rows are not accepted, because a result with no
+   * source is exactly what the spec forbids.
+   */
+  result?: ResultSurface;
   title?: string;
   summary?: string;
 };
@@ -242,11 +251,29 @@ function buildFormComponents(input: {
   return [{ id: "root", component: "Column", children }, ...components];
 }
 
-/** A result surface lists data and offers no control. */
-function buildResultComponents(input: {
-  title?: string;
-  rows: Array<string | Record<string, unknown>>;
-}): Component[] {
+/** The one line under a result card that states where the numbers came from. */
+function provenanceLine(provenance: {
+  source: string;
+  asOf: string;
+  units?: string;
+  window?: { from: string; to: string };
+}): string {
+  const parts = [provenance.source];
+  if (provenance.window) parts.push(`${provenance.window.from} – ${provenance.window.to}`);
+  if (provenance.units) parts.push(provenance.units);
+  parts.push(`as of ${provenance.asOf.slice(0, 10)}`);
+  return parts.join(" · ");
+}
+
+/**
+ * A result surface lists data, states where it came from, and offers no control.
+ *
+ * The table is composed from basic-catalog primitives only — a header Row of
+ * Texts and one Row per record — because the basic catalog has no Table or
+ * DataGrid. Anything richer would have to be a registered extension, and this
+ * adapter does not pretend one exists.
+ */
+function buildResultComponents(input: { title?: string; result?: ResultSurface }): Component[] {
   const children: string[] = [];
   const components: Component[] = [];
 
@@ -255,20 +282,70 @@ function buildResultComponents(input: {
     components.push({ id: TITLE_ID, component: "Text", text: input.title, variant: "h3" });
   }
 
-  input.rows.forEach((row, index) => {
-    const id = RESULT_IDS(index);
-    children.push(id);
-    if (typeof row === "string") {
-      components.push({ id, component: "Text", text: row });
-      return;
-    }
-    // A record becomes one line of `label: value` pairs, which is a Row of Texts.
-    const cells = Object.entries(row).map(([key, value], cellIndex) => {
-      const cellId = `${id}_c${cellIndex}`;
-      components.push({ id: cellId, component: "Text", text: `${key}: ${String(value)}` });
-      return cellId;
+  const result = input.result;
+  if (!result) {
+    // No data at all: say so rather than render an empty table that looks like 0.
+    children.push(EMPTY_ID);
+    components.push({
+      id: EMPTY_ID,
+      component: "Text",
+      text: "No data was found for this period.",
     });
-    components.push({ id, component: "Row", children: cells });
+    return [{ id: "root", component: "Column", children }, ...components];
+  }
+
+  if (result.empty) {
+    children.push(EMPTY_ID);
+    components.push({
+      id: EMPTY_ID,
+      component: "Text",
+      text: result.emptyNotice ?? "No data was found for this period.",
+    });
+  } else {
+    // Header row: one Text per declared column, so a wide table stays readable.
+    if (result.columns.length > 0) {
+      const headerCells = result.columns.map((column, index) => {
+        const id = `${HEADER_ID}_c${index}`;
+        components.push({ id, component: "Text", text: column.label, variant: "h4" });
+        return id;
+      });
+      children.push(HEADER_ID);
+      components.push({ id: HEADER_ID, component: "Row", children: headerCells });
+    }
+
+    result.rows.forEach((row, rowIndex) => {
+      const id = RESULT_IDS(rowIndex);
+      const cells = result.columns.map((column, cellIndex) => {
+        const cellId = `${id}_c${cellIndex}`;
+        const value = row[column.key];
+        components.push({
+          id: cellId,
+          component: "Text",
+          text: value === null || value === undefined ? "" : String(value),
+        });
+        return cellId;
+      });
+      children.push(id);
+      components.push({ id, component: "Row", children: cells });
+    });
+
+    if (result.truncated) {
+      children.push(TRUNCATED_ID);
+      components.push({
+        id: TRUNCATED_ID,
+        component: "Text",
+        text: `Showing the first ${result.rows.length} of ${result.totalRows} rows.`,
+      });
+    }
+  }
+
+  // Provenance is not optional chrome: the card states where the numbers came from.
+  children.push(PROVENANCE_ID);
+  components.push({
+    id: PROVENANCE_ID,
+    component: "Text",
+    text: provenanceLine(result.provenance),
+    variant: "caption",
   });
 
   return [{ id: "root", component: "Column", children }, ...components];
@@ -314,8 +391,10 @@ export async function compileInteractionSurface(
     schema.presentation === "form"
       ? buildFormComponents({ ...input, schema })
       : buildResultComponents({
+          // The result surface already carries its own heading; fall back to the
+          // caller's title only when it has none.
           title: input.result?.title ?? input.title,
-          rows: input.result?.rows ?? [],
+          result: input.result,
         });
 
   const dataModel = surfaceDataModel({
@@ -324,7 +403,18 @@ export async function compileInteractionSurface(
     surfaceId,
     ...(input.revision !== undefined ? { revision: input.revision } : {}),
     ...(input.interactionId ? { interactionId: input.interactionId } : {}),
-    ...(input.result?.rows ? { rows: input.result.rows } : {}),
+    ...(input.result
+      ? {
+          result: {
+            columns: input.result.columns,
+            rows: input.result.rows,
+            provenance: input.result.provenance,
+            truncated: input.result.truncated,
+            totalRows: input.result.totalRows,
+            empty: input.result.empty,
+          },
+        }
+      : {}),
   });
 
   const messages: unknown[] = [

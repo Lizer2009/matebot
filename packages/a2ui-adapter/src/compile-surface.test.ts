@@ -157,7 +157,25 @@ describe("compileInteractionSurface", () => {
         fields: [],
         action: null,
       },
-      result: { title: "Revenue", rows: ["Q1 1.2M", "Q2 1.6M"] },
+      result: {
+        title: "Revenue",
+        provenance: {
+          source: "user-provided CSV",
+          asOf: "2026-11-06T00:00:00.000Z",
+          units: "CNY",
+        },
+        columns: [
+          { key: "quarter", label: "Quarter" },
+          { key: "total", label: "Total" },
+        ],
+        rows: [
+          { quarter: "Q1", total: "1.2M" },
+          { quarter: "Q2", total: "1.6M" },
+        ],
+        truncated: false,
+        totalRows: 2,
+        empty: false,
+      },
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -168,7 +186,38 @@ describe("compileInteractionSurface", () => {
     const texts = components
       .filter((component) => component.component === "Text")
       .map((component) => component.text);
-    expect(texts).toContain("Q1 1.2M");
+    // The header labels, the cell values, and the provenance line all render.
+    expect(texts).toContain("Quarter");
+    expect(texts).toContain("Q1");
+    expect(texts).toContain("1.2M");
+    expect(
+      texts.some((text) => typeof text === "string" && text.includes("user-provided CSV")),
+    ).toBe(true);
+  });
+
+  // An empty result must say so rather than render an empty grid.
+  it("renders an empty result as a sentence, not a table", async () => {
+    const result = await compileInteractionSurface({
+      surfaceId: "s-empty",
+      values: {},
+      schema: { schemaVersion: 1, presentation: "result", fields: [], action: null },
+      result: {
+        title: "Revenue",
+        provenance: { source: "user-provided CSV", asOf: "2026-11-06T00:00:00.000Z" },
+        columns: [],
+        rows: [],
+        truncated: false,
+        totalRows: 0,
+        empty: true,
+        emptyNotice: "No data was found for this period in user-provided CSV.",
+      },
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const texts = componentsOf(result.messages)
+      .filter((component) => component.component === "Text")
+      .map((component) => component.text);
+    expect(texts).toContain("No data was found for this period in user-provided CSV.");
   });
 
   it("refuses a schema with an unknown field kind instead of emitting a broken tree", async () => {

@@ -105,3 +105,42 @@ export const InteractionSurfaceSchema = z.object({
   action: InteractionActionSpec.nullable(),
 });
 export type InteractionSurfaceSchema = z.infer<typeof InteractionSurfaceSchema>;
+
+/**
+ * Where a result's numbers came from. Required on every result surface: a figure
+ * with no traceable origin is what the spec forbids showing at all.
+ */
+export const ResultProvenanceSchema = z.object({
+  /** Who produced the numbers: a file the user supplied, a connector, a query. */
+  source: z.string().trim().min(1).max(200),
+  /** When the data was measured, not when the card was drawn. */
+  asOf: z.string().trim().min(1),
+  window: z.object({ from: z.string().trim().min(1), to: z.string().trim().min(1) }).optional(),
+  /** The unit of any measure, e.g. "CNY" or "count". Never invented. */
+  units: z.string().trim().max(32).optional(),
+  timezone: z.string().trim().max(64).optional(),
+});
+export type ResultProvenance = z.infer<typeof ResultProvenanceSchema>;
+
+export const ResultColumnSchema = z.object({
+  key: z.string().trim().min(1).max(64),
+  label: z.string().trim().min(1).max(120),
+  align: z.enum(["start", "end"]).optional(),
+});
+export type ResultColumn = z.infer<typeof ResultColumnSchema>;
+
+/** A cell is a scalar; structure never reaches the surface. */
+export const ResultCellSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+
+/** A bounded result: rows already truncated and flagged by the server. */
+export const ResultSurfaceSchema = z.object({
+  title: z.string(),
+  provenance: ResultProvenanceSchema,
+  columns: z.array(ResultColumnSchema),
+  rows: z.array(z.record(z.string(), ResultCellSchema)),
+  truncated: z.boolean(),
+  totalRows: z.number().int().nonnegative(),
+  empty: z.boolean(),
+  emptyNotice: z.string().optional(),
+});
+export type ResultSurface = z.infer<typeof ResultSurfaceSchema>;

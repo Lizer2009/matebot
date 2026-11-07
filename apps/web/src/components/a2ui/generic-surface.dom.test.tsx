@@ -141,13 +141,33 @@ describe("generic compiled surface (real renderer)", () => {
     expect((checkbox as HTMLInputElement).checked).toBe(true);
   });
 
-  // A result surface must not sprout inputs or a submit button.
-  it("renders a result surface with data and no controls", async () => {
+  // A result surface must not sprout inputs or a submit button, and it must
+  // state where the numbers came from.
+  it("renders a result table with its provenance and no controls", async () => {
     const compiled = await compileInteractionSurface({
       surfaceId: "s-1",
       values: {},
       schema: { schemaVersion: 1, presentation: "result", fields: [], action: null },
-      result: { title: "Revenue", rows: ["Q1 1.2M", { Q2: "1.6M" }] },
+      result: {
+        title: "Revenue",
+        provenance: {
+          source: "user-provided CSV",
+          asOf: "2026-11-06T00:00:00.000Z",
+          window: { from: "2026-01-01", to: "2026-12-31" },
+          units: "CNY",
+        },
+        columns: [
+          { key: "quarter", label: "Quarter" },
+          { key: "total", label: "Total" },
+        ],
+        rows: [
+          { quarter: "Q1", total: "1.2M" },
+          { quarter: "Q2", total: "1.6M" },
+        ],
+        truncated: false,
+        totalRows: 2,
+        empty: false,
+      },
     });
     expect(compiled.ok).toBe(true);
     if (!compiled.ok) return;
@@ -162,9 +182,51 @@ describe("generic compiled surface (real renderer)", () => {
     });
     const text = host.textContent ?? "";
     expect(text).toContain("Revenue");
-    expect(text).toContain("Q1 1.2M");
-    expect(text).toContain("Q2: 1.6M");
+    // Header labels and cell values render as a real table.
+    expect(text).toContain("Quarter");
+    expect(text).toContain("Total");
+    expect(text).toContain("1.2M");
+    expect(text).toContain("1.6M");
+    // Provenance is visible, not decorative metadata.
+    expect(text).toContain("user-provided CSV");
+    expect(text).toContain("CNY");
     expect(host.querySelectorAll("input").length).toBe(0);
     expect(host.querySelectorAll("button").length).toBe(0);
+  });
+
+  // Nothing to show must read as a sentence, not an empty table or a zero.
+  it("renders an empty result as a notice with its source", async () => {
+    const compiled = await compileInteractionSurface({
+      surfaceId: "s-1",
+      values: {},
+      schema: { schemaVersion: 1, presentation: "result", fields: [], action: null },
+      result: {
+        title: "Revenue",
+        provenance: { source: "user-provided CSV", asOf: "2026-11-06T00:00:00.000Z" },
+        columns: [],
+        rows: [],
+        truncated: false,
+        totalRows: 0,
+        empty: true,
+        emptyNotice: "No data was found for this period in user-provided CSV.",
+      },
+    });
+    expect(compiled.ok).toBe(true);
+    if (!compiled.ok) return;
+    const processor = new mods.MessageProcessor([mods.basicCatalog]);
+    processor.processMessages(compiled.messages as never[]);
+    await act(async () => {
+      root.render(
+        createElement(mods.A2uiSurface, {
+          surface: processor.model.surfacesMap.get("s-1") as never,
+        }),
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 60));
+    });
+    const text = host.textContent ?? "";
+    expect(text).toMatch(/No data was found/);
+    expect(text).not.toMatch(/^0$/);
   });
 });
