@@ -200,8 +200,11 @@ export function inferScript(
   // A2UI fixtures: the scripted runtime can drive the same tool entry a model
   // would, so an end-to-end test can exercise the real card pipeline. These are
   // explicit imperative prompts, matching the `call save_page with ...` style.
+  // A message that carries an attachment has provider prose appended after the
+  // user's words, so the instruction is matched at the start and anything after
+  // the JSON object is ignored.
   const a2ui =
-    /^(?:@\S+\s+)?call (present_interaction|present_result|refresh_result|edit_interaction|cancel_interaction) with (\{[\s\S]+\})$/.exec(
+    /^(?:@\S+\s+)?call (present_interaction|present_result|refresh_result|edit_interaction|cancel_interaction) with (\{[\s\S]*\})/.exec(
       words.trim(),
     );
   if (a2ui) {

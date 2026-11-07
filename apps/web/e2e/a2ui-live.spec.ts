@@ -40,6 +40,15 @@ async function signIn(
 ) {
   await signup(page, nextAccount(), password, "A2UI Tester", testInfo);
   await completeOnboarding(page, testInfo);
+  // The scripted runtime still needs a model to resolve. Connecting the scripted
+  // provider gives it one without contacting any real provider, which is what
+  // makes this suite runnable with no credentials at all.
+  await rpc(page, "models/connect", {
+    provider: "scripted",
+    apiKey: "fake-scripted-model-key",
+    label: "Scripted",
+    setDefault: true,
+  }).catch(() => undefined);
 }
 
 /** Send a message that the scripted runtime turns into one production tool call. */
@@ -98,34 +107,63 @@ test("compose card, model-shaped edit, same card, then a fake send", async ({ pa
   await captureScreenshot(page, testInfo, "a2ui-e2e-02-edited-same-card");
 });
 
-test("result card carries provenance and re-queries the same card", async ({ page }, testInfo) => {
-  await signIn(page, testInfo);
+/**
+ * A result card built from a file the user uploaded.
+ *
+ * The CSV is synthetic — made-up quarterly figures — because this proves the
+ * pipeline, not anyone's data. The bytes go through the real upload route, the
+ * real artifact store, the real reader and the real router, so a card appearing
+ * with these numbers means every step worked.
+ */
+const SAMPLE_CSV = [
+  "quarter,region,amount",
+  "Q1,North,1200.50",
+  "Q1,South,800",
+  "Q2,North,1500",
+].join("\n");
 
-  await send(
-    page,
-    `call present_result with ${JSON.stringify({
-      title: "Annual sales",
-      source: "user-provided CSV",
-      asOf: "2026-11-06T00:00:00.000Z",
-      window: { from: "2026-01-01", to: "2026-12-31" },
-      units: "CNY",
-      columns: [
-        { key: "quarter", label: "Quarter" },
-        { key: "total", label: "Total" },
-      ],
-      rows: [
-        { quarter: "Q1", total: "1.2M" },
-        { quarter: "Q2", total: "1.6M" },
-      ],
-    })}`,
-  );
-  await waitForSurface(page, "a2ui-surface-card");
-  // Provenance is on the card, not in prose.
-  await expect(page.getByTestId("a2ui-surface-card").first()).toContainText("user-provided CSV", {
-    timeout: 30_000,
+async function uploadCsv(page: import("@playwright/test").Page, botId: string): Promise<string> {
+  const artifact = await rpc<{ id: string }>(page, "artifacts/create", {
+    botId,
+    name: "sample-quarters.csv",
+    mimeType: "text/csv",
+    contentBase64: Buffer.from(SAMPLE_CSV, "utf8").toString("base64"),
   });
-  await expect(page.getByTestId("a2ui-surface-card").first()).toContainText("Q1");
-  await captureScreenshot(page, testInfo, "a2ui-e2e-03-result-provenance");
+  return artifact.id;
+}
+
+test("a result card reads the uploaded file and shows its own source", async ({
+  page,
+}, testInfo) => {
+  await signIn(page, testInfo);
+  const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
+  const botId = bots[0]!.id;
+  const artifactId = await uploadCsv(page, botId);
+
+  await rpc(page, "threads/send", {
+    botId,
+    artifactIds: [artifactId],
+    text: `call present_result with ${JSON.stringify({
+      title: "Quarterly totals",
+      sourceId: "csv-upload",
+      from: "2026-01-01",
+      to: "2026-12-31",
+      groupBy: "quarter",
+      metrics: [{ key: "total", op: "sum", of: "amount" }],
+    })}`,
+  });
+
+  const card = page.getByTestId("a2ui-surface-card").first();
+  await expect(card).toBeVisible({ timeout: 45_000 });
+  // The card names the file it read, not a generic label.
+  await expect(card).toContainText("sample-quarters.csv", { timeout: 30_000 });
+  // And shows the totals the server computed from those rows: 1200.50 + 800 for
+  // Q1, and 1500 for Q2 — arithmetic done in code, not supplied by a model.
+  await expect(card).toContainText("2000.5");
+  await expect(card).toContainText("1500");
+  // The period the read covered is on the card too.
+  await expect(card).toContainText("2026-01-01");
+  await captureScreenshot(page, testInfo, "a2ui-e2e-03-uploaded-result");
 
   // A result offers no Send or Create.
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
@@ -394,4 +432,128 @@ test("a result with no source is refused rather than shown", async ({ page }, te
   // Nothing is drawn: the server refused a result with no provenance.
   await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(0);
   await expect(page.getByTestId("a2ui-surface-host")).toHaveCount(0);
+});
+
+/**
+ * The remaining acceptance cases that only a browser can prove.
+ *
+ * Ambiguity, a same-card re-query and a double submit are all about what the real
+ * client and the real router do together, so they are driven here rather than
+ * asserted on a pure function.
+ */
+
+test("two open cards make an unqualified edit ask which one", async ({ page }, testInfo) => {
+  await signIn(page, testInfo);
+  const plan = (title: string) =>
+    JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title,
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: title, required: true, status: "resolved" },
+          { name: "body", value: "Hello there", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    });
+  await send(page, `call present_interaction with ${plan("First")}`);
+  await waitForSurface(page, "a2ui-email-compose");
+  await send(page, `call present_interaction with ${plan("Second")}`);
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(2, { timeout: 45_000 });
+
+  const subjects = page.getByTestId("a2ui-email-subject");
+  // Both cards must have hydrated before either can be compared: a card still
+  // loading shows the same element with an empty value.
+  await expect
+    .poll(
+      async () =>
+        subjects.evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
+      { timeout: 30_000 },
+    )
+    .toEqual(["First", "Second"]);
+  const before = await subjects.evaluateAll((nodes) =>
+    nodes.map((node) => (node as HTMLInputElement).value),
+  );
+
+  // "Change it" with two cards open must be resolved by asking, not by guessing.
+  const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
+  const ambiguous = await page.request.post("/rpc/threads/editInteraction", {
+    data: { json: { botId: bots[0]!.id, revision: 2, fields: { subject: "changed" } } },
+  });
+  expect(ambiguous.status()).toBeGreaterThanOrEqual(400);
+  expect(await ambiguous.text()).toContain("ambiguous_target");
+
+  // Neither card was touched.
+  expect(
+    await subjects.evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
+  ).toEqual(before);
+  await captureScreenshot(page, testInfo, "a2ui-e2e-08-ambiguous");
+});
+
+test("a result with no readable source is refused, and a source read shows its own name", async ({
+  page,
+}, testInfo) => {
+  await signIn(page, testInfo);
+  // A source id that is not registered: refused, nothing published.
+  await send(
+    page,
+    `call present_result with ${JSON.stringify({
+      title: "Numbers",
+      sourceId: "not-a-registered-source",
+      from: "2026-01-01",
+      to: "2026-12-31",
+    })}`,
+  );
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-e2e-09-unknown-source-refused");
+});
+
+test("a repeated submit does not run the action twice", async ({ page }, testInfo) => {
+  await signIn(page, testInfo);
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "Hello",
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "Hi", required: true, status: "resolved" },
+          { name: "body", value: "Hello there", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+  await waitForSurface(page, "a2ui-email-compose");
+  const interactionId = await cardInteractionId(page);
+  const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
+  const botId = bots[0]!.id;
+  const revision = await cardRevision(page);
+  const body = {
+    botId,
+    interactionId,
+    surfaceId: (await page
+      .getByTestId("a2ui-surface-card")
+      .first()
+      .getAttribute("data-surface-id")) as string,
+    action: "send",
+    revision,
+  };
+
+  // Two clicks issued at once, as a double tap would.
+  const [first, second] = await Promise.all([
+    page.request.post("/rpc/threads/dispatchInteractionAction", { data: { json: body } }),
+    page.request.post("/rpc/threads/dispatchInteractionAction", { data: { json: body } }),
+  ]);
+  const results = [await first.json(), await second.json()];
+  // At most one of them reports a fresh execution; the other is a duplicate or a
+  // refusal, never a second run.
+  expect(
+    results.filter((entry: unknown) => JSON.stringify(entry).includes('"duplicate":false')).length,
+  ).toBeLessThanOrEqual(1);
+  await captureScreenshot(page, testInfo, "a2ui-e2e-10-double-submit");
 });

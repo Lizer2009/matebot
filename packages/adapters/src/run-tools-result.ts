@@ -6,6 +6,7 @@ import type {
   ResultSourceRead,
 } from "@matebot/core";
 import { buildResultSurface, validateResultProvenance } from "@matebot/core";
+import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { loadOwnerEmailConnections } from "./interaction-email-capability.js";
 import { publishResultSurface } from "./interaction-result-publish.js";
@@ -260,6 +261,12 @@ export async function presentResult(
   }
   const built = await surfaceFromArgs(args, resultDeps);
   if (!built.ok) {
+    // A refusal is worth a line: it says which source was asked for and why the
+    // read did not happen, which is otherwise invisible to an operator.
+    getLogger().warn("a2ui.result_refused", {
+      "result.error": built.error,
+      "result.source_id": typeof args.sourceId === "string" ? args.sourceId : "none",
+    });
     // Tell the model what to do instead of showing a card with no source.
     const reply =
       built.error === "missing_source"
