@@ -220,7 +220,11 @@ export async function publishMidTurnNarration(ctx: RunContext, beforeConnectCard
   // Text the redactor still holds back belongs to the text just taken out.
   reply.redactor.skip();
   const promotes = runPromotesMidTurnNarration(run.trigger);
+  // A note that only repeats one already posted this run is not a new bubble. It is
+  // held like any other unposted note, so the run still ends with the answer once.
+  const repeatsPostedNote = restatesPublishedNarration(reply, text);
   if (
+    !repeatsPostedNote &&
     text.length <= USER_PROGRESS_MESSAGE_MAX_LENGTH &&
     (canPublishDurableNarration(ctx) || (beforeConnectCard && promotes))
   ) {
@@ -241,11 +245,17 @@ export async function publishMidTurnNarration(ctx: RunContext, beforeConnectCard
   reply.discardedMidTurnNarration = true;
   reply.lastDiscardedMidTurnNarration = clampUserProgressMessage(text);
   if (promotes && !ctx.allowSilentEmptyRun) {
-    reply.workingNotes.push(text);
+    holdWorkingNote(reply, text);
     flushPendingTools(reply);
     reply.messageSegments = noteLastToolStep(reply.messageSegments, text);
   }
   return text;
+}
+
+/** Keep a note for the final reply, once: the same sentence held twice is still one note. */
+export function holdWorkingNote(reply: ReplyState, text: string) {
+  if (reply.workingNotes.some((note) => normalizeNarration(note) === normalizeNarration(text))) return;
+  reply.workingNotes.push(text);
 }
 
 /**
