@@ -85,16 +85,35 @@ export async function createReplyState(
   return reply;
 }
 
-export function recordExplicitNoResponse(reply: ReplyState, text: string) {
-  reply.explicitNoResponse ||= isExactNoResponse(text) || /\bNO_RESPONSE\b/.test(text);
-}
-
 /** Durable interim messages only on genuinely long turns, capped per run. */
 export function canPublishDurableProgress(reply: ReplyState) {
   return (
     reply.steeringReplyPending ||
     midTurnProgressBudgetAllows(progressSinceBudgetStart(reply), Date.now() - reply.turnStartedAtMs)
   );
+}
+
+export function recordExplicitNoResponse(reply: ReplyState, text: string) {
+  reply.explicitNoResponse ||= isExactNoResponse(text) || /\bNO_RESPONSE\b/.test(text);
+}
+
+/**
+ * Whether a narration only repeats one already posted in this run.
+ *
+ * Deliberately conservative: it normalises whitespace and case and compares whole
+ * sentences against everything already sent, so a note with any new content is
+ * published. The audit's case was one conclusion restated after each command tail;
+ * this catches that without swallowing a genuinely different result. Nothing is
+ * compared across runs, so two runs reaching the same conclusion both report it.
+ */
+export function restatesPublishedNarration(reply: ReplyState, text: string): boolean {
+  const next = normalizeNarration(text);
+  if (!next) return false;
+  return reply.midTurnUserTexts.some((posted) => normalizeNarration(posted) === next);
+}
+
+function normalizeNarration(text: string): string {
+  return text.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 const BROWSER_AND_DESKTOP_TOOLS = new Set([

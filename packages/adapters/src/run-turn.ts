@@ -58,6 +58,7 @@ import {
   publishMidTurnNarration,
   publishNarrationBeforeAsk,
   recordExplicitNoResponse,
+  restatesPublishedNarration,
   showNarrationStatus,
   tryFlushPendingTools,
 } from "./run-progress.js";
@@ -343,16 +344,25 @@ async function onSteered(ctx: RunContext, event: RuntimeEvent<"steered">) {
     reply.hasStreamedText = false;
     reply.pendingProgress = "";
     reply.redactor.skip();
-    await publishMessage(
-      deps,
-      run,
-      "bot",
-      [{ kind: "text", text }],
-      undefined,
-      nextProgressNonce(ctx),
-    );
-    reply.midTurnUserTexts.push(text);
-    reply.publishedMidTurnUserMessage = true;
+    // This path used to publish unconditionally, so a run that kept taking steering
+    // turns accumulated one bubble per steering reset — the audit saw several
+    // restatements of the same conclusion, each the tail of a command. Only a note
+    // that repeats one already posted is held back; the person's own answer, and
+    // anything with new content, still goes out immediately.
+    if (restatesPublishedNarration(reply, text)) {
+      reply.workingNotes.push(text);
+    } else {
+      await publishMessage(
+        deps,
+        run,
+        "bot",
+        [{ kind: "text", text }],
+        undefined,
+        nextProgressNonce(ctx),
+      );
+      reply.midTurnUserTexts.push(text);
+      reply.publishedMidTurnUserMessage = true;
+    }
   }
   reply.progressBudgetStart = reply.midTurnProgressCount;
   reply.turnStartedAtMs = now;
