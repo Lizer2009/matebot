@@ -1,5 +1,5 @@
 import { parseA2uiSurfaceDocumentRef } from "@matebot/contracts";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { resolveFixtureMessages } from "./fixtures";
 
 export type A2uiSurfaceDocumentSource = {
@@ -10,34 +10,65 @@ export type A2uiSurfaceDocumentSource = {
   fetchDocument?: (documentRef: string) => Promise<unknown[] | undefined>;
 };
 
+export type A2uiSurfaceDocumentState = {
+  messages: unknown[] | undefined;
+  loading: boolean;
+  error: string | null;
+  /**
+   * True when the card has nothing to draw and no fetch is in flight: either the
+   * host was given no way to load the document, or the fetch returned nothing.
+   * The card must show something readable in this state rather than leaving the
+   * region empty.
+   */
+  unavailable: boolean;
+  /** Load again after a failure. A no-op when there is nothing to fetch. */
+  reload: () => void;
+};
+
 /**
  * Resolve A2UI protocol messages for a surface card:
  * 1. explicit messages prop
  * 2. local fixture documentRef
  * 3. server documentRef via fetchDocument (PR-4 persistence)
+ *
+ * A card whose document cannot be resolved reports `unavailable` rather than
+ * returning an empty list, so the caller can say why instead of drawing a blank
+ * box. Loading and failure are separate states because they need different words.
  */
-export function useA2uiSurfaceDocument(source: A2uiSurfaceDocumentSource): {
-  messages: unknown[] | undefined;
-  loading: boolean;
-  error: string | null;
-} {
+export function useA2uiSurfaceDocument(
+  source: A2uiSurfaceDocumentSource,
+): A2uiSurfaceDocumentState {
   const fixture = resolveFixtureMessages(source.documentRef);
   const [remote, setRemote] = useState<unknown[] | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  // A fetch that resolves after the card unmounts must not set state.
+  const mounted = useRef(true);
 
   const documentRef = source.documentRef;
   const fetchDocument = source.fetchDocument;
   const injected = source.messages;
 
   useEffect(() => {
-    if (injected || resolveFixtureMessages(documentRef) || !documentRef || !fetchDocument) {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const serverRef = Boolean(documentRef && parseA2uiSurfaceDocumentRef(documentRef));
+
+  useEffect(() => {
+    if (injected || fixture || !serverRef) {
       setRemote(undefined);
       setLoading(false);
       setError(null);
       return;
     }
-    if (!parseA2uiSurfaceDocumentRef(documentRef)) {
+    // A server ref with no fetcher is not "loading": it will never load, so the
+    // card reports it as unavailable instead of waiting forever.
+    if (!fetchDocument) {
       setRemote(undefined);
       setLoading(false);
       setError(null);
@@ -46,24 +77,38 @@ export function useA2uiSurfaceDocument(source: A2uiSurfaceDocumentSource): {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    void fetchDocument(documentRef)
+    void fetchDocument(documentRef!)
       .then((messages) => {
-        if (cancelled) return;
-        setRemote(messages);
+        if (cancelled || !mounted.current) return;
+        // An empty document is a failure to load, not an empty surface: a card
+        // with no components would otherwise render as a blank region.
+        if (!messages || messages.length === 0) {
+          setRemote(undefined);
+          setError("This card had no content to load.");
+        } else {
+          setRemote(messages);
+        }
         setLoading(false);
       })
       .catch((err: unknown) => {
-        if (cancelled) return;
+        if (cancelled || !mounted.current) return;
         setRemote(undefined);
         setLoading(false);
-        setError(err instanceof Error ? err.message : "Failed to load surface");
+        setError(err instanceof Error ? err.message : "Could not load this card.");
       });
     return () => {
       cancelled = true;
     };
-  }, [injected, documentRef, fetchDocument]);
+  }, [injected, fixture, serverRef, documentRef, fetchDocument, attempt]);
 
-  if (injected) return { messages: injected, loading: false, error: null };
-  if (fixture) return { messages: fixture, loading: false, error: null };
-  return { messages: remote, loading, error };
+  const reload = useCallback(() => setAttempt((value) => value + 1), []);
+
+  if (injected && injected.length > 0) {
+    return { messages: injected, loading: false, error: null, unavailable: false, reload };
+  }
+  if (fixture)
+    return { messages: fixture, loading: false, error: null, unavailable: false, reload };
+
+  const unavailable = !loading && remote === undefined;
+  return { messages: remote, loading, error, unavailable, reload };
 }
