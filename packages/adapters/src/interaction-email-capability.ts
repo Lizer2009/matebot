@@ -153,13 +153,18 @@ export function providerSatisfiesInteractionApp(
 export function emailSendAdapterContext(
   owner: { spaceId: string; userId: string },
   connection: EmailCapabilityRow,
+  /**
+   * The signal to hand the provider. Pass the run's own controller signal so a
+   * cancel can abort the in-flight request; omitted means an uncancellable one.
+   */
+  signal?: AbortSignal,
 ): AdapterContext {
   return {
     operationId: "interaction.email.send",
     traceId: "interaction.email.send",
     spaceId: owner.spaceId,
     userId: owner.userId,
-    signal: new AbortController().signal,
+    signal: signal ?? new AbortController().signal,
     ...connectedContext([
       {
         id: connection.id,

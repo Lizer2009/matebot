@@ -289,6 +289,8 @@ export type CancelInteractionServiceInput = {
   botId: string;
   interactionId: string;
   expectedDraftVersion: number;
+  /** True when the caller's runtime can abort a running effect. */
+  runtimeCanAbort?: boolean;
 };
 
 export class InteractionCancelRejectedError extends Error {
@@ -313,7 +315,7 @@ export class InteractionCancelRejectedError extends Error {
 export async function cancelInteractionService(
   prisma: PrismaClient,
   input: CancelInteractionServiceInput,
-): Promise<{ status: "cancelled"; draftVersion: number }> {
+): Promise<{ status: "cancelled"; draftVersion: number } | { status: "abort_requested" }> {
   const current = await getInteraction(prisma, input.interactionId);
   if (!current || current.threadId !== input.threadId) {
     throw new InteractionNotFoundError(input.interactionId);
@@ -327,8 +329,17 @@ export async function cancelInteractionService(
   }
   const decision = decideCancel({
     status: current.status as InteractionLifecycleStatus,
+    // An in-flight action resolves as an abort request rather than a refusal when
+    // the caller's runtime can stop it; the caller checks that it actually did.
+    runtimeCanAbort: input.runtimeCanAbort === true,
   });
   if (!decision.ok) throw new InteractionCancelRejectedError(decision.error, decision.message);
+  if (decision.status === "abort_requested") {
+    // The action is running. Cancelling the row now would record a withdrawal of
+    // something that may already have happened, so the caller is told to abort
+    // the effect instead; the effect then settles as failed or unknown by itself.
+    return { status: "abort_requested" };
+  }
 
   const plan = current.plan as InteractionPlan;
   const surfaceRow = await prisma.interactionSurface.findFirst({

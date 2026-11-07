@@ -24,10 +24,23 @@ describe("decideCancel", () => {
     expect(decision.message).toContain("关联草稿");
   });
 
-  it("refuses while an action is in flight", () => {
+  it("refuses while an action is in flight when the runtime cannot abort", () => {
     expect(decideCancel({ status: "executing" })).toMatchObject({
       ok: false,
       error: "in_flight",
+    });
+    expect(decideCancel({ status: "executing", runtimeCanAbort: false })).toMatchObject({
+      ok: false,
+      error: "in_flight",
+    });
+  });
+
+  // §6.5.2: an abort may be requested only where the runtime supports it. This
+  // one does, so the cancel asks rather than refusing outright.
+  it("requests an abort while an action is in flight when the runtime supports it", () => {
+    expect(decideCancel({ status: "executing", runtimeCanAbort: true })).toEqual({
+      ok: true,
+      status: "abort_requested",
     });
   });
 

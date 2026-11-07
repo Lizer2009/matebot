@@ -14,6 +14,15 @@ import type { InteractionLifecycleStatus } from "./interaction-runtime.js";
 export type CancelDecision =
   | { ok: true; status: "cancelled" }
   | {
+      /**
+       * The action is still running and this runtime can abort it. The caller
+       * requests the abort; the effect settles as failed or unknown afterwards,
+       * never as "cancelled and nothing happened".
+       */
+      ok: true;
+      status: "abort_requested";
+    }
+  | {
       ok: false;
       error: "already_executed" | "in_flight" | "terminal";
       /**
@@ -23,7 +32,19 @@ export type CancelDecision =
       message: string;
     };
 
-export function decideCancel(input: { status: InteractionLifecycleStatus }): CancelDecision {
+/**
+ * Decide what a cancel may do.
+ *
+ * `runtimeCanAbort` reflects whether this deployment can actually stop an
+ * in-flight provider request. The spec makes the abort conditional on exactly
+ * that (§6.5.2: "request an abort only when the runtime supports it"), so it is a
+ * parameter rather than an assumption: a runtime that cannot abort must refuse
+ * and say so, not silently do nothing and report success.
+ */
+export function decideCancel(input: {
+  status: InteractionLifecycleStatus;
+  runtimeCanAbort?: boolean;
+}): CancelDecision {
   switch (input.status) {
     case "succeeded":
       return {
@@ -39,6 +60,7 @@ export function decideCancel(input: { status: InteractionLifecycleStatus }): Can
         message: "这次操作的结果还不确定，我会先核对，而不是当作已取消。",
       };
     case "executing":
+      if (input.runtimeCanAbort) return { ok: true, status: "abort_requested" };
       return {
         ok: false,
         error: "in_flight",

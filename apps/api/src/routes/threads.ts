@@ -11,6 +11,7 @@ import {
   interactionCapabilityForIntent,
   MODEL_REQUIRED_SEND_ERROR,
   QUEUE_HOLDING_RUN_STATUSES,
+  timingFields,
   userEditedFieldNames,
 } from "@matebot/core";
 import type { Prisma } from "@matebot/db";
@@ -30,6 +31,7 @@ import {
 import { getLogger } from "@matebot/logging";
 import { ORPCError } from "@orpc/server";
 import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
+import { requestEffectAbort } from "../interaction-abort.js";
 import { dispatchInteractionActionService } from "../interaction-dispatch.js";
 import { confirmThenExecute } from "../interaction-run-action.js";
 import {
@@ -163,6 +165,7 @@ export function threadsRoutes(ctx: RouterContext) {
     input: Parameters<typeof sendThreadMessage>[3] & { botId?: string; groupId?: string },
     startRoutines?: Parameters<typeof sendThreadMessage>[5],
   ) => {
+    const submitStartedAt = Date.now();
     const setup = await modelSetup(deps, actor);
     const target = await resolveThreadTarget(deps.prisma, actor, input);
     // A bot with its own runnable model needs no main model, and stopping work needs none.
@@ -180,6 +183,18 @@ export function threadsRoutes(ctx: RouterContext) {
     const deployment = setup.hasDeployment
       ? { provider: deps.env.defaultProvider, model: deps.env.defaultModel }
       : null;
+    // §9.6: the user's own submission, measured up to the point the run is
+    // handed off. Model and provider latency happen after this and are not
+    // included, so the number describes this server's intake work.
+    getLogger().info("a2ui.user_submit", {
+      ...timingFields({
+        metric: "user-submit",
+        ms: Date.now() - submitStartedAt,
+        origin: "user-message",
+      }),
+      "submit.target": target.kind,
+      "submit.attachments": input.artifactIds?.length ?? 0,
+    });
     return sendThreadMessage(
       {
         ...deps,
@@ -806,7 +821,26 @@ export function threadsRoutes(ctx: RouterContext) {
             botId,
             interactionId: input.interactionId,
             expectedDraftVersion: input.draftVersion,
+            // This process can abort a provider request, so an in-flight action
+            // is stopped rather than refused. §6.5.2 makes the abort conditional
+            // on exactly this.
+            runtimeCanAbort: true,
           });
+          if (result.status === "abort_requested") {
+            const row = await getInteraction(deps.prisma, input.interactionId);
+            const abort = requestEffectAbort({
+              effectId: row?.approvalEffectId ?? "",
+              spaceId: context.actor.spaceId,
+            });
+            // The row is deliberately left in `executing`: the effect settles it
+            // as failed or unknown, and cancelling it now could erase something
+            // that already happened.
+            throw new ORPCError("CONFLICT", {
+              message: abort.aborted
+                ? "已请求停止这次操作；结果以卡片最终状态为准。"
+                : "这次操作已经在进行中，且不在本进程内，无法停止；结果以卡片最终状态为准。",
+            });
+          }
           return {
             ok: true as const,
             status: "cancelled" as const,

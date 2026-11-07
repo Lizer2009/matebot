@@ -1,8 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { interactionHarness, rpc } from "./a2ui-route-harness.js";
+import { clearInFlightEffects, registerInFlightEffect } from "./interaction-abort.js";
 
 beforeAll(() => vi.stubEnv("FEATURE_A2UI", "1"));
-afterAll(() => vi.unstubAllEnvs());
+afterAll(() => {
+  clearInFlightEffects();
+  vi.unstubAllEnvs();
+});
+afterEach(() => clearInFlightEffects());
 
 /**
  * `threads.cancelInteraction` over real HTTP.
@@ -53,15 +58,47 @@ describe("threads.cancelInteraction over HTTP", () => {
     expect(h.published).toEqual([]);
   });
 
-  it("refuses while the action is in flight", async () => {
-    const h = interactionHarness({ interaction: { status: "executing" } });
-    const { status } = await rpc(h.handler, "threads/cancelInteraction", {
+  it("asks the running effect to stop instead of cancelling the row", async () => {
+    const h = interactionHarness({
+      interaction: { status: "executing", approvalEffectId: "effect-1" },
+    });
+    const controller = new AbortController();
+    const release = registerInFlightEffect({
+      effectId: "effect-1",
+      spaceId: "space-1",
+      controller,
+    });
+    try {
+      const { status, json } = await rpc(h.handler, "threads/cancelInteraction", {
+        botId: "bot-1",
+        interactionId: "ix-1",
+        draftVersion: 2,
+      });
+      // The runtime supports abort, so the request is made...
+      expect(controller.signal.aborted).toBe(true);
+      // ...and the row is deliberately left running: cancelling it now could
+      // erase an effect that already happened.
+      expect(status).toBe(409);
+      expect(h.row.status).toBe("executing");
+      expect(h.published).toEqual([]);
+      expect(JSON.stringify(json)).toContain("以卡片最终状态为准");
+    } finally {
+      release();
+    }
+  });
+
+  it("says plainly when a running effect is not in this process", async () => {
+    const h = interactionHarness({
+      interaction: { status: "executing", approvalEffectId: "effect-elsewhere" },
+    });
+    const { status, json } = await rpc(h.handler, "threads/cancelInteraction", {
       botId: "bot-1",
       interactionId: "ix-1",
       draftVersion: 2,
     });
     expect(status).toBe(409);
-    expect(h.published).toEqual([]);
+    expect(h.row.status).toBe("executing");
+    expect(JSON.stringify(json)).toContain("不在本进程内");
   });
 
   it("refuses to cancel an outcome that is not yet known", async () => {

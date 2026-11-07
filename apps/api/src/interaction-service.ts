@@ -55,6 +55,7 @@ import {
   withTransactionRetry,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { registerInFlightEffect } from "./interaction-abort.js";
 
 export type { PublishInteractionSurfaceInput } from "@matebot/adapters";
 export { publishInteractionSurface } from "@matebot/adapters";
@@ -675,6 +676,16 @@ export async function executeConfirmedInteractionService(
     data: { status: "executing" },
   });
 
+  // §6.5.2: this runtime can abort a provider request, so a cancel is allowed to
+  // ask. The controller is registered for exactly this effect and space, and
+  // released in the `finally` below so nothing outlives the call.
+  const effectAbort = new AbortController();
+  const releaseAbort = registerInFlightEffect({
+    effectId: effect.id,
+    spaceId: input.spaceId,
+    controller: effectAbort,
+  });
+
   const plan = current.plan as InteractionPlan;
   const interaction = {
     id: current.id,
@@ -777,6 +788,7 @@ export async function executeConfirmedInteractionService(
         context: emailSendAdapterContext(
           { spaceId: input.spaceId, userId: input.userId },
           connection,
+          effectAbort.signal,
         ),
         connector: input.connector,
         connectionId: connection.id,
@@ -885,6 +897,7 @@ export async function executeConfirmedInteractionService(
       context: emailSendAdapterContext(
         { spaceId: input.spaceId, userId: input.userId },
         connection,
+        effectAbort.signal,
       ),
       connector: input.connector,
       connectionId: connection.id,
@@ -946,16 +959,26 @@ export async function executeConfirmedInteractionService(
     ) {
       throw error;
     }
+    // An aborted provider call means the request was stopped *or* that it had
+    // already been accepted: the outcome is genuinely unknown, not a clean
+    // failure, so it settles the same way any ambiguous delivery does.
+    const aborted = effectAbort.signal.aborted;
     try {
       await finish({
-        effectStatus: "failed",
-        interactionStatus: "failed",
-        result: { error: "Could not send the email" },
+        effectStatus: aborted ? "ambiguous" : "failed",
+        interactionStatus: aborted ? "unknown" : "failed",
+        result: { error: aborted ? "Cancelled while running" : "Could not send the email" },
       });
     } catch {
       // Keep the original failure; finishing is best-effort.
     }
-    throw new InteractionEmailDeliveryError("Could not send the email");
+    if (aborted) await scheduleReconcile();
+    throw new InteractionEmailDeliveryError(
+      aborted ? "Cancelled while running" : "Could not send the email",
+      aborted ? "unknown" : "failed",
+    );
+  } finally {
+    releaseAbort();
   }
 }
 
@@ -987,10 +1010,23 @@ export async function reconcileConfirmedInteractionService(
       "Send result is unknown; do not send again",
     );
   }
+  const reconcileStartedAt = Date.now();
   const outcome = await reconcileAmbiguousEmailEffect(
     { prisma, jobs: input.jobs, connector: input.connector },
     { effectId: current.approvalEffectId },
   );
+  // §9.6: an UNKNOWN outcome was resolved (or found still unknown) by reconciling
+  // it. Recorded with the outcome, so a run that stayed unknown is visible too.
+  getLogger().info("a2ui.reconciled", {
+    ...timingFields({
+      metric: "reconciled",
+      ms: Date.now() - reconcileStartedAt,
+      origin: "run-created",
+    }),
+    "interaction.id": current.id,
+    "effect.id": current.approvalEffectId,
+    "reconcile.status": outcome.status,
+  });
   if (outcome.status === "ignored") {
     const latest = await getInteraction(prisma, input.interactionId);
     if (latest?.status === "succeeded") {

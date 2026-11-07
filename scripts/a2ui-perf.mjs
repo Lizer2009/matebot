@@ -1,12 +1,24 @@
 #!/usr/bin/env node
 /**
- * A reproducible measurement of the numbers the spec asks about (§9.6).
+ * A reproducible measurement of one narrow thing the spec asks about (§9.6).
  *
- * This is deliberately narrow. It measures the server's own work on an A2UI turn
- * — validating a decision, compiling a surface, bounding a result, aggregating
- * rows — and reports the p95 over many iterations. It does not measure the model
- * or the network, because those would dominate and would make the number a
- * property of the provider rather than of this code.
+ * WHAT THIS MEASURES
+ *   The server-side CPU work of a single turn, in-process, over N iterations:
+ *   validating a decision, compiling a surface, bounding and aggregating a
+ *   result. "turn-server-work" is decision-validation plus compile-surface.
+ *
+ * WHAT THIS DOES NOT MEASURE — and must never be read as
+ *   - It is not a turn's wall-clock latency. No database, no queue, no SSE, no
+ *     HTTP, no provider, no model.
+ *   - It is not first-feedback or first-card end-to-end latency. Those include
+ *     model time and provider time; `run.first_response_ms` is the field for
+ *     that, and it is not produced here.
+ *   - It is not a p95 of any user-facing target. The spec's 1s first-feedback
+ *     target is stated as a proposal for a controlled harness; this script
+ *     covers only the fraction of it that is this repository's own code.
+ *
+ * The budget below bounds *this* measurement, nothing else. Reported alongside it
+ * are the sample count and the max, because a p95 without them is not reviewable.
  *
  *   node scripts/a2ui-perf.mjs                 # default 2000 iterations
  *   node scripts/a2ui-perf.mjs --runs 5000
@@ -140,6 +152,9 @@ process.stdout.write(
   JSON.stringify(
     {
       runs,
+      warmupRuns: Math.min(50, runs),
+      measured: "in-process server-side work only",
+      excludes: ["model latency", "network", "database", "queue", "SSE", "provider"],
       budgetMs: ${BUDGET_MS},
       turnP95: turn?.p95 ?? null,
       withinBudget: (turn?.p95 ?? Number.POSITIVE_INFINITY) <= ${BUDGET_MS},
@@ -176,11 +191,13 @@ if (json) {
   }
   console.log("");
   console.log(
-    `  turn server work p95: ${report.turnP95?.toFixed(3)} ms (budget ${report.budgetMs} ms)`,
+    `  turn server work p95: ${report.turnP95?.toFixed(3)} ms over ${report.runs} samples (budget ${report.budgetMs} ms)`,
   );
   console.log("");
-  console.log("  Excluded on purpose: model latency and network. This measures only the work");
-  console.log("  this repository does, so the number is reproducible on any machine.");
+  console.log("  This is in-process server CPU work only. It is NOT turn latency,");
+  console.log("  NOT first-feedback, and NOT a user-facing p95. Excluded: model,");
+  console.log("  network, database, queue, SSE, provider. First feedback is measured");
+  console.log("  by run.first_response_ms / a2ui.first_feedback instead.");
 }
 
 if (!report.withinBudget) {

@@ -5,6 +5,7 @@ import {
   A2UI_SURFACE_NUDGE,
   interactionRequiredApp,
   surfaceNudgeFor,
+  timingFields,
   unknownCapabilityNotice,
   validateDecisionForCapability,
 } from "@matebot/core";
@@ -97,6 +98,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
   // plan's intent is the model's proposal; only a registered, implemented
   // capability may render. An unregistered intent gets the human-readable
   // fallback instead of a card that cannot work.
+  const planStartedAt = Date.now();
   const verdict = validateDecisionForCapability({
     taskIdentity: plan.intent,
     capabilityCandidates: [plan.intent],
@@ -110,6 +112,17 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       reply: unknownCapabilityNotice(),
     };
   }
+  // §9.6: the server now knows which surface to build, before it builds it.
+  getLogger().info("a2ui.plan_ready", {
+    ...timingFields({
+      metric: "plan-ready",
+      ms: Date.now() - planStartedAt,
+      origin: "run-created",
+    }),
+    "surface.intent": plan.intent,
+    "surface.resolved_from": verdict.capability.intent,
+    "surface.fields": plan.fields.length,
+  });
 
   try {
     const published = await publishInteractionSurface(deps.prisma, {

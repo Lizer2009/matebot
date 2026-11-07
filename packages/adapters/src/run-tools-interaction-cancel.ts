@@ -66,9 +66,20 @@ export async function cancelInteraction(
 
   const record = await services.loadInteraction(chosen);
   if (!record) return { ok: false, error: "unknown_interaction" };
-  // The same decision the route makes, so the two paths cannot disagree.
-  const decision = decideCancel({ status: record.status as never });
+  // The same decision the route makes, so the two paths cannot disagree. The
+  // runtime can abort a provider request here, so a running action becomes an
+  // abort request rather than an outright refusal.
+  const decision = decideCancel({ status: record.status as never, runtimeCanAbort: true });
   if (!decision.ok) return { ok: false, error: decision.error, reply: decision.message };
+  if (decision.status === "abort_requested") {
+    // The effect is running. The route owns the abort registry, so the tool says
+    // what is true and lets the card's own status settle the outcome.
+    return {
+      ok: false,
+      error: "in_flight",
+      reply: "这次操作已经在进行中，无法当作已取消；结果以卡片最终状态为准。",
+    };
+  }
 
   try {
     const result = await cancelInteractionService(ctx.deps.prisma, {
@@ -78,6 +89,13 @@ export async function cancelInteraction(
       interactionId: chosen,
       expectedDraftVersion: revision,
     });
+    if (result.status === "abort_requested") {
+      return {
+        ok: false,
+        error: "in_flight",
+        reply: "这次操作已经在进行中，不能再取消。",
+      };
+    }
     return {
       ok: true,
       interactionId: chosen,

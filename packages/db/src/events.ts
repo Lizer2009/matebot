@@ -2182,10 +2182,24 @@ async function notifyCommittedEvent(
 ): Promise<void> {
   await notifyRealtime(realtime, threadId, seq);
   if (!firstResponseRunId) return;
+  const timing = await readRunTimingFields(prisma, firstResponseRunId);
   getLogger().info("run.first_response", {
     "run.id": firstResponseRunId,
-    ...(await readRunTimingFields(prisma, firstResponseRunId)),
+    ...timing,
   });
+  // The same moment under the A2UI metric name, so a card that is the first thing
+  // the user can act on counts as first feedback. This offset is end to end from
+  // the user's message and therefore *includes* model and provider time; it is
+  // not the server-only figure that `pnpm test:a2ui-perf` measures.
+  const endToEnd = timing["run.first_response_ms"];
+  if (typeof endToEnd === "number") {
+    getLogger().info("a2ui.first_feedback", {
+      "a2ui.metric": "first-feedback",
+      "a2ui.origin": "user-message",
+      "a2ui.ms": endToEnd,
+      "run.id": firstResponseRunId,
+    });
+  }
 }
 
 export async function notifyRealtime(
