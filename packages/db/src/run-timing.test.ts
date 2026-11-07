@@ -42,6 +42,17 @@ describe("run response timing", () => {
     expect(
       isRunResponse("thread.message.created", { role: "bot", blocks: [{ kind: "chart" }] }),
     ).toBe(true);
+    // A card the user can read and act on is first feedback in its own right.
+    expect(
+      isRunResponse("thread.message.created", {
+        role: "bot",
+        blocks: [{ kind: "a2ui_surface", interactionId: "ix-1", surfaceId: "s-1" }],
+      }),
+    ).toBe(true);
+    // An empty surface block is not output the user can act on.
+    expect(
+      isRunResponse("thread.message.created", { role: "bot", blocks: [{ kind: "a2ui_surface" }] }),
+    ).toBe(true);
     expect(isRunResponse("thread.progress", { text: "activity", activity: true })).toBe(false);
     expect(isRunResponse("thread.meta", { activity: { thinking: true } })).toBe(false);
     expect(isRunResponse("thread.meta", { activity: { thinking: false } })).toBe(false);

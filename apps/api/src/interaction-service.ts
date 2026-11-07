@@ -3,6 +3,7 @@ import type {
   JobPublisher,
   ManagedConnectorProvider,
 } from "@matebot/adapter-kit";
+import { getLogger } from "@matebot/logging";
 import type {
   EmailCapabilityRow,
   InteractionCalendarSender,
@@ -36,6 +37,7 @@ import {
   deliveryNeedsReconnect,
   emailCapabilityAllowsSend,
   emailDeliveryOutcome,
+  timingFields,
   emailSurfaceBlockFields,
   interactionConfirmEffectRequest,
   interactionConfirmIdempotencyKey,
@@ -774,6 +776,7 @@ export async function executeConfirmedInteractionService(
         connector: input.connector,
         connectionId: connection.id,
       };
+      const providerStartedAt = Date.now();
       if (draft.kind === "batch") {
         // Several items were requested, so several outcomes are reported: a
         // partial batch must not read as "done".
@@ -842,6 +845,17 @@ export async function executeConfirmedInteractionService(
         if (outcome === "unknown") await scheduleReconcile();
         throw new InteractionEmailDeliveryError(created.error, outcome);
       }
+      getLogger().info("a2ui.provider_result", {
+        ...timingFields({
+          metric: "provider-result",
+          ms: Date.now() - providerStartedAt,
+          origin: "run-created",
+        }),
+        "interaction.id": current.id,
+        "effect.id": effect.id,
+        "effect.kind": effect.kind,
+        "provider.outcome": "created",
+      });
       await finish({
         effectStatus: "completed",
         interactionStatus: "succeeded",

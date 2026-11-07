@@ -19,6 +19,10 @@ const RESPONSE_BLOCK_KINDS = new Set<string>([
   "mcp_approval",
   "child_bot",
   "cloud_agent",
+  // An editable or read-only card is something the user can act on, so it is
+  // first feedback exactly like a reply. Without it an A2UI-only turn records no
+  // first response and its latency disappears from the metric (spec §9.6).
+  "a2ui_surface",
 ] satisfies MessageBlock["kind"][]);
 
 /** Only actual reply output counts; working/activity placeholders do not. */

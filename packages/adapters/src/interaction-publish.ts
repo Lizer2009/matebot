@@ -1,6 +1,7 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
-import { emailSurfaceBlockFields, interactionSlotsFromPlan } from "@matebot/core";
+import { emailSurfaceBlockFields, interactionSlotsFromPlan, timingFields } from "@matebot/core";
+import { getLogger } from "@matebot/logging";
 import type { PrismaClient, RunLease } from "@matebot/db";
 import {
   appendEventInTransaction,
@@ -89,6 +90,7 @@ export async function publishInteractionSurface(
   });
   const slots = interactionSlotsFromPlan(input.plan);
 
+  const publishedAt = Date.now();
   return withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
       const interaction = await createInteraction(tx, {
@@ -180,6 +182,19 @@ export async function publishInteractionSurface(
           messageId: message.id,
           ...stamps,
         },
+      });
+      // §9.6 instrumentation: the surface the user can now see. Measured from
+      // the start of the publish, so it is the server's own work, not the model's.
+      getLogger().info("a2ui.surface_visible", {
+        ...timingFields({
+          metric: "surface-visible",
+          ms: Math.max(0, Date.now() - publishedAt),
+          origin: "run-created",
+        }),
+        "interaction.id": interaction.id,
+        "surface.id": surfaceId,
+        "surface.intent": input.plan.intent,
+        "surface.draft_version": interaction.draftVersion,
       });
       return {
         interactionId: interaction.id,
