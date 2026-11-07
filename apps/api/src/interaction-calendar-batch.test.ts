@@ -83,6 +83,8 @@ function harness(slots: Record<string, unknown>) {
     messageId: null,
   };
   const finished: Array<{ result?: Record<string, unknown>; interactionStatus: string }> = [];
+  /** Documents written to the card's surface, so a partial batch can be read back. */
+  const surfaceWrites: Array<Record<string, unknown>> = [];
   const effect = {
     id: "effect-batch",
     spaceId: "space-1",
@@ -112,7 +114,18 @@ function harness(slots: Record<string, unknown>) {
         return { count: 1 };
       },
     },
-    interactionSurface: { findFirst: async () => null },
+    interactionSurface: {
+      findFirst: async () => ({
+        interactionId: "ix-batch",
+        surfaceId: "surf-batch",
+        protocolFamily: "v0_9",
+        document: [],
+      }),
+      upsert: async ({ create, update }: { create?: unknown; update?: unknown }) => {
+        surfaceWrites.push((create ?? update) as Record<string, unknown>);
+        return create ?? update;
+      },
+    },
     message: { findUnique: async () => null, update: async () => ({}) },
     externalEffect: {
       findUnique: async () => effect,
@@ -127,7 +140,7 @@ function harness(slots: Record<string, unknown>) {
     ...tx,
     $transaction: async (run: (client: unknown) => Promise<unknown>) => run(tx),
   } as unknown as PrismaClient;
-  return { prisma, interaction, finished };
+  return { prisma, interaction, finished, surfaceWrites };
 }
 
 const readyCalendar = {
@@ -171,6 +184,29 @@ describe("calendar batch through the shared execute path", () => {
     expect(result.executed).toBe(true);
     expect(creates).toEqual(["A", "B"]);
     expect(h.interaction.status).toBe("succeeded");
+  });
+
+  it("puts each item's outcome on the card, not just a failure", async () => {
+    failOn = "B";
+    const h = harness({ events: [item("A", "09"), item("B", "10"), item("C", "11")] });
+    await expect(
+      executeConfirmedInteractionService(h.prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-batch",
+        ...readyCalendar,
+      }),
+    ).rejects.toMatchObject({ outcome: "failed" });
+
+    // The card's own document now lists one row per requested item.
+    expect(h.surfaceWrites).toHaveLength(1);
+    const document = JSON.stringify(h.surfaceWrites[0]?.document ?? []);
+    for (const label of ["A", "B", "C"]) expect(document).toContain(label);
+    expect(document).toContain("succeeded");
+    expect(document).toContain("failed");
+    // The count summary is on the card too.
+    expect(document).toContain("2");
   });
 
   it("fails the interaction and says two of three, not done", async () => {

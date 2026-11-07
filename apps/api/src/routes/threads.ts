@@ -5,13 +5,13 @@ import { a2uiSurfaceDocumentRef, parseA2uiSurfaceDocumentRef } from "@matebot/co
 import {
   AttachmentValidationError,
   applyNaturalLanguageEdit,
-  userEditedFieldNames,
   CALL_CLIENT_NONCE_PREFIX,
   callClientNonce,
   expandSkillReferencesInPrompt,
   interactionCapabilityForIntent,
   MODEL_REQUIRED_SEND_ERROR,
   QUEUE_HOLDING_RUN_STATUSES,
+  userEditedFieldNames,
 } from "@matebot/core";
 import type { Prisma } from "@matebot/db";
 import {
@@ -36,8 +36,8 @@ import {
   cancelInteractionService,
   confirmInteractionService,
   executeConfirmedInteractionService,
-  InteractionEffectRunMissingError,
   InteractionCancelRejectedError,
+  InteractionEffectRunMissingError,
   InteractionEmailDeliveryError,
   InteractionSendRejectedError,
   reconcileConfirmedInteractionService,
@@ -807,7 +807,11 @@ export function threadsRoutes(ctx: RouterContext) {
             interactionId: input.interactionId,
             expectedDraftVersion: input.draftVersion,
           });
-          return { ok: true as const, status: "cancelled" as const, draftVersion: result.draftVersion };
+          return {
+            ok: true as const,
+            status: "cancelled" as const,
+            draftVersion: result.draftVersion,
+          };
         } catch (error) {
           if (error instanceof InteractionNotFoundError) {
             throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });

@@ -1,7 +1,6 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
 import { emailSurfaceBlockFields, interactionSlotsFromPlan, timingFields } from "@matebot/core";
-import { getLogger } from "@matebot/logging";
 import type { PrismaClient, RunLease } from "@matebot/db";
 import {
   appendEventInTransaction,
@@ -10,6 +9,7 @@ import {
   upsertInteractionSurface,
   withTransactionRetry,
 } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 
 async function compilePlanSurface(input: {
   plan: InteractionPlan;
@@ -121,9 +121,7 @@ export async function publishInteractionSurface(
         title: input.plan.title,
         summary: input.plan.summary,
         documentRef,
-        ...(input.amendsInteractionId
-          ? { amendsInteractionId: input.amendsInteractionId }
-          : {}),
+        ...(input.amendsInteractionId ? { amendsInteractionId: input.amendsInteractionId } : {}),
         ...stamps,
       };
       const message = await createThreadMessageInTransaction(tx, {

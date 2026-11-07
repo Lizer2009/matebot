@@ -114,9 +114,7 @@ export function applyInteractionFieldChange(
   const plan = {
     ...state.plan,
     fields: state.plan.fields.map((entry) =>
-      entry.name === input.name
-        ? { ...withFieldValue(entry, input.value), source: origin }
-        : entry,
+      entry.name === input.name ? { ...withFieldValue(entry, input.value), source: origin } : entry,
     ),
   };
   const status = deriveCollectingStatus(plan, slots, state.status);

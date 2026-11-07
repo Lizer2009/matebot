@@ -179,9 +179,7 @@ if (json) {
     `  turn server work p95: ${report.turnP95?.toFixed(3)} ms (budget ${report.budgetMs} ms)`,
   );
   console.log("");
-  console.log(
-    "  Excluded on purpose: model latency and network. This measures only the work",
-  );
+  console.log("  Excluded on purpose: model latency and network. This measures only the work");
   console.log("  this repository does, so the number is reproducible on any machine.");
 }
 

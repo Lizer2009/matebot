@@ -14,6 +14,12 @@ export type ResultSourceReadInput = {
   window: { from: string; to: string };
   connectionId: string | null;
   timezone: string;
+  /**
+   * A specific artifact the caller named, when the source reads files. It is only
+   * honored by sources that read the user's own uploads, and the reader still
+   * checks ownership before returning anything.
+   */
+  artifactId?: string;
 };
 
 /** The shape a caller-supplied reader has; see `queryResultSource`. */
@@ -25,6 +31,16 @@ export type ResultSourceReadResult =
       rows: Array<Record<string, string | number | boolean | null>>;
       asOf: string;
       units?: string;
+      /**
+       * A more specific name for where these rows came from, such as the file the
+       * user uploaded. The card uses it when present, so a reader can say
+       * "Upload: sales.csv" instead of a generic source label.
+       */
+      sourceLabel?: string;
+      /** True when the reader had to drop rows to fit a bound. */
+      truncated?: boolean;
+      /** The number of rows the source held, when it is more than were returned. */
+      totalRows?: number;
     }
   | { ok: false; error: string; outcome?: "failed" | "unavailable" };
 
@@ -38,21 +54,19 @@ export type ResultSource = {
 };
 
 /**
- * A local source with no rows. It exists so the contract is exercised end to end
- * without inventing a provider: a deployment wires its real source here, and
- * until then this one honestly reports that it has nothing.
+ * The user's own uploaded spreadsheet.
+ *
+ * Like the calendar, the reader belongs to one turn: it needs this user's
+ * artifact store and the message that carried the file, so the registry only
+ * names the source. With no reader supplied the read says it has nothing wired
+ * rather than returning zero rows, which a reader would take to mean "the file
+ * is empty".
  */
 const csvUpload: ResultSource = {
   id: "csv-upload",
   label: "Uploaded spreadsheet",
   requiresConnection: null,
-  // An empty upload reads as an empty result, which the card reports honestly.
-  read: async () => ({
-    ok: true,
-    rows: [],
-    asOf: new Date().toISOString(),
-    units: "CNY",
-  }),
+  read: async () => ({ ok: false, error: "csv_read_not_wired" }),
 };
 
 /**
@@ -106,6 +120,8 @@ export type QueryResultSourceInput = {
   sourceId: string;
   window: { from: string; to: string };
   timezone?: string;
+  /** A specific uploaded file to read, when the source reads files. */
+  artifactId?: string;
 };
 
 export type QueryResultSourceOutput =
@@ -113,6 +129,10 @@ export type QueryResultSourceOutput =
       ok: true;
       rows: Array<Record<string, string | number | boolean | null>>;
       provenance: ResultProvenance;
+      /** True when the source held more rows than the read returned. */
+      truncated?: boolean;
+      /** How many rows the source held, when it reports that. */
+      totalRows?: number;
     }
   | { ok: false; error: string };
 
@@ -150,6 +170,7 @@ export async function queryResultSource(
     window: window.window,
     connectionId: deps.connectionId,
     timezone: input.timezone ?? "UTC",
+    ...(input.artifactId ? { artifactId: input.artifactId } : {}),
   });
   if (!read.ok) return { ok: false, error: read.error };
 
@@ -157,12 +178,16 @@ export async function queryResultSource(
     ok: true,
     rows: read.rows,
     provenance: {
-      source: source.label,
+      // A reader that names its own origin (a file the user attached) wins over
+      // the generic registry label, so the card says where the numbers really came from.
+      source: read.sourceLabel ?? source.label,
       asOf: read.asOf,
       window: window.window,
       ...(read.units ? { units: read.units } : {}),
       ...(input.timezone ? { timezone: input.timezone } : {}),
     },
+    ...(read.truncated ? { truncated: true } : {}),
+    ...(read.totalRows !== undefined ? { totalRows: read.totalRows } : {}),
   };
 }
 

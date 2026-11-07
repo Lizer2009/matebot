@@ -125,9 +125,12 @@ export async function refreshResult(
     : null;
   const queried = await queryResultSource(
     { sourceId, window: { from, to }, ...(timezone ? { timezone } : {}) },
-    { connectionId, ...(services.read
+    {
+      connectionId,
+      ...(services.read
         ? { readFor: (id: string) => (id === "calendar-events" ? services.read : undefined) }
-        : {}) },
+        : {}),
+    },
   );
   if (!queried.ok) {
     const reply =

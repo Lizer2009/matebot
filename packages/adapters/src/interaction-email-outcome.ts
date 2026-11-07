@@ -1,7 +1,7 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
-import { emailSurfaceBlockFields } from "@matebot/core";
+import { batchResultRows, buildResultSurface, emailSurfaceBlockFields } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import { appendEventInTransaction, withTransactionRetry } from "@matebot/db";
 
@@ -51,6 +51,16 @@ export type ProjectInteractionEmailSurfaceInput = {
     | "thread.interaction.action_succeeded"
     | "thread.interaction.action_failed";
   progress?: string;
+  /**
+   * Per-item outcomes of a batch. When present, the surface the draft already
+   * owns is republished as a result document with one row per requested item, so
+   * a partial batch is readable on the card itself (§5.4.2) rather than only in
+   * the stored effect payload.
+   */
+  batch?: {
+    items: Array<{ label: string; state: "succeeded" | "failed" | "unknown"; error?: string }>;
+    notice: string;
+  };
 };
 
 /** Patch the existing email surface and emit the SSE the card already listens to. */
@@ -75,6 +85,32 @@ export async function projectInteractionEmailSurface(
     providerMessageId: input.providerMessageId,
     error: input.error,
   });
+  if (surfaceRow && input.batch) {
+    // Rewrite the document this card already points at, in place: the same
+    // surfaceId, the same message, a result rendering of what actually happened.
+    const batchDocument = await batchResultDocument(input.batch);
+    if (batchDocument) {
+      await tx.interactionSurface.upsert({
+        where: {
+          interactionId_surfaceId: {
+            interactionId: input.interaction.id,
+            surfaceId: surfaceRow.surfaceId,
+          },
+        },
+        create: {
+          interactionId: input.interaction.id,
+          surfaceId: surfaceRow.surfaceId,
+          protocolFamily: protocolFamilyOf(surfaceRow.protocolFamily),
+          document: batchDocument as Prisma.InputJsonValue,
+          draftVersion: input.draftVersion,
+        },
+        update: {
+          document: batchDocument as Prisma.InputJsonValue,
+          draftVersion: input.draftVersion,
+        },
+      });
+    }
+  }
   if (surfaceRow && message && input.interaction.messageId) {
     const protocolFamily = protocolFamilyOf(surfaceRow.protocolFamily);
     const documentRef = a2uiSurfaceDocumentRef({
@@ -200,6 +236,11 @@ export type FinishInteractionEmailSendInput = {
   capability?: EmailSurfaceCapability;
   /** When set, a concurrent writer that already left `ambiguous` wins once. */
   expectedEffectStatus?: string;
+  /** Per-item outcomes, when the effect ran a batch. */
+  batch?: {
+    items: Array<{ label: string; state: "succeeded" | "failed" | "unknown"; error?: string }>;
+    notice: string;
+  };
 };
 
 export async function finishInteractionEmailSend(
@@ -252,6 +293,7 @@ export async function finishInteractionEmailSend(
         error,
         approvalEffectId: input.effectId,
         ...(input.capability ? { capability: input.capability } : {}),
+        ...(input.batch ? { batch: input.batch } : {}),
         actionEvent,
         progress: input.interactionStatus,
       });
@@ -272,4 +314,33 @@ export function emailDraftSlots(request: unknown): { to: string; subject: string
       : {};
   const text = (name: string) => (typeof slots[name] === "string" ? slots[name] : "");
   return { to: text("to"), subject: text("subject"), body: text("body") };
+}
+
+/**
+ * The document for a batch's outcomes, in the same catalog the card already uses.
+ *
+ * One row per requested item, plus the count summary as the title. Built from the
+ * recorded outcomes, so the card cannot say more happened than did.
+ */
+async function batchResultDocument(batch: {
+  items: Array<{ label: string; state: "succeeded" | "failed" | "unknown"; error?: string }>;
+  notice: string;
+}): Promise<unknown[] | null> {
+  const rows = batchResultRows(batch.items);
+  const built = buildResultSurface({
+    title: batch.notice,
+    provenance: { source: "Calendar", asOf: new Date().toISOString(), attribution: "source" },
+    columns: rows.columns,
+    rows: rows.rows,
+  });
+  if (!built.ok) return null;
+  const { compileInteractionSurface } = await import("@matebot/a2ui-adapter");
+  const compiled = await compileInteractionSurface({
+    schema: { schemaVersion: 1, presentation: "result", fields: [], action: null },
+    values: {},
+    surfaceId: "batch-result",
+    result: built.surface,
+    title: built.surface.title,
+  });
+  return compiled.ok ? compiled.messages : null;
 }

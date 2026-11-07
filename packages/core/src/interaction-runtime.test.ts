@@ -90,7 +90,8 @@ describe("interaction-runtime", () => {
     expect(result.plan.fields.find((field) => field.name === "subject")?.source).toBe("model");
   });
 
-  it("rejects stale expectedDraftVersion and unknown fields", () => {    const state = {
+  it("rejects stale expectedDraftVersion and unknown fields", () => {
+    const state = {
       status: "collecting" as const,
       draftVersion: 1,
       confirmedVersion: null,

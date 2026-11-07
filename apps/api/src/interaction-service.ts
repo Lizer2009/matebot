@@ -3,7 +3,6 @@ import type {
   JobPublisher,
   ManagedConnectorProvider,
 } from "@matebot/adapter-kit";
-import { getLogger } from "@matebot/logging";
 import type {
   EmailCapabilityRow,
   InteractionCalendarSender,
@@ -37,7 +36,6 @@ import {
   deliveryNeedsReconnect,
   emailCapabilityAllowsSend,
   emailDeliveryOutcome,
-  timingFields,
   emailSurfaceBlockFields,
   interactionConfirmEffectRequest,
   interactionConfirmIdempotencyKey,
@@ -45,6 +43,7 @@ import {
   interactionRequiredApp,
   normalizeCalendarFields,
   readConfirmedCalendarDraft,
+  timingFields,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
@@ -55,6 +54,7 @@ import {
   upsertInteractionSurface,
   withTransactionRetry,
 } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 
 export type { PublishInteractionSurfaceInput } from "@matebot/adapters";
 export { publishInteractionSurface } from "@matebot/adapters";
@@ -118,9 +118,9 @@ function protocolFamilyOf(value: string): A2uiProtocolFamily {
 // route and its tests import it from this module.
 export {
   type CancelInteractionServiceInput,
-  type UpdateInteractionFieldServiceInput,
   cancelInteractionService,
   InteractionCancelRejectedError,
+  type UpdateInteractionFieldServiceInput,
   updateInteractionFieldService,
 } from "@matebot/adapters";
 
@@ -687,6 +687,11 @@ export async function executeConfirmedInteractionService(
     interactionStatus: "succeeded" | "failed" | "unknown";
     result: Record<string, unknown>;
     capability?: EmailSurfaceCapability;
+    /** Per-item outcomes, when the effect ran a batch. */
+    batch?: {
+      items: Array<{ label: string; state: "succeeded" | "failed" | "unknown"; error?: string }>;
+      notice: string;
+    };
   }) =>
     finishInteractionEmailSend(prisma, {
       spaceId: input.spaceId,
@@ -795,6 +800,8 @@ export async function executeConfirmedInteractionService(
               deliveryId: batch.created[0]?.eventId,
               batch: { items: batch.items, summary: batch.summary },
             },
+            // Several events were requested, so the card lists each one.
+            batch: { items: batch.items, notice: batch.summary.notice },
           });
           return {
             effectId: effect.id,
@@ -812,6 +819,8 @@ export async function executeConfirmedInteractionService(
             error: batch.summary.notice,
             batch: { items: batch.items, summary: batch.summary },
           },
+          // A partial batch says which items went through, on the card itself.
+          batch: { items: batch.items, notice: batch.summary.notice },
         });
         if (outcome === "unknown") await scheduleReconcile();
         throw new InteractionEmailDeliveryError(batch.summary.notice, outcome);

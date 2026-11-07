@@ -1,6 +1,9 @@
-import type { InteractionPlan, InteractionSurfaceSchema } from "@matebot/contracts";
+import type {
+  InteractionField,
+  InteractionPlan,
+  InteractionSurfaceSchema,
+} from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
-import type { InteractionField } from "@matebot/contracts";
 import { withFieldValue } from "./interaction-runtime.js";
 import type { SurfaceStatus } from "./surface-revision.js";
 import { canSubmitSurface } from "./surface-revision.js";
@@ -173,10 +176,7 @@ export async function applyNaturalLanguageEdit(
     return { ok: false, error: "stale_revision" };
   }
 
-  const userEdited = new Set([
-    ...(input.userEditedFields ?? []),
-    ...(row.userEditedFields ?? []),
-  ]);
+  const userEdited = new Set([...(input.userEditedFields ?? []), ...(row.userEditedFields ?? [])]);
   const fields: Record<string, unknown> = {};
   const skippedFields: string[] = [];
   for (const [name, value] of Object.entries(input.fields)) {

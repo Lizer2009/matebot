@@ -24,6 +24,8 @@ export type SourceBackedResultInput = {
   groupBy?: string;
   metrics?: ResultAggregation["metrics"];
   columns?: ResultColumn[];
+  /** A specific uploaded file to read, for the file source. */
+  artifactId?: string;
 };
 
 export type ResolveResultRowsDeps = {
@@ -34,6 +36,8 @@ export type ResolveResultRowsDeps = {
    * from this turn's connector, so no reader outlives the turn or crosses users.
    */
   read?: ResultSourceRead;
+  /** The reader for the user's own uploaded file, when this turn has one. */
+  csvRead?: ResultSourceRead;
 };
 
 export type ResolveResultRowsOutcome =
@@ -78,12 +82,15 @@ export async function resolveSourceBackedRows(
       sourceId: input.sourceId,
       window: { from: input.from, to: input.to },
       ...(input.timezone ? { timezone: input.timezone } : {}),
+      ...(input.artifactId ? { artifactId: input.artifactId } : {}),
     },
     {
       connectionId,
-      ...(deps.read
-        ? { readFor: (id: string) => (id === "calendar-events" ? deps.read : undefined) }
-        : {}),
+      readFor: (id: string) => {
+        if (id === "calendar-events") return deps.read;
+        if (id === "csv-upload") return deps.csvRead;
+        return undefined;
+      },
     },
   );
   if (!queried.ok) return { ok: false, error: queried.error };
@@ -106,12 +113,4 @@ export async function resolveSourceBackedRows(
     ...(columns ? { columns } : {}),
     provenance: { ...queried.provenance, attribution: "source" },
   };
-}
-
-/**
- * Rows the model wrote are still shown on request, but the card must not imply a
- * data source vouched for them.
- */
-export function modelRowProvenance(provenance: Record<string, unknown>): Record<string, unknown> {
-  return { ...provenance, attribution: "model" };
 }

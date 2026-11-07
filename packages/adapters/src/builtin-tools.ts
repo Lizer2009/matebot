@@ -827,7 +827,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "present_result",
     description:
-      "Show a read-only result card in the chat, when the user asks to see numbers, a summary, or a trend. Prefer naming a registered sourceId with from/to and optional metrics: the server then reads the data itself and computes sums and averages, so nothing is invented. Only pass rows yourself when you already have real numbers from a tool result in this turn; those rows are labelled on the card as not coming from a data source. With no real data, ask the user where the numbers should come from instead. It displays only; it sends and changes nothing. After it publishes, reply in one short sentence.",
+      "Show a read-only result card in the chat, when the user asks to see numbers, a summary, or a trend. Name a registered sourceId plus from/to: the server reads that source itself and computes any sums with its own code, so every number on the card comes from data it read. Use csv-upload for a file the user attached, and calendar-events for their calendar. You cannot supply the rows yourself: if you have no source to name, ask the user where the numbers should come from and answer in prose instead. It displays only; it sends and changes nothing. After it publishes, reply in one short sentence.",
     inputSchema: {
       type: "object",
       properties: {
@@ -835,15 +835,19 @@ export const builtinAgentTools: ConnectorTool[] = [
         sourceId: {
           type: "string",
           description:
-            "Registered source to read, e.g. calendar-events or csv-upload. Preferred over rows.",
+            "Registered source to read: csv-upload for a file the user attached, or calendar-events.",
         },
-        from: { type: "string", description: "Window start for sourceId, ISO 8601 or date." },
-        to: { type: "string", description: "Window end for sourceId, ISO 8601 or date." },
-        groupBy: { type: "string", description: "Optional column to group a source read by." },
+        from: { type: "string", description: "Window start, ISO 8601 or date." },
+        to: { type: "string", description: "Window end, ISO 8601 or date." },
+        artifactId: {
+          type: "string",
+          description:
+            "Optional uploaded file id, when the user attached several and named one. Omit to read the newest file attached to their message.",
+        },
+        groupBy: { type: "string", description: "Optional column to group the read rows by." },
         metrics: {
           type: "array",
-          description:
-            "Optional deterministic aggregation the server computes over the read rows.",
+          description: "Optional aggregation the server computes over the rows it read.",
           items: {
             type: "object",
             properties: {
@@ -854,41 +858,22 @@ export const builtinAgentTools: ConnectorTool[] = [
             required: ["key", "op"],
           },
         },
-        source: {
+        units: {
           type: "string",
-          description: "Where the numbers came from, such as a file or a query.",
+          description: "Optional unit for a measure the file does not declare, such as CNY.",
         },
-        asOf: { type: "string", description: "ISO 8601 time the data was measured." },
-        window: {
-          type: "object",
-          description: "Optional period: from/to.",
-          properties: { from: { type: "string" }, to: { type: "string" } },
-          required: ["from", "to"],
-        },
-        units: { type: "string", description: "Optional unit, such as CNY or count." },
         timezone: { type: "string", description: "Optional IANA zone for the window." },
-        year: { type: "number", description: "Optional calendar year the data belongs to." },
-        freshness: {
-          type: "string",
-          description: "Optional ISO 8601 time the source itself was last updated.",
-        },
         columns: {
           type: "array",
-          description: "Optional column order and labels; defaults to the first row's keys.",
+          description: "Optional column order and labels; defaults to the file's header.",
           items: {
             type: "object",
             properties: { key: { type: "string" }, label: { type: "string" } },
             required: ["key", "label"],
           },
         },
-        rows: {
-          type: "array",
-          description:
-            "Rows you already have from a tool result in this turn; at most 200 are shown. Never invent values.",
-          items: { type: "object" },
-        },
       },
-      required: ["title"],
+      required: ["title", "sourceId", "from", "to"],
     },
   },
   {

@@ -1,3 +1,4 @@
+import type { MessageBlock } from "@matebot/contracts";
 import type {
   BuildResultSurfaceResult,
   ResultAggregation,
@@ -9,9 +10,10 @@ import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { loadOwnerEmailConnections } from "./interaction-email-capability.js";
 import { publishResultSurface } from "./interaction-result-publish.js";
 import { calendarResultReader } from "./result-source-calendar.js";
+import { csvResultReader } from "./result-source-csv.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
-import { modelRowProvenance, resolveSourceBackedRows } from "./run-tools-result-source.js";
+import { resolveSourceBackedRows } from "./run-tools-result-source.js";
 
 /**
  * `present_result`: the model posting a read-only result card.
@@ -44,6 +46,8 @@ export type PresentResultArgs = {
   year?: unknown;
   freshness?: unknown;
   columns?: unknown;
+  /** A specific uploaded file to read, when the model knows which one. */
+  artifactId?: unknown;
   rows?: unknown;
 };
 
@@ -90,32 +94,6 @@ export function parseMetrics(value: unknown): ResultAggregation["metrics"] | und
   return metrics.length > 0 ? (metrics as ResultAggregation["metrics"]) : undefined;
 }
 
-/**
- * Validate the tool's arguments into a bounded surface, or explain why not.
- * Exported so the tool's refusals are testable without a database.
- */
-export function buildResultFromArgs(args: PresentResultArgs): BuildResultSurfaceResult {
-  const title = typeof args.title === "string" ? args.title.trim() : "";
-  if (!title) return { ok: false, error: "missing_title" };
-  const provenance = validateResultProvenance({
-    source: args.source,
-    asOf: args.asOf,
-    window: args.window,
-    units: args.units,
-    timezone: args.timezone,
-    year: args.year,
-    freshness: args.freshness,
-  });
-  if (!provenance.ok) return { ok: false, error: provenance.error };
-  return buildResultSurface({
-    title,
-    // Rows the model wrote are never labelled as read from a source.
-    provenance: modelRowProvenance(provenance.provenance),
-    columns: parseColumns(args.columns),
-    rows: Array.isArray(args.rows) ? args.rows : [],
-  });
-}
-
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -123,8 +101,13 @@ function text(value: unknown): string {
 export type PresentResultDeps = {
   /** The user's own connection for a source that needs one. */
   connectionFor: (app: "email" | "calendar") => Promise<string | null>;
-  /** A per-turn reader for a source that needs the user's provider connection. */
+  /**
+   * A per-turn reader, asked for by source id. Each source that cannot be read
+   * from a shared registry (the calendar through a connector, a file through this
+   * turn's artifacts) supplies one; anything else uses the registered reader.
+   */
   read?: ResultSourceRead;
+  csvRead?: ResultSourceRead;
 };
 
 export function presentResultDeps(ctx: RunContext): PresentResultDeps {
@@ -167,7 +150,60 @@ export function presentResultDeps(ctx: RunContext): PresentResultDeps {
       if (!reader) return { ok: false, error: "needs_connection", outcome: "unavailable" };
       return reader(input);
     },
+    // The uploaded file, read from this user's own artifact store. The candidate
+    // list is the file(s) on the message that started this run, resolved lazily
+    // so a turn that never asks for a result does no extra query.
+    csvRead: deps.artifacts
+      ? async (input) => {
+          const attachedArtifactIds = await attachedFileArtifactIds(run.sourceMessageId, deps);
+          const reader = csvResultReader(
+            {
+              artifacts: {
+                find: (artifactId) =>
+                  deps.prisma.artifact.findFirst({
+                    where: { id: artifactId, spaceId: run.spaceId, userId: run.userId },
+                    select: { id: true, name: true, mimeType: true, storageKey: true },
+                  }),
+                read: (storageKey) =>
+                  deps.artifacts!.get(storageKey, {
+                    operationId: "interaction.result.read",
+                    traceId: "interaction.result.read",
+                    spaceId: run.spaceId,
+                    userId: run.userId,
+                    signal: new AbortController().signal,
+                  }),
+              },
+              attachedArtifactIds,
+            },
+            input.artifactId ? { artifactId: input.artifactId } : {},
+          );
+          if (!reader) return { ok: false, error: "no_uploaded_file", outcome: "unavailable" };
+          return reader(input);
+        }
+      : undefined,
   };
+}
+
+/**
+ * The files attached to the message that started this run.
+ *
+ * Read from that message's own blocks. Only artifacts the same person attached are
+ * in scope, and the newest is tried first, so the file the user just handed over
+ * is the one read.
+ */
+async function attachedFileArtifactIds(
+  sourceMessageId: string | null | undefined,
+  deps: RunContext["deps"],
+): Promise<string[]> {
+  if (!sourceMessageId) return [];
+  const message = await deps.prisma.message.findUnique({
+    where: { id: sourceMessageId },
+    select: { blocks: true },
+  });
+  const blocks = Array.isArray(message?.blocks) ? (message.blocks as MessageBlock[]) : [];
+  return blocks
+    .filter((block): block is Extract<MessageBlock, { kind: "file" }> => block.kind === "file")
+    .map((block) => block.artifactId);
 }
 
 /** Turn the arguments into a surface, reading the source when one was named. */
@@ -192,6 +228,7 @@ export async function surfaceFromArgs(
         ...(text(args.groupBy) ? { groupBy: text(args.groupBy) } : {}),
         ...(parseMetrics(args.metrics) ? { metrics: parseMetrics(args.metrics) } : {}),
         ...(parseColumns(args.columns) ? { columns: parseColumns(args.columns) } : {}),
+        ...(text(args.artifactId) ? { artifactId: text(args.artifactId) } : {}),
       },
       deps,
     );
@@ -204,7 +241,10 @@ export async function surfaceFromArgs(
     });
   }
 
-  return buildResultFromArgs(args);
+  // Rows the model wrote are not a data source. Presenting them would make the
+  // server vouch for numbers nothing read, and a label saying so is not evidence
+  // (§5.6.2). The model is told to name a source instead, or to answer in prose.
+  return { ok: false, error: "missing_source" };
 }
 
 export async function presentResult(
@@ -272,5 +312,4 @@ export const resultTools: ToolHandlers = {
   },
 };
 
-export type { ResultColumn };
-export type { ToolCall };
+export type { ResultColumn, ToolCall };
