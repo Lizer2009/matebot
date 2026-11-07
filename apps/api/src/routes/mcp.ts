@@ -3,6 +3,7 @@ import { runContinueJob } from "@matebot/adapter-kit";
 import {
   createPluginMarketplace,
   isTransientFetchError,
+  MCP_HEALTH_RESET,
   McpOAuthClientRequiredError,
   persistPreparedSecret,
   pluginPreviewDto,
@@ -12,7 +13,6 @@ import {
   recordMcpServerHealth,
   sanitizeComposioError,
   verifyMcpInstall,
-  MCP_HEALTH_RESET,
 } from "@matebot/adapters";
 import type { Actor } from "@matebot/contracts";
 import { signupSurveyAsksTeamSize } from "@matebot/contracts";

@@ -1,11 +1,11 @@
 import type { AgentToolCompletion } from "@matebot/adapter-kit";
 import { describe, expect, it } from "vitest";
+import { EgressRefusedError } from "./network-address.js";
 import {
   reachableDestinationOf,
   reachableHostOf,
   toolCompletionAuditPayload,
 } from "./tool-completion-audit.js";
-import { EgressRefusedError } from "./network-address.js";
 import { classifyToolFailure } from "./tool-failure.js";
 
 /**
@@ -76,16 +76,20 @@ describe("reachableDestinationOf", () => {
   });
 
   it("keeps a path that matches a declared low-risk route", () => {
-    const dest = reachableDestinationOf({ url: "https://example.test/status/incidents" }, [], [
-      { prefix: "/status/", staticSegments: ["incidents"] },
-    ]);
+    const dest = reachableDestinationOf(
+      { url: "https://example.test/status/incidents" },
+      [],
+      [{ prefix: "/status/", staticSegments: ["incidents"] }],
+    );
     expect(dest?.path).toBe("/status/incidents");
   });
 
   it("does not let a declared prefix carry an undeclared segment", () => {
-    const dest = reachableDestinationOf({ url: "https://example.test/status/alex" }, [], [
-      { prefix: "/status/", staticSegments: ["incidents"] },
-    ]);
+    const dest = reachableDestinationOf(
+      { url: "https://example.test/status/alex" },
+      [],
+      [{ prefix: "/status/", staticSegments: ["incidents"] }],
+    );
     expect(dest?.path).toBeUndefined();
     expect(dest?.pathWithheld).toBe("unrecognised");
   });
@@ -312,9 +316,9 @@ describe("classifyToolFailure", () => {
   it("does not read a security decision out of prose alone", () => {
     // A message that merely mentions a private address is not a policy refusal:
     // nothing structured says it was refused, so it is not classified as one.
-    expect(
-      classifyToolFailure(new Error("URL resolves to a private address")).class,
-    ).not.toBe("security_refused");
+    expect(classifyToolFailure(new Error("URL resolves to a private address")).class).not.toBe(
+      "security_refused",
+    );
   });
 
   it("keeps an unresolved host distinct from a refused one", () => {

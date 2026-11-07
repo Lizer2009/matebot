@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { mcpConnectionVerdict } from "@matebot/core";
+import { describe, expect, it } from "vitest";
 import { MCP_HEALTH_RESET, mcpServerHealthDto } from "./mcp-server-health.js";
 
 /**

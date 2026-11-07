@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { browserNavigateFromTool, EGRESS_REFUSED_HOST_MESSAGE } from "./browser-tools.js";
-import { EGRESS_REFUSED_SHELL_MESSAGE, refuseRefusedDestinationShell } from "./egress-fallback-guard.js";
+import {
+  EGRESS_REFUSED_SHELL_MESSAGE,
+  refuseRefusedDestinationShell,
+} from "./egress-fallback-guard.js";
 import { egressRefused, withEgressRefusalLedger } from "./network-address.js";
 
 /**

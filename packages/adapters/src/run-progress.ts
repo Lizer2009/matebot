@@ -254,7 +254,8 @@ export async function publishMidTurnNarration(ctx: RunContext, beforeConnectCard
 
 /** Keep a note for the final reply, once: the same sentence held twice is still one note. */
 export function holdWorkingNote(reply: ReplyState, text: string) {
-  if (reply.workingNotes.some((note) => normalizeNarration(note) === normalizeNarration(text))) return;
+  if (reply.workingNotes.some((note) => normalizeNarration(note) === normalizeNarration(text)))
+    return;
   reply.workingNotes.push(text);
 }
 

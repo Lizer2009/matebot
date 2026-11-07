@@ -1776,7 +1776,10 @@ describe("a repeated conclusion does not become another bubble", () => {
       { type: "text", text: "The fourth supplier replied: two days late." },
       { type: "tool", name: "read_file", args: {}, executionId: "call-2" },
     ]);
-    expect(sentTexts(messages)).toEqual([conclusion, "The fourth supplier replied: two days late."]);
+    expect(sentTexts(messages)).toEqual([
+      conclusion,
+      "The fourth supplier replied: two days late.",
+    ]);
   });
 
   it("still publishes the person's own answer, even when it repeats nothing new", async () => {

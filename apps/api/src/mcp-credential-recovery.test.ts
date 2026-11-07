@@ -1,5 +1,5 @@
-import { EncryptedSecretStore, McpConnector } from "@matebot/adapters";
 import type { McpOAuthSummary } from "@matebot/adapters";
+import { EncryptedSecretStore, McpConnector } from "@matebot/adapters";
 import type { Actor } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
 import { createRouterClient } from "@orpc/server";

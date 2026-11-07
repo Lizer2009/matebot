@@ -84,9 +84,7 @@ export function EmailComposeEditor({
     // republish, and React would then render the old value over what is on screen.
     // Every other field follows the server, so a model's edit still applies.
     const next = { ...fields };
-    for (const [name, typed] of Object.entries(dirty.current) as Array<
-      [EmailFieldName, string]
-    >) {
+    for (const [name, typed] of Object.entries(dirty.current) as Array<[EmailFieldName, string]>) {
       if (fields[name] === typed) delete dirty.current[name];
       else next[name] = valuesRef.current[name];
     }

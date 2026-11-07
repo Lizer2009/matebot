@@ -5,7 +5,7 @@ import type {
   ResultColumn,
   ResultSourceRead,
 } from "@matebot/core";
-import { buildResultSurface, validateResultProvenance, windowDecision } from "@matebot/core";
+import { buildResultSurface, windowDecision } from "@matebot/core";
 import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { loadOwnerEmailConnections } from "./interaction-email-capability.js";
@@ -294,10 +294,10 @@ export async function presentResult(
         : built.error === "unstated_window"
           ? "Which dates should I cover? Tell me the period and I will read it."
           : built.error === "needs_connection"
-          ? "需要先连接数据来源才能读取。"
-          : built.error === "unknown_source"
-            ? "没有这个数据来源，请告诉我要从哪里读取。"
-            : undefined;
+            ? "需要先连接数据来源才能读取。"
+            : built.error === "unknown_source"
+              ? "没有这个数据来源，请告诉我要从哪里读取。"
+              : undefined;
     return { ok: false, error: built.error, ...(reply ? { reply } : {}) };
   }
 

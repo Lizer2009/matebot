@@ -812,4 +812,3 @@ test("a calendar draft draws its schema fields and edits on the same card", asyn
   await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(1);
   await captureScreenshot(page, testInfo, "a2ui-e2e-12-calendar-same-card-edit");
 });
-

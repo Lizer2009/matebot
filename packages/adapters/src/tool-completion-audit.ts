@@ -53,7 +53,9 @@ export function toolCompletionAuditPayload(
     // rather than from its wording, so a reworded provider message changes nothing.
     // The original failure is classified, not the message: `error` above is prose.
     const failure = classifyToolFailure(
-      completion.error !== undefined ? completion.error : (toolResultFailure(completion.result) ?? error),
+      completion.error !== undefined
+        ? completion.error
+        : (toolResultFailure(completion.result) ?? error),
     );
     payload.failure = failure.detail
       ? { class: failure.class, detail: failure.detail }

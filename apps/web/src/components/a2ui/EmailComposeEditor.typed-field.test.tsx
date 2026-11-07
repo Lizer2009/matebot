@@ -59,10 +59,7 @@ function subjectInput(): HTMLInputElement {
 }
 
 function setValue(element: HTMLInputElement, value: string) {
-  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
-    element,
-    value,
-  );
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(element, value);
 }
 
 describe("a field the person typed", () => {
@@ -72,11 +69,7 @@ describe("a field the person typed", () => {
     );
     act(() =>
       root.render(
-        <EmailComposeEditor
-          draftVersion={1}
-          fields={fields("Hi")}
-          onFieldChange={onFieldChange}
-        />,
+        <EmailComposeEditor draftVersion={1} fields={fields("Hi")} onFieldChange={onFieldChange} />,
       ),
     );
 
@@ -91,11 +84,7 @@ describe("a field the person typed", () => {
     // A snapshot from before the commit arrives, with the old subject in it.
     await act(async () => {
       root.render(
-        <EmailComposeEditor
-          draftVersion={1}
-          fields={fields("Hi")}
-          onFieldChange={onFieldChange}
-        />,
+        <EmailComposeEditor draftVersion={1} fields={fields("Hi")} onFieldChange={onFieldChange} />,
       );
     });
     expect(subjectInput().value).toBe("我写的主题");
@@ -107,11 +96,7 @@ describe("a field the person typed", () => {
     });
     await act(async () => {
       root.render(
-        <EmailComposeEditor
-          draftVersion={1}
-          fields={fields("Hi")}
-          onFieldChange={onFieldChange}
-        />,
+        <EmailComposeEditor draftVersion={1} fields={fields("Hi")} onFieldChange={onFieldChange} />,
       );
     });
     expect(onFieldChange).toHaveBeenCalledWith("subject", "我写的主题", 1);
@@ -122,11 +107,7 @@ describe("a field the person typed", () => {
     const onFieldChange = vi.fn(async () => ({ draftVersion: 2 }));
     act(() =>
       root.render(
-        <EmailComposeEditor
-          draftVersion={1}
-          fields={fields("Hi")}
-          onFieldChange={onFieldChange}
-        />,
+        <EmailComposeEditor draftVersion={1} fields={fields("Hi")} onFieldChange={onFieldChange} />,
       ),
     );
     // A model edit changes the subject; the person never touched it, so it applies.

@@ -154,7 +154,9 @@ export class EgressRefusedError extends Error {
 export function egressRefused(hostname: string, error: unknown): Error {
   const reason = (error instanceof Error ? error.message : String(error)) || "refused";
   const refusal =
-    error instanceof Error ? error : new EgressRefusedError(normalizeLookupHostname(hostname), reason);
+    error instanceof Error
+      ? error
+      : new EgressRefusedError(normalizeLookupHostname(hostname), reason);
   void recordSecurityEvent({
     type: "egress.refused",
     metadata: { host: hostname.slice(0, 253), reason },

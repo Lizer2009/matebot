@@ -75,7 +75,10 @@ export function destinationKey(hostname: string): string {
   if (v6 === undefined) return value;
   // An IPv4-mapped address reaches the same place as its IPv4 form.
   const mapped = mappedIpv4(v6);
-  if (mapped !== undefined) return destinationKey(`${mapped >>> 24}.${(mapped >>> 16) & 255}.${(mapped >>> 8) & 255}.${mapped & 255}`);
+  if (mapped !== undefined)
+    return destinationKey(
+      `${mapped >>> 24}.${(mapped >>> 16) & 255}.${(mapped >>> 8) & 255}.${mapped & 255}`,
+    );
   return formatIpv6(v6);
 }
 
