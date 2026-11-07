@@ -134,6 +134,32 @@ describe("authenticated secret requests", () => {
     },
   );
 
+  /**
+   * A command variable is for shell commands.
+   *
+   * The audit saw a registered connection fail on a revoked key and the model then
+   * reach the same service through a shell command with a newly saved key. That is
+   * what a command variable is for. The boundary has to hold the other way too: the
+   * same variable must not be spendable as an authenticated HTTP request, which
+   * would turn a broken connection into a way to send a credential anywhere it
+   * names.
+   */
+  it("refuses to spend a command variable as an HTTP credential", async () => {
+    // A command variable has no site at all, so it cannot even be stored with an
+    // origin to send to. This is stronger than a check on the request: the shape
+    // that would let it be spent cannot exist.
+    const { input, fetch } = await fixture({ type: "command" });
+    await expect(requestWithBotSecret(input)).rejects.toThrow(/has no site/);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses to fill a website login into an HTTP request", async () => {
+    const { input, fetch } = await fixture({ type: "login", fields: [] });
+    const result = await requestWithBotSecret(input);
+    expect(result).toMatchObject({ error: expect.stringContaining("browser_act") });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it.each(["userId", "spaceId"] as const)(
     "denies a different %s before decrypting or sending",
     async (key) => {

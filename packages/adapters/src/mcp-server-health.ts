@@ -57,6 +57,20 @@ export async function recordMcpServerHealth(
   }
 }
 
+/**
+ * The health columns a server starts from when its settings changed.
+ *
+ * One definition so a caller cannot reset the status and leave a stale count or
+ * timestamp beside it: an `unknown` status next to yesterday's tool count reads as
+ * a measurement that still applies.
+ */
+export const MCP_HEALTH_RESET = {
+  healthStatus: "unknown",
+  healthMessage: null,
+  healthToolCount: null,
+  healthCheckedAt: null,
+} as const;
+
 export function mcpServerHealthDto(row: {
   healthStatus: string;
   healthMessage: string | null;

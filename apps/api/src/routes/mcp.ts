@@ -12,6 +12,7 @@ import {
   recordMcpServerHealth,
   sanitizeComposioError,
   verifyMcpInstall,
+  MCP_HEALTH_RESET,
 } from "@matebot/adapters";
 import type { Actor } from "@matebot/contracts";
 import { signupSurveyAsksTeamSize } from "@matebot/contracts";
@@ -586,10 +587,7 @@ export function mcpRoutes(ctx: RouterContext) {
                       verbatimResults: config.verbatimResults,
                       revision: { increment: 1 },
                       // The old verdict is about the old config.
-                      healthStatus: "unknown",
-                      healthMessage: null,
-                      healthToolCount: null,
-                      healthCheckedAt: null,
+                      ...MCP_HEALTH_RESET,
                       ...(stored ? { secretId: stored.id } : clearing ? { secretId: null } : {}),
                     },
                   });
