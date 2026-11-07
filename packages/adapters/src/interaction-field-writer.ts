@@ -82,6 +82,11 @@ export type UpdateInteractionFieldServiceInput = {
   expectedDraftVersion: number;
   name: string;
   value: unknown;
+  /**
+   * `user` for a control the person drove, `model` (default) for a tool edit.
+   * The stamp is persisted on the field so a later model edit can skip it.
+   */
+  origin?: "user" | "model";
 };
 
 export async function updateInteractionFieldService(
@@ -110,6 +115,7 @@ export async function updateInteractionFieldService(
       expectedDraftVersion: input.expectedDraftVersion,
       name: input.name,
       value: input.value,
+      origin: input.origin,
     },
   );
   if (!changed.ok) {

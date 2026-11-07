@@ -22,6 +22,8 @@ export type PresentResultArgs = {
   window?: unknown;
   units?: unknown;
   timezone?: unknown;
+  year?: unknown;
+  freshness?: unknown;
   columns?: unknown;
   rows?: unknown;
 };
@@ -60,6 +62,8 @@ export function buildResultFromArgs(args: PresentResultArgs): BuildResultSurface
       window: args.window,
       units: args.units,
       timezone: args.timezone,
+      year: args.year,
+      freshness: args.freshness,
     },
     columns: parseColumns(args.columns),
     rows: Array.isArray(args.rows) ? args.rows : [],

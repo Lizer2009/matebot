@@ -28,13 +28,19 @@ export type ResultProvenance = {
   units?: string;
   /** Optional: the zone the window is expressed in. */
   timezone?: string;
+  /** Optional: the calendar year the measure belongs to. */
+  year?: number;
+  /** Optional: when the source itself was last updated. Not the same as asOf. */
+  freshness?: string;
 };
 
 export type ResultProvenanceError =
   | "missing_source"
   | "invalid_as_of"
   | "invalid_timezone"
-  | "invalid_window";
+  | "invalid_window"
+  | "invalid_year"
+  | "invalid_freshness";
 
 export type ResultProvenanceValidation =
   | { ok: true; provenance: ResultProvenance }
@@ -93,6 +99,24 @@ export function validateResultProvenance(input: unknown): ResultProvenanceValida
   }
 
   const units = text(record.units);
+
+  // A year is a four-digit calendar year; a stray number or a phrase is refused
+  // rather than rendered as if it labelled the data.
+  let year: number | undefined;
+  if (record.year !== undefined && record.year !== null) {
+    const parsedYear =
+      typeof record.year === "number" ? record.year : Number(text(record.year));
+    if (!Number.isInteger(parsedYear) || parsedYear < 1900 || parsedYear > 2999) {
+      return { ok: false, error: "invalid_year" };
+    }
+    year = parsedYear;
+  }
+
+  const freshnessText = text(record.freshness);
+  if (freshnessText && !parseable(freshnessText)) {
+    return { ok: false, error: "invalid_freshness" };
+  }
+
   return {
     ok: true,
     provenance: {
@@ -101,6 +125,8 @@ export function validateResultProvenance(input: unknown): ResultProvenanceValida
       ...(window ? { window } : {}),
       ...(units ? { units } : {}),
       ...(timezone ? { timezone } : {}),
+      ...(year !== undefined ? { year } : {}),
+      ...(freshnessText ? { freshness: freshnessText } : {}),
     },
   };
 }
@@ -220,9 +246,11 @@ export function buildResultSurface(input: BuildResultSurfaceInput): BuildResultS
 /** The one line under a result card that states where the numbers came from. */
 export function provenanceLine(provenance: ResultProvenance): string {
   const parts = [provenance.source];
+  if (provenance.year !== undefined) parts.push(String(provenance.year));
   if (provenance.window) parts.push(`${provenance.window.from} – ${provenance.window.to}`);
   if (provenance.units) parts.push(provenance.units);
   parts.push(`as of ${provenance.asOf.slice(0, 10)}`);
+  if (provenance.freshness) parts.push(`fresh ${provenance.freshness.slice(0, 10)}`);
   return parts.join(" · ");
 }
 

@@ -1,7 +1,13 @@
 import type { InteractionPlan } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
-import { A2UI_SURFACE_NUDGE, interactionRequiredApp, surfaceNudgeFor } from "@matebot/core";
+import {
+  A2UI_SURFACE_NUDGE,
+  interactionRequiredApp,
+  surfaceNudgeFor,
+  unknownCapabilityNotice,
+  validateDecisionForCapability,
+} from "@matebot/core";
 import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import {
@@ -86,6 +92,25 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
   }
   const plan = normalizeInteractionPlan(parsed.data);
   const { deps, run } = ctx;
+
+  // Spec §6.3: the server rules on the capability before a surface exists. The
+  // plan's intent is the model's proposal; only a registered, implemented
+  // capability may render. An unregistered intent gets the human-readable
+  // fallback instead of a card that cannot work.
+  const verdict = validateDecisionForCapability({
+    taskIdentity: plan.intent,
+    capabilityCandidates: [plan.intent],
+    missingFields: plan.fields.filter((field) => field.status === "missing").map((f) => f.name),
+    presentationChoice: "form",
+    version: 1,
+  });
+  if (!verdict.ok) {
+    return {
+      error: "unknown_capability",
+      reply: unknownCapabilityNotice(),
+    };
+  }
+
   try {
     const published = await publishInteractionSurface(deps.prisma, {
       spaceId: run.spaceId,

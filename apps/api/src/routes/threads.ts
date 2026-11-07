@@ -5,6 +5,7 @@ import { a2uiSurfaceDocumentRef, parseA2uiSurfaceDocumentRef } from "@matebot/co
 import {
   AttachmentValidationError,
   applyNaturalLanguageEdit,
+  userEditedFieldNames,
   CALL_CLIENT_NONCE_PREFIX,
   callClientNonce,
   expandSkillReferencesInPrompt,
@@ -775,6 +776,8 @@ export function threadsRoutes(ctx: RouterContext) {
               expectedDraftVersion: input.expectedDraftVersion,
               name: input.name,
               value: input.value,
+              // This call is the card's own control: the person typed the value.
+              origin: "user",
             });
             return { ok: true as const, draftVersion: result.draftVersion };
           } catch (error) {
@@ -919,6 +922,7 @@ export function threadsRoutes(ctx: RouterContext) {
                 draftVersion: row.draftVersion,
                 confirmedVersion: row.confirmedVersion,
                 slots: (row.slots ?? {}) as Record<string, unknown>,
+                userEditedFields: userEditedFieldNames(row.plan),
               };
             },
             listOpenSurfaces: async () => open,

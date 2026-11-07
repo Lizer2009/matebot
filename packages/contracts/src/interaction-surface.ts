@@ -119,6 +119,10 @@ export const ResultProvenanceSchema = z.object({
   /** The unit of any measure, e.g. "CNY" or "count". Never invented. */
   units: z.string().trim().max(32).optional(),
   timezone: z.string().trim().max(64).optional(),
+  /** The calendar year the measure belongs to. */
+  year: z.number().int().min(1900).max(2999).optional(),
+  /** When the source itself was last updated; distinct from asOf. */
+  freshness: z.string().trim().min(1).optional(),
 });
 export type ResultProvenance = z.infer<typeof ResultProvenanceSchema>;
 
@@ -144,3 +148,37 @@ export const ResultSurfaceSchema = z.object({
   emptyNotice: z.string().optional(),
 });
 export type ResultSurface = z.infer<typeof ResultSurfaceSchema>;
+
+/**
+ * Spec §6.3 — the model's structured decision about a request, before any
+ * surface exists. A proposal only: the server still owns whether the named
+ * capability exists and may render.
+ */
+export const InteractionPresentationChoice = z.enum([
+  "text",
+  "result",
+  "form",
+  "review",
+  "progress",
+]);
+export type InteractionPresentationChoice = z.infer<typeof InteractionPresentationChoice>;
+
+export const InteractionDecisionSchema = z.object({
+  /** Stable task identity: decides same-card update versus a new card. */
+  taskIdentity: z.string().trim().min(1).max(200),
+  /** What the model thinks could answer the request, best first. */
+  capabilityCandidates: z.array(z.string().trim().min(1).max(120)).min(1).max(5),
+  /** Fields that block execution; drives a minimal clarification. */
+  missingFields: z.array(z.string().trim().min(1).max(64)).max(40).default([]),
+  permissions: z
+    .object({
+      sourceAvailable: z.boolean().optional(),
+      connectionReady: z.boolean().optional(),
+    })
+    .optional(),
+  presentationChoice: InteractionPresentationChoice,
+  presentationReason: z.string().trim().max(200).optional(),
+  /** Decision/schema version, so a proposal can be replayed. */
+  version: z.number().int().positive().default(1),
+});
+export type InteractionDecision = z.infer<typeof InteractionDecisionSchema>;

@@ -3,6 +3,7 @@ import {
   buildResultSurface,
   emptyResultNotice,
   provenanceFromUnknown,
+  provenanceLine,
   RESULT_MAX_ROWS,
   readWindow,
   validateResultProvenance,
@@ -177,5 +178,55 @@ describe("provenanceFromUnknown", () => {
   it("reports absence rather than returning a half-filled record", () => {
     expect(provenanceFromUnknown({})).toMatchObject({ ok: false, error: "missing_source" });
     expect(provenanceFromUnknown(null)).toMatchObject({ ok: false });
+  });
+});
+
+describe("spec §5.6.1 provenance fields", () => {
+  it("carries the year the measure belongs to", () => {
+    const result = validateResultProvenance({ ...provenance, year: 2026 });
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.provenance.year).toBe(2026);
+  });
+
+  it("rejects a year that is not a plausible four-digit year", () => {
+    expect(validateResultProvenance({ ...provenance, year: 26 })).toMatchObject({
+      ok: false,
+      error: "invalid_year",
+    });
+    expect(validateResultProvenance({ ...provenance, year: "last year" })).toMatchObject({
+      ok: false,
+      error: "invalid_year",
+    });
+  });
+
+  // Freshness is when the source was last updated, which is not the same as asOf
+  // (when the measure was taken) and must be parseable rather than free text.
+  it("carries the freshness timestamp of the source", () => {
+    const result = validateResultProvenance({
+      ...provenance,
+      freshness: "2026-11-05T22:00:00.000Z",
+    });
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.provenance.freshness).toBe("2026-11-05T22:00:00.000Z");
+  });
+
+  it("rejects an unparseable freshness instead of showing it", () => {
+    expect(validateResultProvenance({ ...provenance, freshness: "recently" })).toMatchObject({
+      ok: false,
+      error: "invalid_freshness",
+    });
+  });
+
+  it("states both in the provenance line", () => {
+    const line = provenanceLine({
+      source: "user-provided CSV",
+      asOf: "2026-11-06T00:00:00.000Z",
+      year: 2026,
+      freshness: "2026-11-05T22:00:00.000Z",
+    });
+    expect(line).toContain("2026");
+    expect(line).toMatch(/fresh|更新/i);
   });
 });

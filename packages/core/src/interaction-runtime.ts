@@ -78,7 +78,17 @@ export function deriveCollectingStatus(
 
 export function applyInteractionFieldChange(
   state: InteractionDraftState,
-  input: { expectedDraftVersion: number; name: string; value: unknown },
+  input: {
+    expectedDraftVersion: number;
+    name: string;
+    value: unknown;
+    /**
+     * Who is writing. A value the person typed is stamped `source: "user"` on
+     * the field itself, so a later model edit can tell it apart from a value the
+     * model proposed and leave it alone (spec §6.4.3).
+     */
+    origin?: "user" | "model";
+  },
 ): FieldChangeResult {
   if (LOCKED.has(state.status)) {
     return {
@@ -100,10 +110,13 @@ export function applyInteractionFieldChange(
   }
 
   const slots = { ...state.slots, [input.name]: input.value };
+  const origin = input.origin ?? "model";
   const plan = {
     ...state.plan,
     fields: state.plan.fields.map((entry) =>
-      entry.name === input.name ? withFieldValue(entry, input.value) : entry,
+      entry.name === input.name
+        ? { ...withFieldValue(entry, input.value), source: origin }
+        : entry,
     ),
   };
   const status = deriveCollectingStatus(plan, slots, state.status);

@@ -23,6 +23,11 @@ export type NaturalLanguageEditDeps = {
     draftVersion: number;
     confirmedVersion: number | null;
     slots: Record<string, unknown>;
+    /**
+     * Field names the person typed, read from the persisted draft. A model edit
+     * must leave them alone even when the caller did not pass the list itself.
+     */
+    userEditedFields?: readonly string[];
   } | null>;
   /**
    * Cards in the thread. Live ones by default; `includeExecuted` also returns
@@ -88,6 +93,29 @@ function statusOf(row: {
   return "draft";
 }
 
+/**
+ * Fields the person typed, read from the persisted draft.
+ *
+ * The card's own control stamps `source: "user"` on the field it writes, so the
+ * protected set survives a restart and does not depend on the caller remembering
+ * to send it. A model edit skips these; nothing else can silently overwrite what
+ * someone actually typed (spec §6.4.3).
+ */
+export function userEditedFieldNames(plan: unknown): string[] {
+  if (!plan || typeof plan !== "object" || Array.isArray(plan)) return [];
+  const fields = (plan as { fields?: unknown }).fields;
+  if (!Array.isArray(fields)) return [];
+  return fields
+    .filter(
+      (field): field is { name: string } =>
+        Boolean(field) &&
+        typeof field === "object" &&
+        typeof (field as { name?: unknown }).name === "string" &&
+        (field as { source?: unknown }).source === "user",
+    )
+    .map((field) => field.name);
+}
+
 export async function applyNaturalLanguageEdit(
   deps: NaturalLanguageEditDeps,
   input: NaturalLanguageEditInput,
@@ -140,7 +168,10 @@ export async function applyNaturalLanguageEdit(
     return { ok: false, error: "stale_revision" };
   }
 
-  const userEdited = new Set(input.userEditedFields ?? []);
+  const userEdited = new Set([
+    ...(input.userEditedFields ?? []),
+    ...(row.userEditedFields ?? []),
+  ]);
   const fields: Record<string, unknown> = {};
   const skippedFields: string[] = [];
   for (const [name, value] of Object.entries(input.fields)) {

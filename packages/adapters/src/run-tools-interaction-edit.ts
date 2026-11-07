@@ -4,6 +4,7 @@ import {
   applyNaturalLanguageEdit,
   findInteractionCapability,
   interactionCapabilityForIntent,
+  userEditedFieldNames,
 } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { updateInteractionFieldService } from "./interaction-field-writer.js";
@@ -194,6 +195,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
           row.slots && typeof row.slots === "object" && !Array.isArray(row.slots)
             ? (row.slots as Record<string, unknown>)
             : {},
+        userEditedFields: userEditedFieldNames(row.plan),
       };
     },
     listOpenSurfaces: async ({ spaceId, threadId }) => {

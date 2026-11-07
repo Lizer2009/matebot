@@ -363,6 +363,14 @@ function A2uiCatalogNode({
   if (node.type === "Column") {
     return <A2uiCatalogNodes nodes={node.children} block={block} onAction={onAction} />;
   }
+  if (node.type === "Row") {
+    // A table header or data row: stacked so a wide table stays readable on a phone.
+    return (
+      <View style={{ gap: 2 }}>
+        <A2uiCatalogNodes nodes={node.children} block={block} onAction={onAction} />
+      </View>
+    );
+  }
   if (node.type === "Sheet") {
     return (
       <A2uiSheet label={node.title ?? t("Open")}>

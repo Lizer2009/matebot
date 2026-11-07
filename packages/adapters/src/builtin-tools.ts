@@ -826,6 +826,11 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
         units: { type: "string", description: "Optional unit, such as CNY or count." },
         timezone: { type: "string", description: "Optional IANA zone for the window." },
+        year: { type: "number", description: "Optional calendar year the data belongs to." },
+        freshness: {
+          type: "string",
+          description: "Optional ISO 8601 time the source itself was last updated.",
+        },
         columns: {
           type: "array",
           description: "Optional column order and labels; defaults to the first row's keys.",
