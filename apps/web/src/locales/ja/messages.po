@@ -897,6 +897,10 @@ msgstr "このサーバーを承認すると、エージェントがそのツー
 msgid "Approved"
 msgstr ""
 
+#: src/pages/shell/message-cards.tsx
+msgid "Approved, not connected yet"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
 msgstr ""
@@ -3820,6 +3824,10 @@ msgstr ""
 msgid "Loading preview…"
 msgstr "プレビューを読み込み中…"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Loading this card…"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
 msgstr "音声プロバイダーを読み込み中…"
@@ -4564,6 +4572,10 @@ msgstr "Matebotでは使用しません"
 msgid "Not working"
 msgstr "動作していません"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Nothing has reached this server yet."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "記憶はまだありません"
@@ -4998,6 +5010,10 @@ msgstr "POST先"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "環境設定"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Preparing this server."
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6503,6 +6519,10 @@ msgstr "この操作は元に戻せません。"
 msgid "This cannot be undone."
 msgstr "この操作は元に戻せません。"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This card could not be shown."
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "このコンピューター"
@@ -6602,6 +6622,10 @@ msgstr "このサーバーはブラウザでの認可を要求しませんでし
 #: src/pages/McpServersOverlay.tsx
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "このサーバーはすでに接続されています。再度認可するには、先に切断してください。"
+
+#: src/pages/shell/message-cards.tsx
+msgid "This server is not responding."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6729,6 +6753,7 @@ msgstr "不正利用を防ぐため、トライアルでは時間が少なくな
 msgid "Trusted sites"
 msgstr "信頼済みサイト"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx

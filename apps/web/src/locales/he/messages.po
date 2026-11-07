@@ -897,6 +897,10 @@ msgstr "יש לאשר את השרת הזה כדי שהסוכן יוכל להשת
 msgid "Approved"
 msgstr ""
 
+#: src/pages/shell/message-cards.tsx
+msgid "Approved, not connected yet"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
 msgstr ""
@@ -3820,6 +3824,10 @@ msgstr ""
 msgid "Loading preview…"
 msgstr "טוען תצוגה מקדימה…"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Loading this card…"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
 msgstr "טוען ספקי קול…"
@@ -4564,6 +4572,10 @@ msgstr "לא בשימוש ב-Matebot"
 msgid "Not working"
 msgstr "לא עובד"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Nothing has reached this server yet."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "עדיין אין זיכרונות"
@@ -4998,6 +5010,10 @@ msgstr "POST אל"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "העדפות"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Preparing this server."
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6503,6 +6519,10 @@ msgstr "לא ניתן לבטל פעולה זו."
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל פעולה זו."
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This card could not be shown."
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "המחשב הזה"
@@ -6602,6 +6622,10 @@ msgstr "השרת הזה לא ביקש הרשאה דרך הדפדפן."
 #: src/pages/McpServersOverlay.tsx
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "השרת הזה כבר מחובר. יש לנתק אותו קודם כדי לאשר מחדש."
+
+#: src/pages/shell/message-cards.tsx
+msgid "This server is not responding."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6729,6 +6753,7 @@ msgstr "בתקופת ניסיון יש פחות שעות כדי למנוע ני�
 msgid "Trusted sites"
 msgstr "אתרים מהימנים"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx

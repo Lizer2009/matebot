@@ -110,25 +110,7 @@ export async function executeCloudAgentTool(
         userId: context.userId,
       },
     });
-    if (!owned) {
-      // Say which situation this is, because the two need different next steps and
-      // the audit saw a model fill the gap by talking about a connection that did
-      // not exist. The check is a real query, not an assumption.
-      const anyForThread = await deps.prisma.cloudAgent.findFirst({
-        where: {
-          threadId: run.threadId,
-          providerKey: connection.key,
-          spaceId: context.spaceId,
-          userId: context.userId,
-        },
-        select: { id: true },
-      });
-      return {
-        error: anyForThread
-          ? "That cloud agent does not exist here. Use the id from a launch in this conversation."
-          : "No cloud agent to check: none has been started in this conversation. Connect the provider and launch one first.",
-      };
-    }
+    if (!owned) return { error: "Unknown cloud agent." };
     agent = owned;
     if (name === "cloud_agent_reply") {
       if (
