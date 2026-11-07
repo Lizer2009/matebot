@@ -1,4 +1,10 @@
-import type { InteractionSurfaceSchema } from "@matebot/contracts";
+import type {
+  InteractionField,
+  InteractionPlan,
+  InteractionSurfaceSchema,
+} from "@matebot/contracts";
+import { InteractionPlanSchema } from "@matebot/contracts";
+import { withFieldValue } from "./interaction-runtime.js";
 import type { SurfaceStatus } from "./surface-revision.js";
 import { canSubmitSurface } from "./surface-revision.js";
 import type { OpenSurface } from "./surface-target.js";
@@ -23,6 +29,13 @@ export type NaturalLanguageEditDeps = {
     draftVersion: number;
     confirmedVersion: number | null;
     slots: Record<string, unknown>;
+    /**
+     * Field names the person typed, read from the persisted draft. A model edit
+     * must leave them alone even when the caller did not pass the list itself.
+     */
+    userEditedFields?: readonly string[];
+    /** The stored plan, needed to build a correction of a record that already ran. */
+    plan?: unknown;
   } | null>;
   /**
    * Cards in the thread. Live ones by default; `includeExecuted` also returns
@@ -88,6 +101,29 @@ function statusOf(row: {
   return "draft";
 }
 
+/**
+ * Fields the person typed, read from the persisted draft.
+ *
+ * The card's own control stamps `source: "user"` on the field it writes, so the
+ * protected set survives a restart and does not depend on the caller remembering
+ * to send it. A model edit skips these; nothing else can silently overwrite what
+ * someone actually typed (spec §6.4.3).
+ */
+export function userEditedFieldNames(plan: unknown): string[] {
+  if (!plan || typeof plan !== "object" || Array.isArray(plan)) return [];
+  const fields = (plan as { fields?: unknown }).fields;
+  if (!Array.isArray(fields)) return [];
+  return fields
+    .filter(
+      (field): field is { name: string } =>
+        Boolean(field) &&
+        typeof field === "object" &&
+        typeof (field as { name?: unknown }).name === "string" &&
+        (field as { source?: unknown }).source === "user",
+    )
+    .map((field) => field.name);
+}
+
 export async function applyNaturalLanguageEdit(
   deps: NaturalLanguageEditDeps,
   input: NaturalLanguageEditInput,
@@ -140,7 +176,7 @@ export async function applyNaturalLanguageEdit(
     return { ok: false, error: "stale_revision" };
   }
 
-  const userEdited = new Set(input.userEditedFields ?? []);
+  const userEdited = new Set([...(input.userEditedFields ?? []), ...(row.userEditedFields ?? [])]);
   const fields: Record<string, unknown> = {};
   const skippedFields: string[] = [];
   for (const [name, value] of Object.entries(input.fields)) {
@@ -195,5 +231,59 @@ export async function applyNaturalLanguageEdit(
     // Changing an approved payload means the old approval no longer describes it.
     confirmationInvalidated: status === "approved",
     nudge: "已更新卡片，请在卡片上确认。",
+  };
+}
+
+export type AmendmentResult =
+  | { ok: true; plan: InteractionPlan; changedFields: string[]; skippedFields: string[] }
+  | { ok: false; error: "unknown_field" | "no_change" | "invalid_plan" };
+
+/**
+ * Build the draft that corrects a record that already ran.
+ *
+ * The executed row is a record of what happened, so a correction cannot be an
+ * edit of it: it is a new draft carrying the amended values and pointing at the
+ * original. Running it then needs its own confirmation and its own effect, which
+ * is why this returns a plan rather than publishing or executing anything.
+ *
+ * Fields the person typed on the new draft are still protected, using the same
+ * rule as an ordinary edit.
+ */
+export function buildAmendment(input: {
+  plan: unknown;
+  fields: Record<string, unknown>;
+  schema: InteractionSurfaceSchema;
+  userEditedFields?: readonly string[];
+}): AmendmentResult {
+  const parsed = InteractionPlanSchema.safeParse(input.plan);
+  if (!parsed.success) return { ok: false, error: "invalid_plan" };
+
+  const declared = new Set(input.schema.fields.map((field) => field.name));
+  for (const name of Object.keys(input.fields)) {
+    if (!declared.has(name)) return { ok: false, error: "unknown_field" };
+  }
+
+  const userEdited = new Set(input.userEditedFields ?? []);
+  const changedFields: string[] = [];
+  const skippedFields: string[] = [];
+  const fields = parsed.data.fields.map((field) => {
+    if (!(field.name in input.fields)) return field;
+    if (userEdited.has(field.name)) {
+      skippedFields.push(field.name);
+      return field;
+    }
+    const value = input.fields[field.name];
+    if (field.value === value) return field;
+    changedFields.push(field.name);
+    return { ...withFieldValue(field, value), source: "model" };
+  });
+
+  if (changedFields.length === 0) return { ok: false, error: "no_change" };
+
+  return {
+    ok: true,
+    plan: { ...parsed.data, fields },
+    changedFields,
+    skippedFields,
   };
 }

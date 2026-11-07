@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ResultSourceReadInput } from "./result-source.js";
-import {
-  describeUnavailableSource,
-  findResultSource,
-  queryResultSource,
-  RESULT_SOURCE_REGISTRY,
-} from "./result-source.js";
+import { findResultSource, queryResultSource, RESULT_SOURCE_REGISTRY } from "./result-source.js";
 
 /**
  * A result re-query reads through a *registered* source, never an endpoint the
@@ -59,16 +54,41 @@ describe("RESULT_SOURCE_REGISTRY", () => {
 });
 
 describe("queryResultSource", () => {
-  it("reads through the registered source and reports its provenance", async () => {
+  it("reads through a per-turn reader and reports its provenance", async () => {
+    // A file source has no shared reader: it is supplied for this call, and the
+    // registry still owns the id, the label and the window validation.
+    const result = await queryResultSource(
+      { sourceId: "csv-upload", window: { from: "2026-07-01", to: "2026-09-30" } },
+      {
+        connectionId: null,
+        readFor: (id) =>
+          id === "csv-upload"
+            ? async () => ({
+                ok: true as const,
+                rows: [{ quarter: "Q3", amount: 10 }],
+                asOf: "2026-11-06T00:00:00Z",
+                units: "CNY",
+                sourceLabel: "Upload: sales.csv",
+              })
+            : undefined,
+      },
+    );
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.rows).toEqual([{ quarter: "Q3", amount: 10 }]);
+    expect(result.provenance.units).toBe("CNY");
+    // The reader's own origin wins over the generic registry label.
+    expect(result.provenance.source).toBe("Upload: sales.csv");
+    expect(result.provenance.window).toEqual({ from: "2026-07-01", to: "2026-09-30" });
+  });
+
+  it("refuses a file source when this turn supplied no reader", async () => {
     const result = await queryResultSource(
       { sourceId: "csv-upload", window: { from: "2026-07-01", to: "2026-09-30" } },
       { connectionId: null },
     );
-    expect(result).toMatchObject({ ok: true });
-    if (!result.ok) return;
-    expect(result.provenance.units).toBe("CNY");
-    // The registered source decides its own rows; the window is passed through.
-    expect(result.provenance.window).toEqual({ from: "2026-07-01", to: "2026-09-30" });
+    // No reader means nothing to read: an empty table would be a false answer.
+    expect(result).toMatchObject({ ok: false, error: "csv_read_not_wired" });
   });
 
   it("refuses an unregistered source instead of attempting a read", async () => {
@@ -99,14 +119,5 @@ describe("queryResultSource", () => {
     expect(result).toMatchObject({ ok: false, error: "invalid_window" });
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
-  });
-});
-
-describe("describeUnavailableSource", () => {
-  // The honest fallback when no source is configured.
-  it("asks for a source rather than showing invented numbers", () => {
-    const text = describeUnavailableSource();
-    expect(text).toMatch(/source/i);
-    expect(text).not.toMatch(/\d/);
   });
 });

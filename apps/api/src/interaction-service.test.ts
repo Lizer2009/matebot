@@ -361,6 +361,41 @@ describe("executeConfirmedInteractionService", () => {
     vi.clearAllMocks();
   });
 
+  // An effect kind this build has no sender for must never be reported as run.
+  // This replaces the retired `resolveInteractionSender` helper: the behaviour
+  // lives in this service now, so it is checked here rather than in a module
+  // nothing calls.
+  it("reports an unknown effect kind as not executed", async () => {
+    const db = memoryPrisma(
+      readyInteraction({ confirmedVersion: 2, approvalEffectId: "effect-1" }),
+    );
+    db.effects.set("a2ui:interaction:ix-1:confirm:2", {
+      id: "effect-1",
+      spaceId: "space-1",
+      runId: "run-1",
+      kind: "reminder.create",
+      idempotencyKey: "a2ui:interaction:ix-1:confirm:2",
+      status: "intended",
+      request: {
+        interactionId: "ix-1",
+        intent: "reminder.create",
+        draftVersion: 2,
+        confirmedVersion: 2,
+        slots: {},
+      },
+      reviewDecision: "allow",
+      reviewReason: "user confirmed draft",
+    });
+    const result = await executeConfirmedInteractionService(db.prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      ...readyMailbox,
+    });
+    expect(result).toMatchObject({ executed: false, duplicate: false });
+  });
+
   it("rejects send before the draft is confirmed", async () => {
     const db = memoryPrisma(readyInteraction());
     await expect(

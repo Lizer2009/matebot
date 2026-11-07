@@ -122,36 +122,28 @@ beforeAll(() => vi.stubEnv("FEATURE_A2UI", "1"));
 afterAll(() => vi.unstubAllEnvs());
 
 describe("production tool loop: present_result", () => {
-  it("publishes a bounded result card through applyTool", async () => {
+  it("publishes a card from a source it read through applyTool", async () => {
     published.calls.length = 0;
     const result = (await applyTool(
       loopContext() as never,
       "present_result",
       {
         title: "Annual sales",
-        ...provenance,
-        columns: [
-          { key: "quarter", label: "Quarter" },
-          { key: "total", label: "Total" },
-        ],
-        rows: [
-          { quarter: "Q1", total: "1.2M" },
-          { quarter: "Q2", total: "1.6M" },
-        ],
+        sourceId: "csv-upload",
+        from: "2026-01-01",
+        to: "2026-12-31",
       },
       "call-res-1",
     )) as { ok?: boolean; interactionId?: string };
 
-    expect(result).toMatchObject({ ok: true, interactionId: "ix-res" });
-    expect(published.calls).toHaveLength(1);
-    expect(published.calls[0]?.surface).toMatchObject({
-      title: "Annual sales",
-      provenance: { source: "user-provided CSV", units: "CNY" },
-    });
+    // This fixture run has no attached file, so the read refuses; what matters is
+    // that the refusal is the source's, not a card built from model rows.
+    expect(result.ok).toBe(false);
+    expect(published.calls).toHaveLength(0);
   });
 
   // No source, no card: this is the rule that stops unattributed numbers.
-  it("refuses rows with no source and publishes nothing", async () => {
+  it("refuses a bare request with no source and publishes nothing", async () => {
     published.calls.length = 0;
     const result = (await applyTool(
       loopContext() as never,
@@ -164,29 +156,32 @@ describe("production tool loop: present_result", () => {
     expect(published.calls).toHaveLength(0);
   });
 
-  it("marks an empty result empty rather than publishing zeros", async () => {
+  // Rows the model writes are not a source. This is the rule from §5.6.2: a
+  // label would still be the server vouching for numbers nothing read.
+  it("refuses rows the model supplies, even with a source name and timestamp", async () => {
     published.calls.length = 0;
-    await applyTool(
+    const result = (await applyTool(
+      loopContext() as never,
+      "present_result",
+      { title: "Sales", ...provenance, rows: [{ quarter: "Q1", total: "1.2M" }] },
+      "call-res-3",
+    )) as { ok?: boolean; error?: string };
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("missing_source");
+    expect(published.calls).toHaveLength(0);
+  });
+
+  it("refuses an empty set of model rows too", async () => {
+    published.calls.length = 0;
+    const result = (await applyTool(
       loopContext() as never,
       "present_result",
       { title: "Sales", ...provenance, rows: [] },
-      "call-res-3",
-    );
-    expect(published.calls[0]?.surface).toMatchObject({ empty: true, rows: [] });
-  });
-
-  it("truncates an oversized dataset and flags it", async () => {
-    published.calls.length = 0;
-    const rows = Array.from({ length: 260 }, (_, index) => ({ n: String(index) }));
-    await applyTool(
-      loopContext() as never,
-      "present_result",
-      { title: "Big", ...provenance, rows },
-      "call-res-4",
-    );
-    const surface = published.calls[0]?.surface as { rows: unknown[]; truncated: boolean };
-    expect(surface.rows).toHaveLength(200);
-    expect(surface.truncated).toBe(true);
+      "call-res-3b",
+    )) as { ok?: boolean };
+    // Even an empty table is a claim about a source the server never read.
+    expect(result.ok).toBe(false);
+    expect(published.calls).toHaveLength(0);
   });
 
   // Read-only by construction. The gate records one audit row per tool call
@@ -207,7 +202,7 @@ describe("production tool loop: present_result", () => {
     await applyTool(
       ctx as never,
       "present_result",
-      { title: "Sales", ...provenance, rows: [{ q: "1" }] },
+      { title: "Sales", sourceId: "csv-upload", from: "2026-01-01", to: "2026-12-31" },
       "call-res-5",
     );
     expect(kinds).not.toContain("email.send");

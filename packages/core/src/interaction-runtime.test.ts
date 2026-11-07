@@ -50,6 +50,46 @@ describe("interaction-runtime", () => {
     expect(result.slots.subject).toBe("Hello again");
   });
 
+  it("stamps a user-typed value so a later model edit can skip it", () => {
+    const result = applyInteractionFieldChange(
+      {
+        status: "ready_for_review",
+        draftVersion: 2,
+        confirmedVersion: null,
+        plan,
+        slots: { to: "model@example.com", subject: "Hi", body: "Hello" },
+      },
+      {
+        expectedDraftVersion: 2,
+        name: "to",
+        value: "typed@example.com",
+        origin: "user",
+      },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.plan.fields.find((field) => field.name === "to")).toMatchObject({
+      value: "typed@example.com",
+      source: "user",
+    });
+  });
+
+  it("leaves a model-written field marked as the model's", () => {
+    const result = applyInteractionFieldChange(
+      {
+        status: "ready_for_review",
+        draftVersion: 2,
+        confirmedVersion: null,
+        plan,
+        slots: { to: "a@example.com", subject: "Hi", body: "Hello" },
+      },
+      { expectedDraftVersion: 2, name: "subject", value: "Hello again" },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.plan.fields.find((field) => field.name === "subject")?.source).toBe("model");
+  });
+
   it("rejects stale expectedDraftVersion and unknown fields", () => {
     const state = {
       status: "collecting" as const,

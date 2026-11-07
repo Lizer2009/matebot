@@ -111,6 +111,11 @@ export const A2uiSurfaceBlockSchema = z.object({
   providerMessageId: z.string().trim().min(1).optional(),
   /** Last send error when lifecycle is failed or unknown. */
   error: z.string().optional(),
+  /**
+   * The executed record this draft corrects. A correction is always a new draft
+   * that points at what happened; the executed record itself never changes.
+   */
+  amendsInteractionId: z.string().trim().min(1).optional(),
   /** Short label for the timeline before/without the full catalog document. */
   title: z.string().optional(),
   summary: z.string().optional(),
@@ -252,6 +257,19 @@ export const ThreadsConfirmInteractionOutput = z.object({
   idempotencyKey: z.string().min(1),
 });
 export type ThreadsConfirmInteractionOutput = z.infer<typeof ThreadsConfirmInteractionOutput>;
+
+export const ThreadsCancelInteractionInput = ThreadTargetSchema.safeExtend({
+  interactionId: Id,
+  /** The revision the caller was looking at; a stale cancel is refused. */
+  draftVersion: z.number().int().positive(),
+});
+export type ThreadsCancelInteractionInput = z.infer<typeof ThreadsCancelInteractionInput>;
+
+export const ThreadsCancelInteractionOutput = z.object({
+  ok: z.literal(true),
+  status: z.literal("cancelled"),
+  draftVersion: z.number().int().positive(),
+});
 
 /**
  * Execute a confirmed interaction. The server rejects the call when

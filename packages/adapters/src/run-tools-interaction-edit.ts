@@ -1,9 +1,11 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
+import { InteractionPlanSchema } from "@matebot/contracts";
 import type { InteractionCapability, NaturalLanguageEditDeps } from "@matebot/core";
 import {
   applyNaturalLanguageEdit,
-  findInteractionCapability,
+  buildAmendment,
   interactionCapabilityForIntent,
+  userEditedFieldNames,
 } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { updateInteractionFieldService } from "./interaction-field-writer.js";
@@ -32,6 +34,17 @@ export type EditInteractionResult =
       skippedFields: string[];
       confirmationInvalidated: boolean;
       /** The only words the turn should add. */
+      reply: string;
+    }
+  | {
+      ok: true;
+      /** True when this created a linked draft instead of editing in place. */
+      amendment: true;
+      interactionId: string;
+      surfaceId: string;
+      draftVersion: number;
+      skippedFields: string[];
+      confirmationInvalidated: true;
       reply: string;
     }
   | {
@@ -84,7 +97,72 @@ function parseArgs(args: Record<string, unknown>):
 export type EditInteractionServices = Pick<
   NaturalLanguageEditDeps,
   "loadInteraction" | "listOpenSurfaces" | "applyField"
->;
+> & {
+  /**
+   * Publish a correction as a new draft linked to the record it amends. Separate
+   * from `applyField` because it must create a new card, never touch the record.
+   */
+  publishAmendment?: (input: {
+    interactionId: string;
+    plan: unknown;
+  }) => Promise<{ interactionId: string; surfaceId: string; draftVersion: number }>;
+  /**
+   * The record an unqualified correction is about: the named one, or the newest
+   * of any status when nothing is named and no draft is open.
+   */
+  loadExecutedCandidate?: (input: {
+    interactionId?: string;
+    allowNewest: boolean;
+  }) => Promise<Awaited<ReturnType<NaturalLanguageEditDeps["loadInteraction"]>>>;
+};
+
+/**
+ * Publish the correction of a record that already ran.
+ *
+ * Returns null when this turn cannot amend (no publisher wired, or there is
+ * nothing to change), so the caller falls through to the ordinary paths and
+ * their own error messages.
+ */
+async function amendExecuted(
+  services: EditInteractionServices,
+  input: {
+    record: NonNullable<Awaited<ReturnType<NaturalLanguageEditDeps["loadInteraction"]>>>;
+    fields: Record<string, unknown>;
+    schema: InteractionSurfaceSchema;
+  },
+): Promise<EditInteractionResult | null> {
+  if (!services.publishAmendment) return null;
+  const amended = buildAmendment({
+    plan: input.record.plan,
+    fields: input.fields,
+    schema: input.schema,
+    ...(input.record.userEditedFields ? { userEditedFields: input.record.userEditedFields } : {}),
+  });
+  if (!amended.ok) {
+    // No stored plan means there is nothing to correct from; the caller reports
+    // the record as finished instead of pretending it can amend it.
+    if (amended.error === "invalid_plan") return null;
+    return {
+      ok: false,
+      error: amended.error,
+      ...(amended.error === "no_change" ? { reply: "这次修改没有改变任何字段。" } : {}),
+    };
+  }
+  const published = await services.publishAmendment({
+    interactionId: input.record.id,
+    plan: amended.plan,
+  });
+  return {
+    ok: true,
+    amendment: true,
+    interactionId: published.interactionId,
+    surfaceId: published.surfaceId,
+    draftVersion: published.draftVersion,
+    skippedFields: amended.skippedFields,
+    confirmationInvalidated: true,
+    reply: "已新建一张关联草稿，请在卡片上确认后再执行。",
+  };
+}
 
 export async function editInteraction(
   ctx: RunContext,
@@ -108,23 +186,43 @@ export async function editInteraction(
       : undefined;
   const capability = capabilityForIntent(target?.intent);
 
-  // A card that already ran is not in the open list, so "no open surface"
-  // would read as "there is no card". Say plainly that it is finished instead.
-  if (!target) {
-    const candidate = parsed.interactionId
-      ? await services.loadInteraction(parsed.interactionId)
-      : open.length === 0
-        ? await services.loadInteraction(
-            (
-              await services.listOpenSurfaces({
-                spaceId: run.spaceId,
-                threadId: run.threadId,
-                includeExecuted: true,
-              })
-            )?.[0]?.taskId ?? "",
-          )
+  // A record that already ran is found too, because a correction of it is a new
+  // draft that names it. Resolve which row the edit is really about first.
+  const executedTarget =
+    target?.status === "executed"
+      ? await services.loadInteraction(target.taskId)
+      : !target
+        ? await (services.loadExecutedCandidate?.({
+            interactionId: parsed.interactionId,
+            allowNewest: open.length === 0,
+          }) ??
+            // A caller without the loader still learns that the card finished,
+            // rather than "there is no card".
+            (parsed.interactionId
+              ? services.loadInteraction(parsed.interactionId)
+              : (async () => {
+                  const including = await services.listOpenSurfaces({
+                    spaceId: run.spaceId,
+                    threadId: run.threadId,
+                    includeExecuted: true,
+                  });
+                  const newest = including[0];
+                  return newest ? services.loadInteraction(newest.taskId) : null;
+                })()))
         : null;
-    if (candidate?.status === "succeeded") return { ok: false, error: "already_executed" };
+
+  if (executedTarget?.status === "succeeded") {
+    // The record stays exactly as it is. What the user gets is a new draft that
+    // names it, so the correction has its own revision and its own confirmation
+    // instead of rewriting history.
+    const executedCapability = capability ?? capabilityForIntent(executedTarget.intent);
+    const amendment = await amendExecuted(services, {
+      record: executedTarget,
+      fields: parsed.fields,
+      schema: executedCapability?.schema ?? fallbackSchema(),
+    });
+    if (amendment) return amendment;
+    return { ok: false, error: "already_executed" };
   }
 
   const result = await applyNaturalLanguageEdit(services, {
@@ -194,6 +292,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
           row.slots && typeof row.slots === "object" && !Array.isArray(row.slots)
             ? (row.slots as Record<string, unknown>)
             : {},
+        userEditedFields: userEditedFieldNames(row.plan),
       };
     },
     listOpenSurfaces: async ({ spaceId, threadId }) => {
@@ -230,10 +329,69 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
                 : ("draft" as const),
         }));
     },
+    loadExecutedCandidate: async ({ interactionId, allowNewest }) => {
+      const load = async (id: string | undefined) => {
+        if (!id) return null;
+        const row = await prisma.interaction.findUnique({ where: { id } });
+        if (!row) return null;
+        return {
+          id: row.id,
+          spaceId: row.spaceId,
+          threadId: row.threadId,
+          intent: row.intent,
+          status: row.status,
+          draftVersion: row.draftVersion,
+          confirmedVersion: row.confirmedVersion,
+          slots:
+            row.slots && typeof row.slots === "object" && !Array.isArray(row.slots)
+              ? (row.slots as Record<string, unknown>)
+              : {},
+          userEditedFields: userEditedFieldNames(row.plan),
+          plan: row.plan,
+        };
+      };
+      if (interactionId) return load(interactionId);
+      if (!allowNewest) return null;
+      // Nothing named and no draft open: the newest card in the thread is the
+      // one the user means, whether it is a draft or a finished record.
+      const newest = await prisma.interaction.findFirst({
+        where: {
+          spaceId: run.spaceId,
+          threadId: run.threadId,
+          status: { notIn: ["cancelled"] },
+        },
+        orderBy: { updatedAt: "desc" },
+        select: { id: true },
+      });
+      return load(newest?.id);
+    },
+    publishAmendment: async ({ interactionId, plan }) => {
+      const { publishInteractionSurface } = await import("./interaction-publish.js");
+      const parsed = InteractionPlanSchema.parse(plan);
+      const published = await publishInteractionSurface(prisma, {
+        spaceId: run.spaceId,
+        threadId: run.threadId,
+        botId: run.botId,
+        runId: run.id,
+        plan: parsed,
+        status: "ready_for_review",
+        // The record this draft corrects. The original row is never rewritten.
+        amendsInteractionId: interactionId,
+      });
+      await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
+        // The card is persisted; a missed wake-up is picked up on the next read.
+        void error;
+      });
+      return {
+        interactionId: published.interactionId,
+        surfaceId: published.surfaceId,
+        draftVersion: published.draftVersion,
+      };
+    },
     applyField: async (input) => {
       // The same write the card's own field edit performs, including the
       // revision bump and the republish of this surface.
-      await updateInteractionFieldService(prisma, {
+      const written = await updateInteractionFieldService(prisma, {
         spaceId: input.spaceId,
         threadId: input.threadId,
         botId: input.botId || run.botId,
@@ -242,7 +400,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         name: input.name,
         value: input.value,
       });
-      return { draftVersion: input.expectedDraftVersion + 1 };
+      return { draftVersion: written.draftVersion };
     },
   };
 }

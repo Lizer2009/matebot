@@ -256,12 +256,18 @@ function provenanceLine(provenance: {
   source: string;
   asOf: string;
   units?: string;
+  year?: number;
+  freshness?: string;
   window?: { from: string; to: string };
+  attribution?: "source" | "model";
 }): string {
   const parts = [provenance.source];
+  if (provenance.year !== undefined) parts.push(String(provenance.year));
   if (provenance.window) parts.push(`${provenance.window.from} – ${provenance.window.to}`);
   if (provenance.units) parts.push(provenance.units);
   parts.push(`as of ${provenance.asOf.slice(0, 10)}`);
+  if (provenance.freshness) parts.push(`fresh ${provenance.freshness.slice(0, 10)}`);
+  if (provenance.attribution !== "source") parts.push("not from a data source");
   return parts.join(" · ");
 }
 

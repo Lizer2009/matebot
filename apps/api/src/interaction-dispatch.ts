@@ -1,7 +1,8 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
 import { InteractionSurfaceSchema as InteractionSurfaceSchemaZ } from "@matebot/contracts";
 import type { SurfaceStatus } from "@matebot/core";
-import { canDispatchSurfaceAction } from "@matebot/core";
+import { canDispatchSurfaceAction, timingFields } from "@matebot/core";
+import { getLogger } from "@matebot/logging";
 
 /**
  * The API half of the action bridge: everything the browser claims is checked
@@ -108,6 +109,7 @@ export async function dispatchInteractionActionService(
     return { ok: true, duplicate: true, interactionId: row.id, revision: input.revision };
   }
 
+  const startedAt = Date.now();
   clicks.set(key, "in_flight");
   let outcome: { ok: true } | { ok: false; error: string };
   try {
@@ -126,5 +128,17 @@ export async function dispatchInteractionActionService(
     return { ok: false, error: outcome.error };
   }
   clicks.set(key, "done");
+  // §9.6 instrumentation: the user's action was accepted and has run. Logged only
+  // on a first dispatch, so a duplicate click does not inflate the count.
+  getLogger().info("a2ui.action_confirmed", {
+    ...timingFields({
+      metric: "action-confirmed",
+      ms: Date.now() - startedAt,
+      origin: "run-created",
+    }),
+    "interaction.id": row.id,
+    "surface.action": input.action,
+    "surface.revision": input.revision,
+  });
   return { ok: true, duplicate: false, interactionId: row.id, revision: input.revision };
 }

@@ -54,8 +54,11 @@ found="$(grep -E \
 mkdir "${work}/app"
 tar -xf "${rootfs}" -C "${work}/app" --exclude=node_modules app
 while IFS= read -r file; do
+  # `length() >= 40` rather than `/...{40,}$/`: mawk, the awk on a minimal Debian
+  # image, does not implement interval expressions, so the regex form silently
+  # never matched there and a shipped private key passed the check.
   if awk '/-----BEGIN ([A-Z0-9]+ )*PRIVATE KEY-----/ {
-        if ((getline body) > 0 && body ~ /^[A-Za-z0-9+\/=]{40,}$/) { found = 1; exit }
+        if ((getline body) > 0 && body ~ /^[A-Za-z0-9+\/=]+$/ && length(body) >= 40) { found = 1; exit }
       } END { exit !found }' "${file}"; then
     found+="${found:+$'\n'}${file#"${work}/app/"}"
   fi

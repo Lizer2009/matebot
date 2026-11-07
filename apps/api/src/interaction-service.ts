@@ -10,6 +10,7 @@ import type {
   InteractionEmailSender,
 } from "@matebot/adapters";
 import {
+  createCalendarBatch,
   createCalendarEvent,
   deliverInteractionEmail,
   emailCapabilityFromRows,
@@ -41,7 +42,8 @@ import {
   interactionEffectKind,
   interactionRequiredApp,
   normalizeCalendarFields,
-  validateCalendarEvent,
+  readConfirmedCalendarDraft,
+  timingFields,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
@@ -52,6 +54,8 @@ import {
   upsertInteractionSurface,
   withTransactionRetry,
 } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
+import { registerInFlightEffect } from "./interaction-abort.js";
 
 export type { PublishInteractionSurfaceInput } from "@matebot/adapters";
 export { publishInteractionSurface } from "@matebot/adapters";
@@ -114,6 +118,9 @@ function protocolFamilyOf(value: string): A2uiProtocolFamily {
 // card's own controls share one implementation. Re-exported here because the
 // route and its tests import it from this module.
 export {
+  type CancelInteractionServiceInput,
+  cancelInteractionService,
+  InteractionCancelRejectedError,
   type UpdateInteractionFieldServiceInput,
   updateInteractionFieldService,
 } from "@matebot/adapters";
@@ -669,6 +676,16 @@ export async function executeConfirmedInteractionService(
     data: { status: "executing" },
   });
 
+  // §6.5.2: this runtime can abort a provider request, so a cancel is allowed to
+  // ask. The controller is registered for exactly this effect and space, and
+  // released in the `finally` below so nothing outlives the call.
+  const effectAbort = new AbortController();
+  const releaseAbort = registerInFlightEffect({
+    effectId: effect.id,
+    spaceId: input.spaceId,
+    controller: effectAbort,
+  });
+
   const plan = current.plan as InteractionPlan;
   const interaction = {
     id: current.id,
@@ -681,6 +698,11 @@ export async function executeConfirmedInteractionService(
     interactionStatus: "succeeded" | "failed" | "unknown";
     result: Record<string, unknown>;
     capability?: EmailSurfaceCapability;
+    /** Per-item outcomes, when the effect ran a batch. */
+    batch?: {
+      items: Array<{ label: string; state: "succeeded" | "failed" | "unknown"; error?: string }>;
+      notice: string;
+    };
   }) =>
     finishInteractionEmailSend(prisma, {
       spaceId: input.spaceId,
@@ -747,16 +769,17 @@ export async function executeConfirmedInteractionService(
       const slots = interactionSlots(
         effect.request && (effect.request as { slots?: unknown }).slots,
       );
-      const normalized = normalizeCalendarFields(slots);
-      const validated = validateCalendarEvent(normalized);
-      if (!validated.ok) {
+      // A draft is one event, or an explicit list the user asked for. Anything
+      // malformed is refused before any provider call is made.
+      const draft = readConfirmedCalendarDraft(slots);
+      if (draft.kind === "invalid") {
         await finish({
           effectStatus: "failed",
           interactionStatus: "failed",
-          result: { error: validated.error },
+          result: { error: draft.error },
         });
         throw new InteractionEmailDeliveryError(
-          `Calendar event rejected: ${validated.error}`,
+          `Calendar event rejected: ${draft.error}`,
           "failed",
         );
       }
@@ -765,14 +788,60 @@ export async function executeConfirmedInteractionService(
         context: emailSendAdapterContext(
           { spaceId: input.spaceId, userId: input.userId },
           connection,
+          effectAbort.signal,
         ),
         connector: input.connector,
         connectionId: connection.id,
       };
+      const providerStartedAt = Date.now();
+      if (draft.kind === "batch") {
+        // Several items were requested, so several outcomes are reported: a
+        // partial batch must not read as "done".
+        const batch = await createCalendarBatch({
+          events: draft.events,
+          batchKey: effect.idempotencyKey,
+          sender: calendarSender,
+          create: createCalendarEvent,
+        });
+        if (batch.complete) {
+          await finish({
+            effectStatus: "completed",
+            interactionStatus: "succeeded",
+            result: {
+              providerMessageId: batch.created[0]?.eventId,
+              deliveryId: batch.created[0]?.eventId,
+              batch: { items: batch.items, summary: batch.summary },
+            },
+            // Several events were requested, so the card lists each one.
+            batch: { items: batch.items, notice: batch.summary.notice },
+          });
+          return {
+            effectId: effect.id,
+            idempotencyKey: effect.idempotencyKey,
+            duplicate: false,
+            executed: true,
+            providerMessageId: batch.created[0]?.eventId,
+          };
+        }
+        const outcome = batch.hasUnknown ? ("unknown" as const) : ("failed" as const);
+        await finish({
+          effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
+          interactionStatus: outcome,
+          result: {
+            error: batch.summary.notice,
+            batch: { items: batch.items, summary: batch.summary },
+          },
+          // A partial batch says which items went through, on the card itself.
+          batch: { items: batch.items, notice: batch.summary.notice },
+        });
+        if (outcome === "unknown") await scheduleReconcile();
+        throw new InteractionEmailDeliveryError(batch.summary.notice, outcome);
+      }
+
       let created: Awaited<ReturnType<typeof createCalendarEvent>>;
       try {
         created = await createCalendarEvent(
-          { event: validated.event, idempotencyKey: effect.idempotencyKey },
+          { event: draft.event, idempotencyKey: effect.idempotencyKey },
           calendarSender,
         );
       } catch (error) {
@@ -797,6 +866,17 @@ export async function executeConfirmedInteractionService(
         if (outcome === "unknown") await scheduleReconcile();
         throw new InteractionEmailDeliveryError(created.error, outcome);
       }
+      getLogger().info("a2ui.provider_result", {
+        ...timingFields({
+          metric: "provider-result",
+          ms: Date.now() - providerStartedAt,
+          origin: "run-created",
+        }),
+        "interaction.id": current.id,
+        "effect.id": effect.id,
+        "effect.kind": effect.kind,
+        "provider.outcome": "created",
+      });
       await finish({
         effectStatus: "completed",
         interactionStatus: "succeeded",
@@ -817,6 +897,7 @@ export async function executeConfirmedInteractionService(
       context: emailSendAdapterContext(
         { spaceId: input.spaceId, userId: input.userId },
         connection,
+        effectAbort.signal,
       ),
       connector: input.connector,
       connectionId: connection.id,
@@ -878,16 +959,26 @@ export async function executeConfirmedInteractionService(
     ) {
       throw error;
     }
+    // An aborted provider call means the request was stopped *or* that it had
+    // already been accepted: the outcome is genuinely unknown, not a clean
+    // failure, so it settles the same way any ambiguous delivery does.
+    const aborted = effectAbort.signal.aborted;
     try {
       await finish({
-        effectStatus: "failed",
-        interactionStatus: "failed",
-        result: { error: "Could not send the email" },
+        effectStatus: aborted ? "ambiguous" : "failed",
+        interactionStatus: aborted ? "unknown" : "failed",
+        result: { error: aborted ? "Cancelled while running" : "Could not send the email" },
       });
     } catch {
       // Keep the original failure; finishing is best-effort.
     }
-    throw new InteractionEmailDeliveryError("Could not send the email");
+    if (aborted) await scheduleReconcile();
+    throw new InteractionEmailDeliveryError(
+      aborted ? "Cancelled while running" : "Could not send the email",
+      aborted ? "unknown" : "failed",
+    );
+  } finally {
+    releaseAbort();
   }
 }
 
@@ -919,10 +1010,23 @@ export async function reconcileConfirmedInteractionService(
       "Send result is unknown; do not send again",
     );
   }
+  const reconcileStartedAt = Date.now();
   const outcome = await reconcileAmbiguousEmailEffect(
     { prisma, jobs: input.jobs, connector: input.connector },
     { effectId: current.approvalEffectId },
   );
+  // §9.6: an UNKNOWN outcome was resolved (or found still unknown) by reconciling
+  // it. Recorded with the outcome, so a run that stayed unknown is visible too.
+  getLogger().info("a2ui.reconciled", {
+    ...timingFields({
+      metric: "reconciled",
+      ms: Date.now() - reconcileStartedAt,
+      origin: "run-created",
+    }),
+    "interaction.id": current.id,
+    "effect.id": current.approvalEffectId,
+    "reconcile.status": outcome.status,
+  });
   if (outcome.status === "ignored") {
     const latest = await getInteraction(prisma, input.interactionId);
     if (latest?.status === "succeeded") {

@@ -58,8 +58,9 @@ describe("built-in tool bridge", () => {
     // request_secret carries the card and contact kinds; update_bot carries instructions paging.
     // Two of these descriptions name the product, so the budget moves with the product name.
     // `find_tool` indexes every deferred tool by name, so adding one (`present_result`)
-    // grows this by its name and group, not by its schema.
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_912);
+    // grows this by its name and group, not by its schema. `cancel_interaction`
+    // costs its 20-byte name for the same reason; the budget moves by exactly that.
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_932);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining(["render_plot", "create_space", "generate_secret", "scratchpad_add"]),
     );

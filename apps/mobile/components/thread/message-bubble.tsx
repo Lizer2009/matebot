@@ -796,7 +796,23 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                 await onRefresh?.();
               }
             }}
-            onDiscard={() => undefined}
+            onDiscard={
+              onRefresh
+                ? async () => {
+                    // Discarding an unrun draft is a cancel; the server refuses it
+                    // once the action has started or the record has executed.
+                    try {
+                      await rpc("threads/cancelInteraction", {
+                        ...target,
+                        interactionId: block.interactionId,
+                        draftVersion: Number(block.draftVersion),
+                      });
+                    } finally {
+                      await onRefresh();
+                    }
+                  }
+                : undefined
+            }
           />
         );
       })}

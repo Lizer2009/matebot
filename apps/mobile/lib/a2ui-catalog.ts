@@ -13,6 +13,8 @@ export type NativeTextFieldVariant = "shortText" | "longText" | "number";
 export type NativeCatalogNode =
   | { type: "Text"; text: string }
   | { type: "Column"; children: NativeCatalogNode[] }
+  /** A table header or data row. On a phone a wide row stacks, so it stays readable. */
+  | { type: "Row"; children: NativeCatalogNode[] }
   | {
       type: "TextField";
       id: string;
@@ -29,7 +31,7 @@ export type NativeCatalogResult =
   | { ok: true; nodes: NativeCatalogNode[] }
   | { ok: false; component: string };
 
-const ALLOWED = new Set(["Text", "Column", "TextField", "Button", "Sheet"]);
+const ALLOWED = new Set(["Text", "Column", "Row", "TextField", "Button", "Sheet"]);
 
 type ComponentRecord = {
   id: string;
@@ -111,6 +113,17 @@ function nodeFrom(
   if (component.component === "Column") {
     return {
       type: "Column",
+      children: stringList(component.children).map((id) => {
+        const child = byId.get(id);
+        return child ? nodeFrom(child, byId, data) : { type: "Text", text: "" };
+      }),
+    };
+  }
+  if (component.component === "Row") {
+    // Stacked rather than side by side: a table row on a narrow screen reads as
+    // one value per line, and nothing is dropped.
+    return {
+      type: "Row",
       children: stringList(component.children).map((id) => {
         const child = byId.get(id);
         return child ? nodeFrom(child, byId, data) : { type: "Text", text: "" };

@@ -806,42 +806,74 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "cancel_interaction",
+    description:
+      "Discard an editable card the user no longer wants, when they say to cancel, drop it, or never mind. Pass the revision the card shows. A draft that has not run is cancelled on the same card. If the card already ran, or its action is still in flight, the server refuses and explains why: cancelling would not undo what happened. It never sends, creates, or undoes anything. After it succeeds, reply in one short sentence.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        interactionId: {
+          type: "string",
+          description: "The card to cancel. Omit when only one is open.",
+        },
+        revision: {
+          type: "number",
+          description: "The draft revision shown on the card.",
+        },
+      },
+      required: ["revision"],
+    },
+  },
+  {
     name: "present_result",
     description:
-      "Show a read-only result card from data you already have, when the user asks to see numbers, a summary, or a trend. Pass provenance (source, asOf, optional window/units/timezone) and computed rows — never invent values. It displays only; it sends and changes nothing. With no real data, ask for the source instead. After it publishes, reply in one short sentence.",
+      "Show a read-only result card in the chat, when the user asks to see numbers, a summary, or a trend. Name a registered sourceId plus from/to: the server reads that source itself and computes any sums with its own code, so every number on the card comes from data it read. Use csv-upload for a file the user attached, and calendar-events for their calendar. You cannot supply the rows yourself: if you have no source to name, ask the user where the numbers should come from and answer in prose instead. It displays only; it sends and changes nothing. After it publishes, reply in one short sentence.",
     inputSchema: {
       type: "object",
       properties: {
         title: { type: "string", description: "Short heading for the card." },
-        source: {
+        sourceId: {
           type: "string",
-          description: "Where the numbers came from, such as a file or a query.",
+          description:
+            "Registered source to read: csv-upload for a file the user attached, or calendar-events.",
         },
-        asOf: { type: "string", description: "ISO 8601 time the data was measured." },
-        window: {
-          type: "object",
-          description: "Optional period: from/to.",
-          properties: { from: { type: "string" }, to: { type: "string" } },
-          required: ["from", "to"],
+        from: { type: "string", description: "Window start, ISO 8601 or date." },
+        to: { type: "string", description: "Window end, ISO 8601 or date." },
+        artifactId: {
+          type: "string",
+          description:
+            "Optional uploaded file id, when the user attached several and named one. Omit to read the newest file attached to their message.",
         },
-        units: { type: "string", description: "Optional unit, such as CNY or count." },
+        groupBy: { type: "string", description: "Optional column to group the read rows by." },
+        metrics: {
+          type: "array",
+          description: "Optional aggregation the server computes over the rows it read.",
+          items: {
+            type: "object",
+            properties: {
+              key: { type: "string", description: "Output column key." },
+              op: { type: "string", enum: ["sum", "count", "avg", "min", "max"] },
+              of: { type: "string", description: "Input column; not needed for count." },
+            },
+            required: ["key", "op"],
+          },
+        },
+        units: {
+          type: "string",
+          description: "Optional unit for a measure the file does not declare, such as CNY.",
+        },
         timezone: { type: "string", description: "Optional IANA zone for the window." },
         columns: {
           type: "array",
-          description: "Optional column order and labels; defaults to the first row's keys.",
+          description: "Optional column order and labels; defaults to the file's header.",
           items: {
             type: "object",
             properties: { key: { type: "string" }, label: { type: "string" } },
             required: ["key", "label"],
           },
         },
-        rows: {
-          type: "array",
-          description: "Computed rows of scalar values; at most 200 are shown.",
-          items: { type: "object" },
-        },
       },
-      required: ["title", "source", "asOf", "rows"],
+      required: ["title", "sourceId", "from", "to"],
     },
   },
   {

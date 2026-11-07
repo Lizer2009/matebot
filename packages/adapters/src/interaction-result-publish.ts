@@ -183,9 +183,17 @@ export async function republishResultSurface(
 
   const existing = await deps.prisma.interaction.findFirst({
     where: { id: input.interactionId, spaceId: input.spaceId, threadId: input.threadId },
-    select: { id: true, messageId: true, draftVersion: true },
+    select: { id: true, messageId: true, draftVersion: true, summary: true },
   });
   if (!existing) return { ok: false, error: "unknown_interaction" };
+
+  // A republish is a view change on the card the user is looking at. The stored
+  // summary is the source it was drawn from; relabelling the same card with a
+  // different source would present other data under a name the reader already
+  // trusted, so that is refused here rather than left to each caller (§5.6.3).
+  if (existing.summary && existing.summary !== surface.provenance.source) {
+    return { ok: false, error: "source_changed" };
+  }
 
   const surfaceRow = await deps.prisma.interactionSurface.findFirst({
     where: { interactionId: existing.id },
