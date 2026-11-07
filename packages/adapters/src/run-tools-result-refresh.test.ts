@@ -48,6 +48,8 @@ const resultRow = {
 
 function deps() {
   return {
+    // The person named the period they want the card re-read for.
+    userPrompt: "sales for last quarter",
     loadInteraction: async () => resultRow,
     listOpenResults: async () => [{ taskId: "ix-res", label: "Annual sales" }],
     connectionFor: async () => null,
@@ -126,6 +128,38 @@ describe("refresh_result", () => {
     expect(result.candidates).toHaveLength(2);
   });
 
+  /**
+   * A refresh re-reads a different window on a card the person is looking at. A
+   * period nobody asked for must not replace the one they were shown.
+   */
+  it("asks for the period instead of substituting one nobody stated", async () => {
+    readCalls.length = 0;
+    const result = await refreshResult(
+      ctx,
+      { sourceId: "csv-upload-test", from: "2026-01-01", to: "2026-03-31" },
+      { ...deps(), userPrompt: "update the numbers on that card" },
+    );
+    expect(result).toMatchObject({ ok: false, error: "unstated_window" });
+    expect(readCalls).toEqual([]);
+  });
+
+  it("re-reads a period the model admits choosing, and says so on the card", async () => {
+    readCalls.length = 0;
+    republished.length = 0;
+    const result = await refreshResult(
+      ctx,
+      {
+        sourceId: "csv-upload-test",
+        from: "2026-01-01",
+        to: "2026-03-31",
+        defaultedWindow: true,
+      },
+      { ...deps(), userPrompt: "update the numbers on that card" },
+    );
+    expect(result).toMatchObject({ ok: true });
+    expect(republished[0]?.provenance.defaultedWindow).toBe(true);
+  });
+
   it("refuses a window whose end precedes its start", async () => {
     const result = await refreshResult(
       ctx,
@@ -193,6 +227,8 @@ describe("refresh_result through applyTool", () => {
         connectors: { managed: () => undefined },
       },
       run: { id: "run-1", spaceId: "space-1", threadId: "thread-1", botId: "bot-1", userId: "u-1" },
+      // The person named the period, so the server accepts the window as theirs.
+      task: { prompt: "show the sales for last quarter on that card" },
       bot: { id: "bot-1" },
       thread: { id: "thread-1", groupId: null },
       runId: "run-1",

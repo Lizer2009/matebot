@@ -239,8 +239,10 @@ export interface AgentToolCompletion {
    * Where a network tool was pointed, when that can be recorded safely.
    *
    * The query, fragment and any userinfo are always dropped. The path is kept only
-   * when it is a page this build ships or plainly word-like; otherwise it is
-   * withheld with a reason, so a reader knows something was omitted.
+   * when it is a page this build ships, or a route the caller declared low-risk;
+   * otherwise it is withheld with a reason, so a reader knows something was omitted.
+   * A word-like shape is not treated as evidence of safety, because a name or a
+   * short token has the same shape as a section.
    */
   destination?: {
     host: string;

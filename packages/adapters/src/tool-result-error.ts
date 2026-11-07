@@ -27,3 +27,23 @@ export function toolResultError(result: unknown): unknown {
     : "";
   return text || "tool reported an error result";
 }
+
+/**
+ * The failure itself, not its message.
+ *
+ * `toolResultError` returns text for display. Classification needs the original
+ * value so it can read an error class, a `code` or an HTTP status, which the
+ * message has already dropped. Both paths a tool can fail through are covered:
+ * a returned `{ error }` and an MCP `isError: true` result.
+ */
+export function toolResultFailure(result: unknown): unknown {
+  const payload = (result as { details?: unknown } | null)?.details ?? result;
+  if (!payload || typeof payload !== "object") return undefined;
+  if (isFailedToolResult(payload)) {
+    const error = (payload as { error?: unknown }).error;
+    // A plain string carries no structure, so it is the message and nothing more.
+    return typeof error === "string" ? { message: error } : error;
+  }
+  if ((payload as { isError?: unknown }).isError !== true) return undefined;
+  return payload;
+}

@@ -569,7 +569,8 @@ async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promi
           durationMs: Date.now() - startedAt,
           // Where a network tool went, as far as it is safe to record: the query,
           // fragment and userinfo are dropped, and the path only when it is a page
-          // this build ships or plainly word-like.
+          // this build ships. Anything else keeps the origin and says the path was
+          // withheld, because a word-like shape is not evidence of safety.
           ...(reachableDestinationOf(event.args, productDocumentationUrls())
             ? { destination: reachableDestinationOf(event.args, productDocumentationUrls())! }
             : {}),

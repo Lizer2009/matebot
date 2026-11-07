@@ -1,5 +1,5 @@
 import type { ResultSourceRead } from "@matebot/core";
-import { queryResultSource } from "@matebot/core";
+import { queryResultSource, windowDecision } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import type { publishResultSurface } from "./interaction-result-publish.js";
 import { calendarResultReader } from "./result-source-calendar.js";
@@ -24,6 +24,8 @@ export type RefreshResultArgs = {
   to?: unknown;
   timezone?: unknown;
   revision?: unknown;
+  /** True when the assistant chose the period because the user named none. */
+  defaultedWindow?: unknown;
 };
 
 export type RefreshResultServices = {
@@ -45,6 +47,8 @@ export type RefreshResultServices = {
   connectionFor: (app: "email" | "calendar") => Promise<string | null>;
   /** A per-turn reader for a source that reads through the user's provider. */
   read?: ResultSourceRead;
+  /** The prompt this run is answering, so the server can tell whose period this is. */
+  userPrompt?: string | null;
   /** Republish the same interaction's surface with the new result. */
   republish: (input: {
     interactionId: string;
@@ -89,6 +93,20 @@ export async function refreshResult(
   const to = text(args.to);
   if (!sourceId) return { ok: false, error: "missing_source" };
   if (!from || !to) return { ok: false, error: "invalid_window" };
+  // A refresh re-reads a different window on a card the person is looking at. The
+  // same rule as a first result applies: a period nobody stated and nobody admitted
+  // choosing is asked about, not silently substituted for the one on the card.
+  const window = windowDecision({
+    claimedByModel: args.defaultedWindow === true,
+    userPrompt: services.userPrompt,
+  });
+  if (window === "unstated") {
+    return {
+      ok: false,
+      error: "unstated_window",
+      reply: "Which dates should I cover? Tell me the period and I will read it.",
+    };
+  }
 
   // Which card? An unnamed reference with several results must be clarified.
   const open = await services.listOpenResults({
@@ -145,7 +163,10 @@ export async function refreshResult(
   const { buildResultSurface } = await import("@matebot/core");
   const built = buildResultSurface({
     title: row.title ?? "Result",
-    provenance: queried.provenance,
+    provenance: {
+      ...queried.provenance,
+      ...(window === "assumed" ? { defaultedWindow: true } : {}),
+    },
     rows: queried.rows,
   });
   if (!built.ok) return { ok: false, error: built.error };
@@ -166,7 +187,11 @@ export async function refreshResult(
     totalRows: built.surface.totalRows,
     truncated: built.surface.truncated,
     provenance: { ...built.surface.provenance },
-    reply: built.surface.empty ? "该范围内没有数据，已注明来源。" : "已按新范围更新卡片。",
+    reply: built.surface.empty
+      ? "该范围内没有数据，已注明来源。"
+      : built.surface.provenance.defaultedWindow
+        ? "已按新范围更新卡片；日期是默认范围，不是你说的。"
+        : "已按新范围更新卡片。",
   };
 }
 
@@ -192,6 +217,7 @@ export function refreshResultServices(ctx: RunContext): RefreshResultServices {
     return match?.id ?? null;
   };
   return {
+    userPrompt: ctx.task?.prompt ?? null,
     loadInteraction: async (interactionId) => {
       const row = await prisma.interaction.findUnique({ where: { id: interactionId } });
       if (!row) return null;
