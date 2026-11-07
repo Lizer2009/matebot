@@ -229,6 +229,10 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "save_memory",
   "save_page",
   "present_interaction",
+  // Read-only result cards and same-card edits write no external effect, so they
+  // are as exempt as the draft card that created them.
+  "present_result",
+  "edit_interaction",
   "save_shared_memory",
   "schedule_cancel",
   "schedule_create",
