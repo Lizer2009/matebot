@@ -35,16 +35,28 @@ Last updated for the third foundation PR (base: PR #35 tip `1205da088`).
 | VegaChart catalog | **Not adopted** | npm 404 at audit; needs license/build/size review |
 | Performance targets (p95 ≤ 1s) | **Not measured** | Spec calls these proposals |
 
+## Model constraint for validation
+
+Any Matebot LLM validation is authorised **only** with a DeepSeek provider and
+model. Another provider, an "auto" route, or the coding agent's own output is not
+accepted as evidence. The authorised command and the exact missing configuration
+are in [`matebot-a2ui-phase0-validation.md`](./matebot-a2ui-phase0-validation.md);
+`DEEPSEEK_API_KEY` is absent in this workspace, so live model behaviour is
+**unverified** rather than assumed.
+
 ## Environment blocker: no real database
 
-The route-level test (`apps/api/src/a2ui-route.test.ts`) drives the real oRPC
-router over real HTTP with an in-memory Prisma client, because this environment
-has no Postgres, no Docker, and no root to install either. That covers routing,
-middleware, request/response shape, validation, and the service logic. It does
-**not** cover SQL constraints, transaction isolation, or row security — those
-remain the `.postgres.test.ts` suites, which need a database and were not run
-here. Integration evidence was not silently replaced with pure unit tests; the
-gap is named.
+That blocker is now **resolved** for SQL behaviour: a disposable, unprivileged
+PostgreSQL 18.6 runs under `/tmp` (no root, no Docker), the full 221-migration
+schema is applied, and `apps/api/src/a2ui-postgres.test.ts` plus
+`apps/api/src/a2ui-route-postgres.test.ts` exercise real constraints,
+transactions, idempotency, and the real row-level-security policies. See
+[`matebot-a2ui-phase0-validation.md`](./matebot-a2ui-phase0-validation.md).
+
+`apps/api/src/a2ui-route.test.ts` still exists and still uses an in-memory
+Prisma; it is kept because it is fast and covers request-shape cases that do not
+need a server. It is labelled as mock-backed and is not counted as database
+evidence.
 
 ## Deliberate design notes
 
