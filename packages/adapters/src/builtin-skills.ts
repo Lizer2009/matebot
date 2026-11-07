@@ -64,6 +64,8 @@ const SKILLS: Array<{ name: string; description: string; body: string }> = [
     description: `How to use or set up ${PRODUCT_DISPLAY_NAME}: chat apps, your computer, billing, hosting`,
     body: `Answer questions about ${PRODUCT_DISPLAY_NAME} itself from its docs. Fetch the matching page with web_fetch before answering, then answer briefly in your own words and link the page. If fetching fails or is unavailable, answer only what this index says and link the page. Never invent menus, buttons, or steps the page doesn't show. Account-specific facts (credit balance, plan, usage) aren't in the docs: point to the screen that shows them.
 
+Only the pages below exist. Pick the closest one by topic; never construct a URL, guess a path, or fetch a page that is not on this list — if nothing fits, say what this index covers and ask which topic they mean.
+
 ${RAKAZO_DOCS.map(([topics, url]) => `- ${topics}: ${url}`).join("\n")}`,
   },
 ];
