@@ -316,11 +316,20 @@ a live-provider acceptance.
 
 | Item | Evidence level | Status after this work |
 |---|---|---|
-| A connection/credential single source | E1 | to be implemented |
-| B failure classification + fallback boundary | E1 + E4 (runtime egress) | classification implemented; egress boundary blocked |
-| C product doc source | E1 | to be implemented |
-| D background completion lifecycle | E1 | to be implemented |
-| E intent clarification / factual boundary | E1 + E4 (no flight source) | decision path implemented; live prices blocked |
-| F blank calendar card | E2 | reproduction first, then fix |
-| G Cursor integration state | E1 | to be implemented |
-| H audit observability | E1 | to be implemented |
+| A connection/credential single source | E1 | **fixed**: `mcpConnectionVerdict` requires a successful discovery for `connected`; both cards use it, a failure carries the server's own reason. Invalidation already existed (`revision` bump clears health; session cache keyed by revision) and is unchanged. |
+| B failure classification + fallback boundary | E1 + E4 (runtime egress) | **fixed (classification and routing)**: an unresolved host and a refused address now report separately, both still refused; a run's refusal ledger stops the browser reaching the host the guard declined. **Blocked (E4)**: whether the deployed browser can reach an address the fetcher refused is runtime configuration this audit cannot inspect, and no claim is made either way. |
+| C product doc source | E1 | **fixed (guard + wording)**: every listed URL is now asserted to exist in this repository, so a rename fails the build; the skill says only these pages exist and forbids constructing a path. The list itself was already accurate — the invented URL in the report was never one of them. |
+| D background completion lifecycle | E1 | **fixed**: a narration that only repeats one already posted in the run is held for the final reply; genuinely different output and the person's own answer still publish immediately. |
+| E intent clarification / factual boundary | E1 + E4 (no flight source) | **fixed (marking + existing refusal)**: a window the assistant chose is recorded as `defaultedWindow` and the card says "dates assumed". A result with no registered source was already refused outright. **Blocked (E4)**: claiming a *live* price needs a flight provider this repository does not have; nothing here invents one. |
+| F blank calendar card | E2 → **E1 after reproduction** | **fixed and reproduced**: the plan compiler emitted three text nodes and no field controls, and the calendar normaliser filled a field set that did not match the registered capability. Both are corrected; the real browser card now renders labels, values and the action at wide and narrow widths. |
+| G Cursor integration state | E1 | **fixed**: the refusal distinguishes "nothing started yet" from "that id is not here" by querying the thread, so a model with nothing to report has nothing to invent. `connect_app` still only shows a card, unchanged and correct. |
+| H audit observability | E1 | **fixed**: a tool completion records the registrable host only — no scheme, path, query, headers or body — beside run, tool, outcome and duration. |
+
+## What is not claimed
+
+- No live DeepSeek run and no live provider call. Every result above is a
+  scripted model and provider doubles.
+- Windows-native and real-phone rendering are not covered; the browser runs are
+  desktop Chromium at two widths.
+- The runtime egress boundary in B and the live price claim in E need
+  environment evidence the audit cannot obtain.
