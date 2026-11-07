@@ -1,5 +1,3 @@
-import type { InteractionDecision } from "@matebot/contracts";
-
 /**
  * Whether the person actually named the period a result covers.
  *
@@ -38,25 +36,37 @@ export function promptStatesPeriod(prompt: string | null | undefined): boolean {
 }
 
 /**
- * Whether this result's window was chosen by the assistant.
+ * What the server can say about a result's window, from the person's own words.
  *
- * The model may say so itself; it may also be wrong, so a claim of "not defaulted"
- * is only accepted when the person's words actually support it. A claim of
- * "defaulted" is always accepted, because saying so is the safe direction.
+ * - `stated`: the person named a period, so the window is theirs.
+ * - `assumed`: the model said it chose the window. That is allowed, but only when
+ *   said out loud: the card and the reply both carry the assumption.
+ * - `unstated`: nobody said. The model presented a window the person never gave
+ *   and did not admit choosing it, which is the defect the audit found. The turn
+ *   asks instead of publishing a figure for a period the person never asked about.
  */
-export function windowWasDefaulted(input: {
+export type WindowDecision = "stated" | "assumed" | "unstated";
+
+export function windowDecision(input: {
   claimedByModel: boolean;
   userPrompt: string | null | undefined;
-}): boolean {
-  if (input.claimedByModel) return true;
-  return !promptStatesPeriod(input.userPrompt);
+}): WindowDecision {
+  // An admission always wins: saying "I chose these dates" is the safe direction,
+  // even when the person also named a period.
+  if (input.claimedByModel) return "assumed";
+  return promptStatesPeriod(input.userPrompt) ? "stated" : "unstated";
 }
 
 /**
- * The decision a result needs when its period was assumed and the person was not
- * asked. Used by callers that want to surface the clarification rather than only
- * label the card.
+ * Whether the assistant should ask for the missing period instead of publishing.
+ *
+ * A window nobody stated and nobody admitted choosing is not labelled and shown:
+ * the answer would put a figure on a period the person never asked about. A window
+ * the model openly chose is still shown, because it disclosed the choice itself.
  */
-export function defaultedWindowNeedsAsking(decision: InteractionDecision): boolean {
-  return decision.missingFields.length > 0;
+export function windowNeedsAsking(input: {
+  claimedByModel: boolean;
+  userPrompt: string | null | undefined;
+}): boolean {
+  return windowDecision(input) === "unstated";
 }

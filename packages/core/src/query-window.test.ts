@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { promptStatesPeriod, windowWasDefaulted } from "./query-window.js";
+import { promptStatesPeriod, windowDecision, windowNeedsAsking } from "./query-window.js";
 
 /**
  * The server decides whether the period came from the person.
@@ -39,19 +39,35 @@ describe("promptStatesPeriod", () => {
   });
 });
 
-describe("windowWasDefaulted", () => {
-  it("accepts the model's own admission", () => {
-    expect(windowWasDefaulted({ claimedByModel: true, userPrompt: "anything" })).toBe(true);
+describe("what the server can say about a window", () => {
+  it("is the person's when they stated a period", () => {
+    expect(windowDecision({ claimedByModel: false, userPrompt: "sales last quarter" })).toBe(
+      "stated",
+    );
   });
 
-  it("overrides a claim of choice when the person named no period", () => {
-    // This is the audit's case: the answer presented an assumed week as the basis.
-    expect(windowWasDefaulted({ claimedByModel: false, userPrompt: "show me sales" })).toBe(true);
+  it("accepts the model's own admission, even beside a stated period", () => {
+    expect(windowDecision({ claimedByModel: true, userPrompt: "anything" })).toBe("assumed");
+    expect(windowDecision({ claimedByModel: true, userPrompt: "sales last quarter" })).toBe(
+      "assumed",
+    );
   });
 
-  it("accepts a claim of choice when the person really named the period", () => {
-    expect(
-      windowWasDefaulted({ claimedByModel: false, userPrompt: "sales for last quarter" }),
-    ).toBe(false);
+  it("is unstated when a model that did not admit a choice names a window anyway", () => {
+    // The audit's case: an assumed week presented as the basis of the answer.
+    expect(windowDecision({ claimedByModel: false, userPrompt: "show me sales" })).toBe("unstated");
+  });
+
+  it("is an admission the model made, even if the person also named a period", () => {
+    // Saying "I chose these dates" is the safe direction and is never overridden.
+    expect(windowDecision({ claimedByModel: true, userPrompt: "sales last quarter" })).toBe(
+      "assumed",
+    );
+  });
+
+  it("is unstated when nobody said, which is neither labelled nor published", () => {
+    expect(windowDecision({ claimedByModel: false, userPrompt: "show me sales" })).toBe("unstated");
+    expect(windowNeedsAsking({ claimedByModel: false, userPrompt: "show me sales" })).toBe(true);
+    expect(windowNeedsAsking({ claimedByModel: true, userPrompt: "show me sales" })).toBe(false);
   });
 });

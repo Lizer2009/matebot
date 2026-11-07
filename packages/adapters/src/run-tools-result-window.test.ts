@@ -7,8 +7,12 @@ import { surfaceFromArgs } from "./run-tools-result.js";
  * The audit's answer defaulted to a week the user never named and reported figures
  * for it. A flag the model sets is not a check: the party that made the choice
  * would be the party confirming it. So the tool reads what the person actually
- * asked, and a claim of "these are your dates" is overridden when their words
- * contain no period at all.
+ * asked, and there are three outcomes rather than two:
+ *
+ * - they named a period: the card is theirs, nothing is added;
+ * - the model says it chose: the card is published and both the card and the
+ *   reply say the dates were assumed;
+ * - nobody said anything: the turn asks, and no figure is published.
  */
 
 const deps = (userPrompt: string | null) => ({
@@ -36,12 +40,17 @@ async function provenance(extra: Record<string, unknown>, userPrompt: string | n
 }
 
 describe("a period the assistant chose", () => {
-  it("is marked when the person named no period, even if the model claimed otherwise", async () => {
-    const mark = await provenance({ defaultedWindow: false }, "show me the sales numbers");
-    expect(mark.defaultedWindow).toBe(true);
+  it("is refused when the person named no period and the model did not say it chose one", async () => {
+    // The audit's exact failure: a window nobody asked for, presented as the basis
+    // of the search. There is no card, because there is nothing true to label.
+    const built = await surfaceFromArgs(
+      { ...args, defaultedWindow: false },
+      deps("show me the sales numbers"),
+    );
+    expect(built).toEqual({ ok: false, error: "unstated_window" });
   });
 
-  it("is marked when the model admits it", async () => {
+  it("is published and marked when the model admits choosing it", async () => {
     const mark = await provenance({ defaultedWindow: true }, "sales for last quarter");
     expect(mark.defaultedWindow).toBe(true);
   });
@@ -56,18 +65,37 @@ describe("a period the assistant chose", () => {
     expect(mark.defaultedWindow).toBeUndefined();
   });
 
-  it("is marked when there is no prompt to check against", async () => {
+  it("is refused when there is no prompt to check against", async () => {
     // A run with no user prompt cannot support a claim that the dates were asked
     // for, so the conservative answer wins.
-    const mark = await provenance({ defaultedWindow: false }, null);
-    expect(mark.defaultedWindow).toBe(true);
+    const built = await surfaceFromArgs({ ...args, defaultedWindow: false }, deps(null));
+    expect(built).toEqual({ ok: false, error: "unstated_window" });
   });
 
   it("says so on the card's provenance line", async () => {
     const built = await surfaceFromArgs({ ...args }, deps("what were the sales"));
-    if (!built.ok) throw new Error(built.error);
-    // The line under the card carries the assumption, not only the reply.
+    // Nobody stated a period here either, so this is a refusal rather than a card…
+    expect(built).toEqual({ ok: false, error: "unstated_window" });
+    // …and an admitted default is what produces the labelled line.
+    const admitted = await surfaceFromArgs(
+      { ...args, defaultedWindow: true },
+      deps("what were the sales"),
+    );
+    if (!admitted.ok) throw new Error(admitted.error);
     const { provenanceLine } = await import("@matebot/core");
-    expect(provenanceLine(built.surface.provenance)).toContain("dates assumed");
+    expect(provenanceLine(admitted.surface.provenance)).toContain("dates assumed");
+  });
+});
+
+describe("the reply the server writes for a published result", () => {
+  it("states the assumption itself instead of leaving it to the model", async () => {
+    const { resultReplyText } = await import("./run-tools-result.js");
+    expect(resultReplyText({ empty: false, provenance: { defaultedWindow: true } })).toContain(
+      "默认范围",
+    );
+    expect(resultReplyText({ empty: false, provenance: {} })).not.toContain("默认");
+    expect(resultReplyText({ empty: true, provenance: { defaultedWindow: true } })).toContain(
+      "没有查到",
+    );
   });
 });

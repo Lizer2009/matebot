@@ -5,7 +5,7 @@ import type {
   ResultColumn,
   ResultSourceRead,
 } from "@matebot/core";
-import { buildResultSurface, validateResultProvenance, windowWasDefaulted } from "@matebot/core";
+import { buildResultSurface, validateResultProvenance, windowDecision } from "@matebot/core";
 import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { loadOwnerEmailConnections } from "./interaction-email-capability.js";
@@ -228,6 +228,14 @@ export async function surfaceFromArgs(
     const from = text(args.from);
     const to = text(args.to);
     if (!from || !to) return { ok: false, error: "invalid_window" };
+    // Nobody stated a period and nobody admitted choosing one. Publishing here
+    // would put a figure on a window the person never asked about, which is what
+    // the audit's flight answer did. The turn asks instead.
+    const window = windowDecision({
+      claimedByModel: args.defaultedWindow === true,
+      userPrompt: deps.userPrompt,
+    });
+    if (window === "unstated") return { ok: false, error: "unstated_window" };
     const resolved = await resolveSourceBackedRows(
       {
         sourceId,
@@ -241,12 +249,7 @@ export async function surfaceFromArgs(
         // The server decides, from the person's own words: a model that reports an
         // invented period as their choice is the defect, so its own claim is not the
         // final word.
-        ...(windowWasDefaulted({
-          claimedByModel: args.defaultedWindow === true,
-          userPrompt: deps.userPrompt,
-        })
-          ? { defaultedWindow: true }
-          : {}),
+        ...(window === "assumed" ? { defaultedWindow: true } : {}),
       },
       deps,
     );
@@ -288,7 +291,9 @@ export async function presentResult(
     const reply =
       built.error === "missing_source"
         ? "I need to know where these numbers came from before I can show them."
-        : built.error === "needs_connection"
+        : built.error === "unstated_window"
+          ? "Which dates should I cover? Tell me the period and I will read it."
+          : built.error === "needs_connection"
           ? "需要先连接数据来源才能读取。"
           : built.error === "unknown_source"
             ? "没有这个数据来源，请告诉我要从哪里读取。"
@@ -326,8 +331,26 @@ export async function presentResult(
     surfaceId: result.surfaceId,
     messageId: result.messageId,
     // The one short line; the card carries the rows and the source.
-    reply: built.surface.empty ? "没有查到该范围内的数据，已注明来源。" : "结果已放在卡片上。",
+    reply: resultReplyText(built.surface),
   };
+}
+
+/**
+ * The single sentence that accompanies a published result.
+ *
+ * It is produced by the server from the surface it just published, and not written
+ * by the model, so a window the server had to choose is stated in the reply as well
+ * as on the card. The model can then only repeat it, not restate it as the
+ * person's own choice.
+ */
+export function resultReplyText(surface: {
+  empty: boolean;
+  provenance: { defaultedWindow?: boolean };
+}): string {
+  if (surface.empty) return "没有查到该范围内的数据，已注明来源。";
+  return surface.provenance.defaultedWindow
+    ? "结果已放在卡片上；日期是默认范围，不是你说的。"
+    : "结果已放在卡片上。";
 }
 
 export const resultTools: ToolHandlers = {
