@@ -236,10 +236,18 @@ export interface AgentToolCompletion {
   executionId: string;
   durationMs: number;
   /**
-   * The registrable host a network tool was pointed at, when it had one. Only the
-   * host: a path or query can carry a token or a private phrase and is never recorded.
+   * Where a network tool was pointed, when that can be recorded safely.
+   *
+   * The query, fragment and any userinfo are always dropped. The path is kept only
+   * when it is a page this build ships or plainly word-like; otherwise it is
+   * withheld with a reason, so a reader knows something was omitted.
    */
-  host?: string;
+  destination?: {
+    host: string;
+    origin: string;
+    path?: string;
+    pathWithheld?: "unrecognised" | "credential_shaped" | "too_long";
+  };
   result?: unknown;
   error?: unknown;
   paused?: boolean;

@@ -25,6 +25,7 @@ import { getLogger } from "@matebot/logging";
 import { sanitizedError } from "@matebot/logging/monitoring";
 import { isToolPauseResult } from "./approval-effect.js";
 import { returnBotMessageOutcome } from "./bot-messages.js";
+import { productDocumentationUrls } from "./builtin-skills.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { holdComputerExecutionLeaseForTakeover } from "./computer-lifecycle.js";
 import { resolveBotWorkspacePath } from "./computer-support.js";
@@ -81,7 +82,7 @@ import { isStrategicInitiativeRun } from "./strategic-initiative.js";
 import { takeoverCheckpointOf } from "./takeover-resume.js";
 import {
   appendToolCompletionAudit,
-  reachableHostOf,
+  reachableDestinationOf,
   toolCompletionFromResult,
 } from "./tool-completion-audit.js";
 import {
@@ -566,9 +567,12 @@ async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promi
           name: event.name,
           executionId: event.executionId,
           durationMs: Date.now() - startedAt,
-          // Which site a network tool reached. Only the host: the path and query
-          // can carry a token or a private phrase and are deliberately dropped.
-          ...(reachableHostOf(event.args) ? { host: reachableHostOf(event.args)! } : {}),
+          // Where a network tool went, as far as it is safe to record: the query,
+          // fragment and userinfo are dropped, and the path only when it is a page
+          // this build ships or plainly word-like.
+          ...(reachableDestinationOf(event.args, productDocumentationUrls())
+            ? { destination: reachableDestinationOf(event.args, productDocumentationUrls())! }
+            : {}),
         },
         result,
       ),

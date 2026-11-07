@@ -597,6 +597,26 @@ describe("notes that can't be posted as messages", () => {
     });
   });
 
+  /**
+   * A tool call can be followed from what was asked to what came back.
+   *
+   * The audit could not tie a completion to the request that produced it. Both
+   * events already carry the same execution id, which is what makes the pair
+   * joinable; this asserts it on the events a run actually appends rather than on
+   * the source that writes them.
+   */
+  it("pairs each request with its completion by execution id", async () => {
+    const { append } = await runTurn("", false);
+    const events = append.mock.calls.map(([event]) => event);
+    const calls = events.filter((event) => event.type === "agent.tool.called");
+    const completions = events.filter((event) => event.type === "agent.tool.completed");
+    expect(calls.length).toBeGreaterThan(0);
+    const calledIds = calls.map((event) => event.payload.executionId).filter(Boolean);
+    const completedIds = completions.map((event) => event.payload.executionId).filter(Boolean);
+    // Every completion the run recorded joins a request it also recorded.
+    for (const id of completedIds) expect(calledIds).toContain(id);
+  });
+
   it("keeps the last note as the reply when nothing comes after the last step", async () => {
     const { finalizeRun } = await runTurn("", false);
     expect(finalText(finalizeRun)).toBe("I will check that.");
