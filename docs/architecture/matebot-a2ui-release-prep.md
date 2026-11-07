@@ -1,7 +1,9 @@
 # Release preparation for this branch (not a release)
 
 This page is what a coordinator needs in order to publish this branch and test it
-on `192.168.10.5` and on a user machine. **Nothing here has been done** — no
+on the staging host described in
+[`matebot-a2ui-staging-flag.md`](./matebot-a2ui-staging-flag.md) and on a user
+machine. **Nothing here has been done** — no
 image was built, nothing was pushed to a registry, no server was contacted, no
 installer was produced. The conditions below are not met yet, so publishing now
 would be premature.
@@ -74,7 +76,7 @@ Two identifiers answer "which build is this":
 
 Record both together. An image tag without its commit cannot be tied to a diff.
 
-## Notes for updating `192.168.10.5`
+## Notes for updating the staging host
 
 These are observations from the change set, not verified against that host — this
 run never contacted it.
@@ -106,7 +108,7 @@ run never contacted it.
 
 | Check | Result |
 |---|---|
-| `pnpm vitest run` | 22,308 passed, 0 failed |
+| `pnpm vitest run` | 22,309 passed, 0 failed |
 | `pnpm check` | 24/24 packages |
 | `pnpm lint` | 0 errors (40 pre-existing warnings, unchanged from the base) |
 | Browser E2E (real app, router, executor, migrated Postgres) | 13/13 scenarios |
