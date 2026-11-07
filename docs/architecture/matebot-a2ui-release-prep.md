@@ -109,7 +109,7 @@ run never contacted it.
 | `pnpm vitest run` | 22,308 passed, 0 failed |
 | `pnpm check` | 24/24 packages |
 | `pnpm lint` | 0 errors (40 pre-existing warnings, unchanged from the base) |
-| Browser E2E (real app, router, executor, migrated Postgres) | 12/12 scenarios |
+| Browser E2E (real app, router, executor, migrated Postgres) | 13/13 scenarios |
 | Real-Postgres route suites (transactions, RLS) | 24 passed |
 | `pnpm test:a2ui-sim` | all rows hold |
 | `pnpm test:a2ui-perf` | turn server CPU work p95 ≈ 0.05 ms over 1000 samples — server-only, not a turn latency |

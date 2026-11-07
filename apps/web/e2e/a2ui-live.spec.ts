@@ -550,10 +550,58 @@ test("a repeated submit does not run the action twice", async ({ page }, testInf
     page.request.post("/rpc/threads/dispatchInteractionAction", { data: { json: body } }),
   ]);
   const results = [await first.json(), await second.json()];
-  // At most one of them reports a fresh execution; the other is a duplicate or a
-  // refusal, never a second run.
-  expect(
-    results.filter((entry: unknown) => JSON.stringify(entry).includes('"duplicate":false')).length,
-  ).toBeLessThanOrEqual(1);
+  const freshRuns = results.filter((entry: unknown) =>
+    JSON.stringify(entry).includes('"duplicate":false'),
+  ).length;
+  // Whatever the outcome, two identical clicks can never produce two executions.
+  // With no mailbox connected both are refused, which is why the assertion is
+  // "never two" rather than "exactly one": the idempotency rule is what is under
+  // test, and the service-level suite covers the single-execution case with a
+  // connected provider.
+  expect(freshRuns).toBeLessThanOrEqual(1);
+  expect(results).toHaveLength(2);
   await captureScreenshot(page, testInfo, "a2ui-e2e-10-double-submit");
+});
+
+test("a re-query updates the same result card with a new window", async ({ page }, testInfo) => {
+  await signIn(page, testInfo);
+  const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
+  const botId = bots[0]!.id;
+  const artifactId = await uploadCsv(page, botId);
+
+  await rpc(page, "threads/send", {
+    botId,
+    artifactIds: [artifactId],
+    text: `call present_result with ${JSON.stringify({
+      title: "Quarterly totals",
+      sourceId: "csv-upload",
+      from: "2026-01-01",
+      to: "2026-12-31",
+      groupBy: "quarter",
+      metrics: [{ key: "total", op: "sum", of: "amount" }],
+    })}`,
+  });
+  const card = page.getByTestId("a2ui-surface-card").first();
+  await expect(card).toBeVisible({ timeout: 45_000 });
+  await expect(card).toContainText("2000.5", { timeout: 30_000 });
+  const interactionId = await cardInteractionId(page);
+
+  // Narrow the window so the file's rows fall outside it: same card, new period,
+  // and the card must say there is no data rather than show a stale total.
+  const bots2 = bots[0]!.id;
+  await rpc(page, "threads/send", {
+    botId: bots2,
+    text: `call refresh_result with ${JSON.stringify({
+      interactionId,
+      sourceId: "csv-upload",
+      from: "2020-01-01",
+      to: "2020-03-31",
+    })}`,
+  });
+
+  // One card, still the same interaction, and the totals are gone with the period.
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(1, { timeout: 45_000 });
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  await expect(card).not.toContainText("2000.5", { timeout: 30_000 });
+  await captureScreenshot(page, testInfo, "a2ui-e2e-11-requery-same-card");
 });
