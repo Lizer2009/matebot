@@ -6,13 +6,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EmailComposeEditor } from "./EmailComposeEditor";
 
 /**
- * Typed text survives a re-render that arrives while the commit is in flight.
+ * Typed text survives a re-render, and is still saved.
  *
- * The browser showed the subject field falling back to its old value right after
- * the person typed into it: the write had been sent, the parent re-rendered from a
- * snapshot that did not have the new text yet, and the editor adopted that snapshot
- * wholesale. React state alone cannot hold the value, because the snapshot is newer
- * than the render that produced the state.
+ * Two failures this guards, both seen in a real browser. A snapshot arriving while
+ * the person is typing re-rendered the old value over their text. And a snapshot
+ * arriving between typing and blur made the write look redundant, so the text stayed
+ * on screen but never reached the server.
+ *
+ * The re-render here carries *different* props — a republish of another field — so
+ * the effect actually runs. A test that re-renders with identical props asserts
+ * nothing, because React bails out.
  */
 
 const lingui = vi.hoisted(() => ({
@@ -44,12 +47,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const fields = (subject: string) => ({
+const fields = (subject: string, body = "Hello") => ({
   from: "bot@example.test",
   to: "a@example.test",
   cc: "",
   subject,
-  body: "Hello",
+  body,
 });
 
 function subjectInput(): HTMLInputElement {
@@ -62,18 +65,21 @@ function setValue(element: HTMLInputElement, value: string) {
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(element, value);
 }
 
+function render(props: {
+  draftVersion: number;
+  fields: ReturnType<typeof fields>;
+  onFieldChange?: () => Promise<{ draftVersion: number } | undefined>;
+}) {
+  act(() => root.render(<EmailComposeEditor {...props} />));
+}
+
 describe("a field the person typed", () => {
-  it("keeps the typed text when a stale snapshot arrives before the commit lands", async () => {
+  it("keeps the typed text when a snapshot of another field arrives mid-typing", async () => {
     const onFieldChange = vi.fn(
       () => new Promise<{ draftVersion: number } | undefined>(() => undefined),
     );
-    act(() =>
-      root.render(
-        <EmailComposeEditor draftVersion={1} fields={fields("Hi")} onFieldChange={onFieldChange} />,
-      ),
-    );
+    render({ draftVersion: 1, fields: fields("Hi"), onFieldChange });
 
-    // The person types.
     const input = subjectInput();
     await act(async () => {
       setValue(input, "我写的主题");
@@ -81,45 +87,62 @@ describe("a field the person typed", () => {
     });
     expect(subjectInput().value).toBe("我写的主题");
 
-    // A snapshot from before the commit arrives, with the old subject in it.
-    await act(async () => {
-      root.render(
-        <EmailComposeEditor draftVersion={1} fields={fields("Hi")} onFieldChange={onFieldChange} />,
-      );
-    });
+    // A republish of a different field: the props really change, so the effect runs.
+    render({ draftVersion: 2, fields: fields("Hi", "A different body"), onFieldChange });
     expect(subjectInput().value).toBe("我写的主题");
+  });
 
-    // Blurring sends it. The write is still in flight when another stale snapshot lands.
+  it("still saves the typed text after a republish of another field", async () => {
+    const onFieldChange = vi.fn(async () => ({ draftVersion: 3 }));
+    render({ draftVersion: 1, fields: fields("Hi"), onFieldChange });
+
+    const input = subjectInput();
+    await act(async () => {
+      setValue(input, "我写的主题");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    // The republish lands before the blur that would send it.
+    render({ draftVersion: 2, fields: fields("Hi", "A different body"), onFieldChange });
     await act(async () => {
       subjectInput().dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
       await Promise.resolve();
     });
-    await act(async () => {
-      root.render(
-        <EmailComposeEditor draftVersion={1} fields={fields("Hi")} onFieldChange={onFieldChange} />,
-      );
-    });
-    expect(onFieldChange).toHaveBeenCalledWith("subject", "我写的主题", 1);
+
+    expect(onFieldChange).toHaveBeenCalledWith("subject", "我写的主题", 2);
     expect(subjectInput().value).toBe("我写的主题");
+  });
+
+  it("does not send a value the server already holds", async () => {
+    const onFieldChange = vi.fn(async () => ({ draftVersion: 2 }));
+    render({ draftVersion: 1, fields: fields("Hi"), onFieldChange });
+    // Blur without typing an edit.
+    await act(async () => {
+      subjectInput().dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(onFieldChange).not.toHaveBeenCalled();
   });
 
   it("follows the server for a field the person did not edit", async () => {
     const onFieldChange = vi.fn(async () => ({ draftVersion: 2 }));
-    act(() =>
-      root.render(
-        <EmailComposeEditor draftVersion={1} fields={fields("Hi")} onFieldChange={onFieldChange} />,
-      ),
-    );
-    // A model edit changes the subject; the person never touched it, so it applies.
+    render({ draftVersion: 1, fields: fields("Hi"), onFieldChange });
+    render({ draftVersion: 2, fields: fields("Model subject"), onFieldChange });
+    expect(subjectInput().value).toBe("Model subject");
+  });
+
+  it("lets the server's own value win once it matches what was typed", async () => {
+    const onFieldChange = vi.fn(async () => ({ draftVersion: 2 }));
+    render({ draftVersion: 1, fields: fields("Hi"), onFieldChange });
+    const input = subjectInput();
     await act(async () => {
-      root.render(
-        <EmailComposeEditor
-          draftVersion={2}
-          fields={fields("Model subject")}
-          onFieldChange={onFieldChange}
-        />,
-      );
+      setValue(input, "Typed");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
     });
+    // The server echoes the typed text back: the field is no longer special.
+    render({ draftVersion: 2, fields: fields("Typed"), onFieldChange });
+    expect(subjectInput().value).toBe("Typed");
+    // And a later model edit applies, because nothing here is unsaved.
+    render({ draftVersion: 3, fields: fields("Model subject"), onFieldChange });
     expect(subjectInput().value).toBe("Model subject");
   });
 });

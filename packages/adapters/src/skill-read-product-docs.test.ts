@@ -69,3 +69,20 @@ describe("skill_read on the product help skill", () => {
     expect(content).toMatch(/never construct a URL, guess a path/);
   });
 });
+
+describe("the builtin catalog a settings screen lists", () => {
+  /**
+   * The body carries a marker the read path resolves. A list endpoint that handed
+   * out the raw content would show the placeholder to anyone reading the skill.
+   */
+  it("resolves the documentation index for every record", async () => {
+    const { builtinAgentSkillRecords } = await import("./skill-tools.js");
+    const records = builtinAgentSkillRecords();
+    const product = records.find((record) => record.name === PRODUCT_DISPLAY_NAME)!;
+    expect(product.content).not.toContain("{{product-documentation-index}}");
+    expect(product.content).toContain("docs.example.test/docs/integrations/");
+    for (const record of records) {
+      expect(record.content).not.toContain("{{product-documentation-index}}");
+    }
+  });
+});

@@ -70,7 +70,15 @@ export function EmailComposeEditor({
   const [discarded, setDiscarded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [mailbox, setMailbox] = useState(capability);
-  const committed = useRef(fields);
+  /**
+   * What the server has acknowledged, as opposed to what is on screen.
+   *
+   * These are different the moment the person types: the field shows their text
+   * while the server still holds the old value. Comparing a commit against the
+   * displayed value would skip the write entirely, so the write is compared
+   * against this instead.
+   */
+  const saved = useRef(fields);
   const versionRef = useRef(draftVersion);
   const valuesRef = useRef(fields);
   const pending = useRef<Partial<Record<EmailFieldName, Promise<number>>>>({});
@@ -89,7 +97,7 @@ export function EmailComposeEditor({
       else next[name] = valuesRef.current[name];
     }
     setValues(next);
-    committed.current = next;
+    saved.current = { ...fields };
     versionRef.current = draftVersion;
     setVersion(draftVersion);
   }, [draftVersion, fields.from, fields.to, fields.cc, fields.subject, fields.body]);
@@ -140,20 +148,21 @@ export function EmailComposeEditor({
       valuesRef.current = nextValues;
       setValues(nextValues);
     }
-    if (value === committed.current[name] || !onFieldChange) return versionRef.current;
-    const previous = committed.current[name];
-    committed.current = { ...committed.current, [name]: value };
+    // Compared against what the server has, not what is displayed: a republish
+    // between typing and blur updates the display, and must not make the write a
+    // no-op. Only a value the server already holds is skipped.
+    if (value === saved.current[name] || !onFieldChange) return versionRef.current;
     dirty.current[name] = value;
     const task = (async () => {
       try {
         const result = await onFieldChange(name, value, versionRef.current);
         const next = result?.draftVersion ?? versionRef.current + 1;
         versionRef.current = next;
+        saved.current = { ...saved.current, [name]: value };
         setVersion(next);
         setLocalConfirmedVersion(undefined);
         return next;
       } catch (err) {
-        committed.current = { ...committed.current, [name]: previous };
         delete dirty.current[name];
         throw err;
       }

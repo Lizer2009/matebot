@@ -145,12 +145,64 @@ describe("authenticated secret requests", () => {
    * names.
    */
   it("refuses to spend a command variable as an HTTP credential", async () => {
-    // A command variable has no site at all, so it cannot even be stored with an
-    // origin to send to. This is stronger than a check on the request: the shape
-    // that would let it be spent cannot exist.
+    // The stronger boundary is structural: a command variable has no site at all, so
+    // the shape that could send it cannot be stored. Reaching the request path with
+    // one is refused with a reason rather than thrown, and nothing leaves the process.
     const { input, fetch } = await fixture({ type: "command" });
-    await expect(requestWithBotSecret(input)).rejects.toThrow(/has no site/);
+    const result = await requestWithBotSecret(input);
+    expect(result).toMatchObject({
+      error: expect.stringContaining("cannot be used for an authenticated request"),
+    });
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The request-time guard, reached the way a stale row would reach it.
+   *
+   * The schema refuses a command variable that carries an origin, which is the
+   * stronger boundary. This drives the guard behind it: a command row stored the
+   * way a command row *is* stored (no origin) must still be refused here, with no
+   * decryption and nothing sent. Without this the guard could be deleted and every
+   * test would still pass.
+   */
+  it("refuses a stored command credential at request time as well", async () => {
+    const encrypted = await secretStore.put(
+      secret,
+      { ...scope, operationId: "t", traceId: "t", signal: new AbortController().signal },
+      { recordId: "secret-2" },
+    );
+    const row = {
+      ...scope,
+      name: destination.name,
+      origin: "",
+      auth: { type: "command" },
+      ...encrypted,
+    };
+    const prisma = {
+      spaceSettingOverride: ownVault,
+      vaultCredential: { findFirst: vi.fn(async () => row) },
+      secret: { findFirst: vi.fn(async () => null) },
+    } as unknown as PrismaClient;
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({ ok: true }));
+    const load = vi.spyOn(secretStore, "load");
+    const result = await requestWithBotSecret({
+      prisma,
+      secretStore,
+      scope,
+      request: { name: destination.name, url: `${destination.origin}/v1/items` },
+      signal: new AbortController().signal,
+      remote: { fetch, resolveHostname: publicResolver },
+    });
+    try {
+      // Refused with the reason a model can act on, and nothing left the process.
+      expect(result).toMatchObject({
+        error: expect.stringContaining("only available to shell"),
+      });
+      expect(fetch).not.toHaveBeenCalled();
+      expect(load).not.toHaveBeenCalled();
+    } finally {
+      load.mockRestore();
+    }
   });
 
   it("refuses to fill a website login into an HTTP request", async () => {

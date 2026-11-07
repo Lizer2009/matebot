@@ -1,12 +1,9 @@
 import type { AgentToolCompletion } from "@matebot/adapter-kit";
 import { describe, expect, it } from "vitest";
-import { EgressRefusedError } from "./network-address.js";
-import {
-  reachableDestinationOf,
-  reachableHostOf,
-  toolCompletionAuditPayload,
-} from "./tool-completion-audit.js";
+import { egressRefused } from "./network-address.js";
+import { reachableDestinationOf, toolCompletionAuditPayload } from "./tool-completion-audit.js";
 import { classifyToolFailure } from "./tool-failure.js";
+import { EGRESS_REASON_PRIVATE_ADDRESS, EGRESS_REASON_UNRESOLVED } from "./web-ssrf.js";
 
 /**
  * Enough to trace where a run went, and nothing that could leak.
@@ -75,25 +72,6 @@ describe("reachableDestinationOf", () => {
     expect(dest?.pathWithheld).toBe("credential_shaped");
   });
 
-  it("keeps a path that matches a declared low-risk route", () => {
-    const dest = reachableDestinationOf(
-      { url: "https://example.test/status/incidents" },
-      [],
-      [{ prefix: "/status/", staticSegments: ["incidents"] }],
-    );
-    expect(dest?.path).toBe("/status/incidents");
-  });
-
-  it("does not let a declared prefix carry an undeclared segment", () => {
-    const dest = reachableDestinationOf(
-      { url: "https://example.test/status/alex" },
-      [],
-      [{ prefix: "/status/", staticSegments: ["incidents"] }],
-    );
-    expect(dest?.path).toBeUndefined();
-    expect(dest?.pathWithheld).toBe("unrecognised");
-  });
-
   it("withholds a path that looks like a credential", () => {
     const dest = reachableDestinationOf({
       url: "https://example.test/api/placeholder-token-value-1234",
@@ -132,7 +110,9 @@ describe("reachableDestinationOf", () => {
   });
 
   it("still reports the origin when the path is withheld", () => {
-    const dest = reachableDestinationOf({ url: "https://example.test/api/placeholder-token-abc123" });
+    const dest = reachableDestinationOf({
+      url: "https://example.test/api/placeholder-token-abc123",
+    });
     expect(dest?.origin).toBe("https://example.test");
     expect(dest?.host).toBe("example.test");
   });
@@ -151,12 +131,6 @@ describe("reachableDestinationOf", () => {
     expect(reachableDestinationOf({ url: "not a url" })).toBeUndefined();
     // A non-HTTP scheme is not a destination a network tool went to.
     expect(reachableDestinationOf({ url: "file:///etc/passwd" })).toBeUndefined();
-  });
-});
-
-describe("reachableHostOf", () => {
-  it("still yields just the host for callers that want it", () => {
-    expect(reachableHostOf({ url: "https://Docs.Example.TEST/x?y=1" })).toBe("docs.example.test");
   });
 });
 
@@ -275,7 +249,7 @@ describe("toolCompletionAuditPayload", () => {
  */
 describe("classifyToolFailure", () => {
   it("recognises our own egress refusal ahead of any network reading", () => {
-    const refusal = new EgressRefusedError("10.0.0.5", "URL resolves to a private address");
+    const refusal = egressRefused("10.0.0.5", new Error(EGRESS_REASON_PRIVATE_ADDRESS));
     expect(classifyToolFailure(refusal)).toEqual({
       class: "security_refused",
       detail: "URL resolves to a private address",
@@ -306,7 +280,7 @@ describe("classifyToolFailure", () => {
   });
 
   it("never turns a refusal into a network error, whatever the message says", () => {
-    const refusal = Object.assign(new EgressRefusedError("x.example.test", "refused"), {
+    const refusal = Object.assign(egressRefused("x.example.test", new Error("refused")), {
       code: "ENOTFOUND",
       message: "getaddrinfo ENOTFOUND x.example.test",
     });
@@ -326,6 +300,63 @@ describe("classifyToolFailure", () => {
       class: "network_error",
       detail: "unresolved",
     });
+    // The guard marks every refusal, so the classified value — not a bare Error —
+    // is what decides. A host that did not resolve is connectivity, not policy.
+    expect(
+      classifyToolFailure(egressRefused("empty.example.test", new Error(EGRESS_REASON_UNRESOLVED))),
+    ).toEqual({ class: "network_error", detail: "unresolved" });
+    expect(
+      classifyToolFailure(
+        egressRefused("internal.example.test", new Error(EGRESS_REASON_PRIVATE_ADDRESS)),
+      ),
+    ).toEqual({ class: "security_refused", detail: EGRESS_REASON_PRIVATE_ADDRESS });
+  });
+
+  /**
+   * A class that exists only as a name must not be lost.
+   *
+   * `AbortError` and `TimeoutError` carry no code, and a cancelled or timed-out
+   * call recorded as `unknown` defeats the point of classifying at all.
+   */
+  it.each([
+    ["AbortError", undefined, "cancelled"],
+    ["TimeoutError", undefined, "timeout"],
+    ["SandboxRateLimitError", undefined, "rate_limited"],
+    ["ModelSignInError", undefined, "auth_required"],
+    ["SandboxUnavailableError", undefined, "provider_unavailable"],
+  ] as const)("reads the class from the name %s", (name, code, expected) => {
+    const error = new Error("reworded by the provider");
+    error.name = name;
+    if (code) Object.assign(error, { code });
+    expect(classifyToolFailure(error).class).toBe(expected);
+  });
+
+  it("does not lose a named error's class when it wraps a cause", () => {
+    const wrapped = new Error("fetch failed", {
+      cause: Object.assign(new Error("socket hang up"), { code: "ECONNRESET" }),
+    });
+    wrapped.name = "AbortError";
+    expect(classifyToolFailure(wrapped).class).toBe("cancelled");
+  });
+
+  it("redacts a secret that appears in the failure detail", () => {
+    // Our guard stores its own reason as data; a reason quoting a URL must not
+    // carry its query into the record.
+    const refusal = egressRefused(
+      "blocked.example.test",
+      new Error("proxy rejected https://blocked.example.test/?token=redacted-key-abc123"),
+    );
+    const payload = toolCompletionAuditPayload(
+      {
+        name: "web_fetch",
+        executionId: "call-1",
+        durationMs: 3,
+        error: refusal,
+      },
+      ["redacted-key-abc123"],
+    );
+    expect(JSON.stringify(payload)).not.toContain("redacted-key-abc123");
+    expect(payload.failure).toMatchObject({ class: "security_refused" });
   });
 
   it("falls back to unknown rather than guessing", () => {

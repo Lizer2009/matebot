@@ -59,6 +59,16 @@ export function useA2uiSurfaceDocument(
   const revision = source.revision;
   const fetchDocument = source.fetchDocument;
   const injected = source.messages;
+  /**
+   * The fetcher is read through a ref, not held in the effect's key.
+   *
+   * Callers pass an inline closure, so its identity changes on every parent
+   * render. Keying on it refetched the document — and blinked the card back to its
+   * loading frame — whenever unrelated activity re-rendered the thread. What the
+   * document *is* changed is the ref and the revision, and those stay in the key.
+   */
+  const fetcher = useRef(fetchDocument);
+  fetcher.current = fetchDocument;
 
   useEffect(() => {
     mounted.current = true;
@@ -78,7 +88,8 @@ export function useA2uiSurfaceDocument(
     }
     // A server ref with no fetcher is not "loading": it will never load, so the
     // card reports it as unavailable instead of waiting forever.
-    if (!fetchDocument) {
+    const load = fetcher.current;
+    if (!load) {
       setRemote(undefined);
       setLoading(false);
       setError(null);
@@ -87,7 +98,7 @@ export function useA2uiSurfaceDocument(
     let cancelled = false;
     setLoading(true);
     setError(null);
-    void fetchDocument(documentRef!)
+    void load(documentRef!)
       .then((messages) => {
         if (cancelled || !mounted.current) return;
         // An empty document is a failure to load, not an empty surface: a card
@@ -109,7 +120,7 @@ export function useA2uiSurfaceDocument(
     return () => {
       cancelled = true;
     };
-  }, [injected, fixture, serverRef, documentRef, revision, fetchDocument, attempt]);
+  }, [injected, fixture, serverRef, documentRef, revision, attempt]);
 
   const reload = useCallback(() => setAttempt((value) => value + 1), []);
 

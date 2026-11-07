@@ -155,4 +155,34 @@ describe("useA2uiSurfaceDocument", () => {
     expect(fetchDocument).toHaveBeenCalledTimes(2);
     expect(latest().messages).toHaveLength(2);
   });
+
+  /**
+   * A new closure for the same document must not refetch it.
+   *
+   * Callers pass an inline arrow, so its identity changes on every parent render.
+   * Keying the fetch on it refetched the document — and blinked the card back to
+   * its loading frame — on unrelated thread activity.
+   */
+  it("does not refetch when only the fetcher's identity changes", async () => {
+    const messages = [{ createSurface: { surfaceId: "surf-1" } }];
+    const first = vi.fn(async () => messages);
+    const { latest, rerender } = run({ documentRef: REF, revision: 1, fetchDocument: first });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(first).toHaveBeenCalledTimes(1);
+
+    // The same document, a new function instance — what an inline prop does.
+    const second = vi.fn(async () => messages);
+    rerender({ documentRef: REF, revision: 1, fetchDocument: second });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(second).not.toHaveBeenCalled();
+    expect(latest().messages).toHaveLength(1);
+    expect(latest().loading).toBe(false);
+  });
 });

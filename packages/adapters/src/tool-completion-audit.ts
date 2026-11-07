@@ -58,7 +58,7 @@ export function toolCompletionAuditPayload(
         : (toolResultFailure(completion.result) ?? error),
     );
     payload.failure = failure.detail
-      ? { class: failure.class, detail: failure.detail }
+      ? { class: failure.class, detail: redactSecrets(failure.detail, secrets) }
       : { class: failure.class };
   }
   // Where a network tool went. The query, fragment and userinfo never reach this
@@ -101,29 +101,6 @@ export function toolCompletionAuditPayload(
 }
 
 /**
- * The registrable host a network tool reached, or nothing.
- *
- * The audit could see which tool ran and whether it failed, but not where it was
- * pointed — so a run that opened a product documentation page could not be traced
- * to the address that was opened. The host is enough to answer that and nothing
- * more: the path and query are omitted because they can carry a token, a search
- * phrase, or a private identifier, and the scheme is dropped because it adds
- * nothing to the question "which site".
- */
-export function reachableHostOf(args: Record<string, unknown>): string | undefined {
-  const raw = args.url ?? args.endpoint ?? args.href;
-  if (typeof raw !== "string") return undefined;
-  try {
-    const host = new URL(raw).hostname.trim().toLowerCase();
-    if (!host) return undefined;
-    // A bare IP or a very long name is not a site name worth the space in a log.
-    return host.length <= 253 ? host : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-/**
  * Where a network tool went, as far as it is safe to write down.
  *
  * The host alone could not answer the audit's question — which page a run opened —
@@ -134,8 +111,6 @@ export function reachableHostOf(args: Record<string, unknown>): string | undefin
  *
  * - The path of a page this build ships (the product documentation, a closed set)
  *   is kept, because the set itself guarantees no user data is in it.
- * - A path matching a template the caller declares low-risk is kept, so a
- *   deployment can name its own static routes without guessing at shapes.
  * - Everything else keeps only the origin, with a marker saying the path was
  *   withheld, so a reader knows something was omitted rather than believing the
  *   log is complete.
@@ -153,17 +128,6 @@ export type ReachableDestination = {
   pathWithheld?: "unrecognised" | "credential_shaped" | "too_long";
 };
 
-/** How a declared low-risk route is recognised: a literal prefix plus static segments. */
-export type SafePathTemplate = {
-  /** Path prefix, e.g. `/status/`. Compared case-insensitively. */
-  prefix: string;
-  /**
-   * Segments below the prefix that are chosen by the site, not by a person.
-   * Defaults to none, so a prefix alone matches only itself.
-   */
-  staticSegments?: readonly string[];
-};
-
 /** Shapes that usually carry a credential or a personal identifier. */
 const SUSPICIOUS_SEGMENT =
   /^(?:[A-Za-z0-9_-]{20,}|[A-Za-z0-9+/=_-]{16,}|.*@.*|[0-9a-f]{16,}|sk[_-].*|gh[pousr]_.*)$/i;
@@ -171,7 +135,6 @@ const SUSPICIOUS_SEGMENT =
 export function reachableDestinationOf(
   args: Record<string, unknown>,
   documentationUrls: readonly string[] = [],
-  safeTemplates: readonly SafePathTemplate[] = [],
 ): ReachableDestination | undefined {
   const raw = args.url ?? args.endpoint ?? args.href;
   if (typeof raw !== "string") return undefined;
@@ -199,24 +162,9 @@ export function reachableDestinationOf(
   if (segments.some((segment) => SUSPICIOUS_SEGMENT.test(segment))) {
     return { host, origin, pathWithheld: "credential_shaped" };
   }
-  if (matchesSafeTemplate(url.pathname, safeTemplates)) {
-    return { host, origin, path: url.pathname };
-  }
-  // Not a page this build ships and not a declared route: the path may name a
-  // person, a document or a token, so it is withheld rather than trusted.
+  // Not a page this build ships: the path may name a person, a document or a
+  // token, so it is withheld rather than trusted.
   return { host, origin, pathWithheld: "unrecognised" };
-}
-
-function matchesSafeTemplate(pathname: string, templates: readonly SafePathTemplate[]): boolean {
-  const actual = pathname.toLowerCase();
-  return templates.some((template) => {
-    const prefix = template.prefix.toLowerCase();
-    if (!actual.startsWith(prefix)) return false;
-    const rest = actual.slice(prefix.length).replace(/\/+$/, "");
-    if (!rest) return true;
-    const allowed = template.staticSegments ?? [];
-    return rest.split("/").every((segment) => allowed.includes(segment.toLowerCase()));
-  });
 }
 
 /** Whether two URLs name the same page, ignoring case and a trailing slash. */

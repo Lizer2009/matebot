@@ -1,4 +1,4 @@
-import { BUILTIN_AGENT_SKILLS } from "@matebot/adapters";
+import { BUILTIN_AGENT_SKILLS, resolveSkillDocumentation } from "@matebot/adapters";
 import type { Actor, AgentSkill, AgentSkillSource } from "@matebot/contracts";
 import type { SkillSource } from "@matebot/core";
 import {
@@ -56,7 +56,9 @@ function builtinCatalog(): AgentSkill[] {
     id: `builtin:${skill.name}`,
     name: skill.name,
     description: skill.description,
-    content: skill.content,
+    // The same resolution `skill_read` performs, so a settings screen cannot show
+    // the documentation marker the body carries instead of the index it becomes.
+    content: resolveSkillDocumentation(skill.content),
     source: "builtin" as const,
     readOnly: true,
     createdAt: new Date(0).toISOString(),

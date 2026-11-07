@@ -162,22 +162,55 @@ describe("a calendar draft compiled for the card", () => {
   });
 
   /**
-   * The card the person is already looking at keeps its own text.
+   * A re-edited card is compiled from the server's slots, not from the model's plan.
    *
-   * A republish rewrites the surface document. The field values come from the
-   * server's slots, so a value the person typed and the server recorded must not be
-   * replaced by a stale plan value.
+   * The person's edits live in the interaction's slots and the plan records which
+   * fields they touched. A republish that compiled the plan's own values would put
+   * the model's text back over what the person typed — the failure the browser run
+   * caught. This drives the field writer, which is the path both the card and
+   * `edit_interaction` use, and reads the document it stored.
    */
-  it("keeps the stored value of a field the person typed", async () => {
+  it("republishes the person's own value after they typed it", async () => {
+    const { applyInteractionFieldChange } = await import("@matebot/core");
+    const plan: InteractionPlan = {
+      intent: "calendar.create",
+      title: "Next week's schedule",
+      fields: [
+        { name: "name", value: "From the model", required: true, status: "resolved" },
+        { name: "start", value: "2026-11-09T09:00:00+08:00", required: true, status: "resolved" },
+        { name: "end", value: "2026-11-09T09:30:00+08:00", required: true, status: "resolved" },
+      ],
+      nextStep: "request_approval",
+      riskLevel: "medium",
+    };
+    const slots = {
+      name: "From the model",
+      start: "2026-11-09T09:00:00+08:00",
+      end: "2026-11-09T09:30:00+08:00",
+    };
+    const changed = applyInteractionFieldChange(
+      { status: "collecting", draftVersion: 1, confirmedVersion: null, plan, slots },
+      {
+        expectedDraftVersion: 1,
+        name: "name",
+        value: "What the person typed",
+        // What the card's own control passes: the person is the author.
+        origin: "user",
+      },
+    );
+    expect(changed.ok).toBe(true);
+    if (!changed.ok) return;
+    // The slot holds the person's text, and the plan records that they wrote it.
+    expect(changed.slots.name).toBe("What the person typed");
+    const nameField = changed.plan.fields.find((field) => field.name === "name");
+    expect(nameField).toMatchObject({ value: "What the person typed", source: "user" });
+
+    // Publishing from that plan draws the person's text, not the model's.
     await publishInteractionSurface(prisma, {
       spaceId: "space-1",
       threadId: "thread-1",
       botId: "bot-1",
-      plan: calendarPlan([
-        resolved("name", "What the person typed"),
-        resolved("start", "2026-11-09T09:00:00+08:00"),
-        resolved("end", "2026-11-09T09:30:00+08:00"),
-      ]),
+      plan: changed.plan,
     });
     const data = storedDocument().find((message) => "updateDataModel" in message) as {
       updateDataModel: { value: { values?: Record<string, unknown> } };

@@ -1,6 +1,7 @@
 import {
   buildSkillMd,
   documentationUrl,
+  documentOriginConfigured,
   documentOriginFromEnv,
   PRODUCT_DISPLAY_NAME,
   PRODUCT_DOCS_FALLBACK,
@@ -38,6 +39,19 @@ export function productDocumentationUrls(
 ): string[] {
   const origin = documentOriginFromEnv(env);
   return PRODUCT_DOCUMENTATION.map((page) => documentationUrl(origin, page.slug));
+}
+
+/**
+ * The documentation pages a fetch may skip approval for.
+ *
+ * Empty when this deployment never configured its own documentation origin. The
+ * default origin belongs to the hosted product, not to whoever is running this
+ * build, so exempting it would pre-approve a host the operator did not choose.
+ */
+export function trustedDocumentationUrls(
+  env: Record<string, string | undefined> = process.env,
+): string[] {
+  return documentOriginConfigured(env) ? productDocumentationUrls(env) : [];
 }
 
 /**

@@ -335,7 +335,7 @@ gaps: an item counted as fixed while a named part of it was not.
 | B1 split "unresolved" from "private address" | E1 | **fixed**: `EGRESS_REASON_UNRESOLVED` and `EGRESS_REASON_PRIVATE_ADDRESS` are separate sentences, both still refused. |
 | B2 classify a failure by structure, not by wording | E1 | **fixed**: `tool-failure.ts` reads an error's class, `code` and HTTP status (following a `cause`), and consults a message only for the two sentences our own guard produces. A refusal is checked first, so it cannot be recorded as a network error; a message that merely mentions a private address is never classified as a refusal. |
 | B3 the record joins a request to its completion | E1 | **fixed**: the completion carries `executionId` (the same id `agent.tool.called` was written with) plus a `failure { class, detail }`, and the log line carries both. Covered by an assertion on the events a real turn appends. |
-| B4 a refused destination cannot be reached by another tool | E1 | **fixed**: the run's ledger is keyed by one canonical destination, so a trailing root dot, an expanded IPv6 address and an IPv4-mapped form all match; the browser refuses it, and shell is refused before it runs when the command names it. |
+| B4 a refused destination cannot be reached by another tool | E1 | **fixed**: the run's ledger is keyed by one canonical destination, so a trailing root dot, an expanded IPv6 address and an IPv4-mapped form all match. The browser refuses it, and shell is refused before it runs when the command names it. The shell check normalises the same way a client does — `127.1`, `2130706433`, `localhost` and `[::1]` all match a refused loopback — asserted case by case. |
 | B5 what that barrier cannot see | E3 | **stated, not claimed away**: a command that assembles its address at run time names no literal, so the shell check does not see it. The boundary that holds is the computer's own network policy. `browser-egress-fallback.test.ts` asserts the blind spot so the limit is a fact rather than a claim. |
 | B6 SSRF redirect, rebinding and host alias | E1 | **unchanged and covered**: every redirect hop is re-validated, the proxy tunnels to the checked address, and a rebinding answer is refused (`web-ssrf.test.ts`). The canonical destination key closes the alias gap in the *ledger*, not in the fetch. |
 | B7 does the deployed browser reach what the fetcher refused | E4 | **blocked**: runtime network configuration this audit cannot inspect. No claim is made either way; the deployment gate is listed below. |
@@ -366,7 +366,8 @@ gaps: an item counted as fixed while a named part of it was not.
 |---|---|---|
 | E1 a missing key parameter is asked about, not defaulted | E1 | **fixed**: `windowDecision` has three outcomes. A period the person stated is theirs; one the model admits choosing is published *and* said out loud; one nobody stated is refused with a question, in `present_result` and `refresh_result` alike. |
 | E2 an assumption is never presented as the person's choice | E1 | **fixed**: the card's provenance line says "dates assumed" and the reply the server writes carries it too, so the model can repeat it but not restate it as the user's own. |
-| E3 the identity boundary is stated where the lookup happens | E1 | **fixed (instruction, honestly labelled)**: the desktop instruction says an association is not proof of ownership, labels a repo count as public repositories, and requires naming a source and its date. This is guidance to the model, not an enforced fact — E4 below says what would be needed to enforce it. |
+| E3 the identity boundary is stated where the lookup happens | E1 | **fixed (instruction, honestly labelled)**: the desktop instruction says an association is not proof of ownership, labels a repo count as public repositories, and requires naming a source and its date. This is guidance to the model, not an enforced fact — nothing here asserts what a model writes. |
+| E6 a stated period is recognised, and only a stated one | E1 | **fixed**: the detector is a floor with narrow patterns, checked in both directions — `May I see the draft` and `show me the sales` state nothing, while `Q2`, `the last 7 days`, `12月的销售` and `flights on 9 Nov` state a period. `refresh_result` also accepts `defaultedWindow`, so a model that chose the dates has a way to say so. |
 | E4 a price claim without a source | E1 | **already correct**: a result with no registered source is refused. Nothing invents one. |
 | E5 "were those prices real?" | E4 | **blocked**: needs a flight provider this repository does not have. The code now refuses to present such a number without one; it does not acquire one. |
 
@@ -378,7 +379,7 @@ gaps: an item counted as fixed while a named part of it was not.
 | F2 each label appears once | E1 | **fixed by reproduction**: the browser showed every label twice, because the compiler emitted a Text label *and* the shipped control draws its own. The Text is gone; the E2E counts the occurrences. |
 | F3 a batch list travels without being drawn | E1 | **fixed**: the list reaches the execute path and no control is bound to it, asserted at both levels. |
 | F4 loading and failure never leave a blank region | E1 | **fixed**: a server ref with no fetcher, an empty document and a failed fetch each render a sentence and a retry; the renderer's own loading frame draws a placeholder rather than an empty div. |
-| F5 a field the person typed survives a late edit | E1 | **fixed by reproduction**: the editor adopted every server snapshot wholesale, so a re-render could replace typed text (and a second edit could append to it). A field the person edited now wins until the server's value is the typed one. |
+| F5 a field the person typed survives a late edit and is still saved | E1 | **fixed by reproduction**: the editor adopted every server snapshot wholesale, so a re-render could replace typed text. A field the person edited wins until the server echoes that text back, and the write is compared against what the server holds rather than what is displayed, so a republish between typing and blur cannot turn the save into a no-op. Both directions are tested against a re-render with *different* props, which is what makes the effect run. |
 | F6 same card, both widths, nothing clipped | E1 | **fixed by reproduction**: a date-time row measured 324px inside a 216px card at narrow width. The row wraps and its inputs shrink; the E2E measures every control against the card and the viewport at 1280 and 360. |
 | F7 timezone | E1 | **fixed**: the timezone travels as a value and is shown in its own control, asserted live. |
 | F8 native Windows and real phones | E4 | **not verified**: no Windows desktop or phone was available. The browser runs are desktop Chromium at two widths, and the mobile card's own logic has unit coverage only. |
@@ -398,7 +399,7 @@ gaps: an item counted as fixed while a named part of it was not.
 |---|---|---|
 | H1 run, tool id and tool name on every completion | E1 | **already correct**. |
 | H2 the same id on the request and the completion | E1 | **fixed**: both events carry the execution id, and the log line carries it as `tool.call_id`. |
-| H3 the destination origin and a safe path | E1 | **fixed**: the origin is always recorded; a path only for a page this build ships or a route the caller declares low-risk. |
+| H3 the destination origin and a safe path | E1 | **fixed**: the origin is always recorded; a path only for a page this build ships. Nothing else in the codebase declared a low-risk route, so no such parameter ships. |
 | H4 a word-like path is not assumed safe | E1 | **fixed**: `/users/alex`, a short token and a private slug are withheld with a marker, because shape is not evidence. |
 | H5 query, fragment, userinfo, headers and body are never recorded | E1 | **already correct, now asserted** including the destination round trip. |
 | H6 what kind of failure it was | E1 | **fixed**: a class from structured signals, with the detail being a code or status rather than a message. |
@@ -422,6 +423,30 @@ depends on them:
   nor any device here.
 - **OAuth, real sends and calendar writes.** Not exercised; the audit's pauses on
   production acceptance stand.
+
+## Independent review
+
+The branch was reviewed after the work above by a second pass that re-read the diff
+and re-ran the key tests with individual lines reverted. Its findings, and what was
+done about them:
+
+| Finding | Verdict | Resolution |
+|---|---|---|
+| A secret could reach the record through `failure.detail` | real | The detail is redacted against the run's secrets like every other recorded string, and a test drives a refusal whose reason quotes a key. |
+| The shell barrier compared the written spelling only, so `127.1`, `2130706433`, `localhost` and `[::1]` slipped past a refused loopback | real | The guard now normalises with the same URL parser a client uses and treats any loopback spelling as the same machine; five spellings are asserted, and a similar-looking other host still passes. |
+| The classifier lost a class that exists only as a name, so cancelled and timed-out calls read `unknown` | real | A known name is now a fact in its own right; `AbortError`, `TimeoutError`, the sandbox rate-limit and auth classes are asserted, including when wrapped around a cause. |
+| A host that failed to resolve was classified as a policy refusal | real | The guard's own "did not resolve" reason now classifies as a network error, and the refusal the guard actually throws — not a bare `Error` — is what the test passes. |
+| The editor could show typed text and never save it, if a republish landed between typing and blur | real | The write is compared against the server's value rather than the displayed one, with a test that republishes another field before blur. |
+| The editor test passed on the unfixed code | real | It re-rendered with identical props, which React bails out of. It now re-renders with different props and fails on the previous implementation. |
+| The command-variable guard was untested (the schema refused first) | real | A stored command row without an origin now drives the request-time guard; removing that guard fails the test. |
+| `refresh_result` could never satisfy the window rule, because nothing let the model admit choosing the dates | real | The tool declares `defaultedWindow`, and a test asserts it is offered and optional. |
+| An unconfigured deployment pre-approved fetches to the default documentation origin — a host its operator never chose | real | Only a configured origin is exempt; the default still builds links but skips the gate no longer. Both cases are asserted. |
+| The `fetchDocument` closure is inline, so unrelated re-renders refetched and blinked the card | real | The fetcher is read through a ref; the ref and the revision stay in the key. Tested by re-rendering with a new function instance. |
+| The builtin skills endpoint returned the unresolved documentation marker | real | The catalog resolves it the same way `skill_read` does, asserted for every record. |
+| `reachableHostOf`, `currentEgressRefusals`, `windowNeedsAsking` and the declared-route parameter had no production caller | real | Removed rather than left as speculative API. |
+| A calendar test named for a user edit never performed one | real | Rewritten to drive `applyInteractionFieldChange` as the card does and read the document it stored. |
+| The date-time CSS targeted classes the renderer never emits | **wrong** | The renderer was mounted and its DOM read: it emits `a2ui-date-time-inputs` and `a2ui-date-time-input`, which is what the stylesheet targets. |
+| The period detector was a regex, which the project rules forbid for judging prose | **partly accepted** | The rules apply to grading free-form meaning; this decides one narrow fact — whether a period appears at all — and its fallback asks rather than publishes. It is now checked in both directions, and the model's own disclosure (`defaultedWindow`) takes precedence whatever the patterns say. |
 
 ## What is not claimed
 

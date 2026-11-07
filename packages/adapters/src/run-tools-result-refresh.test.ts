@@ -293,3 +293,16 @@ describe("refresh_result through applyTool", () => {
     expect(readCalls).toHaveLength(1);
   });
 });
+
+describe("refresh_result's window rule is reachable, not a dead end", () => {
+  it("offers the model a way to say it chose the dates", async () => {
+    // Without this the refusal could never be answered: the model would have to
+    // guess a period the person never gave, which is the defect it exists to stop.
+    const { builtinAgentTools } = await import("./builtin-tools.js");
+    const refresh = builtinAgentTools.find((tool) => tool.name === "refresh_result")!;
+    const properties = refresh.inputSchema.properties as Record<string, unknown>;
+    expect(properties.defaultedWindow).toMatchObject({ type: "boolean" });
+    // And it is not required: an ordinary refresh states the period the person named.
+    expect(refresh.inputSchema.required).not.toContain("defaultedWindow");
+  });
+});

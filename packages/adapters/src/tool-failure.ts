@@ -11,7 +11,9 @@
  * The ordering matters for safety: a refusal by the network policy is recognised
  * before anything that could be read as an ordinary network error, so a blocked
  * destination is never recorded as "the network was down" and retried as though
- * nothing had been decided about it.
+ * nothing had been decided about it. The converse is equally important — a host
+ * that simply did not resolve is a connectivity problem, not a policy decision, and
+ * is classified as one.
  */
 
 export type ToolFailureClass =
@@ -36,9 +38,6 @@ export type ToolFailure = {
   /** A structured code, HTTP status, or the refusal reason. Never a message. */
   detail?: string;
 };
-
-/** Codes that mean the destination was refused by policy rather than unreachable. */
-const SECURITY_CODES = new Set(["EGRESS_REFUSED"]);
 
 /** Codes and class names that mean a credential problem. */
 const AUTH_CODES = new Set([
@@ -85,6 +84,12 @@ const NETWORK_CODES = new Set([
 
 const TIMEOUT_CODES = new Set(["ETIMEDOUT", "UND_ERR_HEADERS_TIMEOUT", "UND_ERR_BODY_TIMEOUT"]);
 
+/** Codes that mean the destination was refused by policy rather than unreachable. */
+const SECURITY_CODES = new Set(["EGRESS_REFUSED"]);
+
+/** The guard's reason for a host that resolved to nothing: a connectivity problem. */
+const UNRESOLVED_REASON = "URL did not resolve to any address";
+
 type ErrorFacts = {
   name: string;
   code?: string;
@@ -93,7 +98,15 @@ type ErrorFacts = {
   refusal?: string;
 };
 
-/** Read the structured facts off an error and, at most three levels, its causes. */
+/**
+ * Read the structured facts off an error and, when it has none of its own, off its
+ * causes.
+ *
+ * A frame that carries a class name is a fact in itself — `AbortError` and
+ * `TimeoutError` are recognised by name and by nothing else — so a named error is
+ * returned rather than skipped in favour of its cause. The cause is consulted only
+ * when this frame says nothing at all, which is the wrapping case it exists for.
+ */
 function factsOf(error: unknown, depth = 0): ErrorFacts | undefined {
   if (!error || typeof error !== "object" || depth > 3) return undefined;
   const record = error as Record<string, unknown>;
@@ -101,10 +114,22 @@ function factsOf(error: unknown, depth = 0): ErrorFacts | undefined {
   const code = typeof record.code === "string" ? record.code : undefined;
   // Our guard marks the error it refused with this, whether or not it made the error.
   const refusal = typeof record.egressReason === "string" ? record.egressReason : undefined;
-  const status = httpStatus(record) ?? httpStatus(record.response) ?? httpStatus(record.cause);
+  const status = httpStatus(record) ?? httpStatus(record.response);
   if (code || refusal || status !== undefined) return { name, code, status, refusal };
+  // A name this classifier knows is enough on its own.
+  if (KNOWN_NAMES.has(name)) return { name };
+  if (name && name !== "Error") return { name };
   return factsOf(record.cause, depth + 1);
 }
+
+const KNOWN_NAMES = new Set([
+  ...AUTH_ERROR_NAMES,
+  ...RATE_LIMIT_NAMES,
+  ...INVALID_INPUT_NAMES,
+  ...PROVIDER_UNAVAILABLE_NAMES,
+  "TimeoutError",
+  "AbortError",
+]);
 
 function httpStatus(value: unknown): number | undefined {
   if (!value || typeof value !== "object") return undefined;
@@ -120,15 +145,21 @@ function httpStatus(value: unknown): number | undefined {
  * Classify one tool failure.
  *
  * `message` is consulted only after every structured signal has been ruled out, and
- * only for the two sentences our own guards produce verbatim. A provider that
- * rewords its errors therefore changes nothing here.
+ * only for the sentence our own guard produces verbatim. A provider that rewords
+ * its errors therefore changes nothing here.
  */
 export function classifyToolFailure(error: unknown): ToolFailure {
   const facts = factsOf(error);
   if (facts) {
-    // Policy first: a refusal must never be recorded as an ordinary network error.
-    if ((facts.code && SECURITY_CODES.has(facts.code)) || facts.refusal) {
-      return { class: "security_refused", ...(facts.refusal ? { detail: facts.refusal } : {}) };
+    // A refusal is a policy decision, unless the guard's own reason says the host
+    // simply did not resolve — that is connectivity, and is recorded as such.
+    if (facts.refusal) {
+      return facts.refusal === UNRESOLVED_REASON
+        ? { class: "network_error", detail: "unresolved" }
+        : { class: "security_refused", detail: facts.refusal };
+    }
+    if (facts.code && SECURITY_CODES.has(facts.code)) {
+      return { class: "security_refused", detail: facts.code };
     }
     if (facts.code && CREDENTIAL_STORE_CODES.has(facts.code)) {
       return { class: "credential_unavailable", detail: facts.code };
@@ -146,10 +177,10 @@ export function classifyToolFailure(error: unknown): ToolFailure {
       return { class: "auth_required", detail: `http_${facts.status}` };
     }
     if (facts.name === "TimeoutError" || (facts.code && TIMEOUT_CODES.has(facts.code))) {
-      return { class: "timeout", ...(facts.code ? { detail: facts.code } : {}) };
+      return { class: "timeout", detail: facts.code ?? "timeout" };
     }
     if (facts.name === "AbortError" || facts.code === "ABORT_ERR") {
-      return { class: "cancelled", ...(facts.code ? { detail: facts.code } : {}) };
+      return { class: "cancelled", detail: facts.code ?? "aborted" };
     }
     if (facts.status === 429) return { class: "rate_limited", detail: "http_429" };
     if (facts.code && RATE_LIMIT_CODES.has(facts.code)) {
@@ -173,10 +204,10 @@ export function classifyToolFailure(error: unknown): ToolFailure {
   return classifyByMessage(messageOf(error));
 }
 
-/** The two sentences our own guards produce, and nothing provider-specific. */
+/** The one sentence our own guard produces, and nothing provider-specific. */
 function classifyByMessage(message: string): ToolFailure {
   if (!message) return { class: "unknown" };
-  if (/did not resolve to any address/i.test(message)) {
+  if (message.includes(UNRESOLVED_REASON)) {
     return { class: "network_error", detail: "unresolved" };
   }
   return { class: "unknown" };

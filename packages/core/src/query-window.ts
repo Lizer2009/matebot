@@ -6,21 +6,50 @@
  * prose is not the same as the card carrying it, and trusting the model to say it
  * defaults the very thing that went wrong to the party that got it wrong.
  *
- * So the server decides from the user's own words. This is deliberately narrow: it
- * looks for a date the person wrote, or an explicit period they named. It does not
- * try to understand the request; it only answers "was a period stated at all",
- * because the consequence of being wrong is asymmetric — saying "we assumed the
- * dates" when the user did state them is a small annoyance, while presenting an
- * invented period as their choice is the defect being fixed.
+ * So the server decides from the user's own words. This is a *floor*, not a reading
+ * of the request: it recognises the shapes a period is normally written in and says
+ * nothing about anything else. The two mistakes are not equally costly. Treating a
+ * stated period as unstated asks a needless question; treating an unstated period as
+ * stated is the defect itself, so every pattern here is deliberately narrow and an
+ * unrecognised prompt falls to "unstated" — the direction that asks.
+ *
+ * This is not a substitute for understanding the request. A model that follows the
+ * rule discloses its own choice through `defaultedWindow`, which is honoured whatever
+ * these patterns say; they only decide the case where nobody admitted anything.
  */
 
-/** A date the person typed: ISO, slash form, or a month/day pair. */
-const STATED_DATE =
-  /\b\d{4}-\d{1,2}(-\d{1,2})?\b|\b\d{1,2}\/\d{1,2}(\/\d{2,4})?\b|\b\d{1,2}\s*(月|日)\b|\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/i;
+/** A date the person typed: ISO, slash form, a day-of-month, or a month with a day. */
+const STATED_DATE = [
+  // 2026-11-09 or 2026/11/09
+  /\b\d{4}[-/]\d{1,2}([-/]\d{1,2})?\b/,
+  // 11/9 or 11/9/2026
+  /\b\d{1,2}\/\d{1,2}(\/\d{2,4})?\b/,
+  // 11月9日, 十二月, 12月
+  /\d{1,2}\s*月(\s*\d{1,2}\s*[日号])?/,
+  /(十[一二]?|正)月/,
+  // 9日 / 9号 on its own is a day of the month.
+  /\b\d{1,2}\s*[日号]/,
+  // "November 9" or "9 November" — a month name with a day beside it. A month name
+  // alone is not enough: "May I see the draft" is not a period.
+  /\b(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|sep(t(ember)?)?|oct(ober)?|nov(ember)?|dec(ember)?)\.?\s+\d{1,2}\b/i,
+  /\b\d{1,2}\s+(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|sep(t(ember)?)?|oct(ober)?|nov(ember)?|dec(ember)?)\b/i,
+  /\bin\s+(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|sep(t(ember)?)?|oct(ober)?|nov(ember)?|dec(ember)?)\b/i,
+];
 
-/** A period named in words, which is as specific as a date for this purpose. */
-const STATED_PERIOD =
-  /\b(this|next|last)\s+(week|month|quarter|year)\b|\b(today|tomorrow|yesterday|tonight)\b|本周|下周|上周|这个月|上个月|下个月|这季度|上季度|本季度|今年|去年|今天|明天|昨天|\d+\s*(天|周|个月)\b/i;
+/** A period named in words, which bounds the question as well as a date does. */
+const STATED_PERIOD = [
+  // this/next/last week, past 7 days, the last 2 weeks
+  /\b(this|next|last|past|previous|coming)\s+(\d+\s+)?(day|week|month|quarter|year)s?\b/i,
+  /\b(today|tomorrow|yesterday|tonight|this morning|this afternoon)\b/i,
+  // Q2, Q2 2026, FY2026
+  /\bq[1-4](\s*\d{4})?\b/i,
+  /\bfy\s*\d{2,4}\b/i,
+  /\b(last|next|this|past)\s+(few|couple)\s+(day|week|month)s?\b/i,
+  // 本周 / 下周, 今天, 今年, 上季度, 过去7天, 最近三个月, 第2季度
+  /本周|这周|下周|上周|这个月|本月|上个月|下个月|这季度|本季度|上季度|下季度|今年|去年|明年|今天|明天|昨天|前天|今晚/,
+  /(过去|最近|近)\s*(\d+\s*)?(天|周|个月|月|年|季度)/,
+  /第\s*[1-4一二三四]\s*季度/,
+];
 
 /**
  * Whether the prompt names a period itself.
@@ -32,7 +61,10 @@ const STATED_PERIOD =
 export function promptStatesPeriod(prompt: string | null | undefined): boolean {
   const text = (prompt ?? "").trim();
   if (!text) return false;
-  return STATED_DATE.test(text) || STATED_PERIOD.test(text);
+  return (
+    STATED_DATE.some((pattern) => pattern.test(text)) ||
+    STATED_PERIOD.some((pattern) => pattern.test(text))
+  );
 }
 
 /**
@@ -55,18 +87,4 @@ export function windowDecision(input: {
   // even when the person also named a period.
   if (input.claimedByModel) return "assumed";
   return promptStatesPeriod(input.userPrompt) ? "stated" : "unstated";
-}
-
-/**
- * Whether the assistant should ask for the missing period instead of publishing.
- *
- * A window nobody stated and nobody admitted choosing is not labelled and shown:
- * the answer would put a figure on a period the person never asked about. A window
- * the model openly chose is still shown, because it disclosed the choice itself.
- */
-export function windowNeedsAsking(input: {
-  claimedByModel: boolean;
-  userPrompt: string | null | undefined;
-}): boolean {
-  return windowDecision(input) === "unstated";
 }

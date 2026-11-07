@@ -133,6 +133,35 @@ describe("the refusal ledger covers shell", () => {
     });
   });
 
+  /**
+   * The shell check must normalise the way a real client does.
+   *
+   * `127.1` and `2130706433` both reach `127.0.0.1`; a check that compared the
+   * written text alone would be bypassed by spelling the address differently, which
+   * is exactly what the browser guard was fixed for.
+   */
+  it.each([
+    ["a short loopback form", "127.0.0.1", "curl -sS http://127.1/x"],
+    ["a single-integer loopback", "127.0.0.1", "curl -sS http://2130706433/x"],
+    ["localhost by name", "127.0.0.1", "curl -sS http://localhost:3000/admin"],
+    ["compressed IPv6 loopback", "127.0.0.1", "curl -sS 'http://[::1]:3000/admin'"],
+    ["an expanded IPv6 loopback", "[::1]", "curl -sS http://0:0:0:0:0:0:0:1/"],
+  ])("refuses %s however it is written", async (_label, refusedHost, command) => {
+    const ledger = await refused(refusedHost);
+    expect(refuseRefusedDestinationShell(ledger, { command })).toEqual({
+      error: EGRESS_REFUSED_SHELL_MESSAGE,
+    });
+  });
+
+  it("still allows a different host that merely looks similar", async () => {
+    const ledger = await refused("10.1.2.3");
+    // A different address, a version string and a file name are not the refusal.
+    expect(refuseRefusedDestinationShell(ledger, { command: "nc 10.1.2.4 8080" })).toBeUndefined();
+    expect(
+      refuseRefusedDestinationShell(ledger, { command: "python3 -c 'print(3.10.2)'" }),
+    ).toBeUndefined();
+  });
+
   it("leaves an ordinary command that names no refused host alone", async () => {
     const ledger = await refused("blocked.example.test");
     // A version string, a file name and a public host are not the refused place.

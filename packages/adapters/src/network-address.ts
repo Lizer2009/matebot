@@ -38,11 +38,6 @@ export async function withEgressRefusalLedger<T>(
   return refusedHosts.run(ledger, work);
 }
 
-/** The refusal ledger for the current run, when one is installed. */
-export function currentEgressRefusals(): ReadonlySet<string> | undefined {
-  return refusedHosts.getStore();
-}
-
 /**
  * Whether this run's guard already refused `hostname`, however it is spelled.
  *

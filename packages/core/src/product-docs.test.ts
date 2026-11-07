@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { documentOriginFromEnv } from "./document-origin.js";
+import { documentOriginConfigured, documentOriginFromEnv } from "./document-origin.js";
 import {
   DOCS_ROOT_PATH,
   documentationUrl,
@@ -105,5 +105,18 @@ describe("documentOriginFromEnv", () => {
     expect(documentOriginFromEnv({ RAKAZO_MARKETING_URL: "javascript:alert(1)" })).not.toMatch(
       /javascript:/,
     );
+  });
+});
+
+describe("whether a deployment named its own documentation origin", () => {
+  it("is configured only for a real http(s) origin", () => {
+    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "https://docs.example.test" })).toBe(
+      true,
+    );
+    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "http://localhost:3000" })).toBe(true);
+    expect(documentOriginConfigured({})).toBe(false);
+    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "" })).toBe(false);
+    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "javascript:alert(1)" })).toBe(false);
+    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "not a url" })).toBe(false);
   });
 });
