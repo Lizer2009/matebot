@@ -27,7 +27,7 @@ Base: PR #40 tip `7f831b4a`. This branch sits on top and leaves #33–#40 untouc
 | §5.1 no per-app parallel templates | one template table; calendar reuses it | `interaction-capability.test.ts` | unit | none |
 | §5.1 default `FieldsEditor(schema)` | `packages/a2ui-adapter/src/compile-surface.ts` | `compile-surface.test.ts`, `generic-surface.dom.test.tsx` | unit + DOM | none |
 | §5.2.1 capability declares schema, connection, effect kind | `packages/core/src/interaction-capability.ts` | `interaction-capability.test.ts` | unit | none |
-| §5.2.2 a local read-only source needs no remote connection | `result-source.ts` (`csv-upload`, `requiresConnection: null`) | `result-source.test.ts`; browser E2E 8 | unit + browser E2E | the shipped local source still has no real upload reader behind it |
+| §5.2.2 a local read-only source needs no remote connection | `result-source.ts` (`csv-upload`, `requiresConnection: null`) with a per-turn reader that reads the user's own uploaded file | `result-source-csv.test.ts`; browser E2E ("a result card reads the uploaded file") | unit + browser E2E | none: the file is read from the user's artifact store through the real upload route |
 | §5.2.3 unregistered intent → refusal + human-readable fallback | `present_interaction` validates the decision before publishing | `run-tools-result-attribution.test.ts`, `interaction-decision.test.ts` | unit + tool loop | none |
 | §5.2.4 per-surface `schemaVersion` | `ResultSurfaceSchema`/`InteractionSurfaceSchema`; version pinned per surface | `compile-surface.test.ts` | unit | negotiation is a field, not a handshake — no v1_0 host exists yet |
 | §5.3.1 plan/decision untrusted, validated server-side | `compile-surface.ts` parse; decision validated in `present_interaction` | `compile-surface.test.ts`, `interaction-decision.test.ts` | unit + tool loop | none |
@@ -45,7 +45,7 @@ Base: PR #40 tip `7f831b4a`. This branch sits on top and leaves #33–#40 untouc
 |---|---|---|---|---|
 | §5.4.1 editable name/time/timezone/all-day | `CALENDAR_SCHEMA` | `calendar-event.test.ts` | unit | none |
 | §5.4.1 default `Asia/Shanghai`, explicit override | `validateCalendarEvent` | `calendar-event.test.ts` | unit | none |
-| §5.4.2 partial batch is distinguishable | `calendar-batch.ts`, `interaction-calendar-batch.ts`, execute service | `interaction-calendar-batch.test.ts` (adapter + execute path) | tool loop + execute service | **a real provider has never run a batch** — same block as single create |
+| §5.4.2 partial batch is distinguishable | `calendar-batch.ts`, `interaction-calendar-batch.ts`; the execute service republishes the draft's own surface as a per-item result document | `interaction-calendar-batch.test.ts` (adapter + execute path, asserts the card document) | tool loop + execute service | **a real provider has never run a batch** — same block as single create |
 | §5.4.3 query is a result, never a create draft | `calendar.query` capability; `readCalendarEvents` behind `calendar-events` | `result-source-calendar.test.ts`, browser E2E 7 | tool loop + browser E2E | provider slug/args unverified against a live calendar |
 | §5.4.4 shared lifecycle for the second domain | same templates | `interaction-calendar.test.ts` | execute service | none |
 
@@ -56,8 +56,8 @@ Base: PR #40 tip `7f831b4a`. This branch sits on top and leaves #33–#40 untouc
 | §5.5.2 old email snapshots still render | `overlayAuthoritativeA2uiBlocks` | `a2ui-recovery.test.ts` | unit + DOM | none |
 | §5.6.1 provenance source/window/units/year/timezone/freshness | `interaction-result.ts`, `ResultProvenanceSchema` | `interaction-result.test.ts` | unit | none |
 | §5.6.1 empty ≠ a real zero | `emptyResultNotice` | DOM test, browser E2E 8 | DOM + browser E2E | none |
-| §5.6.2 aggregation computed by deterministic code | `result-aggregate.ts`, used by `present_result` and `resolveSourceBackedRows` | `result-aggregate.test.ts`, `result-source-calendar.test.ts` | unit + tool loop | none |
-| §5.6.2 the model may not invent a series | rows the model writes are marked `attribution: "model"` and say so on the card | `run-tools-result-attribution.test.ts` | unit + tool loop | a model can still *claim* rows; the card now says they were not read |
+| §5.6.2 aggregation computed by deterministic code | `result-aggregate.ts` + `csv.ts`, used by `present_result` and `resolveSourceBackedRows` | `result-aggregate.test.ts`, `csv.test.ts`, `result-source-csv.test.ts` | unit + tool loop + browser E2E | none |
+| §5.6.2 the model may not invent a series | `present_result` requires a registered source and refuses model-supplied rows entirely | `run-tools-result-loop.test.ts`; browser E2E | tool loop + browser E2E | none: a label was not evidence, so the path was removed rather than annotated |
 | §5.6.3 switching window keeps source and unit | `republishResultSurface` refuses a different source; `refresh_result` reads through the registered source | `interaction-result-republish.test.ts`, `run-tools-result-refresh.test.ts` | unit + tool loop | none |
 | §5.6.4 remote re-query keeps backend authorization | reader built per turn from the run's own connector | `result-source-calendar.test.ts` | tool loop | real provider unverified |
 | §5.6.6 basic has no Table/DataGrid; simple tables use Row/Column | `compile-surface.ts` emits Row+Text | `compile-surface.test.ts`, `a2ui-result-mobile.test.ts` | unit + mobile | none |
@@ -76,7 +76,7 @@ Base: PR #40 tip `7f831b4a`. This branch sits on top and leaves #33–#40 untouc
 | §6.4.6 executed records are immutable; corrections are linked drafts | `edit_interaction` → `buildAmendment` → new draft naming the record | `run-tools-interaction-amend.test.ts`, real PG executed-cancel test | tool loop + real PG | the amended draft has never been *executed* against a real provider |
 | §6.4.8 editing an approved payload voids approval | `confirmedVersion: null` on every field write | browser E2E 6 | browser E2E | none |
 | §6.5.1 in-flight action disables the primary control | `EmailComposeEditor` busy state; idempotent dispatch | DOM tests | DOM | none |
-| §6.5.2 cancel only before the effect runs; no false undo | `interaction-cancel.ts`, `threads.cancelInteraction`, Discard on both hosts, `cancel_interaction` tool | `a2ui-cancel-route.test.ts`, `run-tools-interaction-cancel.test.ts`, browser E2E 7, real PG | route HTTP + tool loop + browser E2E + real PG | abort signalling to a running provider is not implemented; the cancel is refused while in flight, which is the safe half |
+| §6.5.2 cancel aborts only where the runtime supports it; no false undo | `interaction-cancel.ts` + `interaction-abort.ts`; a running effect is aborted through a per-process, space-scoped registry and settles as failed or unknown | `a2ui-cancel-route.test.ts`, `interaction-abort.test.ts`, browser E2E, real PG | route HTTP + tool loop + browser E2E + real PG | an abort that lands on another instance cannot stop that process's request, and the card says so rather than claiming success |
 | §6.5.3 drafts survive load, reauth, cross-device | `overlayAuthoritativeA2uiBlocks` | `a2ui-recovery.test.ts` | unit | none |
 | §6.5.4 UNKNOWN only reconciles | `reconcileConfirmedInteractionService` | `interaction-email-reconcile.test.ts` | unit | none |
 
@@ -89,9 +89,9 @@ Run `pnpm test:a2ui-sim` for the table. Status per row, honestly:
 | 1 | annual sales, real data | deferred | — | no sales data source is wired; a card would have to invent numbers |
 | 2 | then "last quarter" | deferred | — | same block |
 | 3 | sales with no source | deferred | — | the refusal exists; the data path it refuses does not |
-| 4 | next week's schedule | implemented | unit + browser E2E 7 | read goes through the registered source; provider unverified |
+| 4 | next week's schedule | implemented | unit + browser E2E | read goes through the registered source; provider unverified |
 | 5 | book a meeting, missing time | implemented | unit + execute service | provider unverified |
-| 6 | analyse this file | deferred | — | no file-analysis reader is wired |
+| 6 | analyse this file | implemented | unit + browser E2E (uploaded CSV) | reads the user's own uploaded file; other file types are refused rather than guessed |
 | 7 | write an email, then NL-edit the recipient | implemented | browser E2E 1/4 + real PG | send is a provider double |
 | 8 | simple factual question | implemented | browser E2E 8 | renders no card |
 | 9 | GitHub to this machine | unsupported | sim | degrades by design |
@@ -107,12 +107,16 @@ from), not an A2UI mechanism gap.
 
 | Spec | State | Evidence |
 |---|---|---|
-| seven named moments | `a2ui-timing.ts` defines all seven; `surface-visible` and `provider-result` are emitted from the real publish and execute paths | unit; both emit sites are on the production path |
+| seven named moments | `a2ui-timing.ts` defines all seven; **all seven emit** from their real points: submit (route), plan-ready (after the ruling), first-feedback (run first response), surface-visible (publish), action-confirmed (dispatch), provider-result (execute), reconciled (reconcile) | unit + the emit sites are on the production path |
 | a card counts as first feedback | `run-timing.ts` includes `a2ui_surface` in response kinds | unit; this was previously missing, so an A2UI-only turn recorded no first response |
-| p95 reproducible | `pnpm test:a2ui-perf` | script prints p50/p95/max for five workloads and fails above budget |
+| p95 reproducible | `pnpm test:a2ui-perf` | prints sample count, p50/p95/max for five workloads, and the excluded dimensions, and fails above budget |
 
-The measurement excludes model and network time on purpose, so the number
-describes this repository's own work and reproduces anywhere.
+**What that number is, and is not.** It is in-process server CPU work only: no
+database, queue, SSE, HTTP, provider or model. It is therefore *not* turn
+latency, *not* first-feedback, and *not* a user-facing p95. The spec's 1s
+first-feedback target is a proposal for a controlled harness and is not claimed
+here. First feedback is measured by `run.first_response_ms` and
+`a2ui.first_feedback`, which include model time.
 
 ## What remains blocked, and what would clear it
 

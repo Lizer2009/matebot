@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { compileInteractionSurface } from "@matebot/a2ui-adapter";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import type { ReactNode } from "react";
 import { act } from "react";
@@ -410,5 +411,56 @@ describe("native A2UI surface", () => {
       ),
     );
     expect(text("a2ui-native-refused")).toBe("EvilWidget");
+  });
+
+  const resultBlock = {
+    kind: "a2ui_surface",
+    interactionId: "ix-r",
+    surfaceId: "surf-r",
+    protocolFamily: "v0_9",
+    draftVersion: 1,
+    intent: "interaction.result",
+    title: "Quarterly totals",
+  } satisfies A2uiSurfaceBlock;
+
+  it("draws every cell of a result table and its provenance", async () => {
+    // The component renders the compiled document, so the document is what the
+    // test compiles — the same one the server would publish.
+    const compiled = await compileInteractionSurface({
+      schema: { schemaVersion: 1, presentation: "result", fields: [], action: null },
+      values: {},
+      surfaceId: "surf-r",
+      result: {
+        title: "Quarterly totals",
+        provenance: {
+          source: "Upload: sample-quarters.csv",
+          asOf: "2026-11-06T00:00:00.000Z",
+          window: { from: "2026-01-01", to: "2026-12-31" },
+          units: "CNY",
+        },
+        columns: [
+          { key: "quarter", label: "Quarter" },
+          { key: "total", label: "Total" },
+        ],
+        rows: [
+          { quarter: "Q1", total: 2000.5 },
+          { quarter: "Q2", total: 1500 },
+        ],
+        truncated: false,
+        totalRows: 2,
+        empty: false,
+      },
+    });
+    if (!compiled.ok) throw new Error(compiled.error);
+    render(<A2uiNativeSurface block={resultBlock} messages={compiled.messages} />);
+    const body = document.body.textContent ?? "";
+    for (const value of ["Quarter", "Total", "Q1", "2000.5", "Q2", "1500"]) {
+      expect(body).toContain(value);
+    }
+    // Provenance must survive on the phone, not only on web.
+    expect(body).toContain("sample-quarters.csv");
+    expect(body).toContain("CNY");
+    // A result offers nothing to send.
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 });

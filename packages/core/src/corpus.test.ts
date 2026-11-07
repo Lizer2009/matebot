@@ -46,11 +46,18 @@ describe("multi-turn corpus gate", () => {
     expect(implemented).toContain(8);
   });
 
-  it("does not claim sales, file analysis, or GitHub capability is implemented", () => {
+  it("does not claim sales or GitHub capability is implemented", () => {
     const implemented = new Set(corpusByStatus("implemented").map((row) => row.id));
-    // 1/2 sales trend and 6 file analysis (Phase 2), 9 GitHub (Phase 3): no real
-    // data source is wired for these, so a card would have to invent numbers.
-    for (const id of [1, 2, 6, 9]) expect(implemented.has(id)).toBe(false);
+    // 1/2 sales trend have no data source wired, so a card would have to invent
+    // numbers; 9 GitHub has no controlled closed loop.
+    for (const id of [1, 2, 9]) expect(implemented.has(id)).toBe(false);
+  });
+
+  it("claims file analysis, which now reads the user's own upload", () => {
+    const implemented = new Set(corpusByStatus("implemented").map((row) => row.id));
+    // The uploaded-file source is a real read: the server parses the file and
+    // computes the figures itself, so the row no longer needs a fallback.
+    expect(implemented.has(6)).toBe(true);
   });
 
   it("claims the calendar query and create rows, which now have a real path", () => {
