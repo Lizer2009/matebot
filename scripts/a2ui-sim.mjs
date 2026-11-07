@@ -27,6 +27,7 @@ const capabilityModule = join(root, "packages/core/src/interaction-capability.ts
 const planBridgeModule = join(root, "packages/core/src/interaction-plan-bridge.ts");
 const corpusModule = join(root, "packages/core/src/corpus.ts");
 const resultModule = join(root, "packages/core/src/interaction-result.ts");
+const sourceModule = join(root, "packages/core/src/result-source.ts");
 const toolNamesModule = join(root, "packages/contracts/src/builtin-tools.ts");
 
 if (!existsSync(simModule)) {
@@ -63,6 +64,7 @@ import {
 } from ${JSON.stringify(planBridgeModule)};
 import { readFileSync } from "node:fs";
 import { buildResultSurface, refreshResultSurface } from ${JSON.stringify(resultModule)};
+import { findResultSource } from ${JSON.stringify(sourceModule)};
 import { MULTI_TURN_CORPUS } from ${JSON.stringify(corpusModule)};
 import { BUILTIN_TOOL_NAMES } from ${JSON.stringify(toolNamesModule)};
 
@@ -435,6 +437,26 @@ function buildResultScenario() {
       expect: "refused",
     });
   }
+
+  // A re-query reads a *registered* source; the model cannot name an endpoint.
+  rows.push({
+    case: "unregistered source",
+    ok: findResultSource("https://evil.example/sql") === undefined,
+    detail: "refused: only registered sources are readable",
+    expect: "refused",
+  });
+  rows.push({
+    case: "registered local source",
+    ok: findResultSource("csv-upload") !== undefined,
+    detail: "reads without a remote connection",
+    expect: "readable",
+  });
+  rows.push({
+    case: "source needing a connection",
+    ok: findResultSource("calendar-events")?.requiresConnection === "calendar",
+    detail: "declares its own connection requirement",
+    expect: "declares",
+  });
 
   return {
     id: "result-surface",

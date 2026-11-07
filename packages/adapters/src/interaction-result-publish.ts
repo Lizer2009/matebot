@@ -1,6 +1,7 @@
 import type { InteractionPlan, MessageBlock, ResultSurface } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef, ResultSurfaceSchema } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 
 /**
  * Publishing a result surface.
@@ -150,5 +151,148 @@ export async function publishResultSurface(
     surfaceId,
     messageId: committed.messageId,
     eventSeq: committed.eventSeq,
+  };
+}
+
+export type RepublishResultSurfaceInput = {
+  spaceId: string;
+  threadId: string;
+  botId: string;
+  runId?: string;
+  interactionId: string;
+  surface: ResultSurface;
+};
+
+/**
+ * Update the surface of an existing result interaction in place.
+ *
+ * This is a same-card refresh: the interaction keeps its id, the draft revision
+ * moves forward, the surface document and the timeline block are rewritten, and
+ * the SSE event tells the host to re-render. It creates no new card and no effect.
+ */
+export async function republishResultSurface(
+  deps: ResultPublishDeps,
+  input: RepublishResultSurfaceInput,
+): Promise<
+  | { ok: true; interactionId: string; surfaceId: string; draftVersion: number; eventSeq: number }
+  | { ok: false; error: string }
+> {
+  const parsed = ResultSurfaceSchema.safeParse(input.surface);
+  if (!parsed.success) return { ok: false, error: "invalid_result_surface" };
+  const surface = parsed.data;
+
+  const existing = await deps.prisma.interaction.findFirst({
+    where: { id: input.interactionId, spaceId: input.spaceId, threadId: input.threadId },
+    select: { id: true, messageId: true, draftVersion: true },
+  });
+  if (!existing) return { ok: false, error: "unknown_interaction" };
+
+  const surfaceRow = await deps.prisma.interactionSurface.findFirst({
+    where: { interactionId: existing.id },
+    orderBy: { updatedAt: "desc" },
+    select: { surfaceId: true, protocolFamily: true },
+  });
+  if (!surfaceRow) return { ok: false, error: "unknown_surface" };
+
+  const { compileInteractionSurface } = await import("@matebot/a2ui-adapter");
+  const compiled = await compileInteractionSurface({
+    schema: { schemaVersion: 1, presentation: "result", fields: [], action: null },
+    values: {},
+    surfaceId: surfaceRow.surfaceId,
+    result: surface,
+    title: surface.title,
+  });
+  if (!compiled.ok) return { ok: false, error: compiled.error };
+
+  const nextVersion = existing.draftVersion + 1;
+  let eventSeq = 0;
+  try {
+    eventSeq = await deps.prisma.$transaction(async (tx) => {
+      await tx.interaction.updateMany({
+        where: { id: existing.id, draftVersion: existing.draftVersion },
+        data: {
+          draftVersion: nextVersion,
+          plan: resultPlan({ intent: "interaction.result", surface }) as never,
+          title: surface.title,
+          summary: surface.provenance.source,
+        },
+      });
+      await tx.interactionSurface.upsert({
+        where: {
+          interactionId_surfaceId: { interactionId: existing.id, surfaceId: surfaceRow.surfaceId },
+        },
+        create: {
+          interactionId: existing.id,
+          surfaceId: surfaceRow.surfaceId,
+          protocolFamily: compiled.protocolFamily,
+          document: compiled.messages as never,
+          draftVersion: nextVersion,
+        },
+        update: { document: compiled.messages as never, draftVersion: nextVersion },
+      });
+      const block: MessageBlock = {
+        kind: "a2ui_surface",
+        interactionId: existing.id,
+        surfaceId: surfaceRow.surfaceId,
+        protocolFamily: compiled.protocolFamily,
+        draftVersion: nextVersion,
+        intent: "interaction.result",
+        title: surface.title,
+        summary: surface.provenance.source,
+        documentRef: a2uiSurfaceDocumentRef({
+          interactionId: existing.id,
+          surfaceId: surfaceRow.surfaceId,
+        }),
+        template: "action-result-success",
+        lifecycle: "succeeded",
+      };
+      if (existing.messageId) {
+        const message = await tx.message.findUnique({ where: { id: existing.messageId } });
+        const blocks = Array.isArray(message?.blocks)
+          ? (message.blocks as MessageBlock[]).map((entry) =>
+              entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId
+                ? block
+                : entry,
+            )
+          : [block];
+        await tx.message.update({
+          where: { id: existing.messageId },
+          data: { blocks: blocks as never },
+        });
+      }
+      const event = await deps.appendEvent(tx, {
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: input.botId,
+        runId: input.runId,
+        type: "thread.surface.updated",
+        payload: {
+          interactionId: existing.id,
+          surfaceId: surfaceRow.surfaceId,
+          protocolFamily: compiled.protocolFamily,
+          draftVersion: nextVersion,
+          intent: "interaction.result",
+          title: surface.title,
+          summary: surface.provenance.source,
+          messageId: existing.messageId ?? undefined,
+          template: "action-result-success",
+          lifecycle: "succeeded",
+        },
+      });
+      return event.seq;
+    });
+  } catch (cause) {
+    // Keep the underlying reason reachable without changing the contract.
+    getLogger().warn("result surface republish failed", { cause });
+    return { ok: false, error: "result_republish_failed" };
+  }
+
+  await deps.notify(input.threadId, eventSeq).catch(() => undefined);
+  return {
+    ok: true,
+    interactionId: existing.id,
+    surfaceId: surfaceRow.surfaceId,
+    draftVersion: nextVersion,
+    eventSeq,
   };
 }

@@ -181,6 +181,7 @@ export * from "./routine-watch.js";
 export * from "./run-secret.js";
 export * from "./run-tools-interaction-edit.js";
 export * from "./run-tools-result.js";
+export * from "./run-tools-result-refresh.js";
 export * from "./run-wakeup.js";
 export * from "./sandbox-allowance.js";
 export * from "./sandbox-errors.js";
