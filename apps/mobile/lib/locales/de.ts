@@ -574,6 +574,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "Connect API key": "API-Schlüssel verbinden",
   "Connect MCP server {name}": "MCP-Server „{name}“ verbinden",
   "Connected.": "Verbunden.",
+  "Approved, not connected yet.": "Genehmigt, aber noch nicht verbunden.",
+  "Approved, not connected yet: {reason}": "Genehmigt, aber noch nicht verbunden: {reason}",
   "Context limit": "Kontextlimit",
   "Could not connect this provider": "Anbieter konnte nicht verbunden werden",
   "Could not finish sign-in": "Anmeldung konnte nicht abgeschlossen werden",

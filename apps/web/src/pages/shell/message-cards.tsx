@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useLinkPrompt } from "@matebot/chat-ui/web";
 import type { MessageBlock } from "@matebot/contracts";
-import { appConnectedInput, waitForConnection } from "@matebot/core";
+import { appConnectedInput, mcpConnectionVerdict, waitForConnection } from "@matebot/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@matebot/ui-web";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -337,6 +337,15 @@ export function McpApprovalCard({
   const [localStatus, setLocalStatus] = useState<McpApprovalState>("pending");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /**
+   * The server's own last discovery outcome. Approval and health are different
+   * facts: a card that reads `Connected` on approval alone told the user a
+   * revoked key was fine.
+   */
+  const [health, setHealth] = useState<{
+    status: "unknown" | "installing" | "ok" | "error";
+    message: string | null;
+  } | null>(null);
   // A removal repaints the block to pending. Drop an in-session connected
   // override so the card does not keep the old decision.
   useEffect(() => {
@@ -367,6 +376,16 @@ export function McpApprovalCard({
       }
       await rpc.mcp.assignments.approve({ botId, serverId, threadId });
       setLocalStatus("connected");
+      // Approval is recorded; the card still reports what the server actually did.
+      // A failed read leaves health unknown, which reads as "not checked" rather
+      // than as connected.
+      void Promise.resolve()
+        .then(() => rpc.mcp.servers.list())
+        .then((servers) => {
+          const row = servers.find((server) => server.id === serverId);
+          if (row) setHealth({ status: row.health.status, message: row.health.message });
+        })
+        .catch(() => undefined);
     } catch (err) {
       setError(errorText(err, t`Could not approve this server`));
       setLocalStatus("pending");
@@ -427,8 +446,28 @@ export function McpApprovalCard({
         </>
       ) : null}
       {state === "connected" ? (
-        <div className="mt-3">
-          <SuccessPop label={t`Connected`} />
+        <div className="mt-3" data-testid="mcp-approval-state">
+          {(() => {
+            const verdict = mcpConnectionVerdict({ approved: true, health });
+            if (verdict.state === "connected") {
+              return <SuccessPop label={t`Connected`} />;
+            }
+            return (
+              <>
+                <p className="text-[13px] font-medium text-foreground">
+                  <Trans>Approved, not connected yet</Trans>
+                </p>
+                <p className="mt-1 text-[12px] text-muted-foreground">
+                  {verdict.detail ??
+                    (verdict.state === "preparing"
+                      ? t`Preparing this server.`
+                      : verdict.state === "not_checked"
+                        ? t`Nothing has reached this server yet.`
+                        : t`This server is not responding.`)}
+                </p>
+              </>
+            );
+          })()}
         </div>
       ) : null}
       {state === "dismissed" ? (

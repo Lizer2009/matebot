@@ -1153,6 +1153,8 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Chat with your bot from Slack.": "在 Slack 與你的機器人聊天。",
   "Connect a chat app": "連結聊天應用程式",
   "Connected.": "已連線。",
+  "Approved, not connected yet.": "已核准，但尚未連線。",
+  "Approved, not connected yet: {reason}": "已核准，但尚未連線：{reason}",
   Conversations: "對話",
   "Could not save": "無法儲存",
   "Could not stop computer": "無法停止電腦",
