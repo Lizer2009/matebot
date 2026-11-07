@@ -1,6 +1,11 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
-import { emailSurfaceBlockFields, interactionSlotsFromPlan, timingFields } from "@matebot/core";
+import {
+  emailSurfaceBlockFields,
+  interactionCapabilityForIntent,
+  interactionSlotsFromPlan,
+  timingFields,
+} from "@matebot/core";
 import type { PrismaClient, RunLease } from "@matebot/db";
 import {
   appendEventInTransaction,
@@ -10,6 +15,11 @@ import {
   withTransactionRetry,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+
+/** The registered schema for an intent, when the capability is known. */
+function capabilitySchema(intent: string) {
+  return interactionCapabilityForIntent(intent)?.schema;
+}
 
 async function compilePlanSurface(input: {
   plan: InteractionPlan;
@@ -31,6 +41,10 @@ async function compilePlanSurface(input: {
     plan: input.plan,
     surfaceId: input.surfaceId,
     protocolFamily: input.protocolFamily ?? "v0_9",
+    // The registered capability's schema owns the form's labels and control kinds.
+    ...(capabilitySchema(input.plan.intent)
+      ? { schema: capabilitySchema(input.plan.intent)! }
+      : {}),
     ...stamps,
   });
   if (!compiled.ok) {

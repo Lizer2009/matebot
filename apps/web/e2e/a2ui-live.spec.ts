@@ -241,6 +241,76 @@ async function cardInteractionId(page: import("@playwright/test").Page): Promise
   return value;
 }
 
+/**
+ * A calendar card is a real card, at both widths.
+ *
+ * The manual audit found an empty frame where this card should have been, while
+ * the log showed the surface had been published. These drive the real card through
+ * the real API with a scripted model: the document loads, the fields are editable,
+ * nothing overflows, and the region is never blank. Native and phone shells are not
+ * covered here and are not claimed.
+ */
+for (const viewport of [
+  { name: "wide", width: 1280, height: 900 },
+  { name: "narrow", width: 360, height: 780 },
+] as const) {
+  test(`calendar card renders and stays usable at ${viewport.name} width`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await signIn(page, testInfo);
+
+    await send(
+      page,
+      `call present_interaction with ${JSON.stringify({
+        plan: {
+          intent: "calendar.create",
+          title: "Next week's schedule",
+          fields: [
+            { name: "name", value: "Weekly sync", required: true, status: "resolved" },
+            {
+              name: "start",
+              value: "2026-11-09T09:00:00+08:00",
+              required: true,
+              status: "resolved",
+            },
+            { name: "end", value: "2026-11-09T09:30:00+08:00", required: true, status: "resolved" },
+            { name: "timezone", value: "Asia/Shanghai", required: false, status: "resolved" },
+          ],
+          nextStep: "request_approval",
+          riskLevel: "medium",
+        },
+      })}`,
+    );
+
+    const card = page.getByTestId("a2ui-surface-card").first();
+    await expect(card).toBeVisible({ timeout: 45_000 });
+
+    // The document loaded: no placeholder survives once the card is up.
+    await expect(page.getByTestId("a2ui-surface-placeholder")).toHaveCount(0);
+    // The card has real content, not an empty box.
+    const text = (await card.textContent()) ?? "";
+    expect(text.trim().length).toBeGreaterThan(0);
+    // The fields are real controls with the capability's own labels. Before the
+    // fix this region was blank; a draft with a title over nothing.
+    await expect(card).toContainText("Name");
+    await expect(card).toContainText("Starts");
+    await expect(card).toContainText("Ends");
+    // The resolved values are in the controls, not lost on the way to the card.
+    await expect(card.locator("input").first()).not.toHaveValue("");
+    await expect(page.getByTestId("a2ui-surface-host")).toHaveCount(1);
+    // And the action the capability declares is present.
+    await expect(card.getByRole("button", { name: /create/i })).toHaveCount(1);
+
+    // Nothing overflows the viewport horizontally.
+    const box = await card.boundingBox();
+    expect(box).not.toBeNull();
+    if (box) expect(box.width).toBeLessThanOrEqual(viewport.width);
+
+    await captureScreenshot(page, testInfo, `a2ui-e2e-calendar-${viewport.name}`);
+  });
+}
+
 test("a field the person typed survives a late model edit", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
   await send(
