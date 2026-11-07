@@ -46,6 +46,9 @@ export function A2uiSurfaceCard({
 }) {
   const document = useA2uiSurfaceDocument({
     documentRef: block.documentRef,
+    // A republish keeps the ref and moves the revision, so the revision is what
+    // tells this card its content changed.
+    revision: block.draftVersion,
     messages,
     fetchDocument,
   });

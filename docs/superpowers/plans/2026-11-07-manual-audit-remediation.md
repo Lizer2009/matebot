@@ -314,22 +314,120 @@ a live-provider acceptance.
 
 ## Coverage matrix
 
-| Item | Evidence level | Status after this work |
+Every sub-goal below is tracked on its own, because "8 items, 6 fixed" hid real
+gaps: an item counted as fixed while a named part of it was not.
+
+### A. Connection and credential state
+
+| Sub-goal | Evidence | Status |
 |---|---|---|
-| A connection/credential single source | E1 | **fixed**: `mcpConnectionVerdict` requires a successful discovery for `connected`; both cards use it, a failure carries the server's own reason. Invalidation already existed (`revision` bump clears health; session cache keyed by revision) and is unchanged. |
-| B failure classification + fallback boundary | E1 + E4 (runtime egress) | **fixed (classification and routing)**: an unresolved host and a refused address now report separately, both still refused; a run's refusal ledger stops the browser reaching the host the guard declined. **Blocked (E4)**: whether the deployed browser can reach an address the fetcher refused is runtime configuration this audit cannot inspect, and no claim is made either way. |
-| C product doc source | E1 | **fixed (guard + wording)**: every listed URL is now asserted to exist in this repository, so a rename fails the build; the skill says only these pages exist and forbids constructing a path. The list itself was already accurate — the invented URL in the report was never one of them. |
-| D background completion lifecycle | E1 | **fixed**: a narration that only repeats one already posted in the run is held for the final reply; genuinely different output and the person's own answer still publish immediately. |
-| E intent clarification / factual boundary | E1 + E4 (no flight source) | **fixed (marking + existing refusal)**: a window the assistant chose is recorded as `defaultedWindow` and the card says "dates assumed". A result with no registered source was already refused outright. **Blocked (E4)**: claiming a *live* price needs a flight provider this repository does not have; nothing here invents one. |
-| F blank calendar card | E2 → **E1 after reproduction** | **fixed and reproduced**: the plan compiler emitted three text nodes and no field controls, and the calendar normaliser filled a field set that did not match the registered capability. Both are corrected; the real browser card now renders labels, values and the action at wide and narrow widths. |
-| G Cursor integration state | E1 | **investigated, no code change**: the audit's `cloud_agent_status` error is already accurate, and `connect_app` correctly only shows a card. An attempt to make the refusal say *which* miss it was (nothing launched vs a wrong id) failed an existing isolation test — the distinguishing sentence told a caller in another space that the thread was otherwise empty. Tenant isolation wins over the nicer message, so the code is unchanged. What the audit actually showed is a model narrating a connection that did not exist, which belongs to the turn's wording rather than to this tool, and is recorded here as unreproduced in code. |
-| H audit observability | E1 | **fixed**: a tool completion records the registrable host only — no scheme, path, query, headers or body — beside run, tool, outcome and duration. |
+| A1 health, not approval, decides the verdict | E1 | **already correct**: `mcpConnectionVerdict` needs a successful discovery for `connected`; the web and mobile cards both use it. |
+| A2 a failure carries the server's own reason | E1 | **already correct**: `sanitizeConnectorError` keeps the provider's sentence; the audit's `Invalid or revoked API key` reaches the card. |
+| A3 saving clears the old verdict | E1 | **fixed**: `MCP_HEALTH_RESET` is one definition of the reset, used by the update route. |
+| A4 new key → re-discovery → recovered UI, as one chain | E1 | **fixed and proven**: `apps/api/src/mcp-credential-recovery.test.ts` drives the real router, real connector and real encrypted store against a scripted server that rejects the old key and answers the new one. It asserts the failure is recorded, the save clears it, the check re-discovers with the new key, and the settings list agrees. Removing the reset makes it fail. |
+| A5 a failed connection cannot become a new shell credential | E1 | **already correct, now pinned twice**: a command variable has no origin to be sent to, so the *shape* that could spend it cannot be stored (`bot-secrets.test.ts`), and `requestWithBotSecret` refuses it at request time. A login is refused outside `browser_act`. The command variable's own use — exported for shell — is untouched. |
+| A6 concurrent update / isolation | E1 | **already correct**: the update path retries on a changed revision or credential and refuses with CONFLICT; isolation is covered by `refuses another user's server without probing it`. |
+
+### B. Failure classification and the execution boundary
+
+| Sub-goal | Evidence | Status |
+|---|---|---|
+| B1 split "unresolved" from "private address" | E1 | **fixed**: `EGRESS_REASON_UNRESOLVED` and `EGRESS_REASON_PRIVATE_ADDRESS` are separate sentences, both still refused. |
+| B2 classify a failure by structure, not by wording | E1 | **fixed**: `tool-failure.ts` reads an error's class, `code` and HTTP status (following a `cause`), and consults a message only for the two sentences our own guard produces. A refusal is checked first, so it cannot be recorded as a network error; a message that merely mentions a private address is never classified as a refusal. |
+| B3 the record joins a request to its completion | E1 | **fixed**: the completion carries `executionId` (the same id `agent.tool.called` was written with) plus a `failure { class, detail }`, and the log line carries both. Covered by an assertion on the events a real turn appends. |
+| B4 a refused destination cannot be reached by another tool | E1 | **fixed**: the run's ledger is keyed by one canonical destination, so a trailing root dot, an expanded IPv6 address and an IPv4-mapped form all match; the browser refuses it, and shell is refused before it runs when the command names it. |
+| B5 what that barrier cannot see | E3 | **stated, not claimed away**: a command that assembles its address at run time names no literal, so the shell check does not see it. The boundary that holds is the computer's own network policy. `browser-egress-fallback.test.ts` asserts the blind spot so the limit is a fact rather than a claim. |
+| B6 SSRF redirect, rebinding and host alias | E1 | **unchanged and covered**: every redirect hop is re-validated, the proxy tunnels to the checked address, and a rebinding answer is refused (`web-ssrf.test.ts`). The canonical destination key closes the alias gap in the *ledger*, not in the fetch. |
+| B7 does the deployed browser reach what the fetcher refused | E4 | **blocked**: runtime network configuration this audit cannot inspect. No claim is made either way; the deployment gate is listed below. |
+
+### C. Product documentation source
+
+| Sub-goal | Evidence | Status |
+|---|---|---|
+| C1 the help skill describes this product | E1 | **fixed**: the upstream host is gone from the skill. `PRODUCT_DOCUMENTATION` lists this repository's own pages, and the origin comes from deployment configuration (`RAKAZO_MARKETING_URL`), not a literal. |
+| C2 every listed page exists | E1 | **fixed**: `product-docs.test.ts` fails when a slug has no `docs/<slug>.md`, and when the list drifts from the site's own navigation. |
+| C3 no invented URL | E1 | **fixed**: the list is a closed set and each entry is built from the slug, so a URL in the skill is a page that ships. The observed `/docs/cloud-agents/` is asserted absent. |
+| C4 `skill_read` answers Cursor/MCP setup with no network | E1 | **fixed and proven at the production entry**: `skill-read-product-docs.test.ts` calls the real `skillReadFromTool` and checks the answer covers MCP connection, approvals and Cursor cloud agents from the offline fallback, and that the model is told not to construct a path. |
+
+### D. Background completion lifecycle
+
+| Sub-goal | Evidence | Status |
+|---|---|---|
+| D1 a repeated conclusion is one bubble | E1 | **fixed**: the restatement check now guards the mid-turn publish path as well as a steering turn, and a held note is kept once. |
+| D2 a genuinely different result is never swallowed | E1 | **fixed**: only a note that normalises to one already posted is held; anything with new content publishes. |
+| D3 the person's own answer always publishes | E1 | **fixed**: the steering path publishes an answer at once, asserted. |
+| D4 a restart holds what the run already posted | E1 | **fixed**: the reply state is rebuilt from the run's own progress messages, so a restarted attempt cannot post the same note again. |
+| D5 cancellation and late events | E1 | **already correct, now asserted**: what was written before the run stopped stands; nothing written after reaches the chat, and a completion that arrives after a cancelled run does not fail it. |
+| D6 cross-run isolation | E1 | **already correct**: nothing is compared across runs, so two runs reaching the same conclusion both report. |
+
+### E. Intent clarification and factual boundaries
+
+| Sub-goal | Evidence | Status |
+|---|---|---|
+| E1 a missing key parameter is asked about, not defaulted | E1 | **fixed**: `windowDecision` has three outcomes. A period the person stated is theirs; one the model admits choosing is published *and* said out loud; one nobody stated is refused with a question, in `present_result` and `refresh_result` alike. |
+| E2 an assumption is never presented as the person's choice | E1 | **fixed**: the card's provenance line says "dates assumed" and the reply the server writes carries it too, so the model can repeat it but not restate it as the user's own. |
+| E3 the identity boundary is stated where the lookup happens | E1 | **fixed (instruction, honestly labelled)**: the desktop instruction says an association is not proof of ownership, labels a repo count as public repositories, and requires naming a source and its date. This is guidance to the model, not an enforced fact — E4 below says what would be needed to enforce it. |
+| E4 a price claim without a source | E1 | **already correct**: a result with no registered source is refused. Nothing invents one. |
+| E5 "were those prices real?" | E4 | **blocked**: needs a flight provider this repository does not have. The code now refuses to present such a number without one; it does not acquire one. |
+
+### F. Calendar card
+
+| Sub-goal | Evidence | Status |
+|---|---|---|
+| F1 the draft draws real controls | E1 | **fixed**: a plan's fields compile to the schema's control kinds, asserted through the production publish path (`interaction-calendar-card.test.ts`) and on the mounted renderer. |
+| F2 each label appears once | E1 | **fixed by reproduction**: the browser showed every label twice, because the compiler emitted a Text label *and* the shipped control draws its own. The Text is gone; the E2E counts the occurrences. |
+| F3 a batch list travels without being drawn | E1 | **fixed**: the list reaches the execute path and no control is bound to it, asserted at both levels. |
+| F4 loading and failure never leave a blank region | E1 | **fixed**: a server ref with no fetcher, an empty document and a failed fetch each render a sentence and a retry; the renderer's own loading frame draws a placeholder rather than an empty div. |
+| F5 a field the person typed survives a late edit | E1 | **fixed by reproduction**: the editor adopted every server snapshot wholesale, so a re-render could replace typed text (and a second edit could append to it). A field the person edited now wins until the server's value is the typed one. |
+| F6 same card, both widths, nothing clipped | E1 | **fixed by reproduction**: a date-time row measured 324px inside a 216px card at narrow width. The row wraps and its inputs shrink; the E2E measures every control against the card and the viewport at 1280 and 360. |
+| F7 timezone | E1 | **fixed**: the timezone travels as a value and is shown in its own control, asserted live. |
+| F8 native Windows and real phones | E4 | **not verified**: no Windows desktop or phone was available. The browser runs are desktop Chromium at two widths, and the mobile card's own logic has unit coverage only. |
+
+### G. Cursor integration state
+
+| Sub-goal | Evidence | Status |
+|---|---|---|
+| G1 the card never claims a connection before authorization | E1 | **already correct**: `connect_app` only shows a card. |
+| G2 a status call with no launch | E1 | **already correct**: it returns "no agent to check yet" without probing. |
+| G3 tenant isolation is not traded for a nicer sentence | E1 | **confirmed by a failed attempt**: distinguishing "nothing launched" from "a wrong id" told a caller in another space that the thread was otherwise empty. The isolation test caught it and the code is unchanged. |
+| G4 a repeated code or OAuth card is not re-requested after cancellation | E1 | **already correct**: a dismissed card settles the effect as completed with `{ dismissed: true }`, so a resumed attempt replays that result instead of asking again. |
+
+### H. Audit observability
+
+| Sub-goal | Evidence | Status |
+|---|---|---|
+| H1 run, tool id and tool name on every completion | E1 | **already correct**. |
+| H2 the same id on the request and the completion | E1 | **fixed**: both events carry the execution id, and the log line carries it as `tool.call_id`. |
+| H3 the destination origin and a safe path | E1 | **fixed**: the origin is always recorded; a path only for a page this build ships or a route the caller declares low-risk. |
+| H4 a word-like path is not assumed safe | E1 | **fixed**: `/users/alex`, a short token and a private slug are withheld with a marker, because shape is not evidence. |
+| H5 query, fragment, userinfo, headers and body are never recorded | E1 | **already correct, now asserted** including the destination round trip. |
+| H6 what kind of failure it was | E1 | **fixed**: a class from structured signals, with the detail being a code or status rather than a message. |
+| H7 a user message body is never recorded | E1 | **already correct**: only the tool's own text and metadata are touched, and every string is redacted against the run's secrets. |
+
+## Deployment gates (not verifiable here)
+
+These need a deployment, a real provider, or a specific device, and no claim above
+depends on them:
+
+- **Live DeepSeek and real providers.** Every model and provider in this work is a
+  scripted double. Tool *selection* by a live model, and any real MCP server, mailbox
+  or calendar, are unverified.
+- **The deployed browser's egress.** Whether the browser host can reach addresses the
+  fetcher refuses is runtime configuration. `B7` states the barrier and its blind
+  spot; measuring them is a deployment check.
+- **DNS and network from the deployment.** The audit's `egress.refused` entries were
+  not reproduced against the production network, so the split reasons are proven in
+  code, not in that environment.
+- **Windows-native and real-phone rendering.** Covered by neither the browser suite
+  nor any device here.
+- **OAuth, real sends and calendar writes.** Not exercised; the audit's pauses on
+  production acceptance stand.
 
 ## What is not claimed
 
-- No live DeepSeek run and no live provider call. Every result above is a
-  scripted model and provider doubles.
-- Windows-native and real-phone rendering are not covered; the browser runs are
-  desktop Chromium at two widths.
-- The runtime egress boundary in B and the live price claim in E need
-  environment evidence the audit cannot obtain.
+- No live DeepSeek run and no live provider call. Every result above is a scripted
+  model and provider double, and says so where it is used.
+- The runtime egress boundary in B and the price claim in E need environment
+  evidence this audit cannot obtain.
+- The identity wording in E3 is instruction to the model. Nothing enforces that a
+  model repeats it, and no test asserts a model's prose.

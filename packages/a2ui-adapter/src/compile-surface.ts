@@ -31,7 +31,6 @@ const ALLOWED_ACTIONS: ReadonlySet<string> = new Set(INTERACTION_ALLOWED_ACTIONS
 
 /** Component ids are namespaced so a field named "root" cannot collide. */
 const idFor = (field: InteractionFieldSpec) => `field_${field.name}`;
-const labelIdFor = (field: InteractionFieldSpec) => `label_${field.name}`;
 const ACTION_LABEL_ID = "action_label";
 const ACTION_ID = "action";
 const TITLE_ID = "title";
@@ -210,13 +209,10 @@ function buildFormComponents(input: {
   }
 
   for (const field of schema.fields) {
-    // A visible label keeps the control named even on hosts that drop `label`.
-    children.push(labelIdFor(field));
-    components.push({
-      id: labelIdFor(field),
-      component: "Text",
-      text: field.label,
-    });
+    // Every shipped control renders `label` itself, including the date-time one,
+    // whose label markup is not in its declared schema but is in its renderer.
+    // Emitting a Text label as well printed every name twice on a real card, so the
+    // control is the one place a field's name is drawn.
     children.push(idFor(field));
     components.push(fieldComponent(field));
   }

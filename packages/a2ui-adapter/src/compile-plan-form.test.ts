@@ -60,13 +60,22 @@ describe("compiling a draft plan into a form", () => {
     expect(paths).toEqual(["/values/name", "/values/start", "/values/timezone"]);
   });
 
-  it("labels every control so it is readable and accessible", async () => {
+  it("labels every control exactly once, on the control that can carry one", async () => {
     const list = await components();
     const text = list
       .filter((component) => component.component === "Text")
       .map((component) => component.text);
-    // Without a registered schema the field's own name is the label.
-    for (const name of ["name", "start", "timezone"]) expect(text).toContain(name);
+    const controls = list.filter((component) =>
+      ["TextField", "DateTimeInput", "CheckBox", "ChoicePicker"].includes(
+        String(component.component),
+      ),
+    );
+    for (const field of ["name", "start", "timezone"]) {
+      // The control carries its own label, and no Text repeats it above.
+      const control = controls.find((entry) => entry.id === `field_${field}`);
+      expect(control?.label).toBe(field);
+      expect(text).not.toContain(field);
+    }
   });
 
   it("uses the registered schema's labels and control kinds when given one", async () => {
@@ -90,13 +99,16 @@ describe("compiling a draft plan into a form", () => {
       updateComponents?: { components: Array<Record<string, unknown>> };
     }>;
     const list = update.find((message) => message.updateComponents)!.updateComponents!.components;
-    // A date field becomes a date control, not a text box.
+    // A date field becomes a date control, not a text box, and carries the
+    // schema's label itself — once, on the control, not also as a Text above it.
     const start = list.find((component) => component.id === "field_start");
     expect(start?.component).toBe("DateTimeInput");
+    expect(start?.label).toBe("Starts");
     const labels = list
       .filter((component) => component.component === "Text")
       .map((component) => component.text);
-    expect(labels).toContain("Starts");
+    expect(labels).not.toContain("Starts");
+    expect(labels).not.toContain("Name");
   });
 
   it("carries the values the plan already resolved", async () => {

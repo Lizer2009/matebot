@@ -19,3 +19,20 @@
   --a2ui-border: 1px solid var(--border);
   color: var(--foreground);
 }
+
+/**
+ * A date-time control is a date input and a time input side by side.
+ *
+ * Each of them has a browser minimum width, so on a narrow card the pair ran past
+ * the card's edge — measured at 324px of content in a 216px card. Letting them wrap
+ * and shrink keeps every control inside the card instead of pushing the page wider.
+ */
+.matebot-a2ui-theme .a2ui-date-time-inputs {
+  flex-wrap: wrap;
+}
+
+.matebot-a2ui-theme .a2ui-date-time-input {
+  flex: 1 1 8rem;
+  min-width: 0;
+  max-width: 100%;
+}

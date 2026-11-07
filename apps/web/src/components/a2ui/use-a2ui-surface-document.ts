@@ -4,6 +4,14 @@ import { resolveFixtureMessages } from "./fixtures";
 
 export type A2uiSurfaceDocumentSource = {
   documentRef?: string;
+  /**
+   * The draft revision the block was rendered from.
+   *
+   * A republish rewrites the stored document behind the *same* ref, so the ref alone
+   * cannot tell a card that its content changed. Without this, an edit landed on the
+   * server and the card kept drawing the document it fetched first.
+   */
+  revision?: number;
   /** Injected for tests / gallery; skips network. */
   messages?: unknown[];
   /** Optional fetcher; when omitted and documentRef is a server ref, host shows placeholder. */
@@ -47,6 +55,8 @@ export function useA2uiSurfaceDocument(
   const mounted = useRef(true);
 
   const documentRef = source.documentRef;
+  // Part of the effect key so a republished document is fetched again.
+  const revision = source.revision;
   const fetchDocument = source.fetchDocument;
   const injected = source.messages;
 
@@ -99,7 +109,7 @@ export function useA2uiSurfaceDocument(
     return () => {
       cancelled = true;
     };
-  }, [injected, fixture, serverRef, documentRef, fetchDocument, attempt]);
+  }, [injected, fixture, serverRef, documentRef, revision, fetchDocument, attempt]);
 
   const reload = useCallback(() => setAttempt((value) => value + 1), []);
 

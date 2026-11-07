@@ -29,11 +29,12 @@ describe("useA2uiSurfaceDocument", () => {
     host = undefined;
   });
 
-  /** Render the hook and return a live view of its latest state. */
+  /** Render the hook and return a live view of its latest state, plus a re-render. */
   function run(source: Parameters<typeof useA2uiSurfaceDocument>[0]) {
     const seen: Array<ReturnType<typeof useA2uiSurfaceDocument>> = [];
+    let current = source;
     function Probe() {
-      seen.push(useA2uiSurfaceDocument(source));
+      seen.push(useA2uiSurfaceDocument(current));
       return null;
     }
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -41,7 +42,11 @@ describe("useA2uiSurfaceDocument", () => {
     document.body.append(host);
     root = createRoot(host);
     act(() => root!.render(<Probe />));
-    return { latest: () => seen[seen.length - 1]! };
+    const rerender = (next: Parameters<typeof useA2uiSurfaceDocument>[0]) => {
+      current = next;
+      act(() => root!.render(<Probe />));
+    };
+    return { latest: () => seen[seen.length - 1]!, rerender };
   }
 
   it("reports a server ref with no fetcher as unavailable, not as loading", () => {
@@ -118,5 +123,36 @@ describe("useA2uiSurfaceDocument", () => {
     const { latest } = run({ documentRef: REF, fetchDocument, messages: [{ a: 1 }] });
     expect(latest().messages).toEqual([{ a: 1 }]);
     expect(fetchDocument).not.toHaveBeenCalled();
+  });
+
+  /**
+   * A republish keeps the document ref and moves the revision. A card that keyed
+   * its fetch on the ref alone kept drawing the document it loaded first, so an
+   * edit reached the server and the card did not change. The revision is the part
+   * of the ref that says "the content behind this ref is different now".
+   */
+  it("loads again when the revision moves, though the ref is unchanged", async () => {
+    const fetchDocument = vi
+      .fn<(ref: string) => Promise<unknown[] | undefined>>()
+      .mockResolvedValueOnce([{ createSurface: { surfaceId: "surf-1" } }])
+      .mockResolvedValueOnce([
+        { createSurface: { surfaceId: "surf-1" } },
+        { updateDataModel: { surfaceId: "surf-1" } },
+      ]);
+    const { latest, rerender } = run({ documentRef: REF, revision: 1, fetchDocument });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(latest().messages).toHaveLength(1);
+
+    rerender({ documentRef: REF, revision: 2, fetchDocument });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(fetchDocument).toHaveBeenCalledTimes(2);
+    expect(latest().messages).toHaveLength(2);
   });
 });

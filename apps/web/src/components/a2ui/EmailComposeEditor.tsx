@@ -74,11 +74,24 @@ export function EmailComposeEditor({
   const versionRef = useRef(draftVersion);
   const valuesRef = useRef(fields);
   const pending = useRef<Partial<Record<EmailFieldName, Promise<number>>>>({});
+  /** Values the person typed here that the server's snapshot has not caught up with. */
+  const dirty = useRef<Partial<Record<EmailFieldName, string>>>({});
   valuesRef.current = values;
 
   useEffect(() => {
-    setValues(fields);
-    committed.current = fields;
+    // A field the person is editing here wins over a stale snapshot. The props
+    // arrive from the server and can lag the commit this editor just made — or an
+    // edit for another field — so adopting them wholesale would overwrite what was
+    // typed. A field stops being protected once the server's value is the typed one.
+    const next = { ...fields };
+    for (const [name, typed] of Object.entries(dirty.current) as Array<
+      [EmailFieldName, string]
+    >) {
+      if (fields[name] === typed) delete dirty.current[name];
+      else next[name] = valuesRef.current[name];
+    }
+    setValues(next);
+    committed.current = next;
     versionRef.current = draftVersion;
     setVersion(draftVersion);
   }, [draftVersion, fields.from, fields.to, fields.cc, fields.subject, fields.body]);
@@ -119,6 +132,7 @@ export function EmailComposeEditor({
     if (value === committed.current[name] || !onFieldChange) return versionRef.current;
     const previous = committed.current[name];
     committed.current = { ...committed.current, [name]: value };
+    dirty.current[name] = value;
     const task = (async () => {
       try {
         const result = await onFieldChange(name, value, versionRef.current);
@@ -129,6 +143,7 @@ export function EmailComposeEditor({
         return next;
       } catch (err) {
         committed.current = { ...committed.current, [name]: previous };
+        delete dirty.current[name];
         throw err;
       }
     })();
