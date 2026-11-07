@@ -1,6 +1,7 @@
 import { isIP } from "node:net";
 import { describe, expect, it } from "vitest";
 import {
+  destinationKey,
   ipVersion,
   isCloudMetadataAddress,
   isCloudMetadataHost,
@@ -316,5 +317,57 @@ describe("predicate relationships", () => {
   it("normalizes case, brackets, and one trailing dot", () => {
     expect(normalizeHost("[FE80::1]")).toBe("fe80::1");
     expect(normalizeHost("Example.Test.")).toBe("example.test");
+  });
+});
+
+/**
+ * One place, one key. Every "is this the destination we refused" comparison goes
+ * through `destinationKey`, so a guard cannot be walked around by writing the same
+ * address a second way.
+ */
+describe("destinationKey", () => {
+  it("ignores case and a trailing root dot", () => {
+    expect(destinationKey("Example.Test.")).toBe("example.test");
+    expect(destinationKey("EXAMPLE.test")).toBe("example.test");
+  });
+
+  it("writes an IPv4 literal in one form", () => {
+    expect(destinationKey("127.0.0.1")).toBe("127.0.0.1");
+    expect(destinationKey("[127.0.0.1]")).toBe("127.0.0.1");
+    // Short and single-integer forms are not IP literals here, exactly as in
+    // `ipVersion`: they reach the ledger only as the URL parser rewrote them, and
+    // that rewrite is what the browser test covers at the call site.
+    expect(destinationKey("127.1")).toBe("127.1");
+    expect(destinationKey("2130706433")).toBe("2130706433");
+  });
+
+  it.each([
+    ["::1", "::1"],
+    ["0:0:0:0:0:0:0:1", "::1"],
+    ["[0:0:0:0:0:0:0:1]", "::1"],
+    ["fe80:0:0:0:0:0:0:1", "fe80::1"],
+    ["2001:0DB8:0000:0000:0000:0000:0000:0001", "2001:db8::1"],
+    ["2001:db8:0:0:1:0:0:1", "2001:db8::1:0:0:1"],
+  ])("writes %s in one IPv6 form", (input, expected) => {
+    expect(destinationKey(input)).toBe(expected);
+  });
+
+  it("writes an IPv4-mapped IPv6 address as its IPv4 key", () => {
+    expect(destinationKey("::ffff:7f00:1")).toBe("127.0.0.1");
+    expect(destinationKey("::ffff:127.0.0.1")).toBe("127.0.0.1");
+    expect(destinationKey("[::ffff:10.1.2.3]")).toBe("10.1.2.3");
+  });
+
+  it("does not compress a single zero group", () => {
+    // `::` for one group would be ambiguous with the surrounding colons.
+    expect(destinationKey("2001:db8:0:1:1:1:1:1")).toBe("2001:db8:0:1:1:1:1:1");
+    expect(destinationKey("::1:0:0:0:1")).toBe("::1:0:0:0:1");
+  });
+
+  it("keeps distinct destinations distinct", () => {
+    expect(destinationKey("10.0.0.1")).not.toBe(destinationKey("10.0.0.2"));
+    expect(destinationKey("::1")).not.toBe(destinationKey("::2"));
+    expect(destinationKey("example.test")).not.toBe(destinationKey("example.test.uk"));
+    expect(destinationKey("localhost")).not.toBe(destinationKey(""));
   });
 });

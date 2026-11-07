@@ -11,7 +11,7 @@ import type { PurchaseCardField } from "@matebot/contracts";
 import { PURCHASE_CARD_FIELDS } from "@matebot/contracts";
 import { getLogger } from "@matebot/logging";
 import { redactConnectorPayload } from "./connector-safety.js";
-import { currentEgressRefusals } from "./network-address.js";
+import { egressRefusedHost } from "./network-address.js";
 import { TOOL_RESULT_TEXT_LIMIT } from "./pi-runtime-limits.js";
 import type { PurchaseApproval } from "./purchase-gate.js";
 import { MAX_ACTIONS_PER_CALL } from "./tool-loop.js";
@@ -132,7 +132,7 @@ export async function browserNavigateFromTool(
   // explicit option and the run's ambient ledger are consulted, so a caller cannot
   // forget to pass one.
   const host = parsed.hostname.toLowerCase();
-  if (options.refusedHosts?.has(host) || currentEgressRefusals()?.has(host)) {
+  if (egressRefusedHost(host, options.refusedHosts)) {
     return refusedInput(EGRESS_REFUSED_HOST_MESSAGE);
   }
   try {

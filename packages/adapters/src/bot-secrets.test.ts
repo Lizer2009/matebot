@@ -154,7 +154,7 @@ describe("authenticated secret requests", () => {
   });
 
   it("refuses to fill a website login into an HTTP request", async () => {
-    const { input, fetch } = await fixture({ type: "login", fields: [] });
+    const { input, fetch } = await fixture({ type: "login" });
     const result = await requestWithBotSecret(input);
     expect(result).toMatchObject({ error: expect.stringContaining("browser_act") });
     expect(fetch).not.toHaveBeenCalled();

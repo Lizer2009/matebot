@@ -2,6 +2,7 @@ import type { AgentToolExecutionObserver } from "@matebot/adapter-kit";
 import { toolResultTaintsRun } from "@matebot/core";
 import { isTerminatingReplyResult } from "./approval-effect.js";
 import { refuseOutboundEmailShell } from "./email-shell-escape.js";
+import { refuseRefusedDestinationShell } from "./egress-fallback-guard.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import { withEgressRefusalLedger } from "./network-address.js";
 import type { RunContext } from "./run-context.js";
@@ -118,6 +119,11 @@ async function dispatchTool(
   if (name === "shell" || name === USER_COMPUTER_SHELL_TOOL) {
     const mailEscape = refuseOutboundEmailShell(ctx, args);
     if (mailEscape) return mailEscape;
+    // A refusal is about a destination. Shell is another route to the same place, so
+    // a command that names an already-refused host is turned down here too, before it
+    // runs. It matches literal addresses only — see the guard for what it cannot see.
+    const refusedTarget = refuseRefusedDestinationShell(ctx.state.egressRefusedHosts, args);
+    if (refusedTarget) return refusedTarget;
   }
   const request = await resolveToolRequest(ctx, name, args, executionId);
   if ("error" in request) return request;

@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import dns from "node:dns";
 import type { LookupFunction } from "node:net";
+import { destinationKey, normalizeHost } from "@matebot/contracts";
 import { recordSecurityEvent } from "@matebot/db";
 
 export type ResolvedAddress = { address: string; family: number };
@@ -11,7 +12,8 @@ type PinnedDns = { hostname: string; addresses: ResolvedAddress[] };
 const pinnedDns = new AsyncLocalStorage<PinnedDns>();
 
 /**
- * Hosts the egress guard refused during the current run.
+ * Destinations the egress guard refused during the current run, keyed by
+ * `destinationKey` so every spelling of one place lands on one entry.
  *
  * A refusal is a statement about a destination, not about one tool. Recording it
  * here lets another network tool — the browser in particular — refuse the same
@@ -22,14 +24,7 @@ const pinnedDns = new AsyncLocalStorage<PinnedDns>();
 const refusedHosts = new AsyncLocalStorage<Set<string>>();
 
 /**
- * Run `work` with a refusal ledger, returning the hosts it collected.
- *
- * The ledger is read by the browser tool, so a fetcher refusal cannot be routed
- * around. Callers that do not provide one (tests, single tool calls) behave as
- * before, because an absent ledger records nothing rather than failing.
- */
-/**
- * Run `work` with a refusal ledger owned by the caller.
+ * Run `work` with caller-owned refusal state.
  *
  * The caller passes the same Set it reads later (for example the run's own state),
  * so a refusal recorded deep inside a fetch is visible to the next tool without
@@ -46,6 +41,20 @@ export async function withEgressRefusalLedger<T>(
 /** The refusal ledger for the current run, when one is installed. */
 export function currentEgressRefusals(): ReadonlySet<string> | undefined {
   return refusedHosts.getStore();
+}
+
+/**
+ * Whether this run's guard already refused `hostname`, however it is spelled.
+ *
+ * Every tool that can reach a destination asks this rather than testing its own
+ * spelling against the ledger, because a host can be written with a trailing root
+ * dot, as an expanded IPv6 address, or as an IPv4-mapped form of the same place.
+ */
+export function egressRefusedHost(hostname: string, ledger?: ReadonlySet<string>): boolean {
+  const key = destinationKey(normalizeHost(hostname));
+  if (!key) return false;
+  const scope = ledger ?? refusedHosts.getStore();
+  return scope?.has(key) === true;
 }
 let dnsPinInstalled = false;
 
@@ -127,8 +136,8 @@ export function egressRefused(hostname: string, error: unknown): Error {
     metadata: { host: hostname.slice(0, 253), reason: refusal.message },
   });
   // Remember the destination for this run so another network tool cannot be used
-  // to reach what the guard just refused.
-  refusedHosts.getStore()?.add(normalizeLookupHostname(hostname));
+  // to reach what the guard just refused, whichever way it spells the address.
+  refusedHosts.getStore()?.add(destinationKey(normalizeLookupHostname(hostname)));
   return refusal;
 }
 
