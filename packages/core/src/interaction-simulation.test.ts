@@ -248,31 +248,34 @@ describe("intent mapping for real requests", () => {
 });
 
 describe("calendar surfaces", () => {
-  // The old simulator forced the email template here, which hid the gap.
-  // A non-email intent is stamped with nothing and has no editor.
-  it("stamps no email template for a calendar intent", () => {
+  // Phase 1: the calendar is implemented, so the simulator must report it as
+  // such rather than as a permanent gap.
+  it("reports the calendar capability as implemented in Phase 1", () => {
     const surface = simulateCalendarSurface({
       connection: "not_connected",
       interactionStatus: "needs_connection",
     });
-    expect(surface.template).toBeNull();
     expect(surface.capability).toBe("not_connected");
     expect(surface.registered).toBe(true);
-    expect(surface.implemented).toBe(false);
+    expect(surface.implemented).toBe(true);
   });
 
   // The honest shortfall: nothing on a calendar surface is tappable today.
-  it("offers no action and no editor in any connection state", () => {
+  // Phase 1: the create action exists, but it is only offered once the calendar
+  // is genuinely ready. An unconnected or revoked calendar never shows a submit.
+  it("offers the create action only when the calendar is ready", () => {
     for (const connection of SIMULATED_CONNECTION_STATES) {
       const surface = simulateCalendarSurface({
         connection,
         interactionStatus: connection === "ready" ? "collecting" : "needs_connection",
       });
-      expect(surface.action).toBe("none");
-      expect(surface.canSend).toBe(false);
-      expect(surface.editor).toBe("none");
-      expect(surface.implemented).toBe(false);
-      expect(surface.gap.length).toBeGreaterThan(0);
+      expect(surface.action).toBe("create");
+      expect(surface.presentation).toBe("form");
+      expect(surface.canCreate).toBe(connection === "ready");
+      if (connection === "ready") expect(surface.state).toBe("ready_to_create");
+      else if (connection === "requires_reauth" || connection === "stale_local_connected") {
+        expect(surface.state).toBe("reauth");
+      } else expect(surface.state).toBe("needs_connection");
     }
   });
 

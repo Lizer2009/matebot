@@ -146,13 +146,13 @@ function buildDialogueScenario() {
   });
   rows.push({
     prompt: calendarRequest,
-    step: "2a unbound: connect_app card",
-    template: calendarUnbound.template,
-    action: "none",
-    canSend: false,
+    step: "2a unbound: connect first",
+    template: calendarUnbound.presentation,
+    action: calendarUnbound.action ?? "none",
+    canSend: calendarUnbound.canCreate,
     resumed: "-",
-    nudge: surfaceNudge(calendarUnbound.capability, calendarUnbound.lifecycle),
-    expect: "connect-via-app-card",
+    nudge: surfaceNudge(calendarUnbound.capability, calendarUnbound.interactionStatus),
+    expect: "needs-connection",
   });
   const calendarResume = simulateConnectionResume({
     intent: calendarIntent ?? "calendar.create",
@@ -166,16 +166,12 @@ function buildDialogueScenario() {
   rows.push({
     prompt: calendarRequest,
     step: "2b after googlecalendar connect",
-    template: calendarConnected.template,
-    action: calendarConnected.action,
-    canSend: calendarConnected.canSend,
+    template: calendarConnected.presentation,
+    action: calendarConnected.action ?? "none",
+    canSend: calendarConnected.canCreate,
     resumed: calendarResume.resumed,
-    nudge: surfaceNudge(calendarConnected.capability, calendarConnected.lifecycle),
-    expect: "resumed-readonly",
-    // The honest gap: the turn resumes, but there is nothing to type into.
-    gap:
-      calendarConnected.gap +
-      '; a date range ("下周") has no slot on that plan, and the nudge points at a card with nothing to tap',
+    nudge: surfaceNudge(calendarConnected.capability, calendarConnected.interactionStatus),
+    expect: "ready-to-create",
   });
 
   // 3. A shell job on the user's own computer. The orchestrator presents
@@ -216,19 +212,13 @@ function buildDialogueScenario() {
           !row.canSend
         );
       }
-      if (row.expect === "connect-via-app-card") {
-        // No template is stamped for a non-email intent, so the calendar surface
-        // carries none. The user connects through the connect_app card, and the
-        // nudge says so; the row must not pretend an email draft exists.
-        return (
-          row.template === null &&
-          row.action === "none" &&
-          !row.canSend &&
-          row.nudge === A2UI_SURFACE_NUDGE.awaiting_connection
-        );
+      // Phase 1: an unconnected calendar offers no create, whatever else it shows.
+      if (row.expect === "needs-connection") {
+        return row.action === "create" && row.canSend === false;
       }
-      if (row.expect === "resumed-readonly") {
-        return row.resumed === true && row.action === "none" && !row.canSend;
+      // Connected: the turn resumes and the create action becomes available.
+      if (row.expect === "ready-to-create") {
+        return row.resumed === true && row.action === "create" && row.canSend === true;
       }
       // Nothing presents a surface, and the row must say so rather than pass.
       return row.expect === "out_of_scope" && !simulatedIntentSupported(row.template);

@@ -337,13 +337,12 @@ export function simulateConnectionResume(input: {
 }
 
 /**
- * A calendar surface as the product actually produces it today.
+ * A calendar surface as Phase 1 produces it.
  *
- * The email template ids are stamped only for an email intent, so a calendar
- * surface has no template at all — forcing one here is what previously hid this
- * gap. What the registry says is authoritative: the capability is registered but
- * `implemented: false`, so it has no action, no editor, and no submit. The row
- * reports that instead of borrowing the email card's shape.
+ * It is a real form with one create action on the shared pipeline, so the
+ * simulator reports the capability's own schema rather than a placeholder. When
+ * the calendar is not connected the same card becomes the connection step, and
+ * the row says which state it is in — it never invents a submit.
  */
 export function simulateCalendarSurface(input: {
   connection: SimulatedConnectionState;
@@ -351,15 +350,14 @@ export function simulateCalendarSurface(input: {
 }): {
   capability: ReturnType<typeof preflightCalendarCapability>["surfaceCapability"];
   interactionStatus: InteractionLifecycleStatus;
-  /** Null: no template is stamped for a non-email intent. */
-  template: null;
-  lifecycle: EmailSurfaceLifecycle;
-  action: "none";
-  canSend: false;
-  editor: "none";
+  /** The capability's declared presentation, not an email template. */
+  presentation: "form" | "result" | "progress";
+  action: string | null;
+  canCreate: boolean;
   registered: boolean;
   implemented: boolean;
-  gap: string;
+  /** Which state the user is actually in, in one phrase. */
+  state: "needs_connection" | "ready_to_create" | "reauth";
 } {
   const sim = simulatedConnectionFor("calendar", input.connection);
   const preflight = preflightCalendarCapability({
@@ -368,19 +366,20 @@ export function simulateCalendarSurface(input: {
     providerReady: sim.providerReady,
   });
   const capability = findInteractionCapability("calendar.create");
+  const ready = preflight.surfaceCapability === "ready";
   return {
     capability: preflight.surfaceCapability,
     interactionStatus: input.interactionStatus,
-    template: null,
-    lifecycle: "draft",
-    action: "none",
-    canSend: false,
-    editor: "none",
+    presentation: capability?.schema.presentation ?? "result",
+    action: capability?.schema.action?.id ?? null,
+    canCreate: ready && capability?.implemented === true,
     registered: capability !== undefined,
     implemented: capability?.implemented ?? false,
-    gap:
-      preflight.surfaceCapability === "ready"
-        ? "connected, but the capability is not implemented: no name/start input and nothing to submit"
-        : "unbound: the connect step runs through the connect_app card, and no calendar editor exists yet",
+    state:
+      preflight.surfaceCapability === "requires_reauth"
+        ? "reauth"
+        : ready
+          ? "ready_to_create"
+          : "needs_connection",
   };
 }

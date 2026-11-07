@@ -98,6 +98,7 @@ export * from "./infisical-secret-store.js";
 export * from "./installed-connectors.js";
 export * from "./installed-messaging-surface.js";
 export * from "./integration-provider-settings.js";
+export * from "./interaction-calendar.js";
 export * from "./interaction-email.js";
 export * from "./interaction-email-capability.js";
 export * from "./interaction-email-outcome.js";

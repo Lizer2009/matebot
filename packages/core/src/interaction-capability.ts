@@ -49,18 +49,36 @@ const EMAIL_SCHEMA: InteractionSurfaceSchema = {
 };
 
 /**
- * Registered so a calendar plan cannot silently render as a text-only card, but
- * Phase 1 owns its editor and its submit, so the entry is intentionally
- * incomplete: `implemented: false` and no action. The dispatch path refuses any
- * action for it, and the hosts fall back rather than showing a dead button.
+ * Phase 1: the calendar create draft.
+ *
+ * It is a real form with a real submit, not a copy of the email templates: the
+ * shared lifecycle, action bridge, revision writer and dispatch do the work, and
+ * the calendar-specific parts live in `calendar-event.ts` (start/end ordering,
+ * timezone, all-day snap). Attendees are deliberately not collected, so a create
+ * can never invite anyone by accident.
  */
 const CALENDAR_SCHEMA: InteractionSurfaceSchema = {
   schemaVersion: 1,
-  presentation: "result",
+  presentation: "form",
   fields: [
     { name: "name", label: "Name", kind: "text", required: true, maxLength: 200 },
-    { name: "start", label: "Starts", kind: "dateTime", required: false },
+    { name: "start", label: "Starts", kind: "dateTime", required: true },
+    { name: "end", label: "Ends", kind: "dateTime", required: true },
+    { name: "timezone", label: "Time zone", kind: "text", required: false, maxLength: 64 },
+    { name: "allDay", label: "All day", kind: "boolean", required: false },
   ],
+  action: { id: "create", label: "Create", requiresRevision: true },
+};
+
+/**
+ * Reading a schedule is a different capability from writing one. A query renders
+ * a result surface with no action, so "what is next week" can never turn into a
+ * silent create.
+ */
+const CALENDAR_QUERY_SCHEMA: InteractionSurfaceSchema = {
+  schemaVersion: 1,
+  presentation: "result",
+  fields: [],
   action: null,
 };
 
@@ -92,7 +110,16 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     requiresConnection: "calendar",
     effectKind: "calendar.create",
     readOnly: false,
-    implemented: false,
+    implemented: true,
+  },
+  {
+    intent: "calendar.query",
+    label: "Schedule",
+    schema: CALENDAR_QUERY_SCHEMA,
+    requiresConnection: "calendar",
+    effectKind: null,
+    readOnly: true,
+    implemented: true,
   },
   {
     intent: "interaction.result",
