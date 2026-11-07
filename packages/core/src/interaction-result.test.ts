@@ -230,3 +230,38 @@ describe("spec §5.6.1 provenance fields", () => {
     expect(line).toMatch(/fresh|更新/i);
   });
 });
+
+describe("a window the assistant chose", () => {
+  it("is marked so the card never presents it as the user's choice", () => {
+    const built = buildResultSurface({
+      title: "Flights",
+      provenance: {
+        source: "somewhere",
+        asOf: "2026-11-07T00:00:00Z",
+        window: { from: "2026-11-09", to: "2026-11-16" },
+        defaultedWindow: true,
+      },
+      rows: [{ a: 1 }],
+    });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.surface.provenance.defaultedWindow).toBe(true);
+    expect(provenanceLine(built.surface.provenance)).toContain("dates assumed");
+  });
+
+  it("stays unmarked when the period came from the user", () => {
+    const built = buildResultSurface({
+      title: "Flights",
+      provenance: {
+        source: "somewhere",
+        asOf: "2026-11-07T00:00:00Z",
+        window: { from: "2026-11-09", to: "2026-11-16" },
+      },
+      rows: [{ a: 1 }],
+    });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.surface.provenance.defaultedWindow).toBeUndefined();
+    expect(provenanceLine(built.surface.provenance)).not.toContain("dates assumed");
+  });
+});

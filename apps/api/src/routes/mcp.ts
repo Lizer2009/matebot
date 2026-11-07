@@ -3,6 +3,7 @@ import { runContinueJob } from "@matebot/adapter-kit";
 import {
   createPluginMarketplace,
   isTransientFetchError,
+  MCP_HEALTH_RESET,
   McpOAuthClientRequiredError,
   persistPreparedSecret,
   pluginPreviewDto,
@@ -586,10 +587,7 @@ export function mcpRoutes(ctx: RouterContext) {
                       verbatimResults: config.verbatimResults,
                       revision: { increment: 1 },
                       // The old verdict is about the old config.
-                      healthStatus: "unknown",
-                      healthMessage: null,
-                      healthToolCount: null,
-                      healthCheckedAt: null,
+                      ...MCP_HEALTH_RESET,
                       ...(stored ? { secretId: stored.id } : clearing ? { secretId: null } : {}),
                     },
                   });

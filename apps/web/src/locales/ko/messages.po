@@ -897,6 +897,10 @@ msgstr "이 서버를 승인하면 Bot이 제공되는 도구를 사용할 수 �
 msgid "Approved"
 msgstr ""
 
+#: src/pages/shell/message-cards.tsx
+msgid "Approved, not connected yet"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
 msgstr ""
@@ -3820,6 +3824,10 @@ msgstr ""
 msgid "Loading preview…"
 msgstr "미리보기를 불러오는 중…"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Loading this card…"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
 msgstr "음성 서비스를 불러오는 중…"
@@ -4564,6 +4572,10 @@ msgstr "Matebot에서 사용하지 않음"
 msgid "Not working"
 msgstr "작동하지 않음"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Nothing has reached this server yet."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "아직 기억한 내용이 없습니다"
@@ -4998,6 +5010,10 @@ msgstr "POST 대상"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "환경설정"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Preparing this server."
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6503,6 +6519,10 @@ msgstr "되돌릴 수 없습니다."
 msgid "This cannot be undone."
 msgstr "이 작업은 되돌릴 수 없습니다."
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This card could not be shown."
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "이 컴퓨터"
@@ -6602,6 +6622,10 @@ msgstr "이 서버는 브라우저 인증을 요청하지 않았습니다."
 #: src/pages/McpServersOverlay.tsx
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "이 서버는 이미 연결되어 있습니다. 다시 인증하려면 먼저 연결을 해제하세요."
+
+#: src/pages/shell/message-cards.tsx
+msgid "This server is not responding."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6729,6 +6753,7 @@ msgstr "악용을 막기 위해 체험 기간에는 시간이 더 적게 제공�
 msgid "Trusted sites"
 msgstr "신뢰할 수 있는 사이트"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx

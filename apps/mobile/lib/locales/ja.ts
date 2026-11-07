@@ -555,6 +555,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Connect API key": "APIキーを接続",
   "Connect MCP server {name}": "MCPサーバー{name}を接続",
   "Connected.": "接続しました。",
+  "Approved, not connected yet.": "承認済みですが、まだ接続されていません。",
+  "Approved, not connected yet: {reason}": "承認済みですが、まだ接続されていません：{reason}",
   "Context limit": "コンテキスト上限",
   "Could not connect this provider": "このプロバイダーに接続できませんでした",
   "Could not finish sign-in": "ログインを完了できませんでした",

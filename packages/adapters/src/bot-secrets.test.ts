@@ -134,6 +134,84 @@ describe("authenticated secret requests", () => {
     },
   );
 
+  /**
+   * A command variable is for shell commands.
+   *
+   * The audit saw a registered connection fail on a revoked key and the model then
+   * reach the same service through a shell command with a newly saved key. That is
+   * what a command variable is for. The boundary has to hold the other way too: the
+   * same variable must not be spendable as an authenticated HTTP request, which
+   * would turn a broken connection into a way to send a credential anywhere it
+   * names.
+   */
+  it("refuses to spend a command variable as an HTTP credential", async () => {
+    // The stronger boundary is structural: a command variable has no site at all, so
+    // the shape that could send it cannot be stored. Reaching the request path with
+    // one is refused with a reason rather than thrown, and nothing leaves the process.
+    const { input, fetch } = await fixture({ type: "command" });
+    const result = await requestWithBotSecret(input);
+    expect(result).toMatchObject({
+      error: expect.stringContaining("cannot be used for an authenticated request"),
+    });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The request-time guard, reached the way a stale row would reach it.
+   *
+   * The schema refuses a command variable that carries an origin, which is the
+   * stronger boundary. This drives the guard behind it: a command row stored the
+   * way a command row *is* stored (no origin) must still be refused here, with no
+   * decryption and nothing sent. Without this the guard could be deleted and every
+   * test would still pass.
+   */
+  it("refuses a stored command credential at request time as well", async () => {
+    const encrypted = await secretStore.put(
+      secret,
+      { ...scope, operationId: "t", traceId: "t", signal: new AbortController().signal },
+      { recordId: "secret-2" },
+    );
+    const row = {
+      ...scope,
+      name: destination.name,
+      origin: "",
+      auth: { type: "command" },
+      ...encrypted,
+    };
+    const prisma = {
+      spaceSettingOverride: ownVault,
+      vaultCredential: { findFirst: vi.fn(async () => row) },
+      secret: { findFirst: vi.fn(async () => null) },
+    } as unknown as PrismaClient;
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({ ok: true }));
+    const load = vi.spyOn(secretStore, "load");
+    const result = await requestWithBotSecret({
+      prisma,
+      secretStore,
+      scope,
+      request: { name: destination.name, url: `${destination.origin}/v1/items` },
+      signal: new AbortController().signal,
+      remote: { fetch, resolveHostname: publicResolver },
+    });
+    try {
+      // Refused with the reason a model can act on, and nothing left the process.
+      expect(result).toMatchObject({
+        error: expect.stringContaining("only available to shell"),
+      });
+      expect(fetch).not.toHaveBeenCalled();
+      expect(load).not.toHaveBeenCalled();
+    } finally {
+      load.mockRestore();
+    }
+  });
+
+  it("refuses to fill a website login into an HTTP request", async () => {
+    const { input, fetch } = await fixture({ type: "login" });
+    const result = await requestWithBotSecret(input);
+    expect(result).toMatchObject({ error: expect.stringContaining("browser_act") });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it.each(["userId", "spaceId"] as const)(
     "denies a different %s before decrypting or sending",
     async (key) => {

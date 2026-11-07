@@ -76,11 +76,20 @@ export function A2uiSurfaceHost({
   }, [messages, surfaceId, onAction]);
 
   if (state.kind === "loading") {
+    // The renderer loads in a separate chunk, so there is a moment after the
+    // document arrives and before the card can be drawn. That region used to be an
+    // empty div — the same blank frame the audit found, just a shorter one. It now
+    // says it is busy and draws a placeholder bar, without adding a sentence the
+    // card does not need.
     return (
       <div
         data-testid="a2ui-surface-loading"
-        className="matebot-a2ui-theme px-1 py-2 text-[14px] text-muted-foreground"
-      />
+        role="status"
+        aria-busy="true"
+        className="matebot-a2ui-theme px-1 py-2"
+      >
+        <div className="h-4 w-2/3 animate-pulse rounded bg-muted" aria-hidden="true" />
+      </div>
     );
   }
 

@@ -897,6 +897,10 @@ msgstr "批准此服务器后，Agent 才能使用它的工具。"
 msgid "Approved"
 msgstr "已批准"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Approved, not connected yet"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
 msgstr "正在批准…"
@@ -3820,6 +3824,10 @@ msgstr "正在加载插件…"
 msgid "Loading preview…"
 msgstr "正在加载预览…"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Loading this card…"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
 msgstr "正在加载语音提供方…"
@@ -4564,6 +4572,10 @@ msgstr "Matebot 不使用"
 msgid "Not working"
 msgstr "无法正常工作"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Nothing has reached this server yet."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "暂无记忆"
@@ -4998,6 +5010,10 @@ msgstr "POST 到"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "偏好设置"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Preparing this server."
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6503,6 +6519,10 @@ msgstr "此操作无法撤销。"
 msgid "This cannot be undone."
 msgstr "此操作无法撤销。"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This card could not be shown."
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "这台电脑"
@@ -6602,6 +6622,10 @@ msgstr "此服务器未请求浏览器授权。"
 #: src/pages/McpServersOverlay.tsx
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "此服务器已连接。请先断开再重新授权。"
+
+#: src/pages/shell/message-cards.tsx
+msgid "This server is not responding."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6729,6 +6753,7 @@ msgstr "为防止滥用，试用期的时长较少。"
 msgid "Trusted sites"
 msgstr "受信任的网站"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx

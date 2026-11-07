@@ -405,6 +405,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Connect Treg": "连接 Treg",
   Connected: "已连接",
   "Connected.": "已连接。",
+  "Approved, not connected yet.": "已批准，但尚未连接。",
+  "Approved, not connected yet: {reason}": "已批准，但尚未连接：{reason}",
   "Connected. Its tools are available from your next message.":
     "已连接。从你的下一条消息起即可使用它的工具。",
   Copy: "复制",

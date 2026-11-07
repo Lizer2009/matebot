@@ -897,6 +897,10 @@ msgstr "Genehmige diesen Server, damit dein Agent seine Tools verwenden kann."
 msgid "Approved"
 msgstr ""
 
+#: src/pages/shell/message-cards.tsx
+msgid "Approved, not connected yet"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
 msgstr ""
@@ -3820,6 +3824,10 @@ msgstr ""
 msgid "Loading preview…"
 msgstr "Vorschau wird geladen…"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Loading this card…"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
 msgstr "Stimmanbieter werden geladen…"
@@ -4564,6 +4572,10 @@ msgstr "Wird von Matebot nicht verwendet"
 msgid "Not working"
 msgstr "Funktioniert nicht"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Nothing has reached this server yet."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "Noch nichts gemerkt"
@@ -4998,6 +5010,10 @@ msgstr ""
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "Präferenzen"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Preparing this server."
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6503,6 +6519,10 @@ msgstr "Das kann nicht rückgängig gemacht werden."
 msgid "This cannot be undone."
 msgstr "Dies kann nicht rückgängig gemacht werden."
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This card could not be shown."
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "dieser Computer"
@@ -6602,6 +6622,10 @@ msgstr "Dieser Server hat keine Browserautorisierung angefordert."
 #: src/pages/McpServersOverlay.tsx
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "Dieser Server ist bereits verbunden. Trenne zuerst die Verbindung, um ihn erneut zu autorisieren."
+
+#: src/pages/shell/message-cards.tsx
+msgid "This server is not responding."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6729,6 +6753,7 @@ msgstr "Testzeiträume erhalten weniger Stunden, um Missbrauch zu verhindern."
 msgid "Trusted sites"
 msgstr "Vertrauenswürdige Websites"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx

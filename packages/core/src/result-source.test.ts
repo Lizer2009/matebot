@@ -9,18 +9,6 @@ import { findResultSource, queryResultSource, RESULT_SOURCE_REGISTRY } from "./r
  * was allowed to see.
  */
 
-const csvSource = {
-  id: "csv-upload",
-  label: "Uploaded spreadsheet",
-  requiresConnection: null,
-  read: async (input: { window: { from: string; to: string } }) => ({
-    ok: true as const,
-    rows: [{ quarter: "Q3", total: String(input.window.from) }],
-    asOf: "2026-11-06T00:00:00.000Z",
-    units: "CNY",
-  }),
-};
-
 describe("RESULT_SOURCE_REGISTRY", () => {
   it("registers a source with its own connection requirement", () => {
     const source = findResultSource("csv-upload");

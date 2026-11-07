@@ -1,8 +1,10 @@
 import type { AgentToolExecutionObserver } from "@matebot/adapter-kit";
 import { toolResultTaintsRun } from "@matebot/core";
 import { isTerminatingReplyResult } from "./approval-effect.js";
+import { refuseRefusedDestinationShell } from "./egress-fallback-guard.js";
 import { refuseOutboundEmailShell } from "./email-shell-escape.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
+import { withEgressRefusalLedger } from "./network-address.js";
 import type { RunContext } from "./run-context.js";
 import { noteComputerTaskStep } from "./run-progress.js";
 import type { ToolHandler } from "./run-tool-gate.js";
@@ -77,7 +79,11 @@ export async function applyTool(
   observer?: AgentToolExecutionObserver,
 ) {
   try {
-    return await dispatchTool(ctx, name, args, executionId, observer);
+    // Every tool runs inside this run's refusal ledger, so a host the egress guard
+    // declines is remembered for the next tool rather than only for that one call.
+    return await withEgressRefusalLedger(ctx.state.egressRefusedHosts, () =>
+      dispatchTool(ctx, name, args, executionId, observer),
+    );
   } finally {
     // Editing its own profile returns only what this run wrote; a child's profile is another bot's.
     const ownProfile = name === "update_bot" && !argumentGiven(args.bot_id);
@@ -113,6 +119,11 @@ async function dispatchTool(
   if (name === "shell" || name === USER_COMPUTER_SHELL_TOOL) {
     const mailEscape = refuseOutboundEmailShell(ctx, args);
     if (mailEscape) return mailEscape;
+    // A refusal is about a destination. Shell is another route to the same place, so
+    // a command that names an already-refused host is turned down here too, before it
+    // runs. It matches literal addresses only — see the guard for what it cannot see.
+    const refusedTarget = refuseRefusedDestinationShell(ctx.state.egressRefusedHosts, args);
+    if (refusedTarget) return refusedTarget;
   }
   const request = await resolveToolRequest(ctx, name, args, executionId);
   if ("error" in request) return request;

@@ -1,4 +1,6 @@
+import { Trans } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
+import { Button } from "@matebot/ui-web";
 import { A2uiSurfaceHost } from "./A2uiSurfaceHost";
 import { EmailComposeEditor } from "./EmailComposeEditor";
 import type { EmailFieldName } from "./email-fields";
@@ -44,6 +46,9 @@ export function A2uiSurfaceCard({
 }) {
   const document = useA2uiSurfaceDocument({
     documentRef: block.documentRef,
+    // A republish keeps the ref and moves the revision, so the revision is what
+    // tells this card its content changed.
+    revision: block.draftVersion,
     messages,
     fetchDocument,
   });
@@ -108,12 +113,41 @@ export function A2uiSurfaceCard({
             onAction={onAction}
           />
         ) : (
+          /**
+           * Never a blank region. A published card whose document has not arrived,
+           * or whose load failed, says so and offers a way forward; the audit found
+           * an empty frame here where a calendar card should have been.
+           */
           <div
             data-testid="a2ui-surface-placeholder"
             data-loading={document.loading ? "true" : "false"}
             data-error={document.error ?? undefined}
-            className="text-[14px] text-muted-foreground"
-          />
+            role="status"
+            aria-live="polite"
+            className="flex flex-col gap-2 text-[14px] text-muted-foreground"
+          >
+            {document.loading ? (
+              <span>
+                <Trans>Loading this card…</Trans>
+              </span>
+            ) : (
+              <>
+                <span>
+                  <Trans>This card could not be shown.</Trans>
+                </span>
+                {document.error ? (
+                  <span data-testid="a2ui-surface-placeholder-reason" className="text-[13px]">
+                    {document.error}
+                  </span>
+                ) : null}
+                <div>
+                  <Button variant="secondary" onClick={() => document.reload()}>
+                    <Trans>Try again</Trans>
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>

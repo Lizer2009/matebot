@@ -87,13 +87,38 @@ describe("normalizeCalendarPlan", () => {
     riskLevel: "medium",
   };
 
-  it("adds the optional events field so the surface can collect entries", () => {
+  it("fills the slots the registered schema declares, not a different set", () => {
+    // A draft normalised to fields the schema does not declare rendered controls
+    // the card could not bind and omitted ones it needed — a calendar card with
+    // `events` twice and no start, end or timezone.
     const normalized = normalizeCalendarPlan(calendarPlan);
-    expect(normalized.fields.map((field) => field.name)).toEqual(["name", "events"]);
-    expect(normalized.fields.find((field) => field.name === "events")).toMatchObject({
-      required: false,
+    expect(normalized.fields.map((field) => field.name)).toEqual([
+      "name",
+      "start",
+      "end",
+      "timezone",
+      "allDay",
+    ]);
+    expect(normalized.fields.find((field) => field.name === "start")).toMatchObject({
+      required: true,
       status: "missing",
     });
+  });
+
+  it("carries a batch list through as data without turning it into a field", () => {
+    const normalized = normalizeCalendarPlan({
+      ...calendarPlan,
+      fields: [
+        ...calendarPlan.fields,
+        { name: "events", value: [{ name: "A" }], required: false, status: "resolved" as const },
+      ],
+    });
+    // The batch list still reaches the execute path...
+    expect(normalized.fields.some((field) => field.name === "events")).toBe(true);
+    // ...and the schema's own fields are all present beside it.
+    for (const name of ["name", "start", "end", "timezone", "allDay"]) {
+      expect(normalized.fields.some((field) => field.name === name)).toBe(true);
+    }
   });
 
   it("keeps a resolved name and leaves other intents untouched", () => {
@@ -108,7 +133,10 @@ describe("normalizeCalendarPlan", () => {
     expect(normalizeInteractionPlan(emailPlan).fields.map((field) => field.name)).toContain("to");
     expect(normalizeInteractionPlan(calendarPlan).fields.map((field) => field.name)).toEqual([
       "name",
-      "events",
+      "start",
+      "end",
+      "timezone",
+      "allDay",
     ]);
   });
 });
@@ -208,7 +236,8 @@ describe("present_interaction", () => {
           intent: "calendar.create",
           fields: expect.arrayContaining([
             expect.objectContaining({ name: "name" }),
-            expect.objectContaining({ name: "events" }),
+            expect.objectContaining({ name: "start" }),
+            expect.objectContaining({ name: "end" }),
           ]),
         }),
       }),

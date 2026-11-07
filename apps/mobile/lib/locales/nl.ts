@@ -567,6 +567,8 @@ export const NL_MESSAGES: Record<string, string> = {
   "Connect API key": "API-sleutel koppelen",
   "Connect MCP server {name}": "MCP-server {name} koppelen",
   "Connected.": "Gekoppeld.",
+  "Approved, not connected yet.": "Goedgekeurd, maar nog niet verbonden.",
+  "Approved, not connected yet: {reason}": "Goedgekeurd, maar nog niet verbonden: {reason}",
   "Context limit": "Contextlimiet",
   "Could not connect this provider": "Deze aanbieder koppelen mislukt",
   "Could not finish sign-in": "Aanmelden afronden mislukt",

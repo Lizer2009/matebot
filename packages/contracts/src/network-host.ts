@@ -56,6 +56,55 @@ export function normalizeHost(hostname: string): string {
   return canonical(hostname).replace(/\.$/, "");
 }
 
+/**
+ * One spelling per destination, for remembering a refusal.
+ *
+ * The same place can be written several ways: a trailing root dot (`example.com.`),
+ * a full or compressed IPv6 address, an IPv4 address written as one integer, or an
+ * IPv4-mapped IPv6 form. A guard that only remembered the spelling it was handed
+ * would let the next tool reach the same destination by writing it differently, so
+ * every comparison of "is this the address we refused" goes through this key.
+ */
+export function destinationKey(hostname: string): string {
+  const value = canonical(hostname).replace(/\.$/, "");
+  const v4 = parseIpv4(value);
+  if (v4 !== undefined) {
+    return `${v4 >>> 24}.${(v4 >>> 16) & 255}.${(v4 >>> 8) & 255}.${v4 & 255}`;
+  }
+  const v6 = parseIpv6(value);
+  if (v6 === undefined) return value;
+  // An IPv4-mapped address reaches the same place as its IPv4 form.
+  const mapped = mappedIpv4(v6);
+  if (mapped !== undefined)
+    return destinationKey(
+      `${mapped >>> 24}.${(mapped >>> 16) & 255}.${(mapped >>> 8) & 255}.${mapped & 255}`,
+    );
+  return formatIpv6(v6);
+}
+
+/** The canonical textual form of an IPv6 address: lowercase hex, longest zero run compressed. */
+function formatIpv6(v6: Ipv6): string {
+  const hex = v6.map((part) => part.toString(16));
+  let runStart = -1;
+  let runLength = 0;
+  for (let start = 0; start < hex.length; ) {
+    if (v6[start] !== 0) {
+      start += 1;
+      continue;
+    }
+    let end = start;
+    while (end < v6.length && v6[end] === 0) end += 1;
+    if (end - start > runLength) {
+      runStart = start;
+      runLength = end - start;
+    }
+    start = end;
+  }
+  // A single zero group is written out; only two or more are compressed.
+  if (runLength < 2) return hex.join(":");
+  return `${hex.slice(0, runStart).join(":")}::${hex.slice(runStart + runLength).join(":")}`;
+}
+
 /** 4 or 6 for an IP literal, 0 for anything else. Mirrors `node:net` `isIP`. */
 export function ipVersion(host: string): 0 | 4 | 6 {
   const value = canonical(host);

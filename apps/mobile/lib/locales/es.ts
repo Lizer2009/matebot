@@ -550,6 +550,8 @@ export const ES_MESSAGES: Record<string, string> = {
   "Connect API key": "Conectar clave de API",
   "Connect MCP server {name}": "Conectar el servidor MCP {name}",
   "Connected.": "Conectado.",
+  "Approved, not connected yet.": "Aprobado, pero aún no conectado.",
+  "Approved, not connected yet: {reason}": "Aprobado, pero aún no conectado: {reason}",
   "Context limit": "Límite de contexto",
   "Could not connect this provider": "No se pudo conectar este proveedor",
   "Could not finish sign-in": "No se pudo completar el inicio de sesión",

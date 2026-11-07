@@ -26,9 +26,20 @@ const EMAIL_REQUIRED_FIELDS = ["to", "subject", "body"] as const;
 const EMAIL_OPTIONAL_FIELDS = ["from", "cc"] as const;
 
 /** A calendar draft needs a name; its entries are optional in the first pass. */
+/**
+ * The calendar slots the registered capability declares.
+ *
+ * Kept equal to `CALENDAR_SCHEMA` in `interaction-capability.ts`. A draft that
+ * normalises to a different set renders fields the schema does not have and omits
+ * fields it does — which is how a calendar card came out with `events` twice and no
+ * start, end, or timezone at all.
+ */
 const CALENDAR_FIELDS: { name: string; required: boolean }[] = [
   { name: "name", required: true },
-  { name: "events", required: false },
+  { name: "start", required: true },
+  { name: "end", required: true },
+  { name: "timezone", required: false },
+  { name: "allDay", required: false },
 ];
 
 /** Fill missing email.compose slots so the surface always has the draft fields. */
@@ -54,16 +65,19 @@ export function normalizeEmailComposePlan(plan: InteractionPlan): InteractionPla
   return { ...plan, fields };
 }
 
-/** Fill the calendar slots so the resumed surface always has the name and entries. */
+/** Fill the calendar slots so the resumed surface always has the schema's fields. */
 export function normalizeCalendarPlan(plan: InteractionPlan): InteractionPlan {
   if (plan.intent !== "calendar.create" && plan.intent !== "calendar.compose") return plan;
   const byName = new Map(plan.fields.map((field) => [field.name, field]));
-  const known = new Set(CALENDAR_FIELDS.map((field) => field.name));
   const fields = CALENDAR_FIELDS.map((field) => {
     const existing = byName.get(field.name);
     if (existing) return existing;
     return { name: field.name, required: field.required, status: "missing" as const };
   });
+  // Any other field the model sent is carried through untouched, so a batch list
+  // still reaches the execute path. The surface renders the schema's fields; a
+  // field outside the schema is data, not a control.
+  const known = new Set(CALENDAR_FIELDS.map((field) => field.name));
   for (const field of plan.fields) {
     if (!known.has(field.name)) fields.push(field);
   }

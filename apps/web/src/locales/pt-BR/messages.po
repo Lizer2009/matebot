@@ -897,6 +897,10 @@ msgstr "Aprove este servidor para permitir que seu agente use suas ferramentas."
 msgid "Approved"
 msgstr ""
 
+#: src/pages/shell/message-cards.tsx
+msgid "Approved, not connected yet"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
 msgstr ""
@@ -3820,6 +3824,10 @@ msgstr ""
 msgid "Loading preview…"
 msgstr "Carregando Visualização…"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Loading this card…"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
 msgstr "Carregando provedores de voz..."
@@ -4564,6 +4572,10 @@ msgstr "Não usado pelo Matebot"
 msgid "Not working"
 msgstr "Não está funcionando"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Nothing has reached this server yet."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "Nada memorizado ainda"
@@ -4998,6 +5010,10 @@ msgstr ""
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "Preferências"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Preparing this server."
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6503,6 +6519,10 @@ msgstr "Não é possível desfazer."
 msgid "This cannot be undone."
 msgstr "Essa ação não pode ser desfeita."
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This card could not be shown."
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "Este computador"
@@ -6602,6 +6622,10 @@ msgstr "Este servidor não solicitou autorização do navegador."
 #: src/pages/McpServersOverlay.tsx
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "Este servidor já está conectado. Desconecte-o primeiro para autorizar novamente."
+
+#: src/pages/shell/message-cards.tsx
+msgid "This server is not responding."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6729,6 +6753,7 @@ msgstr "Testes têm menos horas para evitar abusos."
 msgid "Trusted sites"
 msgstr "Sites confiáveis"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx

@@ -1,4 +1,5 @@
 import type { MessageBlock } from "@matebot/contracts";
+import { mcpConnectionVerdict } from "@matebot/core";
 import { typeScale } from "@matebot/ui-tokens";
 import { useEffect, useState } from "react";
 import type { ViewProps } from "react-native";
@@ -46,6 +47,11 @@ export function McpApprovalCard({
   const tokens = useMobileTokens();
   const [localStatus, setLocalStatus] = useState<"pending" | "connected" | "dismissed">("pending");
   const [pendingAction, setPendingAction] = useState<"approve" | "dismiss" | null>(null);
+  /** The server's own last discovery outcome; approval alone is not health. */
+  const [health, setHealth] = useState<{
+    status: "unknown" | "installing" | "ok" | "error";
+    message: string | null;
+  } | null>(null);
   useEffect(() => {
     if (block.status === "connected" || block.status === "dismissed") return;
     setLocalStatus((current) =>
@@ -65,6 +71,24 @@ export function McpApprovalCard({
         await rpc("mcp/assignments/dismiss", { botId, serverId: block.serverId, threadId });
       }
       setLocalStatus(action === "approve" ? "connected" : "dismissed");
+      if (action === "approve") {
+        // Approval is recorded; the card still reports what the server actually did.
+        void Promise.resolve()
+          .then(() => rpc("mcp/servers/list", {}))
+          .then((servers) => {
+            const row = (
+              servers as Array<{
+                id: string;
+                health?: {
+                  status: "unknown" | "installing" | "ok" | "error";
+                  message: string | null;
+                };
+              }>
+            ).find((server) => server.id === block.serverId);
+            if (row?.health) setHealth(row.health);
+          })
+          .catch(() => undefined);
+      }
     } catch (reason) {
       Alert.alert(
         action === "approve" ? t("Could not approve this server") : t("Could not complete action"),
@@ -100,12 +124,25 @@ export function McpApprovalCard({
       {status !== "pending" ? (
         <Text
           style={{
-            color: status === "connected" ? tokens.success : tokens.mutedForeground,
+            color:
+              status === "connected" &&
+              mcpConnectionVerdict({ approved: true, health: health ?? undefined }).working
+                ? tokens.success
+                : tokens.mutedForeground,
             ...typeScale.secondary,
           }}
         >
           {status === "connected"
-            ? t("Connected.")
+            ? (() => {
+                const verdict = mcpConnectionVerdict({
+                  approved: true,
+                  health: health ?? undefined,
+                });
+                if (verdict.state === "connected") return t("Connected.");
+                if (verdict.detail)
+                  return t("Approved, not connected yet: {reason}", { reason: verdict.detail });
+                return t("Approved, not connected yet.");
+              })()
             : t("Dismissed. Reconnect anytime from MCP settings.")}
         </Text>
       ) : !readOnly ? (

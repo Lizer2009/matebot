@@ -431,6 +431,8 @@ export const RU_MESSAGES: Record<string, string> = {
   "Connect Treg": "Подключить Treg",
   Connected: "Подключено",
   "Connected.": "Подключено.",
+  "Approved, not connected yet.": "Одобрено, но ещё не подключено.",
+  "Approved, not connected yet: {reason}": "Одобрено, но ещё не подключено: {reason}",
   Copy: "Копировать",
   More: "Ещё",
   "Could not add source": "Не удалось добавить источник",

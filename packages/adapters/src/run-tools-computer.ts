@@ -172,6 +172,8 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
           await tool(ctx.providers.browser, await ctx.computer.get("tool", name), context, args, {
             desktopTools,
             downloads,
+            // A host the fetcher was refused cannot be reached through the browser.
+            refusedHosts: ctx.state.egressRefusedHosts,
           }),
           redactions(),
         )

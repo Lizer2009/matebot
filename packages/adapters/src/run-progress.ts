@@ -85,16 +85,35 @@ export async function createReplyState(
   return reply;
 }
 
-export function recordExplicitNoResponse(reply: ReplyState, text: string) {
-  reply.explicitNoResponse ||= isExactNoResponse(text) || /\bNO_RESPONSE\b/.test(text);
-}
-
 /** Durable interim messages only on genuinely long turns, capped per run. */
 export function canPublishDurableProgress(reply: ReplyState) {
   return (
     reply.steeringReplyPending ||
     midTurnProgressBudgetAllows(progressSinceBudgetStart(reply), Date.now() - reply.turnStartedAtMs)
   );
+}
+
+export function recordExplicitNoResponse(reply: ReplyState, text: string) {
+  reply.explicitNoResponse ||= isExactNoResponse(text) || /\bNO_RESPONSE\b/.test(text);
+}
+
+/**
+ * Whether a narration only repeats one already posted in this run.
+ *
+ * Deliberately conservative: it normalises whitespace and case and compares whole
+ * sentences against everything already sent, so a note with any new content is
+ * published. The audit's case was one conclusion restated after each command tail;
+ * this catches that without swallowing a genuinely different result. Nothing is
+ * compared across runs, so two runs reaching the same conclusion both report it.
+ */
+export function restatesPublishedNarration(reply: ReplyState, text: string): boolean {
+  const next = normalizeNarration(text);
+  if (!next) return false;
+  return reply.midTurnUserTexts.some((posted) => normalizeNarration(posted) === next);
+}
+
+function normalizeNarration(text: string): string {
+  return text.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 const BROWSER_AND_DESKTOP_TOOLS = new Set([
@@ -201,7 +220,11 @@ export async function publishMidTurnNarration(ctx: RunContext, beforeConnectCard
   // Text the redactor still holds back belongs to the text just taken out.
   reply.redactor.skip();
   const promotes = runPromotesMidTurnNarration(run.trigger);
+  // A note that only repeats one already posted this run is not a new bubble. It is
+  // held like any other unposted note, so the run still ends with the answer once.
+  const repeatsPostedNote = restatesPublishedNarration(reply, text);
   if (
+    !repeatsPostedNote &&
     text.length <= USER_PROGRESS_MESSAGE_MAX_LENGTH &&
     (canPublishDurableNarration(ctx) || (beforeConnectCard && promotes))
   ) {
@@ -222,11 +245,18 @@ export async function publishMidTurnNarration(ctx: RunContext, beforeConnectCard
   reply.discardedMidTurnNarration = true;
   reply.lastDiscardedMidTurnNarration = clampUserProgressMessage(text);
   if (promotes && !ctx.allowSilentEmptyRun) {
-    reply.workingNotes.push(text);
+    holdWorkingNote(reply, text);
     flushPendingTools(reply);
     reply.messageSegments = noteLastToolStep(reply.messageSegments, text);
   }
   return text;
+}
+
+/** Keep a note for the final reply, once: the same sentence held twice is still one note. */
+export function holdWorkingNote(reply: ReplyState, text: string) {
+  if (reply.workingNotes.some((note) => normalizeNarration(note) === normalizeNarration(text)))
+    return;
+  reply.workingNotes.push(text);
 }
 
 /**

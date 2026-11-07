@@ -566,6 +566,71 @@ function emailSurfaceMessages(): unknown[] {
   ];
 }
 
+/**
+ * A card whose document cannot be resolved must say so.
+ *
+ * The audit found an empty frame where a calendar card should have been, while
+ * the log showed the surface had been published. The region was drawn, but with
+ * nothing in it. These pin that every unresolved state renders readable content.
+ */
+describe("A2uiSurfaceCard when the document cannot be resolved", () => {
+  const block = {
+    kind: "a2ui_surface",
+    interactionId: "ix-1",
+    surfaceId: "surf-1",
+    protocolFamily: "v0_9",
+    draftVersion: 1,
+    intent: "calendar.create",
+    title: "Next week's schedule",
+    documentRef: "a2ui:interaction:ix-1:surface:surf-1",
+  } satisfies A2uiSurfaceBlock;
+
+  it("shows a reason and a retry instead of a blank region with no fetcher", () => {
+    act(() => root.render(<A2uiSurfaceCard block={block} />));
+    const placeholder = container.querySelector('[data-testid="a2ui-surface-placeholder"]');
+    expect(placeholder).not.toBeNull();
+    // The old markup was an empty div: no text at all.
+    expect((placeholder?.textContent ?? "").trim().length).toBeGreaterThan(0);
+    expect(container.textContent).toContain("could not be shown");
+    expect(container.textContent).toContain("Try again");
+  });
+
+  it("says it is loading while a fetch is in flight", async () => {
+    let resolve: ((value: unknown[]) => void) | undefined;
+    const fetchDocument = () =>
+      new Promise<unknown[]>((done) => {
+        resolve = done;
+      });
+    act(() => root.render(<A2uiSurfaceCard block={block} fetchDocument={fetchDocument} />));
+    expect(container.textContent).toContain("Loading this card");
+    await act(async () => {
+      resolve?.([{ createSurface: { surfaceId: "surf-1" } }]);
+      await Promise.resolve();
+    });
+  });
+
+  it("explains a failed load and offers to load again", async () => {
+    const fetchDocument = vi.fn(async () => {
+      throw new Error("boom");
+    });
+    await act(async () => {
+      root.render(<A2uiSurfaceCard block={block} fetchDocument={fetchDocument} />);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(
+      container.querySelector('[data-testid="a2ui-surface-placeholder-reason"]')?.textContent,
+    ).toBe("boom");
+    const retry = container.querySelector("button");
+    expect(retry?.textContent).toContain("Try again");
+    await act(async () => {
+      retry?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(fetchDocument.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 function setControlValue(element: HTMLInputElement | HTMLTextAreaElement, value: string) {
   const prototype =
     element instanceof HTMLTextAreaElement

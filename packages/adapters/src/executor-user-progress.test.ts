@@ -597,6 +597,26 @@ describe("notes that can't be posted as messages", () => {
     });
   });
 
+  /**
+   * A tool call can be followed from what was asked to what came back.
+   *
+   * The audit could not tie a completion to the request that produced it. Both
+   * events already carry the same execution id, which is what makes the pair
+   * joinable; this asserts it on the events a run actually appends rather than on
+   * the source that writes them.
+   */
+  it("pairs each request with its completion by execution id", async () => {
+    const { append } = await runTurn("", false);
+    const events = append.mock.calls.map(([event]) => event);
+    const calls = events.filter((event) => event.type === "agent.tool.called");
+    const completions = events.filter((event) => event.type === "agent.tool.completed");
+    expect(calls.length).toBeGreaterThan(0);
+    const calledIds = calls.map((event) => event.payload.executionId).filter(Boolean);
+    const completedIds = completions.map((event) => event.payload.executionId).filter(Boolean);
+    // Every completion the run recorded joins a request it also recorded.
+    for (const id of completedIds) expect(calledIds).toContain(id);
+  });
+
   it("keeps the last note as the reply when nothing comes after the last step", async () => {
     const { finalizeRun } = await runTurn("", false);
     expect(finalText(finalizeRun)).toBe("I will check that.");
@@ -1702,4 +1722,117 @@ it("terminal cancellation wins over a runtime's open thinking marker", async () 
   expect(result.finalizeRun).not.toHaveBeenCalledWith(
     expect.objectContaining({ outcome: "failed" }),
   );
+});
+
+/**
+ * A repeated note is one bubble, and nothing else is folded away.
+ *
+ * The audit saw six bubbles restating one conclusion, each the tail of a command.
+ * These drive the real turn loop: what is held back is a note that repeats one
+ * already posted in the same run, while a different result, the person's own
+ * answer, and a restart's fresh statement each still reach the chat.
+ */
+describe("a repeated conclusion does not become another bubble", () => {
+  const sentTexts = (messages: Awaited<ReturnType<typeof runTurn>>["messages"]) =>
+    messages.map((message) =>
+      message.blocks.map((block) => ("text" in block ? block.text : "")).join(""),
+    );
+  const finalText = (finalizeRun: Awaited<ReturnType<typeof runTurn>>["finalizeRun"]) =>
+    finalizeRun.mock.calls[0]![0].blocks.filter((block) => block.kind === "text")
+      .map((block) => block.text)
+      .join("");
+
+  const conclusion = "The conclusion is unchanged, nothing more to do.";
+
+  const turn = (steps: AgentRuntimeEvent[], options: Parameters<typeof runTurn>[5] = {}) =>
+    runTurn("", false, undefined, [], "fyi", {
+      runtimeEvents: [...steps, { type: "done", text: "" }],
+      ...options,
+    });
+
+  it("posts it once when the model restates it after the next command", async () => {
+    const { messages, finalizeRun } = await turn([
+      { type: "steered", fromRunUser: true },
+      { type: "text", text: conclusion },
+      { type: "tool", name: "read_file", args: {}, executionId: "call-1" },
+      { type: "steered", fromRunUser: true },
+      { type: "text", text: `  ${conclusion}  ` },
+      { type: "tool", name: "read_file", args: {}, executionId: "call-2" },
+      { type: "steered", fromRunUser: true },
+      { type: "text", text: conclusion },
+      { type: "tool", name: "read_file", args: {}, executionId: "call-3" },
+    ]);
+    expect(sentTexts(messages)).toEqual([conclusion]);
+    // The held-back repeats come back once, as the answer, rather than as three bubbles.
+    expect(finalText(finalizeRun)).toBe(conclusion);
+  });
+
+  it("publishes a genuinely different result after it", async () => {
+    const { messages } = await turn([
+      { type: "steered", fromRunUser: true },
+      { type: "text", text: conclusion },
+      { type: "tool", name: "read_file", args: {}, executionId: "call-1" },
+      { type: "steered", fromRunUser: true },
+      { type: "text", text: "The fourth supplier replied: two days late." },
+      { type: "tool", name: "read_file", args: {}, executionId: "call-2" },
+    ]);
+    expect(sentTexts(messages)).toEqual([
+      conclusion,
+      "The fourth supplier replied: two days late.",
+    ]);
+  });
+
+  it("still publishes the person's own answer, even when it repeats nothing new", async () => {
+    const { messages } = await turn([
+      { type: "steered", fromRunUser: true },
+      { type: "text", text: conclusion },
+      { type: "tool", name: "read_file", args: {}, executionId: "call-1" },
+      // The person asked again; the answer is theirs to see, posted at once.
+      { type: "steered", fromRunUser: true },
+      { type: "text", text: "Yes, still on it." },
+      { type: "tool", name: "read_file", args: {}, executionId: "call-2" },
+    ]);
+    expect(sentTexts(messages)).toEqual([conclusion, "Yes, still on it."]);
+  });
+
+  /**
+   * A restart is a new attempt of the same run. What that attempt already posted is
+   * read back, so it cannot be posted a second time as though it were new work.
+   */
+  it("holds a restatement of what an earlier attempt of this run already posted", async () => {
+    const { messages, finalizeRun } = await runTurn("", false, undefined, [], "fyi", {
+      trigger: "reaction",
+      priorProgressText: conclusion,
+      runtimeEvents: [
+        { type: "steered", fromRunUser: true },
+        { type: "text", text: conclusion },
+        { type: "tool", name: "read_file", args: {}, executionId: "call-1" },
+        { type: "steered", fromRunUser: true },
+        { type: "text", text: conclusion },
+        { type: "tool", name: "read_file", args: {}, executionId: "call-2" },
+        { type: "done", text: "" },
+      ],
+    });
+    expect(sentTexts(messages)).toEqual([]);
+    // It is not repeated as the answer either: this run already said it.
+    expect(finalText(finalizeRun)).toBe("");
+  });
+
+  /**
+   * Cancellation stops the run; it does not republish what came before it. The note
+   * written before the cancellation was a real message at the time, so it stands —
+   * and nothing written after it reaches the chat.
+   */
+  it("posts nothing written after the run was cancelled", async () => {
+    const { messages, finalizeRun } = await runTurn("", false, undefined, [], "fyi", {
+      runtimeEvents: [
+        { type: "steered", fromRunUser: true },
+        { type: "text", text: "Starting on the fourth supplier." },
+        { type: "tool", name: "read_file", args: {}, executionId: "call-1" },
+      ],
+      runtimeCancel: true,
+    });
+    expect(sentTexts(messages)).toEqual(["Starting on the fourth supplier."]);
+    expect(finalizeRun).not.toHaveBeenCalledWith(expect.objectContaining({ outcome: "failed" }));
+  });
 });

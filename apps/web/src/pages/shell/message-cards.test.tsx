@@ -13,12 +13,17 @@ const calls = vi.hoisted(() => ({
     authorizationUrl: "https://identity.example.test/authorize",
   })),
   approve: vi.fn(async () => ({ ok: true })),
+  listServers: vi.fn(async () => [] as unknown[]),
 }));
 vi.mock("../../lib/rpc", () => ({
   rpc: {
     connections: { begin: calls.begin, complete: calls.complete },
     onboarding: { appConnected: calls.mark },
-    mcp: { oauth: { begin: calls.oauthBegin }, assignments: { approve: calls.approve } },
+    mcp: {
+      oauth: { begin: calls.oauthBegin },
+      assignments: { approve: calls.approve },
+      servers: { list: calls.listServers },
+    },
   },
 }));
 vi.mock("@lingui/react/macro", () => ({
@@ -92,6 +97,99 @@ it("approves the bot after OAuth completes while a COOP popup keeps focus", asyn
     expect(vi.getTimerCount()).toBe(0);
   } finally {
     await act(async () => root.unmount());
+  }
+});
+
+/**
+ * Approval is not health.
+ *
+ * The audit found a card reading `Connected` on a server whose next call reported
+ * an invalid key. Approval records that the user allowed it; only a successful
+ * discovery means it works, so that is what the card must require.
+ */
+it("does not say Connected for an approved server that failed to reach", async () => {
+  calls.listServers.mockResolvedValueOnce([
+    {
+      id: "server",
+      health: { status: "error", message: "Invalid or revoked API key" },
+      oauthStatus: "connected",
+    },
+  ]);
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(async () =>
+      root.render(
+        <McpApprovalCard
+          botId="bot"
+          threadId="thread"
+          block={{
+            kind: "mcp_approval",
+            name: "Example",
+            serverId: "server",
+            transport: "streamable_http",
+            endpoint: "https://example.test/mcp",
+            needsOAuth: false,
+            status: "pending",
+          }}
+        />,
+      ),
+    );
+    await act(async () => (host.querySelector("button") as HTMLButtonElement | null)?.click());
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const text = host.textContent ?? "";
+    expect(text).not.toContain("Connected");
+    // The server's own failure reason reaches the user instead.
+    expect(text).toContain("Invalid or revoked API key");
+    expect(text).toContain("Approved, not connected yet");
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
+    calls.listServers.mockReset();
+    calls.listServers.mockResolvedValue([]);
+  }
+});
+
+it("says Connected only when discovery reported ok", async () => {
+  calls.listServers.mockResolvedValueOnce([
+    { id: "server", health: { status: "ok", message: null }, oauthStatus: "none" },
+  ]);
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(async () =>
+      root.render(
+        <McpApprovalCard
+          botId="bot"
+          threadId="thread"
+          block={{
+            kind: "mcp_approval",
+            name: "Example",
+            serverId: "server",
+            transport: "streamable_http",
+            endpoint: "https://example.test/mcp",
+            needsOAuth: false,
+            status: "pending",
+          }}
+        />,
+      ),
+    );
+    await act(async () => (host.querySelector("button") as HTMLButtonElement | null)?.click());
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(host.textContent).toContain("Connected");
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
+    calls.listServers.mockReset();
+    calls.listServers.mockResolvedValue([]);
   }
 });
 
