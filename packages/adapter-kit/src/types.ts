@@ -235,6 +235,11 @@ export interface AgentToolCompletion {
   name: string;
   executionId: string;
   durationMs: number;
+  /**
+   * The registrable host a network tool was pointed at, when it had one. Only the
+   * host: a path or query can carry a token or a private phrase and is never recorded.
+   */
+  host?: string;
   result?: unknown;
   error?: unknown;
   paused?: boolean;

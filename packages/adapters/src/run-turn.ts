@@ -79,7 +79,11 @@ import {
 } from "./silent-reply.js";
 import { isStrategicInitiativeRun } from "./strategic-initiative.js";
 import { takeoverCheckpointOf } from "./takeover-resume.js";
-import { appendToolCompletionAudit, toolCompletionFromResult } from "./tool-completion-audit.js";
+import {
+  appendToolCompletionAudit,
+  reachableHostOf,
+  toolCompletionFromResult,
+} from "./tool-completion-audit.js";
 import {
   advanceOverLimitActionCalls,
   advanceToolCallLoopGuard,
@@ -562,6 +566,9 @@ async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promi
           name: event.name,
           executionId: event.executionId,
           durationMs: Date.now() - startedAt,
+          // Which site a network tool reached. Only the host: the path and query
+          // can carry a token or a private phrase and are deliberately dropped.
+          ...(reachableHostOf(event.args) ? { host: reachableHostOf(event.args)! } : {}),
         },
         result,
       ),

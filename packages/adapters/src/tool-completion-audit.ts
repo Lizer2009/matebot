@@ -47,6 +47,9 @@ export function toolCompletionAuditPayload(
   if (error !== undefined) {
     payload.error = sanitizeConnectorError(error, secrets);
   }
+  // Where a network tool went, so a run's path can be traced to a site without
+  // recording the URL. Redacted like every other string here.
+  if (completion.host) payload.host = redactSecrets(completion.host, secrets);
   if (!isAuditableToolResult(completion.result)) return payload;
 
   payload.contentTypes = completion.result.content.flatMap((part) => {
@@ -72,6 +75,29 @@ export function toolCompletionAuditPayload(
     payload.height = record.height;
   }
   return payload;
+}
+
+/**
+ * The registrable host a network tool reached, or nothing.
+ *
+ * The audit could see which tool ran and whether it failed, but not where it was
+ * pointed — so a run that opened a product documentation page could not be traced
+ * to the address that was opened. The host is enough to answer that and nothing
+ * more: the path and query are omitted because they can carry a token, a search
+ * phrase, or a private identifier, and the scheme is dropped because it adds
+ * nothing to the question "which site".
+ */
+export function reachableHostOf(args: Record<string, unknown>): string | undefined {
+  const raw = args.url ?? args.endpoint ?? args.href;
+  if (typeof raw !== "string") return undefined;
+  try {
+    const host = new URL(raw).hostname.trim().toLowerCase();
+    if (!host) return undefined;
+    // A bare IP or a very long name is not a site name worth the space in a log.
+    return host.length <= 253 ? host : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function appendToolCompletionAudit(
