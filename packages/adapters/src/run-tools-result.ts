@@ -47,6 +47,8 @@ export type PresentResultArgs = {
   year?: unknown;
   freshness?: unknown;
   columns?: unknown;
+  /** True when the assistant chose the period because the user named none. */
+  defaultedWindow?: unknown;
   /** A specific uploaded file to read, when the model knows which one. */
   artifactId?: unknown;
   rows?: unknown;
@@ -230,6 +232,7 @@ export async function surfaceFromArgs(
         ...(parseMetrics(args.metrics) ? { metrics: parseMetrics(args.metrics) } : {}),
         ...(parseColumns(args.columns) ? { columns: parseColumns(args.columns) } : {}),
         ...(text(args.artifactId) ? { artifactId: text(args.artifactId) } : {}),
+        ...(args.defaultedWindow === true ? { defaultedWindow: true } : {}),
       },
       deps,
     );

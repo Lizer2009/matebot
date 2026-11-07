@@ -260,6 +260,7 @@ function provenanceLine(provenance: {
   freshness?: string;
   window?: { from: string; to: string };
   attribution?: "source" | "model";
+  defaultedWindow?: boolean;
 }): string {
   const parts = [provenance.source];
   if (provenance.year !== undefined) parts.push(String(provenance.year));
@@ -268,6 +269,7 @@ function provenanceLine(provenance: {
   parts.push(`as of ${provenance.asOf.slice(0, 10)}`);
   if (provenance.freshness) parts.push(`fresh ${provenance.freshness.slice(0, 10)}`);
   if (provenance.attribution !== "source") parts.push("not from a data source");
+  if (provenance.defaultedWindow) parts.push("dates assumed");
   return parts.join(" · ");
 }
 

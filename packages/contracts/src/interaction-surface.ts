@@ -129,6 +129,12 @@ export const ResultProvenanceSchema = z.object({
    * came from a data source is never shown as if it did.
    */
   attribution: z.enum(["source", "model"]).optional(),
+  /**
+   * Set when the period on the card was chosen by the assistant because the user
+   * never named one. The card says so, so a default is never read back as the
+   * user's own choice.
+   */
+  defaultedWindow: z.boolean().optional(),
 });
 export type ResultProvenance = z.infer<typeof ResultProvenanceSchema>;
 

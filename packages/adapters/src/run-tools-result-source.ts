@@ -26,6 +26,8 @@ export type SourceBackedResultInput = {
   columns?: ResultColumn[];
   /** A specific uploaded file to read, for the file source. */
   artifactId?: string;
+  /** True when the assistant chose the window because the user named none. */
+  defaultedWindow?: boolean;
 };
 
 export type ResolveResultRowsDeps = {
@@ -111,6 +113,10 @@ export async function resolveSourceBackedRows(
     ok: true,
     rows,
     ...(columns ? { columns } : {}),
-    provenance: { ...queried.provenance, attribution: "source" },
+    provenance: {
+      ...queried.provenance,
+      attribution: "source",
+      ...(input.defaultedWindow ? { defaultedWindow: true } : {}),
+    },
   };
 }
