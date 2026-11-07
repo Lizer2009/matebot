@@ -958,7 +958,7 @@ export function threadsRoutes(ctx: RouterContext) {
             },
             listOpenSurfaces: async () => open,
             applyField: async (fieldInput) => {
-              await updateInteractionFieldService(deps.prisma, {
+              const written = await updateInteractionFieldService(deps.prisma, {
                 spaceId: fieldInput.spaceId,
                 threadId: fieldInput.threadId,
                 botId: fieldInput.botId || botId || "",
@@ -967,7 +967,7 @@ export function threadsRoutes(ctx: RouterContext) {
                 name: fieldInput.name,
                 value: fieldInput.value,
               });
-              return { draftVersion: fieldInput.expectedDraftVersion + 1 };
+              return { draftVersion: written.draftVersion };
             },
           },
           {

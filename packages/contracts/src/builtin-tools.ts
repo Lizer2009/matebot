@@ -49,6 +49,7 @@ export const BUILTIN_TOOL_NAMES = [
   "save_page",
   "present_interaction",
   "edit_interaction",
+  "cancel_interaction",
   "present_result",
   "refresh_result",
   "generate_image",

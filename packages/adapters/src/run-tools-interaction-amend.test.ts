@@ -90,6 +90,8 @@ function harness() {
         leaseOwner: null,
         firstResponseAt: null,
       }),
+      // A published surface counts as first feedback, so the event write records it.
+      updateMany: async () => ({ count: 1 }),
     },
     event: { create: async () => ({ id: "e", seq: 1 }) },
     $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),

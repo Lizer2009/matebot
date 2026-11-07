@@ -46,10 +46,18 @@ describe("multi-turn corpus gate", () => {
     expect(implemented).toContain(8);
   });
 
-  it("does not claim calendar, chart, or GitHub capability is implemented", () => {
+  it("does not claim sales, file analysis, or GitHub capability is implemented", () => {
     const implemented = new Set(corpusByStatus("implemented").map((row) => row.id));
-    // 1/2 sales trend (Phase 2), 4/5 calendar (Phase 1), 9 GitHub (Phase 3).
-    for (const id of [1, 2, 4, 5, 9]) expect(implemented.has(id)).toBe(false);
+    // 1/2 sales trend and 6 file analysis (Phase 2), 9 GitHub (Phase 3): no real
+    // data source is wired for these, so a card would have to invent numbers.
+    for (const id of [1, 2, 6, 9]) expect(implemented.has(id)).toBe(false);
+  });
+
+  it("claims the calendar query and create rows, which now have a real path", () => {
+    const implemented = new Set(corpusByStatus("implemented").map((row) => row.id));
+    // Query reads through the registered calendar source and renders a result;
+    // create renders a draft whose single action runs the shared effect path.
+    for (const id of [4, 5]) expect(implemented.has(id)).toBe(true);
   });
 
   it("keeps each scenario's expectation internally consistent", () => {
@@ -72,8 +80,9 @@ describe("multi-turn corpus gate", () => {
 
   it("declares the multi-turn requirement on the rows that need it", () => {
     const multiTurn = MULTI_TURN_CORPUS.filter((row) => row.multiTurn);
-    // Same-card edit (2, 7), ambiguous reference (10), resume (11), repeat (12).
-    expect(multiTurn.map((row) => row.id).sort((a, b) => a - b)).toEqual([2, 7, 10, 11, 12]);
+    // Same-card edit (2, 7), calendar create then edit (5), ambiguous reference
+    // (10), resume (11), repeat (12).
+    expect(multiTurn.map((row) => row.id).sort((a, b) => a - b)).toEqual([2, 5, 7, 10, 11, 12]);
   });
 });
 

@@ -85,28 +85,23 @@ export const MULTI_TURN_CORPUS: readonly CorpusScenario[] = [
     prompt: "下周日程",
     class: "QUERY",
     phase: "phase1",
-    status: "deferred",
-    implementingPhase: "phase1",
+    status: "implemented",
     rendersSurface: true,
     surfaceKind: "result",
     expectsAction: false,
     multiTurn: false,
-    safeBehaviour: "日历查询结果卡未实现；禁止把「查询」当成「创建」，当前用对话回答。",
   },
   {
     id: 5,
     prompt: "帮我约会议（缺时间）",
     class: "CREATE",
     phase: "phase1",
-    status: "deferred",
-    implementingPhase: "phase1",
+    status: "implemented",
     rendersSurface: true,
     surfaceKind: "form",
-    // Once Phase 1 lands this row gains a confirmable create action.
-    expectsAction: false,
-    multiTurn: false,
-    safeBehaviour:
-      "日历编辑器与创建动作未实现；registry 标记 calendar.create implemented=false，不出可点按钮。",
+    // A create draft ends in one confirmable Create gesture.
+    expectsAction: true,
+    multiTurn: true,
   },
   {
     id: 6,

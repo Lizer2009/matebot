@@ -201,7 +201,7 @@ export function inferScript(
   // would, so an end-to-end test can exercise the real card pipeline. These are
   // explicit imperative prompts, matching the `call save_page with ...` style.
   const a2ui =
-    /^(?:@\S+\s+)?call (present_interaction|present_result|refresh_result|edit_interaction) with (\{[\s\S]+\})$/.exec(
+    /^(?:@\S+\s+)?call (present_interaction|present_result|refresh_result|edit_interaction|cancel_interaction) with (\{[\s\S]+\})$/.exec(
       words.trim(),
     );
   if (a2ui) {

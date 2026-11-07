@@ -806,6 +806,25 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "cancel_interaction",
+    description:
+      "Discard an editable card the user no longer wants, when they say to cancel, drop it, or never mind. Pass the revision the card shows. A draft that has not run is cancelled on the same card. If the card already ran, or its action is still in flight, the server refuses and explains why: cancelling would not undo what happened. It never sends, creates, or undoes anything. After it succeeds, reply in one short sentence.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        interactionId: {
+          type: "string",
+          description: "The card to cancel. Omit when only one is open.",
+        },
+        revision: {
+          type: "number",
+          description: "The draft revision shown on the card.",
+        },
+      },
+      required: ["revision"],
+    },
+  },
+  {
     name: "present_result",
     description:
       "Show a read-only result card in the chat, when the user asks to see numbers, a summary, or a trend. Prefer naming a registered sourceId with from/to and optional metrics: the server then reads the data itself and computes sums and averages, so nothing is invented. Only pass rows yourself when you already have real numbers from a tool result in this turn; those rows are labelled on the card as not coming from a data source. With no real data, ask the user where the numbers should come from instead. It displays only; it sends and changes nothing. After it publishes, reply in one short sentence.",

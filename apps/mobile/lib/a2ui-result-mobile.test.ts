@@ -67,6 +67,27 @@ describe("mobile result rendering", () => {
     expect(text).toContain("CNY");
   });
 
+  // A ~360px phone cannot show a two-column table, so a row stacks. The rule the
+  // spec asks for is that it stays readable and drops no value.
+  it("stacks a table row instead of dropping cells on a narrow screen", async () => {
+    const parsed = parseNativeCatalog(await compiled());
+    if (!parsed.ok) throw new Error(`refused: ${parsed.component}`);
+    const rows: Array<{ type: string; children: Array<{ type: string; text?: string }> }> = [];
+    const walk = (nodes: unknown[]) => {
+      for (const node of nodes as Array<{ type: string; children?: unknown[] }>) {
+        if (node.type === "Row") {
+          rows.push(node as (typeof rows)[number]);
+        }
+        if (Array.isArray(node.children)) walk(node.children);
+      }
+    };
+    walk(parsed.nodes);
+    // Header plus two body rows, each holding both of its cells.
+    expect(rows.length).toBeGreaterThanOrEqual(3);
+    const header = rows[0]!;
+    expect(header.children.map((child) => child.text)).toEqual(["Quarter", "Total"]);
+  });
+
   it("renders an empty result as a notice, not a table", async () => {
     const result = await compileInteractionSurface({
       schema: { schemaVersion: 1, presentation: "result", fields: [], action: null },

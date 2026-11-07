@@ -579,7 +579,21 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
-                  onDiscard={() => undefined}
+                  onDiscard={
+                    botId || groupId
+                      ? async () => {
+                          // Discarding a draft the user has not run is a cancel,
+                          // and the server decides from the recorded state whether
+                          // that is still possible.
+                          await rpc.threads.cancelInteraction({
+                            ...(botId ? { botId } : { groupId: groupId! }),
+                            interactionId: block.interactionId,
+                            draftVersion: Number(block.draftVersion),
+                          });
+                          await onRefresh();
+                        }
+                      : undefined
+                  }
                 />
               </div>
             );

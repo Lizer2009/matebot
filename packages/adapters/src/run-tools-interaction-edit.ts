@@ -394,7 +394,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
     applyField: async (input) => {
       // The same write the card's own field edit performs, including the
       // revision bump and the republish of this surface.
-      await updateInteractionFieldService(prisma, {
+      const written = await updateInteractionFieldService(prisma, {
         spaceId: input.spaceId,
         threadId: input.threadId,
         botId: input.botId || run.botId,
@@ -403,7 +403,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         name: input.name,
         value: input.value,
       });
-      return { draftVersion: input.expectedDraftVersion + 1 };
+      return { draftVersion: written.draftVersion };
     },
   };
 }
