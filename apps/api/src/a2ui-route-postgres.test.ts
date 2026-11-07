@@ -226,3 +226,93 @@ verify("threads.editInteraction against a real database", () => {
     expect(row?.slots).not.toMatchObject({ subject: "hijack" });
   });
 });
+
+/**
+ * The rules that only a real database can prove: the value the person typed
+ * survives a model edit, cancelling a draft persists and keeps its surface, and
+ * a record that already ran is never edited in place.
+ */
+verify("field protection, cancel, and executed records against a real database", () => {
+  const ixId = "a2ui-rt-protect";
+  const surfId = "a2ui-rt-protect-surf";
+
+  async function seed(status: string, planOverride?: unknown) {
+    await runAsSystem("a2ui protect fixture", async () => {
+      await prisma.$executeRaw`DELETE FROM interaction_surfaces WHERE "interactionId" = ${ixId}`;
+      await prisma.$executeRaw`DELETE FROM interactions WHERE id = ${ixId}`;
+      await prisma.$executeRaw`INSERT INTO interactions (id, "spaceId", "threadId", "runId", intent, status, "draftVersion", plan, slots, title, "createdAt", "updatedAt")
+        VALUES (${ixId}, ${spaceId}, ${threadId}, ${`${spaceId}-run`}, 'email.compose', ${status}, 2, ${JSON.stringify(planOverride ?? plan)}::jsonb, ${JSON.stringify({ to: "a@example.com", subject: "Hi", body: "Hello" })}::jsonb, 'Email', now(), now())`;
+      await prisma.$executeRaw`INSERT INTO interaction_surfaces (id, "interactionId", "surfaceId", "protocolFamily", document, "draftVersion", "createdAt", "updatedAt")
+        VALUES (${`${surfId}-row`}, ${ixId}, ${surfId}, 'v0_9', '[]'::jsonb, 2, now(), now())`;
+    });
+  }
+
+  it("keeps a value the person typed when a model edit arrives later", async () => {
+    process.env.FEATURE_A2UI = "1";
+    // The card's own control runs first and stamps the field as the user's.
+    await seed("ready_for_review");
+    const handler = router(deps());
+    const typed = await rpc(handler, "threads/updateInteractionField", {
+      botId,
+      interactionId: ixId,
+      expectedDraftVersion: 2,
+      name: "subject",
+      value: "我写的主题",
+    });
+    expect(typed.status).toBe(200);
+
+    // A model edit for the same field arrives afterwards.
+    const edited = await rpc(handler, "threads/editInteraction", {
+      botId,
+      interactionId: ixId,
+      revision: 3,
+      fields: { subject: "model subject" },
+    });
+    expect(edited.status).toBe(200);
+
+    const row = await runAsTenant({ spaceId, userId }, () =>
+      prisma.interaction.findUnique({ where: { id: ixId } }),
+    );
+    // The typed value is still there, read back from Postgres.
+    expect(row?.slots).toMatchObject({ subject: "我写的主题" });
+  });
+
+  it("cancels a draft and persists that state on the same surface", async () => {
+    process.env.FEATURE_A2UI = "1";
+    await seed("ready_for_review");
+    const handler = router(deps());
+    const cancelled = await rpc(handler, "threads/cancelInteraction", {
+      botId,
+      interactionId: ixId,
+      draftVersion: 2,
+    });
+    expect(cancelled.status).toBe(200);
+
+    const row = await runAsTenant({ spaceId, userId }, () =>
+      prisma.interaction.findUnique({ where: { id: ixId } }),
+    );
+    expect(row?.status).toBe("cancelled");
+    const surfaces = await runAsTenant({ spaceId, userId }, () =>
+      prisma.interactionSurface.count({ where: { interactionId: ixId } }),
+    );
+    // The card is republished in place, not deleted and not duplicated.
+    expect(surfaces).toBe(1);
+  });
+
+  it("refuses to cancel a record that already executed", async () => {
+    process.env.FEATURE_A2UI = "1";
+    await seed("succeeded");
+    const handler = router(deps());
+    const refused = await rpc(handler, "threads/cancelInteraction", {
+      botId,
+      interactionId: ixId,
+      draftVersion: 2,
+    });
+    expect(refused.status).toBe(409);
+    const row = await runAsTenant({ spaceId, userId }, () =>
+      prisma.interaction.findUnique({ where: { id: ixId } }),
+    );
+    // The record of what happened is unchanged.
+    expect(row?.status).toBe("succeeded");
+  });
+});
