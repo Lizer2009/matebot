@@ -190,8 +190,3 @@ export async function queryResultSource(
     ...(read.totalRows !== undefined ? { totalRows: read.totalRows } : {}),
   };
 }
-
-/** What to say when no source is configured, instead of inventing numbers. */
-export function describeUnavailableSource(): string {
-  return "No data source is configured for this request. Tell me where the numbers should come from and I will read from there.";
-}

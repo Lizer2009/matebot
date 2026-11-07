@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ResultSourceReadInput } from "./result-source.js";
-import {
-  describeUnavailableSource,
-  findResultSource,
-  queryResultSource,
-  RESULT_SOURCE_REGISTRY,
-} from "./result-source.js";
+import { findResultSource, queryResultSource, RESULT_SOURCE_REGISTRY } from "./result-source.js";
 
 /**
  * A result re-query reads through a *registered* source, never an endpoint the
@@ -124,14 +119,5 @@ describe("queryResultSource", () => {
     expect(result).toMatchObject({ ok: false, error: "invalid_window" });
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
-  });
-});
-
-describe("describeUnavailableSource", () => {
-  // The honest fallback when no source is configured.
-  it("asks for a source rather than showing invented numbers", () => {
-    const text = describeUnavailableSource();
-    expect(text).toMatch(/source/i);
-    expect(text).not.toMatch(/\d/);
   });
 });

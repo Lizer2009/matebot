@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { batchIsRequested, batchResultRows, summarizeBatch } from "./calendar-batch.js";
+import { batchResultRows, summarizeBatch } from "./calendar-batch.js";
 
 /**
  * A partial batch must be distinguishable from a complete one.
@@ -69,12 +69,5 @@ describe("batchResultRows", () => {
       { item: "B", state: "failed", error: "declined" },
     ]);
     expect(columns.map((column) => column.key)).toEqual(["item", "state", "error"]);
-  });
-});
-
-describe("batchIsRequested", () => {
-  it("does not fan a single request out into a batch", () => {
-    expect(batchIsRequested({ items: ["one"] })).toBe(false);
-    expect(batchIsRequested({ items: ["one", "two"] })).toBe(true);
   });
 });

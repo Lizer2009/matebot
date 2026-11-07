@@ -80,11 +80,3 @@ export function batchResultRows(items: readonly BatchItem[]): {
     ],
   };
 }
-
-/**
- * Whether a batch may be attempted at all. Batch creation only happens when the
- * user asked for several items; a single request never fans out on its own.
- */
-export function batchIsRequested(input: { items: readonly unknown[] }): boolean {
-  return input.items.length > 1;
-}
