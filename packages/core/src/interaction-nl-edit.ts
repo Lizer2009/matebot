@@ -1,4 +1,7 @@
-import type { InteractionSurfaceSchema } from "@matebot/contracts";
+import type { InteractionPlan, InteractionSurfaceSchema } from "@matebot/contracts";
+import { InteractionPlanSchema } from "@matebot/contracts";
+import type { InteractionField } from "@matebot/contracts";
+import { withFieldValue } from "./interaction-runtime.js";
 import type { SurfaceStatus } from "./surface-revision.js";
 import { canSubmitSurface } from "./surface-revision.js";
 import type { OpenSurface } from "./surface-target.js";
@@ -28,6 +31,8 @@ export type NaturalLanguageEditDeps = {
      * must leave them alone even when the caller did not pass the list itself.
      */
     userEditedFields?: readonly string[];
+    /** The stored plan, needed to build a correction of a record that already ran. */
+    plan?: unknown;
   } | null>;
   /**
    * Cards in the thread. Live ones by default; `includeExecuted` also returns
@@ -226,5 +231,59 @@ export async function applyNaturalLanguageEdit(
     // Changing an approved payload means the old approval no longer describes it.
     confirmationInvalidated: status === "approved",
     nudge: "已更新卡片，请在卡片上确认。",
+  };
+}
+
+export type AmendmentResult =
+  | { ok: true; plan: InteractionPlan; changedFields: string[]; skippedFields: string[] }
+  | { ok: false; error: "unknown_field" | "no_change" | "invalid_plan" };
+
+/**
+ * Build the draft that corrects a record that already ran.
+ *
+ * The executed row is a record of what happened, so a correction cannot be an
+ * edit of it: it is a new draft carrying the amended values and pointing at the
+ * original. Running it then needs its own confirmation and its own effect, which
+ * is why this returns a plan rather than publishing or executing anything.
+ *
+ * Fields the person typed on the new draft are still protected, using the same
+ * rule as an ordinary edit.
+ */
+export function buildAmendment(input: {
+  plan: unknown;
+  fields: Record<string, unknown>;
+  schema: InteractionSurfaceSchema;
+  userEditedFields?: readonly string[];
+}): AmendmentResult {
+  const parsed = InteractionPlanSchema.safeParse(input.plan);
+  if (!parsed.success) return { ok: false, error: "invalid_plan" };
+
+  const declared = new Set(input.schema.fields.map((field) => field.name));
+  for (const name of Object.keys(input.fields)) {
+    if (!declared.has(name)) return { ok: false, error: "unknown_field" };
+  }
+
+  const userEdited = new Set(input.userEditedFields ?? []);
+  const changedFields: string[] = [];
+  const skippedFields: string[] = [];
+  const fields = parsed.data.fields.map((field) => {
+    if (!(field.name in input.fields)) return field;
+    if (userEdited.has(field.name)) {
+      skippedFields.push(field.name);
+      return field;
+    }
+    const value = input.fields[field.name];
+    if (field.value === value) return field;
+    changedFields.push(field.name);
+    return { ...withFieldValue(field, value), source: "model" };
+  });
+
+  if (changedFields.length === 0) return { ok: false, error: "no_change" };
+
+  return {
+    ok: true,
+    plan: { ...parsed.data, fields },
+    changedFields,
+    skippedFields,
   };
 }

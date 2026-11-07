@@ -51,6 +51,11 @@ export type PublishInteractionSurfaceInput = {
   /** Mailbox preflight stamp; omitted on non-email surfaces. */
   capability?: EmailSurfaceCapability;
   status?: InteractionLifecycleStatus;
+  /**
+   * The executed record this surface corrects. Set only when a new draft amends
+   * a record that already ran; the original row is never rewritten.
+   */
+  amendsInteractionId?: string;
 };
 
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
@@ -114,6 +119,9 @@ export async function publishInteractionSurface(
         title: input.plan.title,
         summary: input.plan.summary,
         documentRef,
+        ...(input.amendsInteractionId
+          ? { amendsInteractionId: input.amendsInteractionId }
+          : {}),
         ...stamps,
       };
       const message = await createThreadMessageInTransaction(tx, {

@@ -1,7 +1,7 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
-import { applyInteractionFieldChange, emailSurfaceBlockFields } from "@matebot/core";
+import { applyInteractionFieldChange, decideCancel, emailSurfaceBlockFields } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
   appendEventInTransaction,
@@ -281,4 +281,167 @@ export async function updateInteractionFieldService(
   );
 
   return { draftVersion: changed.draftVersion };
+}
+
+export type CancelInteractionServiceInput = {
+  spaceId: string;
+  threadId: string;
+  botId: string;
+  interactionId: string;
+  expectedDraftVersion: number;
+};
+
+export class InteractionCancelRejectedError extends Error {
+  constructor(
+    readonly reason: "already_executed" | "in_flight" | "terminal",
+    message: string,
+  ) {
+    super(message);
+    this.name = "InteractionCancelRejectedError";
+  }
+}
+
+/**
+ * Cancel a draft that has not run.
+ *
+ * The decision comes from the recorded status, not from the request: a record
+ * that executed keeps its status and its effect, and the caller is told plainly
+ * that cancelling would not undo it. Nothing is deleted — a cancelled row is a
+ * record of a draft the user withdrew, and its surface is republished in that
+ * state so every client converges on the same thing.
+ */
+export async function cancelInteractionService(
+  prisma: PrismaClient,
+  input: CancelInteractionServiceInput,
+): Promise<{ status: "cancelled"; draftVersion: number }> {
+  const current = await getInteraction(prisma, input.interactionId);
+  if (!current || current.threadId !== input.threadId) {
+    throw new InteractionNotFoundError(input.interactionId);
+  }
+  if (current.draftVersion !== input.expectedDraftVersion) {
+    throw new InteractionVersionConflictError(
+      input.interactionId,
+      input.expectedDraftVersion,
+      current.draftVersion,
+    );
+  }
+  const decision = decideCancel({
+    status: current.status as InteractionLifecycleStatus,
+  });
+  if (!decision.ok) throw new InteractionCancelRejectedError(decision.error, decision.message);
+
+  const plan = current.plan as InteractionPlan;
+  const surfaceRow = await prisma.interactionSurface.findFirst({
+    where: { interactionId: input.interactionId },
+    orderBy: { updatedAt: "desc" },
+  });
+  if (!surfaceRow) throw new Error("Interaction has no surface");
+  const currentMessage = current.messageId
+    ? await prisma.message.findUnique({ where: { id: current.messageId } })
+    : null;
+  const currentBlocks = Array.isArray(currentMessage?.blocks)
+    ? (currentMessage.blocks as MessageBlock[])
+    : undefined;
+  const capability = capabilityFromBlocks(currentBlocks, surfaceRow.surfaceId);
+  const compiled = await compilePlanSurface({
+    plan,
+    surfaceId: surfaceRow.surfaceId,
+    protocolFamily: protocolFamilyOf(surfaceRow.protocolFamily),
+    capability,
+    interactionStatus: "cancelled",
+  });
+  const draftVersion = current.draftVersion + 1;
+
+  await withTransactionRetry(() =>
+    prisma.$transaction(async (tx) => {
+      const updated = await tx.interaction.updateMany({
+        where: {
+          id: input.interactionId,
+          draftVersion: input.expectedDraftVersion,
+          // Re-checked inside the transaction so a concurrent execute cannot slip
+          // a started action past the decision made above.
+          status: { notIn: ["executing", "succeeded", "unknown", "failed", "cancelled"] },
+        },
+        data: { status: "cancelled", confirmedVersion: null, draftVersion },
+      });
+      if (updated.count !== 1) {
+        throw new InteractionCancelRejectedError(
+          "in_flight",
+          "这次操作已经在进行中或已经完成，不能再取消。",
+        );
+      }
+      const { documentRef } = await upsertInteractionSurface(tx, {
+        interactionId: input.interactionId,
+        surfaceId: surfaceRow.surfaceId,
+        protocolFamily: compiled.protocolFamily,
+        document: compiled.messages,
+        draftVersion,
+      });
+      const block: MessageBlock = {
+        kind: "a2ui_surface",
+        interactionId: input.interactionId,
+        surfaceId: surfaceRow.surfaceId,
+        protocolFamily: compiled.protocolFamily,
+        draftVersion,
+        intent: plan.intent,
+        title: plan.title,
+        summary: plan.summary,
+        documentRef,
+        ...(isEmailPlan(plan)
+          ? emailSurfaceBlockFields({
+              intent: plan.intent,
+              capability,
+              interactionStatus: "cancelled",
+            })
+          : {}),
+      };
+      if (current.messageId) {
+        const message = await tx.message.findUnique({ where: { id: current.messageId } });
+        if (message) {
+          const existing = Array.isArray(message.blocks) ? (message.blocks as MessageBlock[]) : [];
+          const blocks = existing.map((entry) =>
+            entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId
+              ? block
+              : entry,
+          );
+          await tx.message.update({
+            where: { id: current.messageId },
+            data: { blocks: blocks as Prisma.InputJsonValue },
+          });
+          await appendEventInTransaction(tx, {
+            spaceId: input.spaceId,
+            threadId: input.threadId,
+            botId: input.botId,
+            type: "thread.message.updated",
+            runId: current.runId ?? undefined,
+            payload: { messageId: current.messageId, role: "bot", blocks },
+          });
+        }
+      }
+      await appendEventInTransaction(tx, {
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: input.botId,
+        type: "thread.surface.updated",
+        runId: current.runId ?? undefined,
+        payload: {
+          interactionId: input.interactionId,
+          surfaceId: surfaceRow.surfaceId,
+          protocolFamily: compiled.protocolFamily,
+          draftVersion,
+          intent: plan.intent,
+          title: plan.title,
+          summary: plan.summary,
+          documentRef: a2uiSurfaceDocumentRef({
+            interactionId: input.interactionId,
+            surfaceId: surfaceRow.surfaceId,
+          }),
+          messageId: current.messageId ?? undefined,
+          cancelled: true,
+        },
+      });
+    }),
+  );
+
+  return { status: "cancelled", draftVersion };
 }

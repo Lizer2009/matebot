@@ -130,7 +130,7 @@ export function applyInteractionFieldChange(
   };
 }
 
-function withFieldValue(field: InteractionField, value: unknown): InteractionField {
+export function withFieldValue(field: InteractionField, value: unknown): InteractionField {
   const empty =
     value === undefined || value === null || (typeof value === "string" && value.trim() === "");
   let status = field.status;

@@ -33,9 +33,11 @@ import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
 import { dispatchInteractionActionService } from "../interaction-dispatch.js";
 import { confirmThenExecute } from "../interaction-run-action.js";
 import {
+  cancelInteractionService,
   confirmInteractionService,
   executeConfirmedInteractionService,
   InteractionEffectRunMissingError,
+  InteractionCancelRejectedError,
   InteractionEmailDeliveryError,
   InteractionSendRejectedError,
   reconcileConfirmedInteractionService,
@@ -793,6 +795,35 @@ export function threadsRoutes(ctx: RouterContext) {
           }
         },
       ),
+      cancelInteraction: authed.threads.cancelInteraction.handler(async ({ context, input }) => {
+        assertA2uiEnabled();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
+        try {
+          const result = await cancelInteractionService(deps.prisma, {
+            spaceId: context.actor.spaceId,
+            threadId: target.threadId,
+            botId,
+            interactionId: input.interactionId,
+            expectedDraftVersion: input.draftVersion,
+          });
+          return { ok: true as const, status: "cancelled" as const, draftVersion: result.draftVersion };
+        } catch (error) {
+          if (error instanceof InteractionNotFoundError) {
+            throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+          }
+          if (error instanceof InteractionVersionConflictError) {
+            throw new ORPCError("CONFLICT", {
+              message: "Interaction draft was updated elsewhere; reload and retry",
+            });
+          }
+          if (error instanceof InteractionCancelRejectedError) {
+            // The recorded state decides, and the message says why nothing changed.
+            throw new ORPCError("CONFLICT", { message: error.message });
+          }
+          throw error;
+        }
+      }),
       confirmInteraction: authed.threads.confirmInteraction.handler(async ({ context, input }) => {
         assertA2uiEnabled();
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);

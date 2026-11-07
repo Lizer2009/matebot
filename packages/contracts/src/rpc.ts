@@ -160,6 +160,8 @@ import {
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
 import {
+  ThreadsCancelInteractionInput,
+  ThreadsCancelInteractionOutput,
   ThreadsConfirmInteractionInput,
   ThreadsConfirmInteractionOutput,
   ThreadsDispatchInteractionActionInput,
@@ -755,6 +757,13 @@ export const appContract = {
     confirmInteraction: oc
       .input(ThreadsConfirmInteractionInput)
       .output(ThreadsConfirmInteractionOutput),
+    /**
+     * Cancel a draft that has not run. A record that executed is refused: the
+     * event exists, and cancelling the card would not undo it.
+     */
+    cancelInteraction: oc
+      .input(ThreadsCancelInteractionInput)
+      .output(ThreadsCancelInteractionOutput),
     /**
      * Run the confirmed draft's ExternalEffect. Rejects when the draft is not
      * confirmed. Email send completes the effect; a completed effect is not sent again.

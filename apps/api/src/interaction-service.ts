@@ -10,6 +10,7 @@ import type {
   InteractionEmailSender,
 } from "@matebot/adapters";
 import {
+  createCalendarBatch,
   createCalendarEvent,
   deliverInteractionEmail,
   emailCapabilityFromRows,
@@ -41,7 +42,7 @@ import {
   interactionEffectKind,
   interactionRequiredApp,
   normalizeCalendarFields,
-  validateCalendarEvent,
+  readConfirmedCalendarDraft,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
@@ -114,7 +115,10 @@ function protocolFamilyOf(value: string): A2uiProtocolFamily {
 // card's own controls share one implementation. Re-exported here because the
 // route and its tests import it from this module.
 export {
+  type CancelInteractionServiceInput,
   type UpdateInteractionFieldServiceInput,
+  cancelInteractionService,
+  InteractionCancelRejectedError,
   updateInteractionFieldService,
 } from "@matebot/adapters";
 
@@ -747,16 +751,17 @@ export async function executeConfirmedInteractionService(
       const slots = interactionSlots(
         effect.request && (effect.request as { slots?: unknown }).slots,
       );
-      const normalized = normalizeCalendarFields(slots);
-      const validated = validateCalendarEvent(normalized);
-      if (!validated.ok) {
+      // A draft is one event, or an explicit list the user asked for. Anything
+      // malformed is refused before any provider call is made.
+      const draft = readConfirmedCalendarDraft(slots);
+      if (draft.kind === "invalid") {
         await finish({
           effectStatus: "failed",
           interactionStatus: "failed",
-          result: { error: validated.error },
+          result: { error: draft.error },
         });
         throw new InteractionEmailDeliveryError(
-          `Calendar event rejected: ${validated.error}`,
+          `Calendar event rejected: ${draft.error}`,
           "failed",
         );
       }
@@ -769,10 +774,50 @@ export async function executeConfirmedInteractionService(
         connector: input.connector,
         connectionId: connection.id,
       };
+      if (draft.kind === "batch") {
+        // Several items were requested, so several outcomes are reported: a
+        // partial batch must not read as "done".
+        const batch = await createCalendarBatch({
+          events: draft.events,
+          batchKey: effect.idempotencyKey,
+          sender: calendarSender,
+          create: createCalendarEvent,
+        });
+        if (batch.complete) {
+          await finish({
+            effectStatus: "completed",
+            interactionStatus: "succeeded",
+            result: {
+              providerMessageId: batch.created[0]?.eventId,
+              deliveryId: batch.created[0]?.eventId,
+              batch: { items: batch.items, summary: batch.summary },
+            },
+          });
+          return {
+            effectId: effect.id,
+            idempotencyKey: effect.idempotencyKey,
+            duplicate: false,
+            executed: true,
+            providerMessageId: batch.created[0]?.eventId,
+          };
+        }
+        const outcome = batch.hasUnknown ? ("unknown" as const) : ("failed" as const);
+        await finish({
+          effectStatus: outcome === "unknown" ? "ambiguous" : "failed",
+          interactionStatus: outcome,
+          result: {
+            error: batch.summary.notice,
+            batch: { items: batch.items, summary: batch.summary },
+          },
+        });
+        if (outcome === "unknown") await scheduleReconcile();
+        throw new InteractionEmailDeliveryError(batch.summary.notice, outcome);
+      }
+
       let created: Awaited<ReturnType<typeof createCalendarEvent>>;
       try {
         created = await createCalendarEvent(
-          { event: validated.event, idempotencyKey: effect.idempotencyKey },
+          { event: draft.event, idempotencyKey: effect.idempotencyKey },
           calendarSender,
         );
       } catch (error) {
