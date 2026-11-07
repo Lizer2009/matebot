@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from "vitest";
 import { compileInteractionSurface } from "@matebot/a2ui-adapter";
 import type { ResultSurface } from "@matebot/contracts";
+import { describe, expect, it } from "vitest";
 import { parseNativeCatalog } from "./a2ui-catalog";
 
 /**

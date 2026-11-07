@@ -95,10 +95,25 @@ describe("cancel_interaction", () => {
 
   it("refuses to guess which card when several are open", async () => {
     const ctx = context();
-    const prisma = (ctx as { deps: { prisma: { interaction: { findMany: unknown } } } }).deps.prisma;
+    const prisma = (ctx as { deps: { prisma: { interaction: { findMany: unknown } } } }).deps
+      .prisma;
     prisma.interaction.findMany = async () => [
-      { id: "ix-1", title: "Email", status: "ready_for_review", confirmedVersion: null, intent: "email.compose", surfaces: [{ surfaceId: "s1" }] },
-      { id: "ix-2", title: "Email 2", status: "ready_for_review", confirmedVersion: null, intent: "email.compose", surfaces: [{ surfaceId: "s2" }] },
+      {
+        id: "ix-1",
+        title: "Email",
+        status: "ready_for_review",
+        confirmedVersion: null,
+        intent: "email.compose",
+        surfaces: [{ surfaceId: "s1" }],
+      },
+      {
+        id: "ix-2",
+        title: "Email 2",
+        status: "ready_for_review",
+        confirmedVersion: null,
+        intent: "email.compose",
+        surfaces: [{ surfaceId: "s2" }],
+      },
     ];
     const result = await cancelInteraction(ctx, { revision: 2 });
     expect(result).toMatchObject({ ok: false, error: "ambiguous_target" });

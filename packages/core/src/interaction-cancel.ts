@@ -23,8 +23,6 @@ export type CancelDecision =
       message: string;
     };
 
-const IN_FLIGHT: ReadonlySet<InteractionLifecycleStatus> = new Set(["executing"]);
-
 export function decideCancel(input: { status: InteractionLifecycleStatus }): CancelDecision {
   switch (input.status) {
     case "succeeded":
@@ -64,5 +62,8 @@ export function describeAmendment(input: { status: InteractionLifecycleStatus })
   allowed: boolean;
   requiresNewDraft: boolean;
 } {
-  return { allowed: true, requiresNewDraft: input.status === "succeeded" || input.status === "executing" };
+  return {
+    allowed: true,
+    requiresNewDraft: input.status === "succeeded" || input.status === "executing",
+  };
 }

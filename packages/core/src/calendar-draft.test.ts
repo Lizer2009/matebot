@@ -26,7 +26,15 @@ describe("readConfirmedCalendarDraft", () => {
 
   it("reads an explicit list as a batch", () => {
     const draft = readConfirmedCalendarDraft({
-      events: [one, { ...one, name: "Review", start: "2026-11-10T14:00:00+08:00", end: "2026-11-10T15:00:00+08:00" }],
+      events: [
+        one,
+        {
+          ...one,
+          name: "Review",
+          start: "2026-11-10T14:00:00+08:00",
+          end: "2026-11-10T15:00:00+08:00",
+        },
+      ],
     });
     expect(draft.kind).toBe("batch");
     if (draft.kind !== "batch") return;

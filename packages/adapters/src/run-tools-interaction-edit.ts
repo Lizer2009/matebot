@@ -4,7 +4,6 @@ import type { InteractionCapability, NaturalLanguageEditDeps } from "@matebot/co
 import {
   applyNaturalLanguageEdit,
   buildAmendment,
-  findInteractionCapability,
   interactionCapabilityForIntent,
   userEditedFieldNames,
 } from "@matebot/core";
@@ -137,9 +136,7 @@ async function amendExecuted(
     plan: input.record.plan,
     fields: input.fields,
     schema: input.schema,
-    ...(input.record.userEditedFields
-      ? { userEditedFields: input.record.userEditedFields }
-      : {}),
+    ...(input.record.userEditedFields ? { userEditedFields: input.record.userEditedFields } : {}),
   });
   if (!amended.ok) {
     // No stored plan means there is nothing to correct from; the caller reports

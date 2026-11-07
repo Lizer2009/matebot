@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import { userEditedFieldNames } from "@matebot/core";
+import { describe, expect, it, vi } from "vitest";
 import { editInteraction, servicesFor } from "./run-tools-interaction-edit.js";
 
 /**

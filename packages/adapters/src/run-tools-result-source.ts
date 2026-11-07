@@ -1,5 +1,4 @@
-import type { ResultAggregation, ResultColumn, ResultRow } from "@matebot/core";
-import type { ResultSourceRead } from "@matebot/core";
+import type { ResultAggregation, ResultColumn, ResultRow, ResultSourceRead } from "@matebot/core";
 import { aggregateResultRows, findResultSource, queryResultSource } from "@matebot/core";
 
 /**
@@ -80,7 +79,12 @@ export async function resolveSourceBackedRows(
       window: { from: input.from, to: input.to },
       ...(input.timezone ? { timezone: input.timezone } : {}),
     },
-    { connectionId, ...(deps.read ? { readFor: (id: string) => (id === "calendar-events" ? deps.read : undefined) } : {}) },
+    {
+      connectionId,
+      ...(deps.read
+        ? { readFor: (id: string) => (id === "calendar-events" ? deps.read : undefined) }
+        : {}),
+    },
   );
   if (!queried.ok) return { ok: false, error: queried.error };
 

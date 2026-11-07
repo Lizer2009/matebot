@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import { buildAmendment } from "@matebot/core";
+import { describe, expect, it, vi } from "vitest";
 import { editInteraction, servicesFor } from "./run-tools-interaction-edit.js";
 
 vi.stubEnv("FEATURE_A2UI", "1");
@@ -51,7 +51,7 @@ function harness() {
       findUnique: async ({ where }: { where: { id: string } }) =>
         where.id === original.id
           ? original
-          : (written.find((row) => row.id === where.id) as typeof original | undefined) ?? null,
+          : ((written.find((row) => row.id === where.id) as typeof original | undefined) ?? null),
       create: async ({ data }: { data: Record<string, unknown> }) => {
         const row = {
           ...data,

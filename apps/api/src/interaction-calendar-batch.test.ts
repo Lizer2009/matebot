@@ -191,7 +191,9 @@ describe("calendar batch through the shared execute path", () => {
   });
 
   it("refuses a broken item before calling the provider at all", async () => {
-    const h = harness({ events: [item("A", "09"), { ...item("B", "10"), end: "2026-11-01T10:00:00+08:00" }] });
+    const h = harness({
+      events: [item("A", "09"), { ...item("B", "10"), end: "2026-11-01T10:00:00+08:00" }],
+    });
     await expect(
       executeConfirmedInteractionService(h.prisma, {
         spaceId: "space-1",

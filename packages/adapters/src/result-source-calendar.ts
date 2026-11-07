@@ -1,7 +1,7 @@
 import type { AdapterContext, ConnectorProvider } from "@matebot/adapter-kit";
 import type { ResultSourceRead } from "@matebot/core";
-import { readCalendarEvents } from "./interaction-calendar.js";
 import type { InteractionCalendarSender } from "./interaction-calendar.js";
+import { readCalendarEvents } from "./interaction-calendar.js";
 
 /**
  * The calendar read source, wired to the run's own connector.

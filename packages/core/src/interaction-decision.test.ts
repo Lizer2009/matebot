@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { InteractionDecisionSchema } from "@matebot/contracts";
+import { describe, expect, it } from "vitest";
 import { decidePresentation, validateDecisionForCapability } from "./interaction-decision.js";
 
 /**

@@ -180,9 +180,7 @@ async function typeSubject(page: import("@playwright/test").Page, value: string)
   await subject.blur();
   await expect(subject).toHaveValue(value, { timeout: 20_000 });
   // The revision only moves once the server has the new value.
-  await expect
-    .poll(async () => cardRevision(page), { timeout: 20_000 })
-    .toBeGreaterThan(before);
+  await expect.poll(async () => cardRevision(page), { timeout: 20_000 }).toBeGreaterThan(before);
 }
 
 async function cardRevision(page: import("@playwright/test").Page): Promise<number> {
@@ -245,7 +243,9 @@ test("a field the person typed survives a late model edit", async ({ page }, tes
   await captureScreenshot(page, testInfo, "a2ui-e2e-05-user-field-protected");
 });
 
-test("an out-of-date revision is refused instead of overwriting the card", async ({ page }, testInfo) => {
+test("an out-of-date revision is refused instead of overwriting the card", async ({
+  page,
+}, testInfo) => {
   await signIn(page, testInfo);
   await send(
     page,
@@ -314,7 +314,14 @@ test("changing a payload after approval invalidates that approval", async ({ pag
   // one the card and the model use, so it is checked here over real HTTP.
   const beforeEdit = await cardRevision(page);
   const editResponse = await page.request.post("/rpc/threads/editInteraction", {
-    data: { json: { botId, interactionId, revision: beforeEdit, fields: { body: "changed after approval" } } },
+    data: {
+      json: {
+        botId,
+        interactionId,
+        revision: beforeEdit,
+        fields: { body: "changed after approval" },
+      },
+    },
   });
   // The server's own reason is the point of this assertion, so it is the message.
   const editBody = await editResponse.text();
@@ -331,7 +338,9 @@ test("changing a payload after approval invalidates that approval", async ({ pag
   await captureScreenshot(page, testInfo, "a2ui-e2e-06-edit-invalidates-approval");
 });
 
-test("a draft can be cancelled from the card and offers nothing to send", async ({ page }, testInfo) => {
+test("a draft can be cancelled from the card and offers nothing to send", async ({
+  page,
+}, testInfo) => {
   await signIn(page, testInfo);
   await send(
     page,
@@ -357,7 +366,9 @@ test("a draft can be cancelled from the card and offers nothing to send", async 
   await captureScreenshot(page, testInfo, "a2ui-e2e-06-cancelled");
 });
 
-test("asking for a schedule produces a result card, never a create draft", async ({ page }, testInfo) => {
+test("asking for a schedule produces a result card, never a create draft", async ({
+  page,
+}, testInfo) => {
   await signIn(page, testInfo);
   await send(
     page,

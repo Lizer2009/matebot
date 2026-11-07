@@ -117,7 +117,11 @@ describe("calendar result reader", () => {
       connectionId: "conn-1",
       timezone: "Asia/Shanghai",
     });
-    expect(read).toEqual({ ok: false, error: "Could not read the calendar", outcome: "unavailable" });
+    expect(read).toEqual({
+      ok: false,
+      error: "Could not read the calendar",
+      outcome: "unavailable",
+    });
   });
 });
 
@@ -146,9 +150,24 @@ describe("present_result source path", () => {
     const { connector } = doubleConnector({
       data: {
         items: [
-          { id: "a", summary: "Standup", start: "2026-11-09T09:00:00Z", end: "2026-11-09T09:15:00Z" },
-          { id: "b", summary: "Standup", start: "2026-11-10T09:00:00Z", end: "2026-11-10T09:15:00Z" },
-          { id: "c", summary: "Review", start: "2026-11-11T14:00:00Z", end: "2026-11-11T15:00:00Z" },
+          {
+            id: "a",
+            summary: "Standup",
+            start: "2026-11-09T09:00:00Z",
+            end: "2026-11-09T09:15:00Z",
+          },
+          {
+            id: "b",
+            summary: "Standup",
+            start: "2026-11-10T09:00:00Z",
+            end: "2026-11-10T09:15:00Z",
+          },
+          {
+            id: "c",
+            summary: "Review",
+            start: "2026-11-11T14:00:00Z",
+            end: "2026-11-11T15:00:00Z",
+          },
         ],
       },
     });

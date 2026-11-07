@@ -46,7 +46,10 @@ export function summarizeBatch(items: readonly BatchItem[]): BatchSummary {
   } else if (complete) {
     notice = `已完成全部 ${total} 项。`;
   } else if (succeeded === 0) {
-    notice = unknown > 0 ? `没有一项确认完成，其中 ${unknown} 项结果待核对。` : `全部 ${total} 项都没有完成。`;
+    notice =
+      unknown > 0
+        ? `没有一项确认完成，其中 ${unknown} 项结果待核对。`
+        : `全部 ${total} 项都没有完成。`;
   } else if (unknown > 0) {
     notice = `已完成 ${succeeded} 项，${failed} 项失败，${unknown} 项结果待核对。`;
   } else {

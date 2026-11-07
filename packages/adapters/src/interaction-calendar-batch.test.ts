@@ -40,7 +40,10 @@ function senderWith(
       connectionId: "conn-1",
       connector: {
         async *execute(request: { args: Record<string, unknown>; executionId?: string }) {
-          calls.push({ ...(request.executionId ? { executionId: request.executionId } : {}), args: request.args });
+          calls.push({
+            ...(request.executionId ? { executionId: request.executionId } : {}),
+            args: request.args,
+          });
           const next = results[index++];
           if (!next) {
             yield { type: "error" as const, message: "unexpected extra call" };
@@ -122,9 +125,17 @@ describe("createCalendarBatch", () => {
       context,
       connectionId: "conn-1",
       connector: {
-        async *execute() {
-          throw new Error("socket closed");
-          yield undefined as never;
+        execute() {
+          // A dropped socket: the provider fails before it reports anything.
+          return {
+            [Symbol.asyncIterator]() {
+              return {
+                next: async () => {
+                  throw new Error("socket closed");
+                },
+              };
+            },
+          };
         },
       },
     };

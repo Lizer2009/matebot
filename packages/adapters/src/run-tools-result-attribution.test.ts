@@ -45,7 +45,10 @@ describe("buildResultFromArgs", () => {
     });
     expect(built.ok).toBe(true);
     if (!built.ok) return;
-    expect(built.surface.provenance).toMatchObject({ year: 2026, freshness: "2026-11-05T12:00:00Z" });
+    expect(built.surface.provenance).toMatchObject({
+      year: 2026,
+      freshness: "2026-11-05T12:00:00Z",
+    });
   });
 
   it("refuses a year that is not a calendar year", () => {

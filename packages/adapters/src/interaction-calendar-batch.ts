@@ -1,8 +1,7 @@
-import type { CalendarEvent } from "@matebot/core";
+import type { BatchItem, CalendarEvent } from "@matebot/core";
 import { emailDeliveryOutcome, summarizeBatch } from "@matebot/core";
-import type { BatchItem } from "@matebot/core";
-import { createCalendarEvent } from "./interaction-calendar.js";
 import type { CalendarCreateResult, InteractionCalendarSender } from "./interaction-calendar.js";
+import { createCalendarEvent } from "./interaction-calendar.js";
 
 /**
  * Creating several events when the user asked for several.
@@ -21,7 +20,10 @@ export type BatchCreateInput = {
   batchKey: string;
   sender: InteractionCalendarSender;
   /** The single-item create, injectable so a caller can test the batch itself. */
-  create?: (draft: { event: CalendarEvent; idempotencyKey: string }, sender: InteractionCalendarSender) => Promise<CalendarCreateResult>;
+  create?: (
+    draft: { event: CalendarEvent; idempotencyKey: string },
+    sender: InteractionCalendarSender,
+  ) => Promise<CalendarCreateResult>;
 };
 
 export type BatchCreateOutcome = {
