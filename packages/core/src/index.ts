@@ -94,6 +94,7 @@ export * from "./prompt-data.js";
 export * from "./refresh-coalescer.js";
 export * from "./remote-images.js";
 export * from "./response-bytes.js";
+export * from "./result-source.js";
 export * from "./retry-policy.js";
 export * from "./room-settings.js";
 export * from "./routine-dispatch.js";

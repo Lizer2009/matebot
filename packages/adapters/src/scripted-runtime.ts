@@ -197,6 +197,25 @@ export function inferScript(
       },
     ];
   }
+  // A2UI fixtures: the scripted runtime can drive the same tool entry a model
+  // would, so an end-to-end test can exercise the real card pipeline. These are
+  // explicit imperative prompts, matching the `call save_page with ...` style.
+  const a2ui =
+    /^(?:@\S+\s+)?call (present_interaction|present_result|refresh_result|edit_interaction) with (\{[\s\S]+\})$/.exec(
+      words.trim(),
+    );
+  if (a2ui) {
+    const args = jsonObject(a2ui[2]!);
+    if (args) {
+      return [
+        {
+          assistant: "Handled on the card.",
+          toolCalls: [{ name: a2ui[1]!, args }],
+          complete: true,
+        },
+      ];
+    }
+  }
   if (lower.includes("can you check my gmail inbox?")) {
     return [
       {

@@ -845,6 +845,26 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "refresh_result",
+    description:
+      "Re-read a registered data source for a new date range and update the result card already in this chat. Pass sourceId, from and to; the server reads through that source with the user's own connection. Use this when the user asks to see a different period of the same data. It creates no card and changes nothing outside the card. If you do not know a source id, ask the user where the numbers come from.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        interactionId: {
+          type: "string",
+          description: "The result card to update. Omit when only one is open.",
+        },
+        sourceId: { type: "string", description: "Registered source id." },
+        from: { type: "string", description: "Window start, ISO 8601 or date." },
+        to: { type: "string", description: "Window end, ISO 8601 or date." },
+        timezone: { type: "string", description: "Optional IANA zone for the window." },
+        revision: { type: "number", description: "The revision the card was shown at." },
+      },
+      required: ["sourceId", "from", "to"],
+    },
+  },
+  {
     name: "add_mcp_server",
     description:
       "Connect a remote MCP tool server to this Space when the user asks you to add one and provides the details (URL, optional token/headers). The server is created immediately and an approval card appears in the chat; its tools reach you once the user approves it there. Do not invent endpoints; only use details the user provided. Local (stdio) servers can only be added by an admin in Settings.",

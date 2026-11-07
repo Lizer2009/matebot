@@ -93,7 +93,9 @@ export default defineConfig({
   webServer: {
     command: "pnpm dev",
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    // The A2UI e2e launcher starts Vite itself (no Docker for the container
+    // harness), so it asks Playwright to reuse that server.
+    reuseExistingServer: !process.env.CI || Boolean(process.env.PLAYWRIGHT_REUSE_SERVER),
     timeout: 120_000,
   },
 });

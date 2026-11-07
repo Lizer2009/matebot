@@ -50,6 +50,7 @@ export const BUILTIN_TOOL_NAMES = [
   "present_interaction",
   "edit_interaction",
   "present_result",
+  "refresh_result",
   "generate_image",
   "generate_video",
   "add_mcp_server",
