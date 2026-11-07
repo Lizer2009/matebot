@@ -379,11 +379,29 @@ async function readBodyPrefix(
   return prefix.slice(0, total);
 }
 
+/**
+ * Refuse an address set that cannot be reached safely.
+ *
+ * Two different things used to arrive here under one message: a resolver that
+ * returned nothing at all, and a resolver that returned a non-public address. They
+ * have different causes and different fixes — a missing record is a configuration
+ * or connectivity problem, while a private address is the policy doing its job —
+ * so they are reported separately. Both are still refused; nothing is relaxed.
+ */
 function assertPublicAddresses(addresses: ResolvedAddress[]): void {
-  if (addresses.length === 0 || addresses.some((entry) => isNonPublicAddress(entry.address))) {
-    throw new Error("URL resolves to a private address");
+  if (addresses.length === 0) {
+    throw new Error(EGRESS_REASON_UNRESOLVED);
+  }
+  if (addresses.some((entry) => isNonPublicAddress(entry.address))) {
+    throw new Error(EGRESS_REASON_PRIVATE_ADDRESS);
   }
 }
+
+/** The hostname did not resolve to any address, so nothing could be reached. */
+export const EGRESS_REASON_UNRESOLVED = "URL did not resolve to any address";
+
+/** The hostname resolved to an address the egress policy refuses. */
+export const EGRESS_REASON_PRIVATE_ADDRESS = "URL resolves to a private address";
 
 function abortError(signal: AbortSignal): Error {
   return signal.reason instanceof Error ? signal.reason : new Error("Request timed out");

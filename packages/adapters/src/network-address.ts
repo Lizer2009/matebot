@@ -9,6 +9,44 @@ export type ResolveHostname = (hostname: string) => Promise<ResolvedAddress[]>;
 type PinnedDns = { hostname: string; addresses: ResolvedAddress[] };
 
 const pinnedDns = new AsyncLocalStorage<PinnedDns>();
+
+/**
+ * Hosts the egress guard refused during the current run.
+ *
+ * A refusal is a statement about a destination, not about one tool. Recording it
+ * here lets another network tool — the browser in particular — refuse the same
+ * destination instead of completing what the guard just declined. It is scoped to
+ * the async context of one run, so concurrent runs cannot see each other's
+ * refusals, and nothing leaks between tenants.
+ */
+const refusedHosts = new AsyncLocalStorage<Set<string>>();
+
+/**
+ * Run `work` with a refusal ledger, returning the hosts it collected.
+ *
+ * The ledger is read by the browser tool, so a fetcher refusal cannot be routed
+ * around. Callers that do not provide one (tests, single tool calls) behave as
+ * before, because an absent ledger records nothing rather than failing.
+ */
+/**
+ * Run `work` with a refusal ledger owned by the caller.
+ *
+ * The caller passes the same Set it reads later (for example the run's own state),
+ * so a refusal recorded deep inside a fetch is visible to the next tool without
+ * threading a parameter through every provider. Concurrent runs each pass their
+ * own set, so one run never sees another's refusals.
+ */
+export async function withEgressRefusalLedger<T>(
+  ledger: Set<string>,
+  work: () => Promise<T>,
+): Promise<T> {
+  return refusedHosts.run(ledger, work);
+}
+
+/** The refusal ledger for the current run, when one is installed. */
+export function currentEgressRefusals(): ReadonlySet<string> | undefined {
+  return refusedHosts.getStore();
+}
 let dnsPinInstalled = false;
 
 function normalizeLookupHostname(hostname: string): string {
@@ -88,6 +126,9 @@ export function egressRefused(hostname: string, error: unknown): Error {
     type: "egress.refused",
     metadata: { host: hostname.slice(0, 253), reason: refusal.message },
   });
+  // Remember the destination for this run so another network tool cannot be used
+  // to reach what the guard just refused.
+  refusedHosts.getStore()?.add(normalizeLookupHostname(hostname));
   return refusal;
 }
 

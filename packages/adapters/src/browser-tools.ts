@@ -11,6 +11,7 @@ import type { PurchaseCardField } from "@matebot/contracts";
 import { PURCHASE_CARD_FIELDS } from "@matebot/contracts";
 import { getLogger } from "@matebot/logging";
 import { redactConnectorPayload } from "./connector-safety.js";
+import { currentEgressRefusals } from "./network-address.js";
 import { TOOL_RESULT_TEXT_LIMIT } from "./pi-runtime-limits.js";
 import type { PurchaseApproval } from "./purchase-gate.js";
 import { MAX_ACTIONS_PER_CALL } from "./tool-loop.js";
@@ -64,6 +65,12 @@ export type BrowserActInput =
 export type PageToolOptions = {
   desktopTools?: boolean;
   downloads?: { folder: string; botPath: (path: string) => string };
+  /**
+   * Hosts this run already had refused by the egress guard. A refusal is a decision
+   * about a destination, so the browser must not become a way to reach the same
+   * destination the fetcher was told to stay away from.
+   */
+  refusedHosts?: ReadonlySet<string>;
 };
 export type ResolveSecretFill = (
   step: SecretFillStep,
@@ -94,6 +101,14 @@ export type ResolvePayTokenFill = (
  */
 class BrowserToolInputError extends Error {}
 
+/**
+ * A destination the run's egress guard already refused. The sentence names the
+ * situation rather than the fix, because the model must not try another route to
+ * the same host.
+ */
+export const EGRESS_REFUSED_HOST_MESSAGE =
+  "This address was refused by the network policy in this run, so it cannot be opened in the browser either. Pick a different source or ask the user.";
+
 function refusedInput(message: string) {
   return { ok: false, uncertain: false, error: message };
 }
@@ -110,6 +125,15 @@ export async function browserNavigateFromTool(
   const parsed = new URL(url);
   if (!/^https?:$/.test(parsed.protocol) || parsed.username || parsed.password) {
     return refusedInput(NAVIGATE_URL_REQUIRED);
+  }
+  // The egress guard already refused this destination in this run. Reaching it
+  // through the browser would make that refusal advisory, so it is refused here
+  // too — with a settled result, because nothing ran and nothing changed. Both the
+  // explicit option and the run's ambient ledger are consulted, so a caller cannot
+  // forget to pass one.
+  const host = parsed.hostname.toLowerCase();
+  if (options.refusedHosts?.has(host) || currentEgressRefusals()?.has(host)) {
+    return refusedInput(EGRESS_REFUSED_HOST_MESSAGE);
   }
   try {
     const result = await browser.navigate(

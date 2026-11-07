@@ -169,6 +169,15 @@ export interface RunState {
   toolCallStreak: LoopGuardStreak;
   /** Result fingerprints of finished calls, read when the next call is tracked. */
   toolResults: Map<string, string>;
+  /**
+   * Hosts the egress guard refused during this run.
+   *
+   * A refusal is a decision about a destination, not about one tool. Without this,
+   * a run could be refused by the fetcher and then reach the same host through the
+   * browser, which would make the guard advisory. The browser checks this set and
+   * refuses the same destination rather than routing around it.
+   */
+  egressRefusedHosts: Set<string>;
   /** Consecutive `computer_act`/`browser_act` batches over the action limit, this one included. */
   overLimitActionCalls: number;
   /**

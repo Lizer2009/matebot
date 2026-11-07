@@ -3,6 +3,7 @@ import { toolResultTaintsRun } from "@matebot/core";
 import { isTerminatingReplyResult } from "./approval-effect.js";
 import { refuseOutboundEmailShell } from "./email-shell-escape.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
+import { withEgressRefusalLedger } from "./network-address.js";
 import type { RunContext } from "./run-context.js";
 import { noteComputerTaskStep } from "./run-progress.js";
 import type { ToolHandler } from "./run-tool-gate.js";
@@ -77,7 +78,11 @@ export async function applyTool(
   observer?: AgentToolExecutionObserver,
 ) {
   try {
-    return await dispatchTool(ctx, name, args, executionId, observer);
+    // Every tool runs inside this run's refusal ledger, so a host the egress guard
+    // declines is remembered for the next tool rather than only for that one call.
+    return await withEgressRefusalLedger(ctx.state.egressRefusedHosts, () =>
+      dispatchTool(ctx, name, args, executionId, observer),
+    );
   } finally {
     // Editing its own profile returns only what this run wrote; a child's profile is another bot's.
     const ownProfile = name === "update_bot" && !argumentGiven(args.bot_id);
