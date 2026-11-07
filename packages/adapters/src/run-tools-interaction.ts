@@ -42,9 +42,6 @@ const CALENDAR_FIELDS: { name: string; required: boolean }[] = [
   { name: "allDay", required: false },
 ];
 
-/** A batch of events is a separate shape the plan may carry, not a surface field. */
-const CALENDAR_BATCH_FIELD = "events";
-
 /** Fill missing email.compose slots so the surface always has the draft fields. */
 export function normalizeEmailComposePlan(plan: InteractionPlan): InteractionPlan {
   if (plan.intent !== "email.compose" && plan.intent !== "email.send") return plan;
