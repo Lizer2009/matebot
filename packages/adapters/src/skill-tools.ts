@@ -8,7 +8,7 @@ import {
 } from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { availableInSpace } from "@matebot/db";
-import { BUILTIN_AGENT_SKILLS } from "./builtin-skills.js";
+import { BUILTIN_AGENT_SKILLS, resolveSkillDocumentation } from "./builtin-skills.js";
 
 export const SKILL_TOOL_NAMES = new Set([
   "skill_read",
@@ -57,7 +57,7 @@ export function builtinAgentSkillRecords(): Array<SkillRecord & { id: string }> 
     id: `builtin:${skill.name}`,
     name: skill.name,
     description: skill.description,
-    content: skill.content,
+    content: resolveSkillDocumentation(skill.content),
     source: "builtin" as const,
     readOnly: true,
   }));
@@ -161,7 +161,9 @@ export async function skillReadFromTool(
     description: skill.description,
     source: skill.source,
     readOnly: skill.readOnly,
-    content: skill.content,
+    // Resolved here, at the moment the model reads the skill, so the documentation
+    // links name this deployment's origin rather than whatever it was at import.
+    content: resolveSkillDocumentation(skill.content),
     ...(paths.length ? { files: paths } : {}),
   };
 }

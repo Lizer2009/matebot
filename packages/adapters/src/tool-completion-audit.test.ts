@@ -76,11 +76,11 @@ describe("toolCompletionAuditPayload", () => {
 
   it("classifies a failure without carrying a credential", () => {
     const payload = toolCompletionAuditPayload(
-      { ...base, error: "request failed with key sk_live_abc123" },
-      ["sk_live_abc123"],
+      { ...base, error: "request failed with key redacted-key-abc123" },
+      ["redacted-key-abc123"],
     );
     expect(payload.outcome).toBe("error");
-    expect(JSON.stringify(payload)).not.toContain("sk_live_abc123");
+    expect(JSON.stringify(payload)).not.toContain("redacted-key-abc123");
     expect(payload.host).toBe("docs.example.test");
   });
 });

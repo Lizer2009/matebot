@@ -1,42 +1,44 @@
-import { buildSkillMd, PRODUCT_DISPLAY_NAME } from "@matebot/core";
+import {
+  buildSkillMd,
+  documentationUrl,
+  documentOriginFromEnv,
+  PRODUCT_DISPLAY_NAME,
+  PRODUCT_DOCS_FALLBACK,
+  PRODUCT_DOCUMENTATION,
+} from "@matebot/core";
 
-/** Docs index headings name the product, so a fork's skill lists its own name too. */
-const RAKAZO_DOCS: ReadonlyArray<readonly [topics: string, url: string]> = [
-  [`Getting started, first bot, what ${PRODUCT_DISPLAY_NAME} does`, "https://rakazo.com/docs.md"],
-  [
-    "Creating bots, chatting, bot settings, sidebar, search",
-    "https://rakazo.com/docs/bots-and-chats.md",
-  ],
-  ["Importing an OpenClaw, Hermes or ChatGPT agent", "https://rakazo.com/docs/import-an-agent.md"],
-  [
-    "Connecting apps and integrations (Gmail, GitHub, MCP tools)",
-    "https://rakazo.com/docs/integrations.md",
-  ],
-  ["Slack, Telegram, WhatsApp and other chat apps", "https://rakazo.com/docs/messaging-apps.md"],
-  ["Routines, schedules and triggers", "https://rakazo.com/docs/routines.md"],
-  ["The bot's computer, files, using your own computer", "https://rakazo.com/docs/computer.md"],
-  ["Memory", "https://rakazo.com/docs/memory.md"],
-  ["Skills", "https://rakazo.com/docs/skills.md"],
-  ["Approvals, Allow and Block lists", "https://rakazo.com/docs/approvals.md"],
-  ["Group chats, bots working together, subagents", "https://rakazo.com/docs/groups.md"],
-  ["Voice, calls, spoken replies", "https://rakazo.com/docs/voice-and-calls.md"],
-  ["Models, providers, API keys, fallbacks, usage", "https://rakazo.com/docs/models.md"],
-  ["Spaces", "https://rakazo.com/docs/spaces.md"],
-  ["Saved credentials and website logins", "https://rakazo.com/docs/bot-secrets.md"],
-  [
-    "Account, preferences, data export, credits, plans, billing",
-    "https://rakazo.com/docs/account.md",
-  ],
-  ["Desktop app", "https://rakazo.com/docs/desktop-app.md"],
-  ["Mobile app", "https://rakazo.com/docs/mobile-app.md"],
-  ["Bots that create and manage bots", "https://rakazo.com/docs/fleet-management.md"],
-  ["Building a plugin", "https://rakazo.com/docs/build-a-plugin.md"],
-  ["Self-hosting", "https://rakazo.com/docs/self-host.md"],
-  ["Self-hosted server configuration", "https://rakazo.com/docs/self-host-configuration.md"],
-];
+/**
+ * Where the documentation index goes in the skill body.
+ *
+ * The index depends on the deployment's own origin, which a hosting process may
+ * fill after this module is imported. Writing it in at import time would freeze the
+ * default, so the body carries this marker and the skill entry resolves it when the
+ * model actually reads the skill.
+ */
+export const DOCUMENTATION_INDEX_MARKER = "{{product-documentation-index}}";
 
-/** Fixed URLs, so fetching one can't carry anything out of a run. */
-export const RAKAZO_DOCS_URLS = RAKAZO_DOCS.map(([, url]) => url);
+/** The index, built for the current environment. */
+export function documentationIndex(env: Record<string, string | undefined> = process.env): string {
+  const origin = documentOriginFromEnv(env);
+  return PRODUCT_DOCUMENTATION.map(
+    (page) => `- ${page.topics}: ${documentationUrl(origin, page.slug)}`,
+  ).join("\n");
+}
+
+/** Resolve the marker in a skill body against the current deployment. */
+export function resolveSkillDocumentation(body: string): string {
+  return body.includes(DOCUMENTATION_INDEX_MARKER)
+    ? body.replace(DOCUMENTATION_INDEX_MARKER, documentationIndex())
+    : body;
+}
+
+/** Every URL this skill may name, for callers that need the closed set. */
+export function productDocumentationUrls(
+  env: Record<string, string | undefined> = process.env,
+): string[] {
+  const origin = documentOriginFromEnv(env);
+  return PRODUCT_DOCUMENTATION.map((page) => documentationUrl(origin, page.slug));
+}
 
 /**
  * Built-in Agent Skills (SKILL.md recipes) available to every user.
@@ -62,14 +64,28 @@ const SKILLS: Array<{ name: string; description: string; body: string }> = [
   {
     name: PRODUCT_DISPLAY_NAME,
     description: `How to use or set up ${PRODUCT_DISPLAY_NAME}: chat apps, your computer, billing, hosting`,
-    body: `Answer questions about ${PRODUCT_DISPLAY_NAME} itself from its docs. Fetch the matching page with web_fetch before answering, then answer briefly in your own words and link the page. If fetching fails or is unavailable, answer only what this index says and link the page. Never invent menus, buttons, or steps the page doesn't show. Account-specific facts (credit balance, plan, usage) aren't in the docs: point to the screen that shows them.
+    body: `Answer questions about ${PRODUCT_DISPLAY_NAME} itself from its docs. Fetch the matching page with web_fetch before answering, then answer briefly in your own words and link the page. Never invent menus, buttons, or steps a page doesn't show. Account-specific facts (credit balance, plan, usage, which apps are connected) are not in the docs: point to the screen that shows them.
 
-Only the pages below exist. Pick the closest one by topic; never construct a URL, guess a path, or fetch a page that is not on this list — if nothing fits, say what this index covers and ask which topic they mean.
+Only the pages below exist. Pick the closest one by topic; never construct a URL, guess a path, or fetch a page that is not on this list.
 
-${RAKAZO_DOCS.map(([topics, url]) => `- ${topics}: ${url}`).join("\n")}`,
+If the fetch fails, is blocked, or the answer is not on any page, answer from this summary instead and say it is the short answer rather than the full page:
+
+${PRODUCT_DOCS_FALLBACK}
+
+Pages, for when a fetch does work:
+
+${DOCUMENTATION_INDEX_MARKER}`,
   },
 ];
 
+/**
+ * The built-in skills as a list.
+ *
+ * The product skill's body carries a documentation marker rather than resolved
+ * links, because the origin comes from deployment configuration that may arrive
+ * after this module loads. `resolveSkillDocumentation` fills it in when a model
+ * actually reads the skill.
+ */
 export const BUILTIN_AGENT_SKILLS: Array<{
   name: string;
   description: string;
