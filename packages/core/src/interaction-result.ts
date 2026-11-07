@@ -110,8 +110,7 @@ export function validateResultProvenance(input: unknown): ResultProvenanceValida
   // rather than rendered as if it labelled the data.
   let year: number | undefined;
   if (record.year !== undefined && record.year !== null) {
-    const parsedYear =
-      typeof record.year === "number" ? record.year : Number(text(record.year));
+    const parsedYear = typeof record.year === "number" ? record.year : Number(text(record.year));
     if (!Number.isInteger(parsedYear) || parsedYear < 1900 || parsedYear > 2999) {
       return { ok: false, error: "invalid_year" };
     }
@@ -267,63 +266,4 @@ export function provenanceLine(provenance: ResultProvenance): string {
   // guess whether a figure was read from a source or written by the model.
   if (provenance.attribution !== "source") parts.push("not from a data source");
   return parts.join(" · ");
-}
-
-/**
- * A same-card refresh of a result.
- *
- * Changing the window, or the filter, is a view change on the card the user is
- * already looking at — not a new card. What must not change silently is where the
- * numbers came from: switching source is a new query, and letting a refresh do it
- * would relabel data the user already trusted. Provenance that stays the same is
- * preserved rather than re-derived.
- */
-export type RefreshResultInput = {
-  revision: number;
-  window?: { from: string; to: string };
-  rows: unknown[];
-  /** A refresh may only repeat the current source; a different one is refused. */
-  source?: string;
-};
-
-export type RefreshResultOutput =
-  | { ok: true; surface: ResultSurface; surfaceTitle: string; revision: number }
-  | { ok: false; error: "source_changed" | "invalid_window" | "unsupported_row_value" };
-
-export function refreshResultSurface(
-  current: ResultSurface,
-  input: RefreshResultInput,
-): RefreshResultOutput {
-  if (input.source !== undefined && input.source.trim() !== current.provenance.source) {
-    return { ok: false, error: "source_changed" };
-  }
-
-  let window = current.provenance.window;
-  if (input.window !== undefined) {
-    const parsed = readWindow(input.window);
-    if (!parsed.ok) return { ok: false, error: "invalid_window" };
-    window = parsed.window;
-  }
-
-  const built = buildResultSurface({
-    title: current.title,
-    provenance: {
-      ...current.provenance,
-      ...(window ? { window } : {}),
-    },
-    columns: current.columns,
-    rows: input.rows,
-  });
-  if (!built.ok) {
-    return {
-      ok: false,
-      error: built.error === "unsupported_row_value" ? "unsupported_row_value" : "invalid_window",
-    };
-  }
-  return {
-    ok: true,
-    surface: built.surface,
-    surfaceTitle: current.title,
-    revision: input.revision,
-  };
 }

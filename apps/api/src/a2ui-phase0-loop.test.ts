@@ -1,6 +1,6 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
 import type { NaturalLanguageEditDeps, SurfaceRevisionState } from "@matebot/core";
-import { applyNaturalLanguageEdit, applySurfaceEdit, canSubmitSurface } from "@matebot/core";
+import { applyNaturalLanguageEdit, canSubmitSurface, userEditedFieldNames } from "@matebot/core";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   dispatchInteractionActionService,
@@ -256,18 +256,63 @@ describe("model edit through confirm to exactly one send", () => {
 });
 
 describe("revision rules applied to the same draft", () => {
-  it("drops a replayed server event instead of rewinding the card", () => {
-    const state: SurfaceRevisionState = {
-      taskId: "ix-1",
-      surfaceId: "surf-1",
-      revision: 4,
-      status: "draft",
-      values: { subject: "current" },
-      editedFields: ["subject"],
+  it("keeps the typed value when a late model edit names the same field", async () => {
+    // The draft records that the person wrote this field; a model edit must skip
+    // it. This goes through the same orchestrator the tool uses, not a helper.
+    const plan = {
+      intent: "email.compose",
+      title: "Email",
+      fields: [
+        { name: "subject", value: "current", required: true, status: "resolved", source: "user" },
+      ],
+      nextStep: "ask",
+      riskLevel: "medium",
     };
-    expect(
-      applySurfaceEdit(state, { name: "subject", value: "stale", origin: "model" }).values.subject,
-    ).toBe("current");
+    expect(userEditedFieldNames(plan)).toEqual(["subject"]);
+    const applied: string[] = [];
+    const result = await applyNaturalLanguageEdit(
+      {
+        listOpenSurfaces: async () => [
+          {
+            taskId: "ix-1",
+            surfaceId: "surf-1",
+            label: "Email",
+            status: "draft",
+            intent: "email.compose",
+          },
+        ],
+        loadInteraction: async () => ({
+          id: "ix-1",
+          spaceId: "space-1",
+          threadId: "thread-1",
+          intent: "email.compose",
+          status: "ready_for_review",
+          draftVersion: 4,
+          confirmedVersion: null,
+          slots: { subject: "current" },
+          userEditedFields: userEditedFieldNames(plan),
+          plan,
+        }),
+        applyField: async (input) => {
+          applied.push(input.name);
+          return { draftVersion: input.expectedDraftVersion + 1 };
+        },
+      },
+      {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        schema: {
+          schemaVersion: 1,
+          presentation: "form",
+          fields: [{ name: "subject", label: "Subject", kind: "text", required: true }],
+          action: null,
+        },
+        fields: { subject: "stale" },
+        revision: 4,
+      },
+    );
+    expect(applied).toEqual([]);
+    expect(result).toMatchObject({ ok: true, skippedFields: ["subject"] });
   });
 
   it("refuses a submit whose revision no longer matches the draft", () => {
