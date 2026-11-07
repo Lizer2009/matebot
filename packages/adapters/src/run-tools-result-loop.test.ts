@@ -198,12 +198,12 @@ describe("production tool loop: present_result", () => {
     const original = ctx.deps.prisma.externalEffect.create as unknown as (args: {
       data: { kind?: string };
     }) => Promise<unknown>;
-    vi.spyOn(ctx.deps.prisma.externalEffect, "create").mockImplementation(
-      (async (args: { data: { kind?: string } }) => {
-        if (args?.data?.kind) kinds.push(args.data.kind);
-        return original(args);
-      }) as never,
-    );
+    vi.spyOn(ctx.deps.prisma.externalEffect, "create").mockImplementation((async (args: {
+      data: { kind?: string };
+    }) => {
+      if (args?.data?.kind) kinds.push(args.data.kind);
+      return original(args);
+    }) as never);
     await applyTool(
       ctx as never,
       "present_result",
