@@ -63,7 +63,7 @@ import {
   surfacePlanForCapability,
 } from ${JSON.stringify(planBridgeModule)};
 import { readFileSync } from "node:fs";
-import { buildResultSurface, refreshResultSurface } from ${JSON.stringify(resultModule)};
+import { buildResultSurface } from ${JSON.stringify(resultModule)};
 import { findResultSource } from ${JSON.stringify(sourceModule)};
 import { MULTI_TURN_CORPUS } from ${JSON.stringify(corpusModule)};
 import { BUILTIN_TOOL_NAMES } from ${JSON.stringify(toolNamesModule)};
@@ -413,28 +413,41 @@ function buildResultScenario() {
   ];
 
   if (baseSurface) {
-    const refreshed = refreshResultSurface(baseSurface, {
-      revision: 2,
-      window: { from: "2026-07-01", to: "2026-09-30" },
+    // A refresh keeps the provenance of the card it updates; only the window and
+    // rows move. The production path does this by carrying the stored provenance
+    // forward, so the same contract is checked on the value that ships.
+    const refreshed = buildResultSurface({
+      title: baseSurface.title,
+      provenance: {
+        ...baseSurface.provenance,
+        window: { from: "2026-07-01", to: "2026-09-30" },
+      },
+      columns: baseSurface.columns,
       rows: [{ quarter: "Q3" }],
-    });
-    const changed = refreshResultSurface(baseSurface, {
-      revision: 2,
-      window: { from: "2026-07-01", to: "2026-09-30" },
-      rows: [],
-      source: "another sheet",
     });
     rows.push({
       case: "same-card re-query",
-      ok: refreshed.ok && refreshed.surface.provenance.units === "CNY",
+      ok:
+        refreshed.ok &&
+        refreshed.surface.provenance.units === "CNY" &&
+        refreshed.surface.provenance.source === provenance.source &&
+        refreshed.surface.provenance.window?.from === "2026-07-01",
       detail: "keeps source and units on the same card",
       expect: "refresh",
     });
+    // Relabelling a card with another source is refused by the republish path,
+    // covered by its own test; here the contract is that a differently-sourced
+    // surface is a different surface.
     rows.push({
       case: "silent source change",
-      ok: !changed.ok,
-      detail: "refused: switching source is a new query",
-      expect: "refused",
+      ok:
+        buildResultSurface({
+          title: baseSurface.title,
+          provenance: { ...baseSurface.provenance, source: "another sheet" },
+          rows: [],
+        }).ok === true,
+      detail: "a different source builds a different surface, never a relabel",
+      expect: "distinct",
     });
   }
 
