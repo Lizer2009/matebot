@@ -15,6 +15,16 @@ import { captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
  * travels — tool selection by a live DeepSeek model is a separate, blocked gate.
  */
 
+/**
+ * These run only under the dedicated launcher (`apps/api/e2e-a2ui.mjs`), which
+ * starts the API with `FEATURE_A2UI=1` against a disposable database. The
+ * regular suite runs with the flag at its shipped default (off), so a card is
+ * never rendered there; skipping keeps the default path honest rather than
+ * asserting against a disabled feature.
+ */
+const liveA2ui = Boolean(process.env.A2UI_LIVE_E2E);
+test.skip(!liveA2ui, "run via apps/api/e2e-a2ui.mjs with A2UI_LIVE_E2E=1");
+
 const password = "correct-horse-battery-staple";
 let accountSeq = 0;
 

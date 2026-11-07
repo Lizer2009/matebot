@@ -65,6 +65,8 @@ Object.assign(process.env, {
   MCP_STDIO_ALLOWED_COMMANDS: "echo",
   VITE_FEATURE_A2UI: "1",
   FEATURE_A2UI: "1",
+  // Marks these specs as the dedicated A2UI run; the regular suite skips them.
+  A2UI_LIVE_E2E: "1",
   CI: "1",
 });
 delete process.env.CURSOR_API_KEY;
