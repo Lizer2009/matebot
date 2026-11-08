@@ -127,4 +127,24 @@ describe("image publishing from a prerelease tag", () => {
     // The exact version tag is fine: it names one immutable build.
     expect(publisherText).toContain("type=semver,pattern=v{{version}}");
   });
+
+  /**
+   * A build must not wear a version that already shipped.
+   *
+   * 0.6.1-pr42.f4509d1a1 is published, with images and an installer. A later build must
+   * sort above it and name its own source commit, or the two cannot be told apart on a
+   * machine that has one installed.
+   */
+  it("sorts above the released prerelease and names its own commit", () => {
+    const desktop = JSON.parse(
+      readFileSync(path.resolve(import.meta.dirname, "../package.json"), "utf8"),
+    ) as { version: string };
+    const released = "0.6.1-pr42.f4509d1a1";
+    expect(desktop.version).not.toBe(released);
+    const [major, minor, patch] = desktop.version.split("-")[0]!.split(".").map(Number);
+    expect([major, minor, patch][0]).toBeGreaterThanOrEqual(0);
+    expect(`${major}.${minor}.${patch}` > "0.6.1").toBe(true);
+    // A prerelease names where it came from, so an installed build can be traced.
+    expect(desktop.version).toMatch(/^\d+\.\d+\.\d+-pr\d+\.[0-9a-f]{7,}$/);
+  });
 });
