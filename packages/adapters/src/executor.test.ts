@@ -201,7 +201,12 @@ describe("tool completion audit", () => {
     installLogger(createLogger({ service: "test", level: "off", sinks: [] }));
   });
 
-  it("logs each tool completion by name, outcome and duration without its content", async () => {
+  /**
+   * The log line is what an operator reads. It has to join to the request that
+   * produced it — the requirement is that a run, a tool, and a call id are
+   * traceable — and it must still carry none of the content the tool handled.
+   */
+  it("logs each completion by run, call id, tool and outcome without its content", async () => {
     const append = vi.fn().mockResolvedValue(undefined);
     const sink = createTestSink();
     installLogger(createLogger({ service: "test", sinks: [sink] }));
@@ -238,18 +243,23 @@ describe("tool completion audit", () => {
         "space.id": "space-1",
         "thread.id": "thread-1",
         "bot.id": "bot-1",
+        // The join key back to `agent.tool.called` for this run.
+        "tool.call_id": "call-1",
         tool: "web_search",
         "tool.outcome": "succeeded",
         "tool.duration_ms": 12,
       }),
       expect.objectContaining({
         message: "agent.tool.completed",
+        "tool.call_id": "call-2",
         tool: "mcp__notes__create",
         "tool.outcome": "error",
         "tool.duration_ms": 3,
       }),
     ]);
-    expect(JSON.stringify(sink.events)).not.toMatch(/private|call-1|call-2/);
+    // The content the tools handled never reaches the log.
+    expect(JSON.stringify(sink.events)).not.toMatch(/private/);
+    expect(JSON.stringify(sink.events)).not.toContain("private search result");
     installLogger(createLogger({ service: "test", level: "off", sinks: [] }));
   });
 
@@ -335,6 +345,8 @@ describe("tool completion audit", () => {
       durationMs: 4,
       outcome: "error",
       error: "Rejected [redacted] using Bearer [redacted]",
+      // The message says nothing structured, so the class is honest about that.
+      failure: { class: "unknown" },
     });
   });
 
@@ -1892,6 +1904,25 @@ describe("dockerComputerToolInstruction", () => {
     );
     expect(dockerComputerToolInstruction("desktop")).toBeUndefined();
     expect(dockerComputerToolInstruction("e2b")).toBeUndefined();
+  });
+
+  /**
+   * Looking an account up by its email address is a request the audit saw, and the
+   * answer overstated what the evidence supports. The boundary belongs where the
+   * lookup happens, which is this instruction, and it must be present exactly when
+   * the browser tools that reach GitHub are.
+   */
+  it("states the GitHub identity boundary where the lookup happens", () => {
+    const instruction = dockerComputerToolInstruction("docker") ?? "";
+    expect(instruction).toContain("an association, not proof of ownership");
+    expect(instruction).toContain("public repositories only");
+    expect(instruction).toContain("do not present it as all their projects");
+    // Without a browser there is no GitHub lookup, so the paragraph is not noise.
+    const noBrowser = dockerComputerToolInstruction(
+      "docker",
+      new Set(["browser_navigate", "browser_act"]),
+    );
+    expect(noBrowser ?? "").not.toContain("an association, not proof of ownership");
   });
 
   it("documents gh CLI device-flow login without token injection", () => {

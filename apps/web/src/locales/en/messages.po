@@ -897,6 +897,10 @@ msgstr "Approve this server to let your agent use its tools."
 msgid "Approved"
 msgstr "Approved"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Approved, not connected yet"
+msgstr "Approved, not connected yet"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
 msgstr "Approving…"
@@ -930,6 +934,10 @@ msgstr "Artifacts"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Ask"
 msgstr "Ask"
+
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Ask for the draft again to get an editable card."
+msgstr "Ask for the draft again to get an editable card."
 
 #: src/pages/shell/computer-panel.tsx
 msgid "Asleep"
@@ -3820,6 +3828,10 @@ msgstr "Loading plugins…"
 msgid "Loading preview…"
 msgstr "Loading preview…"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Loading this card…"
+msgstr "Loading this card…"
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
 msgstr "Loading voice providers…"
@@ -4564,6 +4576,10 @@ msgstr "Not used by Matebot"
 msgid "Not working"
 msgstr "Not working"
 
+#: src/pages/shell/message-cards.tsx
+msgid "Nothing has reached this server yet."
+msgstr "Nothing has reached this server yet."
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "Nothing remembered yet"
@@ -4998,6 +5014,10 @@ msgstr "POST to"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "Preferences"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Preparing this server."
+msgstr "Preparing this server."
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6503,6 +6523,14 @@ msgstr "This can't be undone."
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
 
+#: src/pages/shell/message-view.tsx
+msgid "This card can’t be shown here because interactive cards are off on this server."
+msgstr "This card can’t be shown here because interactive cards are off on this server."
+
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This card could not be shown."
+msgstr "This card could not be shown."
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "this computer"
@@ -6529,6 +6557,10 @@ msgstr "This file is not valid UTF-8 text."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "This import was already used. Choose the files again."
+
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm."
+msgstr "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm."
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this Mac"
@@ -6602,6 +6634,10 @@ msgstr "This server did not request browser authorization."
 #: src/pages/McpServersOverlay.tsx
 msgid "This server is already connected. Disconnect it first to authorize again."
 msgstr "This server is already connected. Disconnect it first to authorize again."
+
+#: src/pages/shell/message-cards.tsx
+msgid "This server is not responding."
+msgstr "This server is not responding."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6729,6 +6765,7 @@ msgstr "Trials get fewer hours to prevent abuse."
 msgid "Trusted sites"
 msgstr "Trusted sites"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx

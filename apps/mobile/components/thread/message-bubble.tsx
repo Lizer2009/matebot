@@ -203,6 +203,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   doubleTapSurface = false,
   userBubble,
   onRefresh,
+  a2uiEnabled,
 }: {
   onHelperToggle?: MessageRowActions["helperToggle"];
   botId: string;
@@ -233,6 +234,11 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   doubleTapSurface?: boolean;
   userBubble?: UserBubble;
   onRefresh?: () => void | Promise<unknown>;
+  /**
+   * Whether this deployment serves interactive cards, from `/me`. Undefined means the
+   * server has not answered yet, so the card is drawn rather than called unavailable.
+   */
+  a2uiEnabled?: boolean;
 }) {
   const colorScheme = useResolvedAppearance();
   const tokens = withUserBubble(mobileTokens(), userBubble);
@@ -680,12 +686,12 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   const computerBlocks = message.blocks.filter(
     (block): block is Extract<MessageBlock, { kind: "computer" }> => block.kind === "computer",
   );
-  const a2uiBlocks = isA2uiEnabled()
-    ? message.blocks.filter(
-        (block): block is Extract<MessageBlock, { kind: "a2ui_surface" }> =>
-          block.kind === "a2ui_surface",
-      )
-    : [];
+  // A card this deployment does not serve is still listed, so it can say so. Filtering
+  // it out here is what left a row that was silently empty.
+  const a2uiBlocks = message.blocks.filter(
+    (block): block is Extract<MessageBlock, { kind: "a2ui_surface" }> =>
+      block.kind === "a2ui_surface",
+  );
   return (
     <View style={{ gap: 8, width: "100%" }}>
       {segments.map((segment, index) => (
@@ -711,6 +717,19 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
       ))}
       {a2uiBlocks.map((block) => {
         const target = groupId ? { groupId } : { botId: cardBotId };
+        // The server does not serve cards here. Say so, in the same words web uses, so
+        // the row is never silently empty.
+        if (isA2uiEnabled({ server: a2uiEnabled }) === false) {
+          return (
+            <View key={`a2ui-disabled-${block.surfaceId}`} testID="a2ui-native-disabled">
+              <Text>
+                {t(
+                  "This card can’t be shown here because interactive cards are off on this server.",
+                )}
+              </Text>
+            </View>
+          );
+        }
         return (
           <A2uiNativeSurface
             key={block.surfaceId}

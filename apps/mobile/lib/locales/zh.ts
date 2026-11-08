@@ -1,4 +1,13 @@
 export const ZH_MESSAGES: Record<string, string> = {
+  "Could not load this card.": "无法加载此卡片。",
+  "This card had no content to load.": "此卡片没有可加载的内容。",
+  "This card could not be shown.": "无法显示此卡片。",
+  "Loading this card…": "正在加载卡片…",
+  "Ask for the draft again to get an editable card.": "请重新索取草稿以获得可编辑的卡片。",
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.":
+    "这是较早的卡片：它在卡片可编辑之前就已保存，因此没有可填写或确认的内容。",
+  "This card can’t be shown here because interactive cards are off on this server.":
+    "此卡片无法显示，因为此服务器已关闭交互式卡片。",
   "Add rule": "添加规则",
   "Tool name": "工具名称",
   Address: "地址",
@@ -405,6 +414,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Connect Treg": "连接 Treg",
   Connected: "已连接",
   "Connected.": "已连接。",
+  "Approved, not connected yet.": "已批准，但尚未连接。",
+  "Approved, not connected yet: {reason}": "已批准，但尚未连接：{reason}",
   "Connected. Its tools are available from your next message.":
     "已连接。从你的下一条消息起即可使用它的工具。",
   Copy: "复制",

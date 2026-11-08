@@ -5,7 +5,7 @@ import type {
   ResultColumn,
   ResultSourceRead,
 } from "@matebot/core";
-import { buildResultSurface, validateResultProvenance } from "@matebot/core";
+import { buildResultSurface, windowDecision } from "@matebot/core";
 import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { loadOwnerEmailConnections } from "./interaction-email-capability.js";
@@ -47,6 +47,8 @@ export type PresentResultArgs = {
   year?: unknown;
   freshness?: unknown;
   columns?: unknown;
+  /** True when the assistant chose the period because the user named none. */
+  defaultedWindow?: unknown;
   /** A specific uploaded file to read, when the model knows which one. */
   artifactId?: unknown;
   rows?: unknown;
@@ -103,6 +105,11 @@ export type PresentResultDeps = {
   /** The user's own connection for a source that needs one. */
   connectionFor: (app: "email" | "calendar") => Promise<string | null>;
   /**
+   * What the person actually asked, so the server can decide whether the period
+   * was theirs or the assistant's. Absent in a test that does not care.
+   */
+  userPrompt?: string | null;
+  /**
    * A per-turn reader, asked for by source id. Each source that cannot be read
    * from a shared registry (the calendar through a connector, a file through this
    * turn's artifacts) supplies one; anything else uses the registered reader.
@@ -128,6 +135,7 @@ export function presentResultDeps(ctx: RunContext): PresentResultDeps {
 
   return {
     connectionFor,
+    userPrompt: ctx.task?.prompt ?? null,
     // The calendar is the one source that reads through the provider. Its reader
     // is built from this run's connector so a read happens with this user's own
     // connection and nothing outlives the turn.
@@ -220,6 +228,14 @@ export async function surfaceFromArgs(
     const from = text(args.from);
     const to = text(args.to);
     if (!from || !to) return { ok: false, error: "invalid_window" };
+    // Nobody stated a period and nobody admitted choosing one. Publishing here
+    // would put a figure on a window the person never asked about, which is what
+    // the audit's flight answer did. The turn asks instead.
+    const window = windowDecision({
+      claimedByModel: args.defaultedWindow === true,
+      userPrompt: deps.userPrompt,
+    });
+    if (window === "unstated") return { ok: false, error: "unstated_window" };
     const resolved = await resolveSourceBackedRows(
       {
         sourceId,
@@ -230,6 +246,10 @@ export async function surfaceFromArgs(
         ...(parseMetrics(args.metrics) ? { metrics: parseMetrics(args.metrics) } : {}),
         ...(parseColumns(args.columns) ? { columns: parseColumns(args.columns) } : {}),
         ...(text(args.artifactId) ? { artifactId: text(args.artifactId) } : {}),
+        // The server decides, from the person's own words: a model that reports an
+        // invented period as their choice is the defect, so its own claim is not the
+        // final word.
+        ...(window === "assumed" ? { defaultedWindow: true } : {}),
       },
       deps,
     );
@@ -271,11 +291,13 @@ export async function presentResult(
     const reply =
       built.error === "missing_source"
         ? "I need to know where these numbers came from before I can show them."
-        : built.error === "needs_connection"
-          ? "需要先连接数据来源才能读取。"
-          : built.error === "unknown_source"
-            ? "没有这个数据来源，请告诉我要从哪里读取。"
-            : undefined;
+        : built.error === "unstated_window"
+          ? "Which dates should I cover? Tell me the period and I will read it."
+          : built.error === "needs_connection"
+            ? "需要先连接数据来源才能读取。"
+            : built.error === "unknown_source"
+              ? "没有这个数据来源，请告诉我要从哪里读取。"
+              : undefined;
     return { ok: false, error: built.error, ...(reply ? { reply } : {}) };
   }
 
@@ -309,8 +331,26 @@ export async function presentResult(
     surfaceId: result.surfaceId,
     messageId: result.messageId,
     // The one short line; the card carries the rows and the source.
-    reply: built.surface.empty ? "没有查到该范围内的数据，已注明来源。" : "结果已放在卡片上。",
+    reply: resultReplyText(built.surface),
   };
+}
+
+/**
+ * The single sentence that accompanies a published result.
+ *
+ * It is produced by the server from the surface it just published, and not written
+ * by the model, so a window the server had to choose is stated in the reply as well
+ * as on the card. The model can then only repeat it, not restate it as the
+ * person's own choice.
+ */
+export function resultReplyText(surface: {
+  empty: boolean;
+  provenance: { defaultedWindow?: boolean };
+}): string {
+  if (surface.empty) return "没有查到该范围内的数据，已注明来源。";
+  return surface.provenance.defaultedWindow
+    ? "结果已放在卡片上；日期是默认范围，不是你说的。"
+    : "结果已放在卡片上。";
 }
 
 export const resultTools: ToolHandlers = {

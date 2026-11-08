@@ -241,6 +241,97 @@ async function cardInteractionId(page: import("@playwright/test").Page): Promise
   return value;
 }
 
+/**
+ * A calendar card is a real card, at both widths.
+ *
+ * The manual audit found an empty frame where this card should have been, while
+ * the log showed the surface had been published. These drive the real card through
+ * the real API with a scripted model: the document loads, the fields are editable,
+ * nothing overflows, and the region is never blank. Native and phone shells are not
+ * covered here and are not claimed.
+ */
+for (const viewport of [
+  { name: "wide", width: 1280, height: 900 },
+  { name: "narrow", width: 360, height: 780 },
+] as const) {
+  test(`calendar card renders and stays usable at ${viewport.name} width`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await signIn(page, testInfo);
+
+    await send(
+      page,
+      `call present_interaction with ${JSON.stringify({
+        plan: {
+          intent: "calendar.create",
+          title: "Next week's schedule",
+          fields: [
+            { name: "name", value: "Weekly sync", required: true, status: "resolved" },
+            {
+              name: "start",
+              value: "2026-11-09T09:00:00+08:00",
+              required: true,
+              status: "resolved",
+            },
+            { name: "end", value: "2026-11-09T09:30:00+08:00", required: true, status: "resolved" },
+            { name: "timezone", value: "Asia/Shanghai", required: false, status: "resolved" },
+          ],
+          nextStep: "request_approval",
+          riskLevel: "medium",
+        },
+      })}`,
+    );
+
+    const card = page.getByTestId("a2ui-surface-card").first();
+    await expect(card).toBeVisible({ timeout: 45_000 });
+
+    // The document loaded: no placeholder survives once the card is up.
+    await expect(page.getByTestId("a2ui-surface-placeholder")).toHaveCount(0);
+    // The card has real content, not an empty box.
+    const text = (await card.textContent()) ?? "";
+    expect(text.trim().length).toBeGreaterThan(0);
+    // The fields are real controls with the capability's own labels. Before the
+    // fix this region was blank; a draft with a title over nothing.
+    await expect(card).toContainText("Name");
+    await expect(card).toContainText("Starts");
+    await expect(card).toContainText("Ends");
+    // The resolved values are in the controls, not lost on the way to the card.
+    await expect(card.locator("input").first()).not.toHaveValue("");
+    await expect(page.getByTestId("a2ui-surface-host")).toHaveCount(1);
+    // And the action the capability declares is present.
+    await expect(card.getByRole("button", { name: /create/i })).toHaveCount(1);
+
+    // Nothing overflows the viewport horizontally.
+    const box = await card.boundingBox();
+    expect(box).not.toBeNull();
+    if (box) expect(box.width).toBeLessThanOrEqual(viewport.width);
+
+    // The controls are reachable and inside the card, not clipped by it.
+    const controls = card.locator("input, button");
+    const count = await controls.count();
+    expect(count).toBeGreaterThan(0);
+    for (let index = 0; index < count; index += 1) {
+      const control = controls.nth(index);
+      const controlBox = await control.boundingBox();
+      if (!controlBox) continue;
+      // Every control sits inside the card's own box, and inside the viewport.
+      expect(controlBox.x + controlBox.width).toBeLessThanOrEqual(viewport.width + 0.5);
+      if (box) {
+        expect(controlBox.x).toBeGreaterThanOrEqual(box.x - 0.5);
+        expect(controlBox.x + controlBox.width).toBeLessThanOrEqual(box.x + box.width + 0.5);
+      }
+    }
+    // A narrow card scrolls within itself rather than pushing the page sideways.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+
+    await captureScreenshot(page, testInfo, `a2ui-e2e-calendar-${viewport.name}`);
+  });
+}
+
 test("a field the person typed survives a late model edit", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
   await send(
@@ -604,4 +695,120 @@ test("a re-query updates the same result card with a new window", async ({ page 
   expect(await cardInteractionId(page)).toBe(interactionId);
   await expect(card).not.toContainText("2000.5", { timeout: 30_000 });
   await captureScreenshot(page, testInfo, "a2ui-e2e-11-requery-same-card");
+});
+
+/**
+ * A calendar draft is a real form, and editing it keeps one card.
+ *
+ * Three things the compiler and the client have to agree on, on the real page: the
+ * schema's fields become controls with their own labels, a batch list travels with
+ * the plan without being drawn as a text box, and a follow-up edit rewrites this
+ * card rather than adding another. The timezone travels as a value, not as a caption.
+ */
+test("a calendar draft draws its schema fields and edits on the same card", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await signIn(page, testInfo);
+
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "calendar.create",
+        title: "Two sessions",
+        fields: [
+          { name: "name", value: "Weekly sync", required: true, status: "resolved" },
+          { name: "start", value: "2026-11-09T09:00:00+08:00", required: true, status: "resolved" },
+          { name: "end", value: "2026-11-09T09:30:00+08:00", required: true, status: "resolved" },
+          { name: "timezone", value: "Asia/Shanghai", required: false, status: "resolved" },
+          {
+            name: "events",
+            value: [
+              { summary: "Weekly sync", start: "2026-11-09T09:00:00+08:00" },
+              { summary: "Follow-up", start: "2026-11-10T09:00:00+08:00" },
+            ],
+            required: false,
+            status: "resolved",
+          },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+
+  const card = page.getByTestId("a2ui-surface-card").first();
+  await expect(card).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-surface-host")).toHaveCount(1);
+  // The schema's own labels, each stated once, so a date is a date input and not
+  // a free-text guess. A control that drew its own label *and* a Text label above
+  // it printed every name twice before this.
+  await expect(card).toContainText("Starts");
+  await expect(card).toContainText("Time zone");
+  const labels = await card.innerText();
+  expect(labels.match(/Starts/g) ?? []).toHaveLength(1);
+  expect(labels.match(/Time zone/g) ?? []).toHaveLength(1);
+  // The timezone value reached the card. The renderer sets a control's value as a
+  // property rather than an attribute, so the live values are read from the DOM.
+  await expect
+    .poll(async () =>
+      card
+        .locator("input")
+        .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
+    )
+    .toContain("Asia/Shanghai");
+  // The batch is data: it is not drawn as an editable control or pasted as text.
+  await expect(card).not.toContainText("Follow-up");
+  const values = await card
+    .locator("input, textarea")
+    .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value));
+  expect(values.some((value) => /summary/i.test(value))).toBe(false);
+
+  const interactionId = await cardInteractionId(page);
+  const revision = Number((await card.getAttribute("data-draft-version")) ?? "1");
+  const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
+  const botId = bots[0]!.id;
+
+  // A follow-up edit lands on this card, not a new one.
+  const edited = await page.request.post("/rpc/threads/editInteraction", {
+    data: {
+      json: {
+        botId,
+        interactionId,
+        revision,
+        fields: { name: "Weekly sync (renamed)" },
+      },
+    },
+  });
+  const editBody = await edited.text();
+  expect(edited.status(), editBody).toBe(200);
+  expect(JSON.parse(editBody).json).toMatchObject({
+    ok: true,
+    interactionId,
+    // The edit wrote a new revision of the same card, not a new one.
+    draftVersion: 2,
+  });
+
+  // Reload: the card a person gets on a fresh read is the same interaction, at the
+  // new revision, with the edited value in its control. Live event delivery to an
+  // already-finished run is covered by the email-edit test; this asserts what was
+  // persisted, which is what a reload or another device sees.
+  await page.reload();
+  const reloaded = page.getByTestId("a2ui-surface-card").first();
+  await expect(reloaded).toBeVisible({ timeout: 45_000 });
+  await expect(reloaded).toHaveAttribute("data-draft-version", "2", { timeout: 30_000 });
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  await expect
+    .poll(
+      async () =>
+        reloaded
+          .locator("input")
+          .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
+      { timeout: 30_000 },
+    )
+    .toContain("Weekly sync (renamed)");
+  // Still one card, and no second draft was created.
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(1);
+  await captureScreenshot(page, testInfo, "a2ui-e2e-12-calendar-same-card-edit");
 });

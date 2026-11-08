@@ -1,4 +1,14 @@
 export const ES_MESSAGES: Record<string, string> = {
+  "Could not load this card.": "No se pudo cargar esta tarjeta.",
+  "This card had no content to load.": "Esta tarjeta no tenía contenido que cargar.",
+  "This card could not be shown.": "No se pudo mostrar esta tarjeta.",
+  "Loading this card…": "Cargando la tarjeta…",
+  "Ask for the draft again to get an editable card.":
+    "Pide el borrador de nuevo para obtener una tarjeta editable.",
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.":
+    "Esta es una tarjeta antigua: se guardó antes de que las tarjetas se pudieran editar, así que no tiene nada que rellenar ni confirmar.",
+  "This card can’t be shown here because interactive cards are off on this server.":
+    "Esta tarjeta no se puede mostrar porque las tarjetas interactivas están desactivadas en este servidor.",
   "Add rule": "Añadir regla",
   "Tool name": "Nombre de la herramienta",
   Title: "Título",
@@ -550,6 +560,8 @@ export const ES_MESSAGES: Record<string, string> = {
   "Connect API key": "Conectar clave de API",
   "Connect MCP server {name}": "Conectar el servidor MCP {name}",
   "Connected.": "Conectado.",
+  "Approved, not connected yet.": "Aprobado, pero aún no conectado.",
+  "Approved, not connected yet: {reason}": "Aprobado, pero aún no conectado: {reason}",
   "Context limit": "Límite de contexto",
   "Could not connect this provider": "No se pudo conectar este proveedor",
   "Could not finish sign-in": "No se pudo completar el inicio de sesión",

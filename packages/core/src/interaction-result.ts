@@ -38,6 +38,11 @@ export type ResultProvenance = {
    * not say, which the card treats as unattributed rather than trusted.
    */
   attribution?: "source" | "model";
+  /**
+   * True when the assistant chose the window because the user never named one.
+   * The card says so, so a default is never read back as the user's own choice.
+   */
+  defaultedWindow?: boolean;
 };
 
 export type ResultProvenanceError =
@@ -126,6 +131,7 @@ export function validateResultProvenance(input: unknown): ResultProvenanceValida
     record.attribution === "source" || record.attribution === "model"
       ? record.attribution
       : undefined;
+  const defaultedWindow = record.defaultedWindow === true ? true : undefined;
 
   return {
     ok: true,
@@ -138,6 +144,7 @@ export function validateResultProvenance(input: unknown): ResultProvenanceValida
       ...(year !== undefined ? { year } : {}),
       ...(freshnessText ? { freshness: freshnessText } : {}),
       ...(attribution ? { attribution } : {}),
+      ...(defaultedWindow ? { defaultedWindow } : {}),
     },
   };
 }
@@ -265,5 +272,7 @@ export function provenanceLine(provenance: ResultProvenance): string {
   // An unattributed result says so, in the same line, so a reader never has to
   // guess whether a figure was read from a source or written by the model.
   if (provenance.attribution !== "source") parts.push("not from a data source");
+  // A period the assistant picked is labelled as its choice, not the user's.
+  if (provenance.defaultedWindow) parts.push("dates assumed");
   return parts.join(" · ");
 }

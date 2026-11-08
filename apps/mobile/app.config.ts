@@ -23,6 +23,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   }
 
   let result = config as ExpoConfig;
+  // Which source this binary came from. A test build must be traceable to one commit,
+  // and the app config is the only metadata that travels inside the APK without
+  // changing the version a store sees. EAS sets this for a git build.
+  const sourceCommit = (process.env.EAS_BUILD_GIT_COMMIT_HASH ?? "").trim();
+  if (sourceCommit) {
+    result = { ...result, extra: { ...result.extra, sourceCommit } };
+  }
   const rpId = passkeyRpId(process.env.EXPO_PUBLIC_API_URL);
   if (rpId) {
     // Native passkeys only work for domains the binary is associated with, so the app reads the

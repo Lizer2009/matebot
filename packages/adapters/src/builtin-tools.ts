@@ -862,6 +862,11 @@ export const builtinAgentTools: ConnectorTool[] = [
           type: "string",
           description: "Optional unit for a measure the file does not declare, such as CNY.",
         },
+        defaultedWindow: {
+          type: "boolean",
+          description:
+            "Set when you chose from/to because the user never named a period. The card then says the dates are assumed, so a default is never read as their choice.",
+        },
         timezone: { type: "string", description: "Optional IANA zone for the window." },
         columns: {
           type: "array",
@@ -892,6 +897,11 @@ export const builtinAgentTools: ConnectorTool[] = [
         to: { type: "string", description: "Window end, ISO 8601 or date." },
         timezone: { type: "string", description: "Optional IANA zone for the window." },
         revision: { type: "number", description: "The revision the card was shown at." },
+        defaultedWindow: {
+          type: "boolean",
+          description:
+            "Set when you chose from/to because the user never named a period. The card then says the dates are assumed, so a default is never read as their choice. Without it, a period the user did not state is asked about instead of re-read.",
+        },
       },
       required: ["sourceId", "from", "to"],
     },

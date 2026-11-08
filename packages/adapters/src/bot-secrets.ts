@@ -997,7 +997,15 @@ export async function requestWithBotSecret(input: {
     where: { ...(await vaultFields(input.prisma, input.scope)), name: request.name },
   });
   if (!row) return { error: "Credential is unavailable. Use request_secret to save it first." };
-  const destination = normalizeSecretDestination(row);
+  // A stored row the schema would refuse today — a credential from an older build,
+  // or one written directly — is a refusal, not a crash: nothing is sent, and the
+  // caller gets the reason.
+  let destination: BotSecretDestination;
+  try {
+    destination = normalizeSecretDestination(row);
+  } catch {
+    return { error: "This saved credential cannot be used for an authenticated request." };
+  }
   if (destination.auth.type === "login") {
     return { error: "Website logins can only be filled into their site with browser_act." };
   }

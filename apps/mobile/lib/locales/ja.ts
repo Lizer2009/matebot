@@ -1,4 +1,14 @@
 export const JA_MESSAGES: Record<string, string> = {
+  "Could not load this card.": "このカードを読み込めませんでした。",
+  "This card had no content to load.": "このカードには読み込む内容がありませんでした。",
+  "This card could not be shown.": "このカードを表示できませんでした。",
+  "Loading this card…": "カードを読み込み中…",
+  "Ask for the draft again to get an editable card.":
+    "編集可能なカードを得るには、下書きをもう一度依頼してください。",
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.":
+    "これは古いカードです。カードを編集できるようになる前に保存されたため、入力や確認できる項目がありません。",
+  "This card can’t be shown here because interactive cards are off on this server.":
+    "このサーバーではインタラクティブカードが無効なため、このカードを表示できません。",
   "Add rule": "ルールを追加",
   "Tool name": "ツール名",
   Address: "住所",
@@ -555,6 +565,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Connect API key": "APIキーを接続",
   "Connect MCP server {name}": "MCPサーバー{name}を接続",
   "Connected.": "接続しました。",
+  "Approved, not connected yet.": "承認済みですが、まだ接続されていません。",
+  "Approved, not connected yet: {reason}": "承認済みですが、まだ接続されていません：{reason}",
   "Context limit": "コンテキスト上限",
   "Could not connect this provider": "このプロバイダーに接続できませんでした",
   "Could not finish sign-in": "ログインを完了できませんでした",

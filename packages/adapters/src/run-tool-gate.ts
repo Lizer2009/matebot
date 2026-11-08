@@ -51,7 +51,7 @@ import {
   resolveAutoReviewChecker,
 } from "./auto-review.js";
 import { reviewWithBackups } from "./auto-review-backups.js";
-import { RAKAZO_DOCS_URLS } from "./builtin-skills.js";
+import { trustedDocumentationUrls } from "./builtin-skills.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { findConnectedModelCredential } from "./model-selection.js";
 import { paidRequestEffect } from "./paid-request.js";
@@ -202,7 +202,12 @@ export async function gateToolCall(
           site: fetchSite,
           trusted:
             ctx.trust.searchResultUrls.has(fetchUrl) ||
-            (name === "web_fetch" && RAKAZO_DOCS_URLS.includes(fetchUrl)) ||
+            // The product's own documentation pages are safe to read without asking:
+            // they are a closed set this build ships, on the origin this deployment
+            // configured. An unconfigured origin gets no exemption — its default is
+            // a host the operator never chose, and pre-approving it would be weaker
+            // than asking.
+            (name === "web_fetch" && trustedDocumentationUrls().includes(fetchUrl)) ||
             (await ctx.trust.loadTrustedSites()).has(fetchSite),
           rules: await ctx.trust.loadApprovalRules(),
         })

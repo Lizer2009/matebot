@@ -1,0 +1,214 @@
+name: release-prerelease
+
+# Publishes an unsigned Windows installer plus checksums for a prerelease tag
+# (`v<version>-pr<n>`), as a GitHub prerelease that is never "Latest".
+#
+# The stable channel is `release-desktop`, which only accepts vMAJOR.MINOR.PATCH tags
+# and refuses a tag that is not already on main. This workflow exists so a build from
+# a feature branch can still be handed to a specific machine for testing without
+# touching that channel: it never writes the update feeds a shipped app reads
+# (`latest.yml` is uploaded as a build artifact only, not as the release feed), never
+# marks the release latest, and refuses any tag that is not a prerelease.
+on:
+  push:
+    tags: ["v*-pr*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-prerelease-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate prerelease tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      tag: ${{ steps.check.outputs.tag }}
+      version: ${{ steps.check.outputs.version }}
+      sha: ${{ steps.check.outputs.sha }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require a prerelease tag matching the packaged version
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$REF_TYPE" != "tag" ]]; then
+            echo "A prerelease is published from a tag, not a branch." >&2
+            exit 1
+          fi
+          # A stable tag (`v1.2.3`) belongs to release-desktop. This workflow only takes a
+          # prerelease, and the trailing source-commit identifier is what makes a build
+          # traceable to one commit.
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-pr[0-9]+(\.[a-z0-9]+)?$ ]]; then
+            echo "$RELEASE_TAG is not a prerelease tag (vX.Y.Z-prN or vX.Y.Z-prN.<sha>)." >&2
+            exit 1
+          fi
+          version="$(node -p "require('./apps/desktop/package.json').version")"
+          if [[ "$RELEASE_TAG" != "v$version" ]]; then
+            echo "Tag $RELEASE_TAG does not match packaged version $version." >&2
+            exit 1
+          fi
+          tag_sha="$(git rev-parse "${RELEASE_TAG}^{commit}")"
+          if [[ "$tag_sha" != "$GITHUB_SHA" ]]; then
+            echo "The workflow revision does not match the tagged commit." >&2
+            exit 1
+          fi
+          if gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "A release already exists for $RELEASE_TAG; refusing to replace it." >&2
+            exit 1
+          fi
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "sha=$tag_sha" >> "$GITHUB_OUTPUT"
+
+  windows:
+    name: Build unsigned Windows installer
+    needs: validate
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate the database client for desktop compilation
+        run: pnpm db:generate
+        env:
+          DATABASE_URL: postgres://matebot:matebot@127.0.0.1:5433/matebot
+      - name: Build renderer and Electron main process
+        run: pnpm --filter @matebot/web build && pnpm --filter @matebot/desktop build
+        env:
+          RAKAZO_ALLOW_DEV_SECRETS: "1"
+      # Unsigned, like `desktop-windows-installer`: no certificate exists for a fork
+      # build, and this installer is for a controlled test machine, not distribution.
+      - name: Package the unsigned installer
+        shell: bash
+        run: pnpm --filter @matebot/desktop exec electron-builder --win --x64 --publish never "-c.win.signExecutable=false"
+      - name: Check the installer is the prerelease build
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installers = @(Get-ChildItem "apps/desktop/out/Matebot-Setup-*.exe")
+          if ($installers.Count -ne 1) { throw "Expected one installer, found $($installers.Count)." }
+          if (-not $installers[0].Name.Contains($env:RELEASE_VERSION)) {
+            throw "$($installers[0].Name) does not carry version $($env:RELEASE_VERSION)."
+          }
+          $application = "apps/desktop/out/win-unpacked/Matebot.exe"
+          if (-not (Test-Path $application)) { throw "The packaged application is not named Matebot.exe." }
+          foreach ($path in @($installers[0].FullName, (Resolve-Path $application).Path)) {
+            $info = (Get-Item $path).VersionInfo
+            if ($info.ProductName -ne "Matebot") { throw "$path has product name '$($info.ProductName)'." }
+            if ($info.CompanyName -ne "Matebot") { throw "$path has company name '$($info.CompanyName)'." }
+          }
+      - name: Checksum the installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apps/desktop/out
+          find . -maxdepth 1 -type f \( -name 'Matebot-Setup-*.exe' -o -name '*.blockmap' \) -print0 |
+            sort -z | xargs -0 sha256sum > SHA256SUMS
+          cat SHA256SUMS
+      - name: Upload the installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: matebot-prerelease-windows-${{ needs.validate.outputs.sha }}
+          path: |
+            apps/desktop/out/Matebot-Setup-*.exe
+            apps/desktop/out/Matebot-Setup-*.exe.blockmap
+            apps/desktop/out/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish the prerelease
+    needs: [validate, windows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      # `gh release create` resolves the tag through git unless it is given one, so the
+      # job needs the repository (and its tags) even though it only uploads files.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: matebot-prerelease-windows-${{ needs.validate.outputs.sha }}
+          path: assets
+          merge-multiple: true
+      - name: Write the release notes
+        env:
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+          SOURCE_SHA: ${{ needs.validate.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > notes.md <<EOF
+          Unsigned Windows installer for a controlled test machine. Not a stable release.
+
+          - Version: \`${RELEASE_TAG}\`
+          - Built from commit: \`${SOURCE_SHA}\`
+
+          This build is **not** on the stable update channel: the app's own updater reads
+          the latest stable release, and this one is published as a prerelease, so an
+          installed app will not offer it. Installing it is a manual step on the test machine.
+
+          What is in this build, and what is not:
+
+          - The fixes developed for the manual audit: product help, activity records, MCP
+            credential recovery, refusal boundaries, result windows, narration, and the
+            calendar card.
+          - Verified by unit, integration and browser tests in CI on this commit.
+          - **Not verified**: no live model or provider call; Windows-native interaction and
+            phone rendering by hand; whether a deployed browser's network reaches what the
+            fetcher refuses. The shell refusal check cannot see a command that builds its
+            address at run time either; that limit is known and asserted, not closed.
+
+          Verify before running: \`SHA256SUMS\` beside the installer.
+          EOF
+          cat notes.md
+      - name: Create the prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # --latest=false is explicit: a prerelease must never take the pointer the
+          # desktop updater and the download page both read.
+          git fetch --force origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+          gh release create "$RELEASE_TAG" assets/* \
+            --prerelease --latest=false --verify-tag \
+            --title "Matebot $RELEASE_TAG (prerelease)" \
+            --notes-file notes.md
+      - name: Report the release URL
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq .html_url)"
+          echo "Published $url" >> "$GITHUB_STEP_SUMMARY"

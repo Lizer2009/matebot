@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import dns from "node:dns";
 import type { LookupFunction } from "node:net";
+import { destinationKey, normalizeHost } from "@matebot/contracts";
 import { recordSecurityEvent } from "@matebot/db";
 
 export type ResolvedAddress = { address: string; family: number };
@@ -9,6 +10,47 @@ export type ResolveHostname = (hostname: string) => Promise<ResolvedAddress[]>;
 type PinnedDns = { hostname: string; addresses: ResolvedAddress[] };
 
 const pinnedDns = new AsyncLocalStorage<PinnedDns>();
+
+/**
+ * Destinations the egress guard refused during the current run, keyed by
+ * `destinationKey` so every spelling of one place lands on one entry.
+ *
+ * A refusal is a statement about a destination, not about one tool. Recording it
+ * here lets another network tool — the browser in particular — refuse the same
+ * destination instead of completing what the guard just declined. It is scoped to
+ * the async context of one run, so concurrent runs cannot see each other's
+ * refusals, and nothing leaks between tenants.
+ */
+const refusedHosts = new AsyncLocalStorage<Set<string>>();
+
+/**
+ * Run `work` with caller-owned refusal state.
+ *
+ * The caller passes the same Set it reads later (for example the run's own state),
+ * so a refusal recorded deep inside a fetch is visible to the next tool without
+ * threading a parameter through every provider. Concurrent runs each pass their
+ * own set, so one run never sees another's refusals.
+ */
+export async function withEgressRefusalLedger<T>(
+  ledger: Set<string>,
+  work: () => Promise<T>,
+): Promise<T> {
+  return refusedHosts.run(ledger, work);
+}
+
+/**
+ * Whether this run's guard already refused `hostname`, however it is spelled.
+ *
+ * Every tool that can reach a destination asks this rather than testing its own
+ * spelling against the ledger, because a host can be written with a trailing root
+ * dot, as an expanded IPv6 address, or as an IPv4-mapped form of the same place.
+ */
+export function egressRefusedHost(hostname: string, ledger?: ReadonlySet<string>): boolean {
+  const key = destinationKey(normalizeHost(hostname));
+  if (!key) return false;
+  const scope = ledger ?? refusedHosts.getStore();
+  return scope?.has(key) === true;
+}
 let dnsPinInstalled = false;
 
 function normalizeLookupHostname(hostname: string): string {
@@ -78,16 +120,58 @@ export function createAddressCheckedLookup(
   };
 }
 
+/** A destination the egress policy refused, carrying the reason as data rather than prose. */
+export class EgressRefusedError extends Error {
+  readonly code = "EGRESS_REFUSED";
+  /** The guard's own reason, kept structured so a classifier never has to parse prose. */
+  readonly egressReason: string;
+  /** The destination that was refused, for the ledger and for logs. */
+  readonly host: string;
+
+  constructor(host: string, reason: string, cause?: unknown) {
+    super(reason, cause === undefined ? undefined : { cause });
+    this.name = "EgressRefusedError";
+    this.host = host;
+    this.egressReason = reason;
+  }
+}
+
 /**
  * Record that an outbound-request guard refused a destination, so a probe of private addresses
  * leaves a security event. Returns the error for `throw egressRefused(...)`.
+ *
+ * The refusal is marked *on* the original error rather than replacing it. Callers
+ * (and their tests) distinguish a refusal from another failure by class — a memory
+ * provider's "private endpoint not allowed" is its own type — and wrapping would
+ * erase that. The mark carries the reason as data, so a classifier reads it instead
+ * of parsing a message.
  */
 export function egressRefused(hostname: string, error: unknown): Error {
-  const refusal = error instanceof Error ? error : new Error(String(error));
+  const reason = (error instanceof Error ? error.message : String(error)) || "refused";
+  const refusal =
+    error instanceof Error
+      ? error
+      : new EgressRefusedError(normalizeLookupHostname(hostname), reason);
   void recordSecurityEvent({
     type: "egress.refused",
-    metadata: { host: hostname.slice(0, 253), reason: refusal.message },
+    metadata: { host: hostname.slice(0, 253), reason },
   });
+  try {
+    Object.defineProperties(refusal, {
+      egressReason: { value: reason, configurable: true, enumerable: false },
+      egressHost: {
+        value: normalizeLookupHostname(hostname),
+        configurable: true,
+        enumerable: false,
+      },
+    });
+  } catch {
+    // A frozen error cannot carry the mark; the message still says why, and the
+    // security event above is already recorded.
+  }
+  // Remember the destination for this run so another network tool cannot be used
+  // to reach what the guard just refused, whichever way it spells the address.
+  refusedHosts.getStore()?.add(destinationKey(normalizeLookupHostname(hostname)));
   return refusal;
 }
 

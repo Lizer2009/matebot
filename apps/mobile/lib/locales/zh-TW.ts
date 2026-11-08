@@ -1,4 +1,13 @@
 export const ZH_TW_MESSAGES: Record<string, string> = {
+  "Could not load this card.": "無法載入此卡片。",
+  "This card had no content to load.": "此卡片沒有可載入的內容。",
+  "This card could not be shown.": "無法顯示此卡片。",
+  "Loading this card…": "正在載入卡片…",
+  "Ask for the draft again to get an editable card.": "請重新索取草稿以取得可編輯的卡片。",
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.":
+    "這是較早的卡片：它在卡片可編輯之前就已儲存，因此沒有可填寫或確認的內容。",
+  "This card can’t be shown here because interactive cards are off on this server.":
+    "此卡片無法顯示，因為此伺服器已關閉互動式卡片。",
   "Add rule": "新增規則",
   "Tool name": "工具名稱",
   Address: "地址",
@@ -1153,6 +1162,8 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Chat with your bot from Slack.": "在 Slack 與你的機器人聊天。",
   "Connect a chat app": "連結聊天應用程式",
   "Connected.": "已連線。",
+  "Approved, not connected yet.": "已核准，但尚未連線。",
+  "Approved, not connected yet: {reason}": "已核准，但尚未連線：{reason}",
   Conversations: "對話",
   "Could not save": "無法儲存",
   "Could not stop computer": "無法停止電腦",

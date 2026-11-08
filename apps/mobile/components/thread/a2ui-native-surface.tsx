@@ -1,5 +1,5 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import { emailSurfacePhase } from "@matebot/core";
+import { emailSurfacePhase, needsRecovery } from "@matebot/core";
 import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import type { NativeCatalogNode } from "../../lib/a2ui-catalog";
@@ -58,6 +58,15 @@ export function A2uiNativeSurface({
 }) {
   const { t } = useI18n();
   const [loaded, setLoaded] = useState<unknown[] | undefined>(messages);
+  /**
+   * Whether the stored document is still on its way, and whether it could not be read.
+   *
+   * Without these, an unresolved document is indistinguishable from one that has no
+   * controls, and the card would announce itself as an old one while it is merely
+   * loading — or forever, if the fetch fails.
+   */
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const source = messages ?? loaded;
   const [values, setValues] = useState<EmailFields>(() => emailFieldsFromSurfaceMessages(messages));
   const [error, setError] = useState<string | null>(null);
@@ -93,15 +102,35 @@ export function A2uiNativeSurface({
 
   useEffect(() => {
     if (messages || !block.documentRef) return;
+    const fetchDocument = fetchRef.current;
+    if (!fetchDocument) {
+      // Nothing to fetch from this surface: not loading, and not an old card either.
+      setLoading(false);
+      return;
+    }
     let active = true;
-    void fetchRef.current?.(block.documentRef).then((next) => {
-      if (!active || !next) return;
-      setLoaded(next);
-    });
+    setLoading(true);
+    setLoadError(null);
+    void fetchDocument(block.documentRef)
+      .then((next) => {
+        if (!active) return;
+        if (!next || next.length === 0) {
+          setLoadError(t("This card had no content to load."));
+          return;
+        }
+        setLoaded(next);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setLoadError(error instanceof Error ? error.message : t("Could not load this card."));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };
-  }, [block.documentRef, messages]);
+  }, [block.documentRef, messages, t]);
 
   if (isEmailComposeIntent(block.intent)) {
     const setField = (name: EmailFieldName) => (value: string) => {
@@ -320,6 +349,31 @@ export function A2uiNativeSurface({
     <View testID="a2ui-native-surface">
       {block.title ? <Text>{block.title}</Text> : null}
       <A2uiCatalogNodes nodes={catalog.nodes} block={block} onAction={onAction} />
+      {/*
+        An early card stored a title and two lines of text, and nothing to press. The turn
+        around it may still say "confirm in the card above", which nothing here can
+        satisfy. It cannot grow the button that was never stored, so it says what is
+        missing and offers a way forward — the same words web uses.
+      */}
+      {loading ? (
+        <View testID="a2ui-native-loading">
+          <Text>{t("Loading this card…")}</Text>
+        </View>
+      ) : loadError ? (
+        <View testID="a2ui-native-load-error">
+          <Text>{t("This card could not be shown.")}</Text>
+          <Text>{loadError}</Text>
+        </View>
+      ) : needsRecovery(source, { intent: block.intent }) ? (
+        <View testID="a2ui-native-recovery">
+          <Text>
+            {t(
+              "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.",
+            )}
+          </Text>
+          <Text>{t("Ask for the draft again to get an editable card.")}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }

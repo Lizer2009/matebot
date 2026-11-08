@@ -92,6 +92,7 @@ export const Transcript = memo(function Transcript({
   onSpeak,
   onOpenComputer,
   onOpenImportSetup,
+  authUi,
   rpc,
 }: {
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -142,6 +143,11 @@ export const Transcript = memo(function Transcript({
   onSpeak: (message: ThreadMessage) => void;
   onOpenComputer: (botId?: string) => void;
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
+  /**
+   * What the server says about this deployment. Undefined until `/me` answers, so a
+   * card is never called unavailable just because the request has not landed yet.
+   */
+  authUi: { a2uiEnabled?: boolean };
   rpc: ReturnType<typeof createSpaceRpc>;
 }) {
   const { t } = useLingui();
@@ -569,10 +575,23 @@ export const Transcript = memo(function Transcript({
                               (block) => block.kind === "ask" || block.kind === "mcp_approval",
                             )
                           ? "relative w-full min-w-0 max-w-xl"
-                          : `relative ${message.blocks.some((block) => block.kind === "app_connect" || block.kind === "page") || pageView.pages.has(message.id) ? "w-full" : "w-fit"} min-w-0 ${bubbleFrameWidth(message.role)}`
+                          : `relative ${
+                              message.blocks.some(
+                                (block) =>
+                                  block.kind === "app_connect" ||
+                                  block.kind === "page" ||
+                                  // A card lays itself out at full width. Inside a `w-fit`
+                                  // frame that is circular, and the frame collapses to
+                                  // zero, so the card is present but occupies no space.
+                                  block.kind === "a2ui_surface",
+                              ) || pageView.pages.has(message.id)
+                                ? "w-full"
+                                : "w-fit"
+                            } min-w-0 ${bubbleFrameWidth(message.role)}`
                     }
                   >
                     <MessageView
+                      a2uiEnabled={authUi.a2uiEnabled}
                       artifactTarget={artifactTarget}
                       message={message}
                       markedUnread={message.id === markedUnreadMessageId}

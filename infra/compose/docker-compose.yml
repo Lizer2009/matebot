@@ -29,6 +29,9 @@ x-app-environment: &app-environment
   WAKEUP_DRIVER: graphile
   AGENT_RUNTIME: pi
   API_URL:
+  # The origin this deployment's own documentation lives on; the help skill builds
+  # its page links from it (packages/core/src/document-origin.ts).
+  RAKAZO_MARKETING_URL:
   MAX_UPLOAD_SIZE_MB:
   MAX_ATTACHMENTS_PER_MESSAGE:
   RAKAZO_UPDATE_RESTART_SUPERVISOR:

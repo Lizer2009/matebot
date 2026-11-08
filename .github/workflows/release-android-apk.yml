@@ -1,8 +1,17 @@
 name: release-android-apk
 
+# Builds the `android-apk` profile on EAS and replaces the rolling `android` release, so the
+# documented download URL never changes. Runs from `main` (the normal case), and also from an
+# `android-pr*` tag so a build from a reviewed branch can be installed on a phone without
+# merging. That tag namespace is separate from `v*` on purpose: a desktop prerelease tag must
+# not start an APK build, and this one must not start a desktop or image build. A tag build is
+# labelled with its tag and commit in the release notes; the rolling release itself is never
+# GitHub's "latest", which the desktop updater owns.
 on:
   workflow_dispatch:
   workflow_call:
+  push:
+    tags: ["android-pr*"]
 
 permissions:
   contents: read
@@ -14,7 +23,8 @@ concurrency:
 jobs:
   release:
     name: Build and publish the Android APK
-    if: github.ref == 'refs/heads/main'
+    # A branch alone cannot publish here; only main or an explicit prerelease tag.
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/android-pr')
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
@@ -94,9 +104,22 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.build.outputs.version }}
           VERSION_CODE: ${{ steps.build.outputs.version_code }}
+          SOURCE_REF: ${{ github.ref_name }}
         run: |
           set -euo pipefail
+          notes() {
+            if [[ "$GITHUB_REF" == refs/tags/android-pr* ]]; then
+              printf 'Install matebot.apk on your Android phone.\n\nBuilt from prerelease tag %s at %s. Not a stable build; the over-the-air channel is unchanged.\n' "$SOURCE_REF" "$GITHUB_SHA"
+            else
+              printf 'Install matebot.apk on your Android phone. It updates itself over the air.\n'
+            fi
+          }
           title="Matebot for Android $VERSION ($VERSION_CODE)"
+          # A build from a prerelease tag says so in the title, so the rolling release
+          # never claims to be a stable build it is not.
+          if [[ "$GITHUB_REF" == refs/tags/android-pr* ]]; then
+            title="$title from $SOURCE_REF"
+          fi
           if ! gh release view "$RELEASE_TAG" --json tagName > /dev/null 2> "$RUNNER_TEMP/view.err"; then
             if ! grep -q "release not found" "$RUNNER_TEMP/view.err"; then
               cat "$RUNNER_TEMP/view.err" >&2
@@ -105,7 +128,7 @@ jobs:
             gh release create "$RELEASE_TAG" "$RUNNER_TEMP/matebot.apk" \
               --target "$GITHUB_SHA" \
               --title "$title" \
-              --notes "Install matebot.apk on your Android phone. It updates itself over the air." \
+              --notes "$(notes)" \
               --latest=false
             exit 0
           fi

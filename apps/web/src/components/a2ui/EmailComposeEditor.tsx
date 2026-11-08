@@ -70,15 +70,34 @@ export function EmailComposeEditor({
   const [discarded, setDiscarded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [mailbox, setMailbox] = useState(capability);
-  const committed = useRef(fields);
+  /**
+   * What the server has acknowledged, as opposed to what is on screen.
+   *
+   * These are different the moment the person types: the field shows their text
+   * while the server still holds the old value. Comparing a commit against the
+   * displayed value would skip the write entirely, so the write is compared
+   * against this instead.
+   */
+  const saved = useRef(fields);
   const versionRef = useRef(draftVersion);
   const valuesRef = useRef(fields);
   const pending = useRef<Partial<Record<EmailFieldName, Promise<number>>>>({});
+  /** Values the person typed here that the server's snapshot has not caught up with. */
+  const dirty = useRef<Partial<Record<EmailFieldName, string>>>({});
   valuesRef.current = values;
 
   useEffect(() => {
-    setValues(fields);
-    committed.current = fields;
+    // A field the person typed here is theirs until the server echoes that text
+    // back. A snapshot can arrive before the commit lands, or out of order with a
+    // republish, and React would then render the old value over what is on screen.
+    // Every other field follows the server, so a model's edit still applies.
+    const next = { ...fields };
+    for (const [name, typed] of Object.entries(dirty.current) as Array<[EmailFieldName, string]>) {
+      if (fields[name] === typed) delete dirty.current[name];
+      else next[name] = valuesRef.current[name];
+    }
+    setValues(next);
+    saved.current = { ...fields };
     versionRef.current = draftVersion;
     setVersion(draftVersion);
   }, [draftVersion, fields.from, fields.to, fields.cc, fields.subject, fields.body]);
@@ -107,6 +126,19 @@ export function EmailComposeEditor({
     busy,
   });
 
+  /**
+   * Record a keystroke as the person's own text.
+   *
+   * Marking it here rather than on blur is what keeps the value on screen: a
+   * snapshot that arrives mid-typing would otherwise re-render the old value.
+   */
+  function typed(name: EmailFieldName, value: string) {
+    dirty.current[name] = value;
+    const next = { ...valuesRef.current, [name]: value };
+    valuesRef.current = next;
+    setValues(next);
+  }
+
   async function commit(name: EmailFieldName, override?: string): Promise<number> {
     const inflight = pending.current[name];
     if (inflight) return inflight;
@@ -116,19 +148,22 @@ export function EmailComposeEditor({
       valuesRef.current = nextValues;
       setValues(nextValues);
     }
-    if (value === committed.current[name] || !onFieldChange) return versionRef.current;
-    const previous = committed.current[name];
-    committed.current = { ...committed.current, [name]: value };
+    // Compared against what the server has, not what is displayed: a republish
+    // between typing and blur updates the display, and must not make the write a
+    // no-op. Only a value the server already holds is skipped.
+    if (value === saved.current[name] || !onFieldChange) return versionRef.current;
+    dirty.current[name] = value;
     const task = (async () => {
       try {
         const result = await onFieldChange(name, value, versionRef.current);
         const next = result?.draftVersion ?? versionRef.current + 1;
         versionRef.current = next;
+        saved.current = { ...saved.current, [name]: value };
         setVersion(next);
         setLocalConfirmedVersion(undefined);
         return next;
       } catch (err) {
-        committed.current = { ...committed.current, [name]: previous };
+        delete dirty.current[name];
         throw err;
       }
     })();
@@ -189,9 +224,7 @@ export function EmailComposeEditor({
           placeholder={t`Subject`}
           disabled={locked}
           className="border-0 bg-transparent px-0 text-[18px] font-semibold shadow-none focus-visible:ring-0"
-          onChange={(event) =>
-            setValues((current) => ({ ...current, subject: event.target.value }))
-          }
+          onChange={(event) => typed("subject", event.target.value)}
           onBlur={(event) => {
             void commit("subject", event.currentTarget.value).catch((err: unknown) =>
               setError(messageOf(err)),
@@ -207,7 +240,7 @@ export function EmailComposeEditor({
           value={values.from}
           autoComplete="email"
           disabled={locked}
-          onChange={(value) => setValues((current) => ({ ...current, from: value }))}
+          onChange={(value) => typed("from", value)}
           onBlur={(value) => {
             void commit("from", value).catch((err: unknown) => setError(messageOf(err)));
           }}
@@ -219,7 +252,7 @@ export function EmailComposeEditor({
           value={values.to}
           autoComplete="email"
           disabled={locked}
-          onChange={(value) => setValues((current) => ({ ...current, to: value }))}
+          onChange={(value) => typed("to", value)}
           onBlur={(value) => {
             void commit("to", value).catch((err: unknown) => setError(messageOf(err)));
           }}
@@ -232,7 +265,7 @@ export function EmailComposeEditor({
           autoComplete="email"
           placeholder="name@example.com"
           disabled={locked}
-          onChange={(value) => setValues((current) => ({ ...current, cc: value }))}
+          onChange={(value) => typed("cc", value)}
           onBlur={(value) => {
             void commit("cc", value).catch((err: unknown) => setError(messageOf(err)));
           }}
@@ -249,7 +282,7 @@ export function EmailComposeEditor({
           rows={6}
           disabled={locked}
           className="min-h-[8rem] border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-          onChange={(event) => setValues((current) => ({ ...current, body: event.target.value }))}
+          onChange={(event) => typed("body", event.target.value)}
           onBlur={(event) => {
             void commit("body", event.currentTarget.value).catch((err: unknown) =>
               setError(messageOf(err)),

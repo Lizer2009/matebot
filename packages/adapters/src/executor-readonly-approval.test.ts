@@ -17,6 +17,7 @@ import type { PrismaClient } from "@matebot/db";
 import { createPendingSteeringRun, sendUserMessage } from "@matebot/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DENIED_ACTION_ERROR, isApprovalPausedResult } from "./approval-effect.js";
+import { productDocumentationUrls } from "./builtin-skills.js";
 import { MAX_SHARED_MEMORY_CHARS } from "./builtin-tools.js";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { createRunExecutor } from "./executor.js";
@@ -2516,18 +2517,36 @@ describe("outbound destinations", () => {
   });
 
   it("fetches the product docs pages without asking, but not other URLs on that site", async () => {
+    // The exempt set is the pages this build ships, on the origin this deployment
+    // configured. A path outside it — even on the same host — still asks.
+    vi.stubEnv("RAKAZO_MARKETING_URL", "https://docs.example.test");
+    const docsUrl = productDocumentationUrls()[0]!;
+    const otherOnSameSite = new URL("/?q=secret", docsUrl).href;
     const f = fixture({ builtin: true });
     f.setCalls([
-      {
-        name: "web_fetch",
-        args: { url: "https://rakazo.com/docs/routines.md" },
-        executionId: "call-1",
-      },
-      { name: "web_fetch", args: { url: "https://rakazo.com/?q=secret" }, executionId: "call-2" },
+      { name: "web_fetch", args: { url: docsUrl }, executionId: "call-1" },
+      { name: "web_fetch", args: { url: otherOnSameSite }, executionId: "call-2" },
     ]);
     await f.run();
-    expect(f.fetchedUrls).toEqual(["https://rakazo.com/docs/routines.md"]);
+    vi.unstubAllEnvs();
+    expect(f.fetchedUrls).toEqual([docsUrl]);
     expect(isApprovalPausedResult(f.results[1])).toBe(true);
+  });
+
+  /**
+   * An unconfigured deployment gets no exemption. The default origin belongs to the
+   * hosted product, not to the operator running this build, so pre-approving a fetch
+   * to it would be a weaker guard than asking — the operator never chose that host.
+   */
+  it("asks before fetching the default docs origin when none was configured", async () => {
+    vi.stubEnv("RAKAZO_MARKETING_URL", "");
+    const docsUrl = productDocumentationUrls()[0]!;
+    const f = fixture({ builtin: true });
+    f.setCalls([{ name: "web_fetch", args: { url: docsUrl }, executionId: "call-1" }]);
+    await f.run();
+    vi.unstubAllEnvs();
+    expect(f.fetchedUrls).toEqual([]);
+    expect(isApprovalPausedResult(f.results[0])).toBe(true);
   });
 
   it("refuses a URL that is not http(s)", async () => {

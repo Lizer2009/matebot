@@ -1949,6 +1949,15 @@ export const MeSchema = z.object({
   sandboxProvider: z.string(),
   /** Whether this account can add stdio MCP servers here. Absent from older servers. */
   mcpStdioEnabled: z.boolean().default(false),
+  /**
+   * Whether this deployment serves interactive A2UI cards, reported by the server.
+   *
+   * Optional, and absent means "this server predates the field". A server that predates
+   * it may well be serving cards — the deployment where they went missing was one — so
+   * absence must not be read as "off". The client keeps its own build flag for that
+   * case and draws them.
+   */
+  a2uiEnabled: z.boolean().optional(),
   avatarStyle: AvatarStyleSchema,
   /** The icon set new and unpinned bots wear. Absent from servers that predate it. */
   botAvatarSet: BotAvatarSetSchema.optional(),

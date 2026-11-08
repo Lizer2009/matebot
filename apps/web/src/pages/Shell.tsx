@@ -254,6 +254,15 @@ function SpaceShell() {
   const [botMenu, setBotMenu] = useState<{ kind: "bot" | "group"; id: string } | null>(null);
   const closeBotMenu = useCallback(() => setBotMenu(null), []);
   const currentSpaceId = selectedSpaceId() ?? bootstrapMe?.spaceId ?? null;
+  /**
+   * One stable object for the transcript, so a re-render of the shell does not churn a
+   * `memo` boundary. Undefined until `/me` answers, which draws cards rather than
+   * calling them unavailable.
+   */
+  const a2uiAuth = useMemo(
+    () => ({ a2uiEnabled: bootstrapMe?.a2uiEnabled }),
+    [bootstrapMe?.a2uiEnabled],
+  );
   // null: settings follow the space the app is showing.
   const settingsSpaceId = overlay?.kind === "settings" ? overlay.spaceId : null;
   const settingsSpace =
@@ -1063,6 +1072,7 @@ function SpaceShell() {
           ) : (
             <Transcript
               key={activeSnapshot?.threadId}
+              authUi={a2uiAuth}
               scrollRef={thread.messageScroll}
               scrollRequest={scrollRequest}
               onScrollRequestHandled={clearScrollRequest}

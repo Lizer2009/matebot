@@ -1,4 +1,7 @@
+import { Trans } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
+import { needsRecovery } from "@matebot/core";
+import { Button } from "@matebot/ui-web";
 import { A2uiSurfaceHost } from "./A2uiSurfaceHost";
 import { EmailComposeEditor } from "./EmailComposeEditor";
 import type { EmailFieldName } from "./email-fields";
@@ -44,6 +47,9 @@ export function A2uiSurfaceCard({
 }) {
   const document = useA2uiSurfaceDocument({
     documentRef: block.documentRef,
+    // A republish keeps the ref and moves the revision, so the revision is what
+    // tells this card its content changed.
+    revision: block.draftVersion,
     messages,
     fetchDocument,
   });
@@ -102,18 +108,71 @@ export function A2uiSurfaceCard({
             onDiscard={onDiscard}
           />
         ) : document.messages ? (
-          <A2uiSurfaceHost
-            surfaceId={block.surfaceId}
-            messages={document.messages}
-            onAction={onAction}
-          />
+          <>
+            <A2uiSurfaceHost
+              surfaceId={block.surfaceId}
+              messages={document.messages}
+              onAction={onAction}
+            />
+            {/*
+              An early card stored a title and two lines of text, and nothing to press.
+              The turn around it may still say "confirm in the card above", which nothing
+              here can satisfy. It cannot grow the button that was never stored, so it
+              says what is missing and offers a way forward.
+            */}
+            {needsRecovery(document.messages, { intent: block.intent }) ? (
+              <div
+                data-testid="a2ui-surface-recovery"
+                className="mt-3 flex flex-col gap-2 border-t border-border/60 pt-3 text-[14px] text-muted-foreground"
+              >
+                <span>
+                  <Trans>
+                    This is an older card: it was saved before cards could be edited, so it has
+                    nothing to fill in or confirm.
+                  </Trans>
+                </span>
+                <span>
+                  <Trans>Ask for the draft again to get an editable card.</Trans>
+                </span>
+              </div>
+            ) : null}
+          </>
         ) : (
+          /**
+           * Never a blank region. A published card whose document has not arrived,
+           * or whose load failed, says so and offers a way forward; the audit found
+           * an empty frame here where a calendar card should have been.
+           */
           <div
             data-testid="a2ui-surface-placeholder"
             data-loading={document.loading ? "true" : "false"}
             data-error={document.error ?? undefined}
-            className="text-[14px] text-muted-foreground"
-          />
+            role="status"
+            aria-live="polite"
+            className="flex flex-col gap-2 text-[14px] text-muted-foreground"
+          >
+            {document.loading ? (
+              <span>
+                <Trans>Loading this card…</Trans>
+              </span>
+            ) : (
+              <>
+                <span>
+                  <Trans>This card could not be shown.</Trans>
+                </span>
+                {document.error ? (
+                  <span data-testid="a2ui-surface-placeholder-reason" className="text-[13px]">
+                    {document.error}
+                  </span>
+                ) : null}
+                <div>
+                  <Button variant="secondary" onClick={() => document.reload()}>
+                    <Trans>Try again</Trans>
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>

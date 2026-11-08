@@ -1212,6 +1212,7 @@ export type MobileMe = Pick<
   | "paymentWalletProvider"
   | "ticketBoardEnabled"
   | "botAvatarSet"
+  | "a2uiEnabled"
 >;
 
 export type MobileModel = ModelCatalogEntry;

@@ -135,7 +135,7 @@ bash install-images.sh --prepare-only
 
 | 变量 | 默认值 | 作用 |
 | --- | --- | --- |
-| `RAKAZO_MARKETING_URL` | `https://test.matebot.dev` | canonical、hreflang、sitemap、结构化数据、站内绝对链接 |
+| `RAKAZO_MARKETING_URL` | `https://test.matebot.dev` | canonical、hreflang、sitemap、结构化数据、站内绝对链接；产品帮助技能生成文档链接时也读它 (`packages/core/src/document-origin.ts`) |
 | `RAKAZO_APP_URL` | `https://app.test.matebot.dev` | 所有「开始使用 / 在浏览器里打开 / 登录」链接、插件 API 与集成认领地址 |
 
 两者都接受 absolute origin（含协议与端口）；无效值会回退到默认值。迁移到主域 `matebot.dev` 时，把这两个变量改成 `https://matebot.dev` 与 `https://app.matebot.dev` 后重新构建即可；Cloudflare Tunnel、`BETTER_AUTH_URL`、`WEB_ORIGIN`、`API_URL`、`RAKAZO_HOST` 需在同一次切换中一并更新。

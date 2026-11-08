@@ -260,21 +260,37 @@ describe("a2ui surface presentation", () => {
     vi.unstubAllEnvs();
   });
 
-  it("hides the block while the flag is off", () => {
+  /**
+   * A card this deployment does not serve is still a row, drawn as a sentence.
+   *
+   * It used to be filtered out, so the message either vanished or shrank to its text
+   * with nothing to say a card had been there — the same silent gap web had.
+   */
+  it("keeps the row while the server says cards are off", () => {
     vi.stubEnv("EXPO_PUBLIC_FEATURE_A2UI", "");
-    expect(hasVisibleMessagePresentation([surface])).toBe(false);
+    expect(hasVisibleMessagePresentation([surface])).toBe(true);
+    // Not drawn as a card, so it leaves the inline text flow…
     expect(messagePresentationSegments([surface])).toEqual([]);
-    expect(messageHasInlineControls([surface])).toBe(false);
+    // …and takes no taps, because it has no controls to receive them.
+    expect(messageHasInlineControls([surface], { a2uiEnabled: false })).toBe(false);
   });
 
-  it("shows the block as its own card when the flag is on", () => {
-    vi.stubEnv("EXPO_PUBLIC_FEATURE_A2UI", "1");
+  it("draws the block as its own card when the server serves cards", () => {
+    vi.stubEnv("EXPO_PUBLIC_FEATURE_A2UI", "");
     expect(hasVisibleMessagePresentation([surface])).toBe(true);
+    // A card is a card whether or not it can be drawn: it never joins the text flow.
     expect(messagePresentationSegments([surface])).toEqual([]);
     expect(messagePresentationSegments([{ kind: "text", text: "Draft" }, surface])).toEqual([
       { kind: "content", blocks: [{ kind: "text", text: "Draft" }] },
     ]);
-    expect(messageHasInlineControls([surface])).toBe(true);
+    expect(messageHasInlineControls([surface], { a2uiEnabled: true })).toBe(true);
+  });
+
+  it("keeps the old build flag working when the server says nothing", () => {
+    vi.stubEnv("EXPO_PUBLIC_FEATURE_A2UI", "1");
+    expect(messageHasInlineControls([surface], {})).toBe(true);
+    vi.stubEnv("EXPO_PUBLIC_FEATURE_A2UI", "0");
+    expect(messageHasInlineControls([surface], {})).toBe(false);
   });
 });
 

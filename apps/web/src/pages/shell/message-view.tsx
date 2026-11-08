@@ -30,7 +30,6 @@ import {
 } from "../../components/ToolActivityDisclosure";
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
-import { isA2uiEnabled } from "../../lib/feature-flags";
 import { messageProviderLabel } from "../../lib/messaging";
 import type { PageBlock } from "../../lib/page-cards";
 import { useOpenPage } from "../../lib/pages";
@@ -67,6 +66,7 @@ export const MessageView = memo(function MessageView({
   onOpenPeerMessages,
   peerExchange,
   speakerName,
+  a2uiEnabled,
   memberName,
   peerBot,
   replyParent,
@@ -108,6 +108,12 @@ export const MessageView = memo(function MessageView({
   /** The adjacent receipts represented by this peer line. */
   peerExchange?: PeerExchange;
   speakerName?: string;
+  /**
+   * Whether this deployment serves interactive cards, as reported by the server.
+   * Undefined means the server has not answered yet: draw the card, because that is
+   * what a deployment that serves cards does, and a late answer still corrects it.
+   */
+  a2uiEnabled?: boolean;
   memberName?: (botId: string | undefined) => string | undefined;
   peerBot: (
     botId: string,
@@ -472,8 +478,23 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "a2ui_surface") {
-            // Feature flag default off — production 0.6.0 behavior unchanged.
-            if (!isA2uiEnabled()) return null;
+            // This deployment's own setting decides, and it is reported by the server
+            // rather than guessed from a build variable. A card that cannot be drawn
+            // now says so; returning nothing left an unexplained gap and let the turn's
+            // text claim a draft was waiting in a card nobody could see.
+            if (a2uiEnabled === false) {
+              return (
+                <div
+                  key={i}
+                  data-testid="a2ui-surface-disabled"
+                  className="flex max-w-[min(88%,39rem)] justify-start rounded-[16px] bg-muted px-4 py-3 text-[14px] text-muted-foreground"
+                >
+                  <Trans>
+                    This card can’t be shown here because interactive cards are off on this server.
+                  </Trans>
+                </div>
+              );
+            }
             const botId = "botId" in artifactTarget ? artifactTarget.botId : message.botId;
             const groupId = "groupId" in artifactTarget ? artifactTarget.groupId : undefined;
             return (

@@ -1,4 +1,14 @@
 export const NL_MESSAGES: Record<string, string> = {
+  "Could not load this card.": "Deze kaart kon niet worden geladen.",
+  "This card had no content to load.": "Deze kaart had geen inhoud om te laden.",
+  "This card could not be shown.": "Deze kaart kon niet worden getoond.",
+  "Loading this card…": "Kaart wordt geladen…",
+  "Ask for the draft again to get an editable card.":
+    "Vraag het concept opnieuw aan om een bewerkbare kaart te krijgen.",
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.":
+    "Dit is een oudere kaart: hij is opgeslagen voordat kaarten bewerkbaar waren, dus er valt niets in te vullen of te bevestigen.",
+  "This card can’t be shown here because interactive cards are off on this server.":
+    "Deze kaart kan niet worden getoond, omdat interactieve kaarten op deze server uit staan.",
   "Add rule": "Regel toevoegen",
   "Tool name": "Toolnaam",
   Address: "Adres",
@@ -567,6 +577,8 @@ export const NL_MESSAGES: Record<string, string> = {
   "Connect API key": "API-sleutel koppelen",
   "Connect MCP server {name}": "MCP-server {name} koppelen",
   "Connected.": "Gekoppeld.",
+  "Approved, not connected yet.": "Goedgekeurd, maar nog niet verbonden.",
+  "Approved, not connected yet: {reason}": "Goedgekeurd, maar nog niet verbonden: {reason}",
   "Context limit": "Contextlimiet",
   "Could not connect this provider": "Deze aanbieder koppelen mislukt",
   "Could not finish sign-in": "Aanmelden afronden mislukt",

@@ -43,6 +43,26 @@ describe("web SSRF policy", () => {
     ).rejects.toThrow(/private address/i);
   });
 
+  /**
+   * Two different failures used to share one message, so a log could not say which
+   * had happened. A host that resolves to nothing is a connectivity or
+   * configuration problem; a host that resolves into private space is the policy
+   * working. Both are still refused.
+   */
+  it("says plainly when a host resolved to no address at all", async () => {
+    await expect(
+      assertSafeWebUrl("https://empty.example.test/page", async () => []),
+    ).rejects.toThrow(/did not resolve to any address/i);
+  });
+
+  it("keeps the private-address reason for a non-public result", async () => {
+    await expect(
+      assertSafeWebUrl("https://internal.example.test/page", async () => [
+        { address: "10.9.8.7", family: 4 as const },
+      ]),
+    ).rejects.toThrow(/private address/i);
+  });
+
   it("blocks private hostnames before DNS", () => {
     expect(isBlockedHostname("localhost")).toBe(true);
     expect(isBlockedHostname("127.0.0.1")).toBe(true);

@@ -20,6 +20,9 @@ x-app-environment: &app-environment
   REALTIME_DATABASE_URL:
   DB_POOL_MAX:
   DATA_DIR: /data
+  # The origin this deployment's own documentation lives on; the help skill builds
+  # its page links from it (packages/core/src/document-origin.ts).
+  RAKAZO_MARKETING_URL:
   ENCRYPTION_KEY:
   ENCRYPTION_MASTER_KEYS:
   MASTER_KEY_PROVIDER:

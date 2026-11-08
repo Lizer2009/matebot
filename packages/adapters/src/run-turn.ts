@@ -25,6 +25,7 @@ import { getLogger } from "@matebot/logging";
 import { sanitizedError } from "@matebot/logging/monitoring";
 import { isToolPauseResult } from "./approval-effect.js";
 import { returnBotMessageOutcome } from "./bot-messages.js";
+import { productDocumentationUrls } from "./builtin-skills.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { holdComputerExecutionLeaseForTakeover } from "./computer-lifecycle.js";
 import { resolveBotWorkspacePath } from "./computer-support.js";
@@ -58,6 +59,7 @@ import {
   publishMidTurnNarration,
   publishNarrationBeforeAsk,
   recordExplicitNoResponse,
+  restatesPublishedNarration,
   showNarrationStatus,
   tryFlushPendingTools,
 } from "./run-progress.js";
@@ -78,7 +80,11 @@ import {
 } from "./silent-reply.js";
 import { isStrategicInitiativeRun } from "./strategic-initiative.js";
 import { takeoverCheckpointOf } from "./takeover-resume.js";
-import { appendToolCompletionAudit, toolCompletionFromResult } from "./tool-completion-audit.js";
+import {
+  appendToolCompletionAudit,
+  reachableDestinationOf,
+  toolCompletionFromResult,
+} from "./tool-completion-audit.js";
 import {
   advanceOverLimitActionCalls,
   advanceToolCallLoopGuard,
@@ -343,16 +349,25 @@ async function onSteered(ctx: RunContext, event: RuntimeEvent<"steered">) {
     reply.hasStreamedText = false;
     reply.pendingProgress = "";
     reply.redactor.skip();
-    await publishMessage(
-      deps,
-      run,
-      "bot",
-      [{ kind: "text", text }],
-      undefined,
-      nextProgressNonce(ctx),
-    );
-    reply.midTurnUserTexts.push(text);
-    reply.publishedMidTurnUserMessage = true;
+    // This path used to publish unconditionally, so a run that kept taking steering
+    // turns accumulated one bubble per steering reset — the audit saw several
+    // restatements of the same conclusion, each the tail of a command. Only a note
+    // that repeats one already posted is held back; the person's own answer, and
+    // anything with new content, still goes out immediately.
+    if (restatesPublishedNarration(reply, text)) {
+      reply.workingNotes.push(text);
+    } else {
+      await publishMessage(
+        deps,
+        run,
+        "bot",
+        [{ kind: "text", text }],
+        undefined,
+        nextProgressNonce(ctx),
+      );
+      reply.midTurnUserTexts.push(text);
+      reply.publishedMidTurnUserMessage = true;
+    }
   }
   reply.progressBudgetStart = reply.midTurnProgressCount;
   reply.turnStartedAtMs = now;
@@ -552,6 +567,13 @@ async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promi
           name: event.name,
           executionId: event.executionId,
           durationMs: Date.now() - startedAt,
+          // Where a network tool went, as far as it is safe to record: the query,
+          // fragment and userinfo are dropped, and the path only when it is a page
+          // this build ships. Anything else keeps the origin and says the path was
+          // withheld, because a word-like shape is not evidence of safety.
+          ...(reachableDestinationOf(event.args, productDocumentationUrls())
+            ? { destination: reachableDestinationOf(event.args, productDocumentationUrls())! }
+            : {}),
         },
         result,
       ),

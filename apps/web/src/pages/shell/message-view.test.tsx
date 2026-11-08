@@ -75,6 +75,7 @@ function renderView(
     root.render(
       <MessageView
         rpc={rpc}
+        a2uiEnabled
         artifactTarget={{ botId: "parent" }}
         canAnswer={false}
         canDismiss={false}
@@ -201,6 +202,7 @@ it("keeps an edit made after a save when the saved status arrives late", async (
     root.render(
       <MessageView
         rpc={rpc}
+        a2uiEnabled
         artifactTarget={{ botId: "parent" }}
         canAnswer={false}
         canDismiss={false}
@@ -293,19 +295,34 @@ it("opens one counted peer line without an inline reply toggle", () => {
   expect(open).toHaveBeenCalledWith({ peerBotId: "peer", peerBotName: "Researcher" });
 });
 
-it("hides a2ui_surface blocks when the a2ui feature flag is off", () => {
-  renderView("bot", [
-    {
-      kind: "a2ui_surface",
-      interactionId: "interaction-1",
-      surfaceId: "surface-1",
-      protocolFamily: "v0_9",
-      draftVersion: 1,
-      title: "Hidden surface",
-    },
-  ]);
+/**
+ * A card the server does not serve is said so, not silently dropped.
+ *
+ * The real failure: a production build had no client flag, `return null` removed the
+ * card before rendering, and the turn's text told the person to confirm in a card that
+ * was never in the DOM. Nothing on screen explained the gap.
+ */
+it("says a card cannot be shown when the server does not serve cards", () => {
+  renderView(
+    "bot",
+    [
+      {
+        kind: "a2ui_surface",
+        interactionId: "interaction-1",
+        surfaceId: "surface-1",
+        protocolFamily: "v0_9",
+        draftVersion: 1,
+        title: "Hidden surface",
+      },
+    ],
+    { a2uiEnabled: false },
+  );
   expect(container.querySelector('[data-testid="a2ui-surface-card"]')).toBeNull();
-  expect(container.textContent).not.toContain("Hidden surface");
+  const notice = container.querySelector('[data-testid="a2ui-surface-disabled"]');
+  // A visible sentence, so the region is never an unexplained blank.
+  expect(notice).not.toBeNull();
+  expect((notice?.textContent ?? "").trim().length).toBeGreaterThan(0);
+  expect(notice?.textContent).toMatch(/interactive cards are off/i);
 });
 
 it("renders a2ui_surface as a timeline card when the a2ui flag is on", async () => {
