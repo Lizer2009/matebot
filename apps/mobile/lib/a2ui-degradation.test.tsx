@@ -330,4 +330,38 @@ describe("A2uiNativeSurface on a document it cannot draw", () => {
     expect(container.querySelector('[data-testid="a2ui-native-unavailable"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="a2ui-native-reload"]')).toBeNull();
   });
+
+  /**
+   * A stored ref with no fetcher can never load, so a retry there is a dead control.
+   * The card still says it could not be shown; it just does not offer to try again.
+   */
+  it("offers no retry when the ref has nothing that could fetch it", async () => {
+    vi.resetModules();
+    vi.doMock("react-native", () => ({
+      Text: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <span data-testid={testID}>{children}</span>
+      ),
+      View: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <div data-testid={testID}>{children}</div>
+      ),
+      TextInput: () => <input />,
+      Pressable: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <div data-testid={testID}>{children}</div>
+      ),
+    }));
+    vi.doMock("./i18n", () => ({
+      t: (id: string) => id,
+      useI18n: () => ({ t: (id: string) => id, locale: "en" }),
+    }));
+    const { A2uiNativeSurface } = await import("../components/thread/a2ui-native-surface");
+    await act(async () => {
+      root.render(
+        (await import("react")).createElement(A2uiNativeSurface, {
+          block: { ...surface, documentRef: "a2ui:interaction:interaction-1:surface:surface-1" },
+        } as never),
+      );
+    });
+    expect(container.querySelector('[data-testid="a2ui-native-unavailable"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-native-reload"]')).toBeNull();
+  });
 });

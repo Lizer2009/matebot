@@ -70,6 +70,11 @@ export function A2uiNativeSurface({
   /** Bumped to fetch again after a document could not be read. */
   const [attempt, setAttempt] = useState(0);
   const source = messages ?? loaded;
+  /**
+   * Whether "Try again" can do anything. A stored ref with no fetcher will never load,
+   * so offering the button there would be a control that cannot change the outcome.
+   */
+  const canReload = Boolean(block.documentRef && fetchDocument);
   const [values, setValues] = useState<EmailFields>(() => emailFieldsFromSurfaceMessages(messages));
   const [error, setError] = useState<string | null>(null);
   const [discarded, setDiscarded] = useState(false);
@@ -365,7 +370,7 @@ export function A2uiNativeSurface({
         <View testID="a2ui-native-load-error">
           <Text>{t("This card could not be shown.")}</Text>
           <Text>{loadError}</Text>
-          {block.documentRef ? (
+          {canReload ? (
             <A2uiButton
               label={t("Try again")}
               testID="a2ui-native-reload"
@@ -390,7 +395,7 @@ export function A2uiNativeSurface({
         */
         <View testID="a2ui-native-unavailable">
           <Text>{t("This card could not be shown.")}</Text>
-          {block.documentRef ? (
+          {canReload ? (
             <A2uiButton
               label={t("Try again")}
               testID="a2ui-native-reload"
