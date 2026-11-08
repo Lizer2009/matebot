@@ -137,8 +137,24 @@ class SpecificityOrdering(unittest.TestCase):
             "rakazo-newSetting",
             "rakazo-somethingElse-entirely",
             "rakazo/new/feature/flag",
+            # Environment and stored-key families are enumerated, not wildcarded: a new setting
+            # or storage key has to be registered with a reason rather than inherited.
+            "RAKAZO_A_BRAND_NEW_SETTING",
+            "rakazo.aBrandNewStoredKey",
         ):
             self.assertIsNone(module.classify(token), f"{token} must not be auto-approved")
+
+    def test_a_known_environment_name_is_still_accepted(self) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("brand_guard", GUARD)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+
+        # Tightening the rule must not break the variables a deployment actually reads.
+        for token in ("RAKAZO_COMPUTER_IMAGE", "RAKAZO_DEPLOY_DIR", "rakazo.session_token"):
+            self.assertIsNotNone(module.classify(token), f"{token} must stay classified")
 
 
 if __name__ == "__main__":
