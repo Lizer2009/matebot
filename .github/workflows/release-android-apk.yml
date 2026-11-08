@@ -29,8 +29,10 @@ jobs:
     timeout-minutes: 90
     permissions:
       contents: write
+    # A tag build publishes to a release of its own, never to the rolling one: see the
+    # `Publish rolling release` step's tag branch for why.
     env:
-      RELEASE_TAG: android
+      RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/android-pr') && github.ref_name || 'android' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -99,7 +101,12 @@ jobs:
       # It never becomes GitHub's "latest" release, which the desktop updater reads. An existing
       # release is updated in place: the new APK is uploaded under a temporary name before the old
       # one is removed, so a failed run leaves the previous download working.
-      - name: Publish rolling release
+      #
+      # A tag build does not touch that release. The rolling release is what the public download
+      # page serves and what an installed phone is offered, so a review build that replaced it
+      # would hand strangers a prerelease and destroy the asset it replaced. A tag build gets a
+      # release of its own, named after the tag, marked prerelease.
+      - name: Publish the APK
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.build.outputs.version }}
@@ -107,19 +114,28 @@ jobs:
           SOURCE_REF: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          notes() {
-            if [[ "$GITHUB_REF" == refs/tags/android-pr* ]]; then
-              printf 'Install matebot.apk on your Android phone.\n\nBuilt from prerelease tag %s at %s. Not a stable build; the over-the-air channel is unchanged.\n' "$SOURCE_REF" "$GITHUB_SHA"
-            else
-              printf 'Install matebot.apk on your Android phone. It updates itself over the air.\n'
-            fi
-          }
           title="Matebot for Android $VERSION ($VERSION_CODE)"
-          # A build from a prerelease tag says so in the title, so the rolling release
-          # never claims to be a stable build it is not.
+
           if [[ "$GITHUB_REF" == refs/tags/android-pr* ]]; then
             title="$title from $SOURCE_REF"
+            notes="$(printf 'Install matebot.apk on your Android phone.\n\nBuilt from prerelease tag %s at %s. Not a stable build; the rolling android release and the over-the-air channel are unchanged.\n' "$SOURCE_REF" "$GITHUB_SHA")"
+            if gh release view "$RELEASE_TAG" --json tagName > /dev/null 2> "$RUNNER_TEMP/view.err"; then
+              echo "A release already exists for $RELEASE_TAG; refusing to replace it." >&2
+              exit 1
+            fi
+            if ! grep -q "release not found" "$RUNNER_TEMP/view.err"; then
+              cat "$RUNNER_TEMP/view.err" >&2
+              exit 1
+            fi
+            gh release create "$RELEASE_TAG" "$RUNNER_TEMP/matebot.apk" \
+              --target "$GITHUB_SHA" \
+              --title "$title" \
+              --notes "$notes" \
+              --prerelease --latest=false
+            exit 0
           fi
+
+          notes="Install matebot.apk on your Android phone. It updates itself over the air."
           if ! gh release view "$RELEASE_TAG" --json tagName > /dev/null 2> "$RUNNER_TEMP/view.err"; then
             if ! grep -q "release not found" "$RUNNER_TEMP/view.err"; then
               cat "$RUNNER_TEMP/view.err" >&2
@@ -128,7 +144,7 @@ jobs:
             gh release create "$RELEASE_TAG" "$RUNNER_TEMP/matebot.apk" \
               --target "$GITHUB_SHA" \
               --title "$title" \
-              --notes "$(notes)" \
+              --notes "$notes" \
               --latest=false
             exit 0
           fi

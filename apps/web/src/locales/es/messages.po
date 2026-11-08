@@ -4280,6 +4280,10 @@ msgstr "Nombra esta rutina"
 msgid "Name your Bot"
 msgstr "Ponle nombre a tu bot"
 
+#: src/pages/memory-providers/HonchoSettingsForm.tsx
+msgid "Names starting with bot- are reserved for Matebot."
+msgstr ""
+
 #: src/lib/roster-status.ts
 msgid "Needs an answer"
 msgstr "Necesita una respuesta"
@@ -5086,10 +5090,6 @@ msgstr "Solicitud de incorporación"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "En cola"
-
-#: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Matebot."
-msgstr "rakazo-shared y los ID que empiezan con bot- están reservados para Matebot."
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"

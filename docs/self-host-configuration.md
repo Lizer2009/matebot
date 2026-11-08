@@ -11,6 +11,22 @@ common ones with short notes.
 
 Do not commit `.env`. Never put `COMPOSIO_API_KEY`, OpenRouter keys, or provider tokens in git, logs, or chat.
 
+## Settings whose names start with the project's former name
+
+Some settings, host paths, and object names begin with `RAKAZO_` or `rakazo`. They are not the
+product's name and they are not a preference: they are names that already exist on a running
+deployment, and the software on both sides of an upgrade has to agree on them. `RAKAZO_IMAGE`,
+`RAKAZO_COMPOSE_PROJECT_NAME`, and the rest are read exactly as documented here, and a stack that
+has been running for a while has a Compose project, volumes, and a database role under those
+names. Renaming one changes what the software looks for, so it is not something to tidy up: a
+renamed Compose project starts against empty volumes. Setting the variable is still the supported
+way to configure the behaviour it names. A deployment that wants different names for these
+objects needs a planned move of the data, not a rename.
+
+The same applies to the file names under `/etc/rakazo` and the unit names that systemd has
+installed. Where a document shows one of these names in a command, it is the literal name on the
+server.
+
 ## Settings with names you choose
 
 The Compose files pass the API and worker only the settings each one reads, listed by name, rather than the whole `.env`. A setting whose name you choose, such as `TELEGRAM_BOT_TOKEN_<NAME>` or `PHOTON_PROJECT_ID_<NAME>`, therefore needs its own line: add it under `api` and `worker` `environment` in an override file layered after the base file (and in `RAKAZO_COMPOSE_FILE` when the updater is enabled), with no value so Compose fills it from `.env`. `install-images.sh` names any `.env` setting that no container receives.

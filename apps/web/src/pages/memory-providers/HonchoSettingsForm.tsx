@@ -6,9 +6,18 @@ import { ConnectionModeFields } from "./ConnectionModeFields";
 import type { MemoryProviderConnectionDraft, MemoryProviderSettingsFormProps } from "./registry";
 
 const RESOURCE_ID_PATTERN = /^[A-Za-z0-9_-]{0,512}$/;
-// Matebot writes to these peers, so they cannot be read as the user's own peer.
+/**
+ * Peers Matebot writes to, so they cannot be chosen as the user's own.
+ *
+ * `rakazo-shared` is the identifier earlier releases of this product already created in the
+ * memory provider. It keeps its spelling because the peer exists out there under that name:
+ * renaming the check would let a user select a peer this app writes to. The name is an
+ * interoperability detail, not this product's name, which is why the message below explains
+ * it rather than presenting it as one.
+ */
+const LEGACY_SHARED_PEER_ID = "rakazo-shared";
 function isReservedPeerId(value: string): boolean {
-  return value === "rakazo-shared" || value.startsWith("bot-");
+  return value === LEGACY_SHARED_PEER_ID || value.startsWith("bot-");
 }
 
 export function HonchoSettingsForm({ busy, onConnect }: MemoryProviderSettingsFormProps) {
@@ -84,7 +93,7 @@ export function HonchoSettingsForm({ busy, onConnect }: MemoryProviderSettingsFo
           aria-invalid={workspaceValid ? undefined : true}
           aria-describedby={workspaceValid ? undefined : workspaceErrorId}
           onChange={(event) => setWorkspace(event.target.value)}
-          placeholder="rakazo-<space>"
+          placeholder="team-notes"
           maxLength={512}
           autoComplete="off"
         />
@@ -118,7 +127,7 @@ export function HonchoSettingsForm({ busy, onConnect }: MemoryProviderSettingsFo
           {!userPeerValid ? (
             <FieldError id={userPeerErrorId}>
               {userPeerFormatValid ? (
-                <Trans>rakazo-shared and IDs starting with bot- are reserved for Matebot.</Trans>
+                <Trans>Names starting with bot- are reserved for Matebot.</Trans>
               ) : (
                 <Trans>Use up to 512 letters, digits, _ or -.</Trans>
               )}
