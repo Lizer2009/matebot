@@ -2,7 +2,10 @@ name: release-desktop
 
 on:
   push:
-    tags: ["v*"]
+    # A prerelease tag (`v1.2.3-prN`) belongs to `release-prerelease`, which publishes
+    # without touching the stable channel. Matching it here would make this workflow
+    # validate a tag it must refuse, and a refused run reads like a broken release.
+    tags: ["v*", "!v*-*"]
   workflow_dispatch:
 
 permissions:

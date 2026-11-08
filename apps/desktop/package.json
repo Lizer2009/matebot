@@ -1,7 +1,7 @@
 {
   "name": "@matebot/desktop",
   "productName": "Matebot",
-  "version": "0.6.0",
+  "version": "0.6.1-pr42.f4509d1a1",
   "author": {
     "name": "Matebot"
   },
