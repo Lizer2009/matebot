@@ -78,6 +78,12 @@ const TAR =
     ? path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe")
     : "/usr/bin/tar";
 
+/**
+ * How many times a server-side download failure is retried before the person is told.
+ * The releases host answers 504 in bursts; a 4xx is not retried at all.
+ */
+const DRIVER_DOWNLOAD_ATTEMPTS = 4;
+
 async function fileSha256(file: string) {
   try {
     return createHash("sha256")
@@ -107,9 +113,7 @@ export function screenDriverInstaller(options: {
     await mkdir(options.dir, { recursive: true });
     const staging = await mkdtemp(path.join(options.dir, ".download-"));
     try {
-      const response = await options.fetch(release.url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const archive = Buffer.from(await response.arrayBuffer());
+      const archive = await download(release.url);
       if (createHash("sha256").update(archive).digest("hex") !== release.sha256)
         throw new Error("checksum mismatch");
       const archivePath = path.join(staging, "driver.tar.gz");
@@ -132,6 +136,25 @@ export function screenDriverInstaller(options: {
 
   async function verified() {
     return (await fileSha256(command)) === release.driverSha256 ? command : install();
+  }
+
+  /**
+   * Fetch the archive, retrying while the host refuses it.
+   *
+   * The releases host answers 504 in bursts, and screen control is set up on first use — a
+   * person clicking once would get "check your internet connection" for a host problem that
+   * clears in seconds. Retrying is safe here because the archive is verified against its pinned
+   * hash before anything is extracted, so a retry cannot install different bytes.
+   */
+  async function download(url: string): Promise<Buffer> {
+    for (let attempt = 1; ; attempt += 1) {
+      const response = await options.fetch(url);
+      if (response.ok) return Buffer.from(await response.arrayBuffer());
+      // A 4xx is this app's own mistake; retrying cannot change it.
+      if (response.status < 500 || attempt >= DRIVER_DOWNLOAD_ATTEMPTS)
+        throw new Error(`HTTP ${response.status}`);
+      await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+    }
   }
 
   return () => {

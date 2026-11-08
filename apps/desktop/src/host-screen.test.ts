@@ -194,6 +194,39 @@ describe("screen driver download", () => {
     await expect(install()).resolves.toBe(path.join(bin, release.driverSha256, "cua-driver"));
   });
 
+  /**
+   * The driver host answers 504 in bursts. Screen control is set up on first use, so a single
+   * click during one of those windows would tell the person their internet is broken.
+   */
+  it("retries a server-side failure and installs once the host recovers", async () => {
+    const bin = path.join(dir, "bin");
+    const fetch = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(new Response("", { status: 504 }))
+      .mockResolvedValueOnce(new Response("", { status: 502 }))
+      .mockResolvedValueOnce(new Response(new Uint8Array(archive)));
+    const install = screenDriverInstaller({ dir: bin, fetch, release });
+    const command = await install();
+    expect(await readFile(command, "utf8")).toBe("#!/bin/sh\n");
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not retry a client error, which retrying cannot fix", async () => {
+    const bin = path.join(dir, "bin");
+    const fetch = vi.fn(async () => new Response("", { status: 404 }));
+    const install = screenDriverInstaller({ dir: bin, fetch, release });
+    await expect(install()).rejects.toThrow(SCREEN_DRIVER_DOWNLOAD_MESSAGE);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives up after its retries rather than waiting forever", async () => {
+    const bin = path.join(dir, "bin");
+    const fetch = vi.fn(async () => new Response("", { status: 504 }));
+    const install = screenDriverInstaller({ dir: bin, fetch, release });
+    await expect(install()).rejects.toThrow(SCREEN_DRIVER_DOWNLOAD_MESSAGE);
+    expect(fetch).toHaveBeenCalledTimes(4);
+  });
+
   it("pins one checksummed release per platform from each driver's publisher", () => {
     const { darwin, win32 } = SCREEN_DRIVER_RELEASES;
     expect(darwin.url).toMatch(
