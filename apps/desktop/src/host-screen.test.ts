@@ -245,6 +245,23 @@ describe("screen driver download", () => {
     expect(fetch).toHaveBeenCalledTimes(4);
   });
 
+  /**
+   * The failure seen on CI was not a status at all: the connection dropped mid-response
+   * (`SocketError: other side closed`), which arrives as a thrown error. A retry that only
+   * looked at `response.ok` would never cover the case it was added for.
+   */
+  it("retries a dropped connection, not just a failing status", async () => {
+    const bin = path.join(dir, "bin");
+    const fetch = vi
+      .fn<() => Promise<Response>>()
+      .mockRejectedValueOnce(new TypeError("fetch failed"))
+      .mockResolvedValueOnce(new Response(new Uint8Array(archive)));
+    const install = screenDriverInstaller({ dir: bin, fetch, release });
+    const command = await install();
+    expect(await readFile(command, "utf8")).toBe("#!/bin/sh\n");
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it("pins one checksummed release per platform from each driver's publisher", () => {
     const { darwin, win32 } = SCREEN_DRIVER_RELEASES;
     expect(darwin.url).toMatch(

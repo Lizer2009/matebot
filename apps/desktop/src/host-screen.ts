@@ -84,6 +84,13 @@ const TAR =
  */
 const DRIVER_DOWNLOAD_ATTEMPTS = 4;
 
+/** The error `download` throws for a status it has already decided not to retry. */
+class DriverHttpStatusError extends Error {}
+
+function isHttpStatusError(cause: unknown): cause is DriverHttpStatusError {
+  return cause instanceof DriverHttpStatusError;
+}
+
 async function fileSha256(file: string) {
   try {
     return createHash("sha256")
@@ -143,18 +150,26 @@ export function screenDriverInstaller(options: {
   /**
    * Fetch the archive, retrying while the host refuses it.
    *
-   * The releases host answers 504 in bursts, and screen control is set up on first use — a
-   * person clicking once would get "check your internet connection" for a host problem that
-   * clears in seconds. Retrying is safe here because the archive is verified against its pinned
-   * hash before anything is extracted, so a retry cannot install different bytes.
+   * The releases host fails in bursts — a 5xx, or the connection closed mid-response — and
+   * screen control is set up on first use, so a single click during one of those windows tells
+   * the person their network is broken. Retrying is safe here because the archive is verified
+   * against its pinned hash before anything is extracted, so a retry cannot install other bytes.
    */
   async function download(url: string): Promise<Buffer> {
     for (let attempt = 1; ; attempt += 1) {
-      const response = await options.fetch(url);
-      if (response.ok) return Buffer.from(await response.arrayBuffer());
-      // A 4xx is this app's own mistake; retrying cannot change it.
-      if (response.status < 500 || attempt >= DRIVER_DOWNLOAD_ATTEMPTS)
-        throw new Error(`HTTP ${response.status}`);
+      const last = attempt >= DRIVER_DOWNLOAD_ATTEMPTS;
+      try {
+        const response = await options.fetch(url);
+        if (response.ok) return Buffer.from(await response.arrayBuffer());
+        // A 4xx is this app's own mistake; retrying cannot change it.
+        if (response.status < 500 || last)
+          throw new DriverHttpStatusError(`HTTP ${response.status}`);
+      } catch (cause) {
+        // An HTTP status we already decided on is final; only a transport failure is retried.
+        // A dropped connection (`fetch failed`, socket closed mid-body) arrives here instead of
+        // as a status, and is exactly the transient case this retry exists for.
+        if (last || isHttpStatusError(cause)) throw cause;
+      }
       await new Promise((resolve) => setTimeout(resolve, attempt * 250));
     }
   }
