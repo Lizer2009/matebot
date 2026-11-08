@@ -185,6 +185,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Install the Electron binary
+        # `pnpm install` downloads it once and gives up; the releases host answers 5xx in bursts,
+        # and the desktop suites in this shard cannot import without it.
+        run: infra/install-electron.sh
       - run: pnpm db:generate
         env:
           DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
