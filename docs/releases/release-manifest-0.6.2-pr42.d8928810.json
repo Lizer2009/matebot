@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "channel": "prerelease",
+  "releasedAt": "2026-11-08T08:05:00Z",
+  "source": {
+    "repository": "https://github.com/Lizer2009/matebot",
+    "branch": "cursor/a2ui-card-gate-recovery-a097",
+    "fixCommit": "d892881087d56a6dc65d87e4ecf84e59e5370131",
+    "versionCommit": "8915828a038ff33b99d2b270b0f1308c846080c2",
+    "tag": "v0.6.2-pr42.d8928810",
+    "pullRequest": 43,
+    "recoveredFrom": {
+      "cloudAgent": "bc-9a9ef1a1-fd21-5f81-98e3-ecae2e3ca097",
+      "branch": "cursor/a2ui-manual-audit-remediation-a097",
+      "tipAtRecovery": "8a9457083b2f015b8dea10d15dc76bdbb50fc4e1",
+      "note": "The original branch was left untouched: no force push, no rewrite, no deletion."
+    }
+  },
+  "previous": {
+    "release": "v0.6.1-pr42.f4509d1a1",
+    "source": "f4509d1a1",
+    "runningBuild": "48117f1fb8a1bf3d38f12a8fe2fd010d9624764f",
+    "desktopVersion": "0.6.1-pr42.f4509d1a1",
+    "androidVersion": "1.0.13",
+    "androidVersionCode": 14
+  },
+  "versions": {
+    "desktop": "0.6.2-pr42.d8928810",
+    "android": {
+      "versionName": "1.0.15",
+      "versionCode": 15,
+      "package": "com.matebot.app",
+      "minSdk": 24,
+      "targetSdk": 36,
+      "compileSdk": 36
+    }
+  },
+  "images": {
+    "registry": "ghcr.io/lizer2009/matebot",
+    "tag": "0.6.2-pr42.d8928810",
+    "shaTag": "sha-8915828a038ff33b99d2b270b0f1308c846080c2",
+    "platforms": ["linux/amd64", "linux/arm64"],
+    "app": {
+      "manifestDigest": "sha256:f10061baf70c7a27451952774c0d3b6fec4a60f65278406d132a8defa37e3769",
+      "amd64Manifest": "sha256:7acceddb192566ba38abcffc7eca746e421bca999940f6016570caf522d0b577",
+      "revisionLabel": "8915828a038ff33b99d2b270b0f1308c846080c2",
+      "created": "2026-11-08T07:36:33.875363593Z"
+    },
+    "computer": {
+      "manifestDigest": "sha256:ad9dbbc810b169668152748d748f3b4e6e95649cdd5917eb3976ff4cce44d235"
+    },
+    "updater": {
+      "manifestDigest": "sha256:a9bc8d30b29a8b3013a4c9305908b53facb111c33e9c05e815b944f9ee729945"
+    },
+    "floatingTagsMoved": [],
+    "notes": [
+      "edge is not moved: it only follows refs/heads/main.",
+      "latest is not moved: it is the stable tag 0.6.0 only.",
+      "v0.6.2 (minor) is not created for a prerelease, so a pin cannot silently receive it."
+    ]
+  },
+  "windows": {
+    "release": "https://github.com/Lizer2009/matebot/releases/tag/v0.6.2-pr42.d8928810",
+    "prerelease": true,
+    "latest": false,
+    "signed": false,
+    "assets": [
+      {
+        "name": "Matebot-Setup-0.6.2-pr42.d8928810.exe",
+        "bytes": 135498934,
+        "sha256": "372dacf06b1cceb5af02ef9fb783e14cdddd73e50f077575321425458a2f053d"
+      },
+      {
+        "name": "Matebot-Setup-0.6.2-pr42.d8928810.exe.blockmap",
+        "bytes": 142144,
+        "sha256": "674e3a200a8820ce8431f9ef49a8781f74f68d552dc6b69f8a1b94f1174c8380"
+      },
+      {
+        "name": "SHA256SUMS",
+        "bytes": 221,
+        "sha256": "449c0de70fc26488487b599f1db79d0ed92886ce48d26e0709cc1a4aea14362d"
+      }
+    ],
+    "installerVersion": "0.6.2-pr42.d8928810",
+    "updateFeedIncluded": false
+  },
+  "android": {
+    "release": "https://github.com/Lizer2009/matebot/releases/tag/android",
+    "releaseTitle": "Matebot for Android 1.0.15 (15) from android-pr42.4",
+    "buildTag": "android-pr42.4",
+    "buildTagCommit": "8915828a038ff33b99d2b270b0f1308c846080c2",
+    "apk": {
+      "name": "matebot.apk",
+      "bytes": 112732802,
+      "sha256": "c6ca9d84a74c728e8cb5700544c8390613cc0c0dd71b7e3b59e3b62a41b2268c",
+      "downloadUrl": "https://github.com/Lizer2009/matebot/releases/download/android/matebot.apk",
+      "entries": 1831,
+      "bundledApiUrl": "https://app.matebot.dev",
+      "bundledAt": "2026-11-08T07:47:47.191000Z"
+    },
+    "signing": {
+      "scheme": "v2",
+      "algorithm": "SHA256withRSA",
+      "keyBits": 2048,
+      "certificateSha256": "55:48:3D:6B:30:18:06:1F:CB:2B:1D:5D:0B:6C:BE:05:A5:2B:5B:DC:B0:0A:56:D3:3C:8A:FA:C5:74:66:ED:E8",
+      "certificateNotBefore": "2026-11-06T02:38:16Z",
+      "certificateNotAfter": "2054-03-24T02:38:16Z",
+      "sameSignerAsPreviousApk": "not independently verified: the previous APK was not downloaded in this run; the certificate's validity start predates both builds and this build was signed by the project's managed EAS keystore"
+    },
+    "downloadEntry": {
+      "url": "https://test.matebot.dev/api/download?platform=android",
+      "status": 302,
+      "location": "https://github.com/Lizer2009/matebot/releases/download/android/matebot.apk"
+    },
+    "stableChannelUntouched": {
+      "desktopLatest": "v0.6.0",
+      "androidRollingReleaseIsLatest": false
+    }
+  },
+  "upgrade": {
+    "fromBuild": "48117f1fb8a1bf3d38f12a8fe2fd010d9624764f",
+    "prismaMigrationsAdded": [],
+    "prismaSchemaChanged": false,
+    "databaseMigrationRequired": false,
+    "rollbackInvariant": "Old and new images both read the same schema, so rollback is a digest swap with no data step.",
+    "spaceBudgetNote": "No new schema objects; three image layers per architecture. The root volume was grown to 45 GiB in the previous round with about 10.65 GiB free after deployment; check df -h / and docker system df before pulling."
+  },
+  "gates": {
+    "ci": {
+      "runId": 42458946377,
+      "conclusion": "success",
+      "webE2E": "passed, including the flag-off case that failed before this change"
+    },
+    "releasePrerelease": {
+      "runId": 42459014272,
+      "conclusion": "success"
+    },
+    "publishServerImage": {
+      "runId": 42459014276,
+      "conclusion": "success"
+    },
+    "releaseAndroidApk": {
+      "runId": 42458955494,
+      "conclusion": "success"
+    }
+  },
+  "notVerified": [
+    "No live model or external provider was contacted.",
+    "No physical Android device install; the user installs it.",
+    "No Windows click-through acceptance; the parent operator owns that machine.",
+    "No deployment to 192.168.10.5 and no operation on the Windows host.",
+    "Whether app.matebot.dev is served by the 192.168.10.5 database is still unknown from this environment."
+  ]
+}
