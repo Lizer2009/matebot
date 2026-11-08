@@ -187,6 +187,34 @@ describe("agent-desktop host screen", () => {
     expect(acted()).toEqual([]);
   });
 
+  /**
+   * A menu can only be chosen while its window is active, and Windows refuses the click
+   * otherwise. That refusal reached a user as "use click, set, or menu instead" — advice about
+   * gestures that were never attempted, on the action that did fail.
+   */
+  it("says why a menu click was refused, instead of naming other gestures", async () => {
+    // The item is found, then the driver refuses to activate it — the shape the real run showed.
+    const { screen } = cli({
+      find: () =>
+        ok({ snapshot_id: "s0000000c", match: { ref_id: "@s0000000c:e9", role: "menuitem" } }),
+      click: () => refused("POLICY_DENIED"),
+    });
+    await screen.observe(scope, "notepad");
+    const result = await screen.act(scope, "notepad", [
+      { kind: "menu", path: ["Edit", "Select All"] },
+    ]);
+    expect(result).toMatchObject({ completed: 0 });
+    expect(result.error).toContain("can only be chosen while its window is active");
+    expect(result.error).not.toContain("Use click, set, or menu instead");
+  });
+
+  it("still names other gestures when a click elsewhere is refused", async () => {
+    const { screen } = cli({ click: () => refused("POLICY_DENIED") });
+    await screen.observe(scope, "notepad");
+    const result = await screen.act(scope, "notepad", [{ kind: "click", element: 1 }]);
+    expect(result.error).toContain("Use click, set, or menu instead");
+  });
+
   it("picks a pop-up's choice by name when it takes no value", async () => {
     const { screen, acted } = cli({ "set-value": () => refused("ACTION_NOT_SUPPORTED") });
     await screen.observe(scope, "notepad");
