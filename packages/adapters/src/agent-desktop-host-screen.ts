@@ -446,6 +446,12 @@ async function first(run: (...args: string[]) => Promise<unknown>, args: string[
  * action that failed *was* the menu. It also failed this way intermittently on CI, with the same
  * tree passing in the same job — so the reason is worth naming rather than hiding behind a
  * sentence about gestures that were never attempted.
+ *
+ * The driver can make the window active, but only with `--headed`, which brings it to the front
+ * and takes the foreground. This product is deliberately strict-headless: a bot must not steal
+ * the window a person is working in. So the refusal is surfaced rather than overridden, and the
+ * person is asked to click the window — the same rule the rest of this file follows for anything
+ * that would take over their pointer or keyboard.
  */
 async function clickMenu(run: (...args: string[]) => Promise<unknown>, item: string) {
   try {

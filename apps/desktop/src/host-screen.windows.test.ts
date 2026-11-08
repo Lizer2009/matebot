@@ -63,8 +63,17 @@ describe.runIf(process.platform === "win32" && process.env.CI)("Windows screen c
       { kind: "menu", path: ["Edit", "Select All"] },
     ]);
     console.log(JSON.stringify({ completed: selected.completed, error: selected.error }));
-    expect(selected).toMatchObject({ completed: 1 });
-    expect(selected.error).toBeUndefined();
+    // Two outcomes are correct, and which one appears depends on whether Notepad's window owns
+    // the foreground when the menu is clicked. It is not this app's to take: the driver can only
+    // activate a window with `--headed`, which would steal it from whoever is using the machine.
+    // Either the menu opened, or it was refused and the bot was told to ask the person to click
+    // the window. A refusal that says anything else is a real failure.
+    if (selected.completed === 1) {
+      expect(selected.error).toBeUndefined();
+    } else {
+      expect(selected.completed).toBe(0);
+      expect(selected.error).toContain("can only be chosen while its window is active");
+    }
     await expect(screen.observe(scope, "rakazo-missing-app")).rejects.toThrow(
       'No app named "rakazo-missing-app" is open.',
     );
