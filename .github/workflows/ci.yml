@@ -225,7 +225,9 @@ jobs:
     needs: changes
     if: needs.changes.outputs.native == 'true'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    # The screen driver is downloaded on first use and retries a refused host with backoff, so a
+    # bad day on the releases host adds minutes rather than failing the job.
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:

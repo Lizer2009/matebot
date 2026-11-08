@@ -38,7 +38,9 @@ describe.runIf(process.platform === "win32" && process.env.CI)("Windows screen c
     })!;
     notepad = spawn("notepad.exe", { detached: true, stdio: "ignore" });
     await sleep(3_000);
-  }, 120_000);
+    // The driver's download retries a refused host with backoff, so setup can take minutes on a
+    // bad day. The per-test budget covers that plus the assertions that follow it.
+  }, 300_000);
 
   afterAll(async () => {
     await screen?.close();
@@ -77,5 +79,5 @@ describe.runIf(process.platform === "win32" && process.env.CI)("Windows screen c
     await expect(screen.observe(scope, "rakazo-missing-app")).rejects.toThrow(
       'No app named "rakazo-missing-app" is open.',
     );
-  }, 120_000);
+  }, 300_000);
 });
