@@ -67,4 +67,42 @@ describe("what a stored card can do", () => {
     expect(() => surfaceAffordances(messages)).not.toThrow();
     expect(surfaceAffordances(messages)).toEqual({ editable: false, actionable: false });
   });
+
+  it("counts a slider as something a person can fill in", () => {
+    expect(surfaceAffordances(document([{ id: "s", component: "Slider" }])).editable).toBe(true);
+  });
+});
+
+/**
+ * Recovery is about a draft that lost its controls, not about every card without them.
+ *
+ * A result card is a table of values and deliberately has no controls. Telling its reader
+ * it is an old broken card would be wrong on the most common card in the product.
+ */
+describe("when a card needs recovery", () => {
+  const legacy = document([
+    { id: "root", component: "Column", children: ["title"] },
+    { id: "title", component: "Text", text: { path: "/title" } },
+  ]);
+
+  it("says so for a draft that stored no controls", () => {
+    expect(needsRecovery(legacy, { intent: "calendar.create" })).toBe(true);
+    expect(needsRecovery(legacy, { intent: "email.compose" })).toBe(true);
+  });
+
+  it("never says so for a result, which is read-only by design", () => {
+    const result = document([
+      { id: "root", component: "Row", children: ["cell"] },
+      { id: "cell", component: "Text", text: "2000.5" },
+    ]);
+    for (const intent of ["interaction.result", "calendar.query"]) {
+      expect(needsRecovery(result, { intent })).toBe(false);
+    }
+  });
+
+  it("never says so while the document is unknown", () => {
+    // Loading, or a fetch that failed, is not evidence of an old card.
+    expect(needsRecovery(undefined, { intent: "calendar.create" })).toBe(false);
+    expect(needsRecovery([], { intent: "calendar.create" })).toBe(false);
+  });
 });

@@ -205,6 +205,10 @@ export function useThreadRows({
       currentBot,
       currentBotStatus,
       userBubble,
+      // The server's answer arrives after the first render. Without it in this list the
+      // memoised row keeps the value it first saw, and a card stays wrong until some
+      // unrelated dependency changes.
+      a2uiEnabled,
       rowActions,
       readOnly,
       onCall,

@@ -1,7 +1,12 @@
 export const ZH_TW_MESSAGES: Record<string, string> = {
+  "Could not load this card.": "無法載入此卡片。",
+  "This card had no content to load.": "此卡片沒有可載入的內容。",
+  "This card could not be shown.": "無法顯示此卡片。",
+  "Loading this card…": "正在載入卡片…",
   "Ask for the draft again to get an editable card.": "請重新索取草稿以取得可編輯的卡片。",
-  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.": "這是較早的卡片：它在卡片可編輯之前就已儲存，因此沒有可填寫或確認的內容。",
-  "This card can't be shown here because interactive cards are off on this server.":
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.":
+    "這是較早的卡片：它在卡片可編輯之前就已儲存，因此沒有可填寫或確認的內容。",
+  "This card can’t be shown here because interactive cards are off on this server.":
     "此卡片無法顯示，因為此伺服器已關閉互動式卡片。",
   "Add rule": "新增規則",
   "Tool name": "工具名稱",

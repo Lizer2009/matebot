@@ -120,7 +120,7 @@ export function A2uiSurfaceCard({
               here can satisfy. It cannot grow the button that was never stored, so it
               says what is missing and offers a way forward.
             */}
-            {needsRecovery(document.messages) ? (
+            {needsRecovery(document.messages, { intent: block.intent }) ? (
               <div
                 data-testid="a2ui-surface-recovery"
                 className="mt-3 flex flex-col gap-2 border-t border-border/60 pt-3 text-[14px] text-muted-foreground"

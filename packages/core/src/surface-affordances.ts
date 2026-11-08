@@ -17,13 +17,16 @@ export type SurfaceAffordances = {
   actionable: boolean;
 };
 
-/** Components that take input. `DateTimeInput`, `CheckBox` and `ChoicePicker` included. */
+/**
+ * Components that take input, by the names both compilers and the native catalog use.
+ * `Slider` is in the basic catalog the web renderer allows, so it counts too.
+ */
 const CONTROL_COMPONENTS = new Set([
   "TextField",
   "DateTimeInput",
   "CheckBox",
   "ChoicePicker",
-  "TextFieldRow",
+  "Slider",
 ]);
 
 /** Components that submit. `Button` carries the action a card is confirmed with. */
@@ -65,10 +68,30 @@ export function surfaceAffordances(messages: readonly unknown[] | undefined): Su
 /**
  * Whether a card is a read-only record wearing a draft's clothes.
  *
- * True when it was presented as something to confirm but stored nothing to confirm with.
- * The card says so and offers the way forward instead of leaving the sentence unanswered.
+ * True only for a card that was *presented as something to confirm* — a form intent —
+ * and stored nothing to confirm with. A result card is deliberately read-only: it is a
+ * table of values with no controls by design, so calling it broken would nag the reader
+ * about a card that works.
+ *
+ * `undefined` means the document is unknown (still loading, or a fetch that failed).
+ * That is not evidence of an old card either, so it reports false and the caller shows
+ * its own loading or error state.
  */
-export function needsRecovery(messages: readonly unknown[] | undefined): boolean {
+export function needsRecovery(
+  messages: readonly unknown[] | undefined,
+  options: { intent?: string } = {},
+): boolean {
+  if (!messages || messages.length === 0) return false;
+  // A result is read-only on purpose; only a draft promises something to confirm.
+  if (options.intent && !FORM_INTENTS.has(options.intent)) return false;
   const { editable, actionable } = surfaceAffordances(messages);
   return !editable && !actionable;
 }
+
+/** Intents whose card is a draft the reader is expected to fill in and confirm. */
+const FORM_INTENTS = new Set([
+  "calendar.create",
+  "calendar.compose",
+  "email.compose",
+  "email.send",
+]);

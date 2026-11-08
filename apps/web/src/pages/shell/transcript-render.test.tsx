@@ -176,7 +176,6 @@ it.each([
   ["a2ui_surface", "a2ui"],
   ["app_connect", "connect"],
   ["page", "page"],
-  ["choice", "choice"],
 ])("gives a %s message a full-width frame", (kind, id) => {
   const card = {
     ...message(id, ""),

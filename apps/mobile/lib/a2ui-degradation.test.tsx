@@ -158,6 +158,42 @@ describe("A2uiNativeSurface on a document it cannot draw", () => {
     expect(container.querySelectorAll("input").length).toBe(0);
   });
 
+  it("says it is loading, not that it is an old card", async () => {
+    vi.resetModules();
+    vi.doMock("react-native", () => ({
+      Text: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <span data-testid={testID}>{children}</span>
+      ),
+      View: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <div data-testid={testID}>{children}</div>
+      ),
+      TextInput: () => <input />,
+      Pressable: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <div data-testid={testID}>{children}</div>
+      ),
+    }));
+    vi.doMock("./i18n", () => ({
+      t: (id: string) => id,
+      useI18n: () => ({ t: (id: string) => id, locale: "en" }),
+    }));
+    const { A2uiNativeSurface } = await import("../components/thread/a2ui-native-surface");
+    const { createElement } = await import("react");
+    // A fetch that never resolves: an unresolved document is not an old card.
+    await act(async () => {
+      root.render(
+        createElement(A2uiNativeSurface, {
+          block: {
+            ...surface,
+            documentRef: "a2ui:interaction:interaction-1:surface:surface-1",
+          },
+          fetchDocument: () => new Promise<unknown[] | undefined>(() => undefined),
+        } as never),
+      );
+    });
+    expect(container.querySelector('[data-testid="a2ui-native-loading"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-native-recovery"]')).toBeNull();
+  });
+
   it("renders a reason instead of nothing", async () => {
     vi.resetModules();
     vi.doMock("react-native", () => ({

@@ -58,6 +58,15 @@ export function A2uiNativeSurface({
 }) {
   const { t } = useI18n();
   const [loaded, setLoaded] = useState<unknown[] | undefined>(messages);
+  /**
+   * Whether the stored document is still on its way, and whether it could not be read.
+   *
+   * Without these, an unresolved document is indistinguishable from one that has no
+   * controls, and the card would announce itself as an old one while it is merely
+   * loading — or forever, if the fetch fails.
+   */
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const source = messages ?? loaded;
   const [values, setValues] = useState<EmailFields>(() => emailFieldsFromSurfaceMessages(messages));
   const [error, setError] = useState<string | null>(null);
@@ -93,15 +102,35 @@ export function A2uiNativeSurface({
 
   useEffect(() => {
     if (messages || !block.documentRef) return;
+    const fetchDocument = fetchRef.current;
+    if (!fetchDocument) {
+      // Nothing to fetch from this surface: not loading, and not an old card either.
+      setLoading(false);
+      return;
+    }
     let active = true;
-    void fetchRef.current?.(block.documentRef).then((next) => {
-      if (!active || !next) return;
-      setLoaded(next);
-    });
+    setLoading(true);
+    setLoadError(null);
+    void fetchDocument(block.documentRef)
+      .then((next) => {
+        if (!active) return;
+        if (!next || next.length === 0) {
+          setLoadError(t("This card had no content to load."));
+          return;
+        }
+        setLoaded(next);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setLoadError(error instanceof Error ? error.message : t("Could not load this card."));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };
-  }, [block.documentRef, messages]);
+  }, [block.documentRef, messages, t]);
 
   if (isEmailComposeIntent(block.intent)) {
     const setField = (name: EmailFieldName) => (value: string) => {
@@ -326,7 +355,16 @@ export function A2uiNativeSurface({
         satisfy. It cannot grow the button that was never stored, so it says what is
         missing and offers a way forward — the same words web uses.
       */}
-      {needsRecovery(source) ? (
+      {loading ? (
+        <View testID="a2ui-native-loading">
+          <Text>{t("Loading this card…")}</Text>
+        </View>
+      ) : loadError ? (
+        <View testID="a2ui-native-load-error">
+          <Text>{t("This card could not be shown.")}</Text>
+          <Text>{loadError}</Text>
+        </View>
+      ) : needsRecovery(source, { intent: block.intent }) ? (
         <View testID="a2ui-native-recovery">
           <Text>
             {t(

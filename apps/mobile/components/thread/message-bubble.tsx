@@ -724,7 +724,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
             <View key={`a2ui-disabled-${block.surfaceId}`} testID="a2ui-native-disabled">
               <Text>
                 {t(
-                  "This card can't be shown here because interactive cards are off on this server.",
+                  "This card can’t be shown here because interactive cards are off on this server.",
                 )}
               </Text>
             </View>

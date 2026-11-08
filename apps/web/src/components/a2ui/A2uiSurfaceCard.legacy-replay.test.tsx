@@ -164,6 +164,42 @@ describe("replaying a document an older build wrote", () => {
     expect(container.querySelectorAll("button").length).toBe(0);
   });
 
+  /**
+   * A result card is a table of values and deliberately has no controls. Telling its
+   * reader it is an old broken card would be wrong on the most common card type.
+   */
+  it("does not call a result card an old card", async () => {
+    const compiled = await compileInteractionSurface({
+      surfaceId: SURFACE_ID,
+      values: {},
+      schema: { schemaVersion: 1, presentation: "result", fields: [], action: null },
+      result: {
+        title: "Revenue",
+        provenance: { source: "user-provided CSV", asOf: "2026-11-06T00:00:00.000Z" },
+        columns: [
+          { key: "quarter", label: "Quarter" },
+          { key: "total", label: "Total" },
+        ],
+        rows: [{ quarter: "Q1", total: "1.2M" }],
+        truncated: false,
+        totalRows: 1,
+        empty: false,
+      },
+    });
+    if (!compiled.ok) throw new Error(compiled.error);
+    act(() =>
+      root.render(
+        createElement(A2uiSurfaceCard, {
+          block: { ...block(), intent: "interaction.result" },
+          messages: compiled.messages as unknown[],
+        }),
+      ),
+    );
+    await settle();
+    expect(container.querySelector('[data-testid="a2ui-surface-recovery"]')).toBeNull();
+    expect(container.textContent).toContain("1.2M");
+  });
+
   it("does not show that notice on a card this build writes", async () => {
     const schema: InteractionSurfaceSchema = {
       schemaVersion: 1,
