@@ -147,6 +147,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      # `gh release create` resolves the tag through git unless it is given one, so the
+      # job needs the repository (and its tags) even though it only uploads files.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: matebot-prerelease-windows-${{ needs.validate.outputs.sha }}
@@ -192,8 +198,9 @@ jobs:
           set -euo pipefail
           # --latest=false is explicit: a prerelease must never take the pointer the
           # desktop updater and the download page both read.
+          git fetch --force origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
           gh release create "$RELEASE_TAG" assets/* \
-            --prerelease --latest=false \
+            --prerelease --latest=false --verify-tag \
             --title "Matebot $RELEASE_TAG (prerelease)" \
             --notes-file notes.md
       - name: Report the release URL

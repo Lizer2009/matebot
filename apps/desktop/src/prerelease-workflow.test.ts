@@ -62,6 +62,19 @@ describe("prerelease workflow", () => {
     expect(validate?.run).toContain("refusing to replace it");
   });
 
+  it("checks the repository out before publishing, since gh resolves the tag through git", () => {
+    const publish = workflow.jobs.publish!.steps;
+    const checkout = publish.findIndex((step) => step.uses?.startsWith("actions/checkout@"));
+    const download = publish.findIndex((step) =>
+      step.uses?.startsWith("actions/download-artifact@"),
+    );
+    expect(checkout).toBeGreaterThanOrEqual(0);
+    expect(download).toBeGreaterThan(checkout);
+    // --verify-tag keeps a typo from creating a tag on the default branch.
+    const create = publish.find((step) => step.name === "Create the prerelease");
+    expect(create?.run).toContain("--verify-tag");
+  });
+
   it("publishes as a prerelease that is explicitly not Latest", () => {
     const publish = stepsOf("publish").find((step) => step.name === "Create the prerelease");
     expect(publish?.run).toContain("--prerelease");
