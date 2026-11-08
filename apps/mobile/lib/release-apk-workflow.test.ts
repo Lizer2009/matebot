@@ -99,14 +99,14 @@ describe("Android APK release workflow", () => {
 
   // The marketing site's /api/download?platform=android and docs/mobile-release.md name this asset.
   it("publishes the APK under the documented stable name", () => {
-    expect(workflow).toContain("RELEASE_TAG: android");
+    // The rolling tag is still what main publishes to; a tag build gets its own release.
+    expect(workflow).toContain("|| 'android' }}");
     expect(workflow).toContain("releases/download/android/matebot.apk");
     expect(workflow).not.toContain("rakazo.apk");
     // The create and replace paths both use the stable name, or the download URL breaks.
     expect(workflow).toContain('gh release create "$RELEASE_TAG" "$RUNNER_TEMP/matebot.apk"');
     expect(workflow).toContain("-f name=matebot.apk");
   });
-
   // Firebase config is native, so it cannot arrive in an OTA update; its absence must not block the
   // first APK, which docs/mobile-release.md states is supported.
   it("warns instead of failing when Android push is not configured", () => {
@@ -119,22 +119,52 @@ describe("Android APK release workflow", () => {
     expect(step).not.toContain("exit 1");
   });
 
-  // A build from a prerelease tag must not read as a stable build in the rolling
-  // release title or notes, and it must say which tag and commit it came from.
-  it("labels a prerelease-tag build in the rolling release", () => {
+  // A build from a prerelease tag must not read as a stable build, and it must say which
+  // tag and commit it came from. It also gets a release of its own: the rolling release
+  // is the public download and the build an installed phone is offered, so a review build
+  // that replaced its asset would leave nothing to fall back to.
+  it("publishes a prerelease-tag build to its own release, labelled as a prerelease", () => {
     expect(workflow).toContain('if [[ "$GITHUB_REF" == refs/tags/android-pr* ]]; then');
     expect(workflow).toContain('title="$title from $SOURCE_REF"');
     expect(workflow).toContain("Not a stable build");
-    expect(workflow).toContain('--notes "$(notes)"');
+    expect(workflow).toContain("--prerelease --latest=false");
     // The stable path still keeps its own wording.
     expect(workflow).toContain("It updates itself over the air.");
   });
 
   it("keeps the documented download URL and never deletes the rolling release", () => {
     // The site's /api/download?platform=android resolves this tag, so neither may change.
-    expect(workflow).toContain("RELEASE_TAG: android");
+    expect(workflow).toContain("|| 'android' }}");
     expect(workflow).toContain("releases/download/android/matebot.apk");
     expect(workflow).not.toContain("gh release delete");
+  });
+
+  /**
+   * A tag build must not reach the rolling release's asset, tag, or title.
+   *
+   * The tag branch returns before the staged-upload block, so the delete-and-rename and
+   * the force tag move are unreachable from it. Asserting the ordering is what keeps a
+   * later edit from moving the early return below those lines.
+   */
+  it("stops a tagged build before it can touch the rolling release", () => {
+    const step = workflow.slice(
+      workflow.indexOf("- name: Publish the APK"),
+      workflow.indexOf(
+        '--title "$title" --latest=false\n',
+        workflow.indexOf("- name: Publish the APK"),
+      ) + 40,
+    );
+    const tagBranch = step.indexOf('if [[ "$GITHUB_REF" == refs/tags/android-pr* ]]; then');
+    const tagReturn = step.indexOf("exit 0", tagBranch);
+    const stagedUpload = step.indexOf('gh release upload "$RELEASE_TAG"');
+    const forceTag = step.indexOf("-F force=true");
+    expect(tagBranch).toBeGreaterThan(-1);
+    expect(tagReturn).toBeGreaterThan(tagBranch);
+    expect(stagedUpload).toBeGreaterThan(tagReturn);
+    expect(forceTag).toBeGreaterThan(tagReturn);
+    // The tag build names its own release rather than the rolling one.
+    expect(workflow).toContain("RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/android-pr')");
+    expect(workflow).toContain("github.ref_name || 'android' }}");
   });
 
   /**
@@ -169,7 +199,7 @@ describe("Android APK release workflow", () => {
     expect(app.expo.version).not.toBe("1.0.12");
     expect(app.expo.version > "1.0.12").toBe(true);
     // Nor any version published since, so a phone cannot think it already has this one.
-    for (const released of ["1.0.13", "1.0.14", "1.0.15", "1.0.16", "1.0.17"]) {
+    for (const released of ["1.0.13", "1.0.14", "1.0.15", "1.0.16", "1.0.17", "1.0.18"]) {
       expect(app.expo.version).not.toBe(released);
       expect(app.expo.version > released).toBe(true);
     }
