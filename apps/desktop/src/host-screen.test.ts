@@ -219,6 +219,24 @@ describe("screen driver download", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  /**
+   * The sentence the person sees is deliberately generic. Whoever has to fix a failure needs the
+   * reason, so it travels as the cause: a 504, a checksum mismatch and a failed extract are three
+   * different problems behind the same sentence.
+   */
+  it("keeps the underlying reason for the log, not for the person", async () => {
+    const bin = path.join(dir, "bin");
+    const install = screenDriverInstaller({
+      dir: bin,
+      fetch: async () => new Response("", { status: 404 }),
+      release,
+    });
+    const error = await install().catch((cause: unknown) => cause);
+    expect((error as Error).message).toBe(SCREEN_DRIVER_DOWNLOAD_MESSAGE);
+    expect((error as Error).cause).toBeInstanceOf(Error);
+    expect(String((error as Error).cause)).toContain("404");
+  });
+
   it("gives up after its retries rather than waiting forever", async () => {
     const bin = path.join(dir, "bin");
     const fetch = vi.fn(async () => new Response("", { status: 504 }));

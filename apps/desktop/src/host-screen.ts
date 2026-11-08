@@ -127,8 +127,10 @@ export function screenDriverInstaller(options: {
           await rm(path.join(options.dir, entry), { recursive: true, force: true });
       await renameSoon(staging, path.dirname(command));
       return command;
-    } catch {
-      throw new HostScreenError(SCREEN_DRIVER_DOWNLOAD_MESSAGE);
+    } catch (cause) {
+      // The person only needs the sentence, but whoever has to fix this needs the reason: a 504,
+      // a checksum mismatch and a failed untar are three different problems.
+      throw new HostScreenError(SCREEN_DRIVER_DOWNLOAD_MESSAGE, { cause });
     } finally {
       await rm(staging, { recursive: true, force: true });
     }
