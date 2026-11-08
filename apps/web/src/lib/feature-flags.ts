@@ -35,22 +35,26 @@ function storageEnablesA2ui(storage: Storage | null | undefined): boolean {
 /**
  * Whether the A2UI Surface host may render `a2ui_surface` timeline blocks.
  *
- * The deployment's own setting decides, reported by `/me` as `a2uiEnabled`. The
- * environment and storage overrides remain for local development and the browser
- * suite, but they only ever *add* to the server's answer for a build that was made
- * with them; a production image is built without either, so it follows the server.
+ * The deployment decides, reported by `/me` as `a2uiEnabled`. Precedence, and why:
  *
- * This used to be the only source, and nothing set the build variable on a production
- * image: every card was dropped before rendering, with no frame and no explanation,
- * while the turn said the draft was waiting in the card above.
+ * 1. The server, when it says yes. It publishes the cards; drawing them is always right.
+ * 2. The server, when it says no. Its own routes refuse every action, so drawing a card
+ *    would only offer controls that fail.
+ * 3. With no answer (a server that predates the field, or `/me` not yet loaded) the
+ *    build variable decides, then the storage key an operator can set locally.
+ *
+ * The client used to have only step 3, and a production image was built without the
+ * variable: every card was dropped before rendering with no frame and no explanation,
+ * while the turn described a draft waiting in a card nobody could see.
  */
 export function isA2uiEnabled(options?: {
   env?: FlagEnv;
   storage?: Storage | null;
-  /** `me.a2uiEnabled`. Undefined means the server predates the field. */
+  /** `me.a2uiEnabled`. Undefined means the server did not say. */
   server?: boolean;
 }): boolean {
   if (options?.server === true) return true;
+  if (options?.server === false) return false;
   const fromEnv = envEnablesA2ui(
     options?.env ??
       (typeof import.meta !== "undefined"
@@ -58,9 +62,6 @@ export function isA2uiEnabled(options?: {
         : undefined),
   );
   if (fromEnv !== undefined) return fromEnv;
-  // With no env override, the server's answer is final: a card this deployment does
-  // not serve must not be drawn from a stale local flag either.
-  if (options?.server !== undefined) return false;
   const storage =
     options && "storage" in options
       ? options.storage

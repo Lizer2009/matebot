@@ -68,8 +68,17 @@ describe("isA2uiEnabled", () => {
     ).toBe(false);
   });
 
-  it("keeps the development override for a build made with it", () => {
-    // The browser suite and local development set this deliberately.
-    expect(isA2uiEnabled({ env: { VITE_FEATURE_A2UI: "1" }, server: false })).toBe(true);
+  /**
+   * The server wins in both directions, because it owns the routes a card's buttons call.
+   * A build made with the variable must not offer controls a server will refuse.
+   */
+  it("lets a server that says no override a build made with the variable", () => {
+    expect(isA2uiEnabled({ env: { VITE_FEATURE_A2UI: "1" }, server: false })).toBe(false);
+  });
+
+  it("keeps the development override when the server does not say", () => {
+    // A server that predates the field, or `/me` not yet loaded: the build decides.
+    expect(isA2uiEnabled({ env: { VITE_FEATURE_A2UI: "1" } })).toBe(true);
+    expect(isA2uiEnabled({ env: {} })).toBe(false);
   });
 });

@@ -17,7 +17,8 @@ import { FixtureTranscript } from "./thread-fixture";
  * Open: `/e2e/fixtures/a2ui-surface.html`
  * - default: timeline card with minimal v0.9 surface (flag on via localStorage)
  * - `?refuse=1`: also shows a host fed unknown-component messages (refuse-safe)
- * - `?flag=off`: clears the flag so MessageView hides `a2ui_surface` blocks
+ * - `?flag=off`: the fixture stands in for a server that does not serve cards, so
+ *   MessageView shows its "interactive cards are off" sentence instead of the card
  */
 
 const params = new URLSearchParams(location.search);
@@ -55,7 +56,12 @@ void bootstrapI18n("en").then(() => {
   createRoot(document.getElementById("root")!).render(
     <I18nProvider i18n={i18n}>
       <div className="flex min-h-dvh flex-col bg-background text-foreground">
-        <FixtureTranscript messages={messages} running={false} showToolActivity={false} />
+        <FixtureTranscript
+          messages={messages}
+          running={false}
+          showToolActivity={false}
+          a2uiEnabled={params.get("flag") !== "off"}
+        />
         {refuse ? (
           <div className="mx-auto w-full max-w-xl p-6">
             <A2uiSurfaceCard

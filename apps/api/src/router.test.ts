@@ -2459,13 +2459,18 @@ describe("MCP server health", () => {
    */
   it("reports whether this deployment serves interactive cards", async () => {
     const h = harness();
-    vi.stubEnv("FEATURE_A2UI", "1");
-    expect((await h.client.me()).a2uiEnabled).toBe(true);
-    vi.stubEnv("FEATURE_A2UI", "0");
-    expect((await h.client.me()).a2uiEnabled).toBe(false);
-    vi.stubEnv("FEATURE_A2UI", "");
-    expect((await h.client.me()).a2uiEnabled).toBe(false);
-    vi.unstubAllEnvs();
+    try {
+      vi.stubEnv("FEATURE_A2UI", "1");
+      expect((await h.client.me()).a2uiEnabled).toBe(true);
+      vi.stubEnv("FEATURE_A2UI", "0");
+      expect((await h.client.me()).a2uiEnabled).toBe(false);
+      vi.stubEnv("FEATURE_A2UI", "");
+      expect((await h.client.me()).a2uiEnabled).toBe(false);
+    } finally {
+      // Restored even when an assertion throws, so a failure cannot leak a flag that
+      // makes a later test pass for the wrong reason.
+      vi.unstubAllEnvs();
+    }
   });
 
   it("lets only admins add or change stdio servers", async () => {

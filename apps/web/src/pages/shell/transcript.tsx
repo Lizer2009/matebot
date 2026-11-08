@@ -144,10 +144,10 @@ export const Transcript = memo(function Transcript({
   onOpenComputer: (botId?: string) => void;
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
   /**
-   * What the server says about this deployment. The only source for whether cards are
-   * drawn, so the client cannot disagree with the server that publishes them.
+   * What the server says about this deployment. Undefined until `/me` answers, so a
+   * card is never called unavailable just because the request has not landed yet.
    */
-  authUi: { a2uiEnabled: boolean };
+  authUi: { a2uiEnabled?: boolean };
   rpc: ReturnType<typeof createSpaceRpc>;
 }) {
   const { t } = useLingui();

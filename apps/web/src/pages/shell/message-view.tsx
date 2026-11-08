@@ -108,8 +108,12 @@ export const MessageView = memo(function MessageView({
   /** The adjacent receipts represented by this peer line. */
   peerExchange?: PeerExchange;
   speakerName?: string;
-  /** Whether this deployment serves interactive cards, as reported by the server. */
-  a2uiEnabled: boolean;
+  /**
+   * Whether this deployment serves interactive cards, as reported by the server.
+   * Undefined means the server has not answered yet: draw the card, because that is
+   * what a deployment that serves cards does, and a late answer still corrects it.
+   */
+  a2uiEnabled?: boolean;
   memberName?: (botId: string | undefined) => string | undefined;
   peerBot: (
     botId: string,
@@ -478,14 +482,16 @@ export const MessageView = memo(function MessageView({
             // rather than guessed from a build variable. A card that cannot be drawn
             // now says so; returning nothing left an unexplained gap and let the turn's
             // text claim a draft was waiting in a card nobody could see.
-            if (!a2uiEnabled) {
+            if (a2uiEnabled === false) {
               return (
                 <div
                   key={i}
                   data-testid="a2ui-surface-disabled"
                   className="flex max-w-[min(88%,39rem)] justify-start rounded-[16px] bg-muted px-4 py-3 text-[14px] text-muted-foreground"
                 >
-                  <Trans>This card can’t be shown here because interactive cards are off on this server.</Trans>
+                  <Trans>
+                    This card can’t be shown here because interactive cards are off on this server.
+                  </Trans>
                 </div>
               );
             }

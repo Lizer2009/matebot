@@ -18,7 +18,16 @@ test("A2UI surface fixture refuses unknown catalog components", async ({ page })
   await expect(page.getByText(/EvilWidget/)).toBeVisible();
 });
 
-test("A2UI surface blocks stay hidden when the flag is off", async ({ page }) => {
+/**
+ * A server that does not serve cards produces a sentence, not a blank region.
+ *
+ * Before this, the block returned null and the reader saw an unexplained gap while the
+ * conversation told them to use a card that was never on screen.
+ */
+test("a card the server does not serve says so instead of vanishing", async ({ page }) => {
   await page.goto("/e2e/fixtures/a2ui-surface.html?flag=off");
   await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(0);
+  const notice = page.getByTestId("a2ui-surface-disabled");
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText(/interactive cards are off/i);
 });

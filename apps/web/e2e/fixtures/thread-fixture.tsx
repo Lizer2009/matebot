@@ -53,6 +53,7 @@ export function FixtureTranscript({
   header,
   answerableAskIds = NO_IDS,
   bots = [BOT],
+  a2uiEnabled = true,
 }: {
   messages: readonly ThreadMessage[];
   running: boolean;
@@ -62,6 +63,8 @@ export function FixtureTranscript({
   answerableAskIds?: Set<string>;
   /** The chat's own bot first, then any peers it mentions or hands off to. */
   bots?: GroupAvatarMember[];
+  /** Fixtures stand in for a deployment that serves cards; a spec can turn them off. */
+  a2uiEnabled?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const transcript = useMemo(
@@ -74,6 +77,7 @@ export function FixtureTranscript({
       {header}
       <Transcript
         rpc={rpc}
+        authUi={{ a2uiEnabled }}
         scrollRef={scrollRef}
         scrollRequest={null}
         onScrollRequestHandled={noop}
