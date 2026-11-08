@@ -16,7 +16,21 @@ if echo "$sha256  $dest/agent-browser" | sha256sum -c --status 2>/dev/null; then
 mkdir -p "$dest"
 binary="$(mktemp)"
 trap 'rm -f "$binary"' EXIT
-curl -fsSL "https://github.com/vercel-labs/agent-browser/releases/download/v${version}/agent-browser-linux-${arch}" -o "$binary"
+# The releases host answers 504 intermittently under load. A retry is what turns that into a
+# slow install instead of a failed job; the sha256 check below still decides whether the bytes
+# are the pinned binary, so a retry can never accept a different one.
+url="https://github.com/vercel-labs/agent-browser/releases/download/v${version}/agent-browser-linux-${arch}"
+attempt=1
+while :; do
+  if curl -fsSL --retry 2 --retry-delay 2 --retry-connrefused "$url" -o "$binary"; then break; fi
+  if [ "$attempt" -ge 5 ]; then
+    echo "could not download $url after $attempt attempts" >&2
+    exit 1
+  fi
+  echo "download attempt $attempt failed; retrying in $((attempt * 5))s" >&2
+  sleep $((attempt * 5))
+  attempt=$((attempt + 1))
+done
 echo "$sha256  $binary" | sha256sum -c -
 install -m 755 "$binary" "$dest/agent-browser"
 "$dest/agent-browser" --version

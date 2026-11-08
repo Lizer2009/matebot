@@ -45,7 +45,10 @@
     "registry": "ghcr.io/lizer2009/matebot",
     "tag": "0.6.2-pr42.f5a0764",
     "shaTag": "sha-f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
-    "platforms": ["linux/amd64", "linux/arm64"],
+    "platforms": [
+      "linux/amd64",
+      "linux/arm64"
+    ],
     "app": {
       "manifestDigest": "sha256:2c72d07c6b3f8b6a9d4e64d54917ecea44df65a496ed674442c8afe21df45a9d",
       "revisionLabel": "f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
@@ -153,5 +156,6 @@
     "No Windows click-through acceptance; the parent operator owns that machine.",
     "No deployment to 192.168.10.5 and no operation on the Windows host.",
     "Whether app.matebot.dev is served by the 192.168.10.5 database is still unknown from this environment."
-  ]
+  ],
+  "ciNote": "The artefact commits passed CI twice. Two later empty commits re-ran CI on the identical tree and hit transient infrastructure failures with no assertion ever running: the GitHub releases host returned 504 for both the browser helper and the Electron binary, and a Windows runner had no Visual Studio to build a native module. Those are recorded here rather than hidden; the tree that produced every artefact is documented under source.tip and its CI runs are listed under gates."
 }
