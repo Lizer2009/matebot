@@ -241,4 +241,93 @@ describe("A2uiNativeSurface on a document it cannot draw", () => {
     expect(refused).not.toBeNull();
     expect((refused?.textContent ?? "").trim().length).toBeGreaterThan(0);
   });
+
+  /**
+   * A card with no document at all is the blank frame the audit found: a title over
+   * nothing, with no word about why. It has to say so, and offer the one thing that can
+   * change the answer when a stored ref exists.
+   */
+  it("says a card with nothing to draw could not be shown, and offers to load it again", async () => {
+    vi.resetModules();
+    vi.doMock("react-native", () => ({
+      Text: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <span data-testid={testID}>{children}</span>
+      ),
+      View: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <div data-testid={testID}>{children}</div>
+      ),
+      TextInput: () => <input />,
+      Pressable: ({
+        children,
+        onPress,
+        testID,
+      }: {
+        children?: ReactNode;
+        onPress?: () => void;
+        testID?: string;
+      }) => (
+        <button type="button" data-testid={testID} onClick={() => onPress?.()}>
+          {children}
+        </button>
+      ),
+    }));
+    vi.doMock("./i18n", () => {
+      // A stable `t`, like the real one: the fetch effect keys on it.
+      const t = (id: string) => id;
+      return { t, useI18n: () => ({ t, locale: "en" }) };
+    });
+    const { A2uiNativeSurface } = await import("../components/thread/a2ui-native-surface");
+    const fetchDocument = vi.fn(async () => undefined as unknown[] | undefined);
+    await act(async () => {
+      root.render(
+        (await import("react")).createElement(A2uiNativeSurface, {
+          block: { ...surface, documentRef: "a2ui:interaction:interaction-1:surface:surface-1" },
+          fetchDocument,
+        } as never),
+      );
+    });
+    const loadError = container.querySelector('[data-testid="a2ui-native-load-error"]');
+    expect(loadError).not.toBeNull();
+    expect(loadError?.textContent).toMatch(/could not be shown/i);
+    // The reason travels with it, so the reader is not told only that something failed.
+    expect(loadError?.textContent).toMatch(/no content/i);
+    // The reader can act on it rather than being told to try a card that is not there.
+    const reload = container.querySelector('[data-testid="a2ui-native-reload"]');
+    expect(reload).not.toBeNull();
+    const before = fetchDocument.mock.calls.length;
+    await act(async () => {
+      (reload as HTMLElement).click();
+    });
+    expect(fetchDocument.mock.calls.length).toBeGreaterThan(before);
+  });
+
+  it("draws no attempt to reload a card that has no stored document", async () => {
+    vi.resetModules();
+    vi.doMock("react-native", () => ({
+      Text: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <span data-testid={testID}>{children}</span>
+      ),
+      View: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <div data-testid={testID}>{children}</div>
+      ),
+      TextInput: () => <input />,
+      Pressable: ({ children, testID }: { children?: ReactNode; testID?: string }) => (
+        <div data-testid={testID}>{children}</div>
+      ),
+    }));
+    vi.doMock("./i18n", () => ({
+      t: (id: string) => id,
+      useI18n: () => ({ t: (id: string) => id, locale: "en" }),
+    }));
+    const { A2uiNativeSurface } = await import("../components/thread/a2ui-native-surface");
+    await act(async () => {
+      root.render(
+        (await import("react")).createElement(A2uiNativeSurface, {
+          block: surface,
+        } as never),
+      );
+    });
+    expect(container.querySelector('[data-testid="a2ui-native-unavailable"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-native-reload"]')).toBeNull();
+  });
 });

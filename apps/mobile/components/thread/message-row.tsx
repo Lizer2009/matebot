@@ -430,7 +430,9 @@ export const MessageRow = memo(function MessageRow({
             colorScheme={colorScheme}
             onAction={onMenuAction}
             onLongPress={actionProps.onLongPress}
-            onDoubleTap={messageHasInlineControls(message.blocks) ? undefined : likeMessage}
+            onDoubleTap={
+              messageHasInlineControls(message.blocks, { a2uiEnabled }) ? undefined : likeMessage
+            }
           >
             <ThreadReadOnlyContext.Provider value={readOnly}>
               <MessageBubble
