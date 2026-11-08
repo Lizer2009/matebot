@@ -1,13 +1,19 @@
 {
   "schemaVersion": 1,
   "channel": "prerelease",
-  "releasedAt": "2026-11-08T08:05:00Z",
+  "releasedAt": "2026-11-08T08:45:00Z",
+  "supersedes": {
+    "release": "v0.6.2-pr42.d8928810",
+    "reason": "That build was published before the last card fix, so its version named a commit that was not the code inside it. Its GitHub release was deleted so a test machine cannot install it; the image tags it produced remain in GHCR but are not referenced here."
+  },
   "source": {
     "repository": "https://github.com/Lizer2009/matebot",
     "branch": "cursor/a2ui-card-gate-recovery-a097",
-    "fixCommit": "d892881087d56a6dc65d87e4ecf84e59e5370131",
-    "versionCommit": "8915828a038ff33b99d2b270b0f1308c846080c2",
-    "tag": "v0.6.2-pr42.d8928810",
+    "tip": "f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
+    "releaseTag": "v0.6.2-pr42.f5a0764",
+    "releaseTagCommit": "f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
+    "androidBuildTag": "android-pr42.5",
+    "androidBuildTagCommit": "f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
     "pullRequest": 43,
     "recoveredFrom": {
       "cloudAgent": "bc-9a9ef1a1-fd21-5f81-98e3-ecae2e3ca097",
@@ -25,10 +31,10 @@
     "androidVersionCode": 14
   },
   "versions": {
-    "desktop": "0.6.2-pr42.d8928810",
+    "desktop": "0.6.2-pr42.f5a0764",
     "android": {
-      "versionName": "1.0.15",
-      "versionCode": 15,
+      "versionName": "1.0.16",
+      "versionCode": 16,
       "package": "com.matebot.app",
       "minSdk": 24,
       "targetSdk": 36,
@@ -37,66 +43,62 @@
   },
   "images": {
     "registry": "ghcr.io/lizer2009/matebot",
-    "tag": "0.6.2-pr42.d8928810",
-    "shaTag": "sha-8915828a038ff33b99d2b270b0f1308c846080c2",
+    "tag": "0.6.2-pr42.f5a0764",
+    "shaTag": "sha-f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
     "platforms": ["linux/amd64", "linux/arm64"],
     "app": {
-      "manifestDigest": "sha256:f10061baf70c7a27451952774c0d3b6fec4a60f65278406d132a8defa37e3769",
-      "amd64Manifest": "sha256:7acceddb192566ba38abcffc7eca746e421bca999940f6016570caf522d0b577",
-      "revisionLabel": "8915828a038ff33b99d2b270b0f1308c846080c2",
-      "created": "2026-11-08T07:36:33.875363593Z"
+      "manifestDigest": "sha256:2c72d07c6b3f8b6a9d4e64d54917ecea44df65a496ed674442c8afe21df45a9d",
+      "revisionLabel": "f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
+      "created": "2026-11-08T08:15:54.102Z"
     },
     "computer": {
-      "manifestDigest": "sha256:ad9dbbc810b169668152748d748f3b4e6e95649cdd5917eb3976ff4cce44d235"
+      "manifestDigest": "sha256:06a83f01f343655befa199cd9c9c58b22c8047b072317f0477a250808e6eafe9"
     },
     "updater": {
-      "manifestDigest": "sha256:a9bc8d30b29a8b3013a4c9305908b53facb111c33e9c05e815b944f9ee729945"
+      "manifestDigest": "sha256:12c89b04f324236a7ce201ef66de7d40429d14953b926d4ff2e3960e93052e34"
     },
     "floatingTagsMoved": [],
     "notes": [
       "edge is not moved: it only follows refs/heads/main.",
-      "latest is not moved: it is the stable tag 0.6.0 only.",
-      "v0.6.2 (minor) is not created for a prerelease, so a pin cannot silently receive it."
+      "latest is not moved: it is the stable tag 0.6.0 only, verified after publishing.",
+      "A floating vMAJOR.MINOR tag is not created for a prerelease, so a pin cannot silently receive it.",
+      "Each digest above was read back from the registry as an OCI image index containing both linux/amd64 and linux/arm64."
     ]
   },
   "windows": {
-    "release": "https://github.com/Lizer2009/matebot/releases/tag/v0.6.2-pr42.d8928810",
+    "release": "https://github.com/Lizer2009/matebot/releases/tag/v0.6.2-pr42.f5a0764",
     "prerelease": true,
     "latest": false,
     "signed": false,
-    "assets": [
-      {
-        "name": "Matebot-Setup-0.6.2-pr42.d8928810.exe",
-        "bytes": 135498934,
-        "sha256": "372dacf06b1cceb5af02ef9fb783e14cdddd73e50f077575321425458a2f053d"
-      },
-      {
-        "name": "Matebot-Setup-0.6.2-pr42.d8928810.exe.blockmap",
-        "bytes": 142144,
-        "sha256": "674e3a200a8820ce8431f9ef49a8781f74f68d552dc6b69f8a1b94f1174c8380"
-      },
-      {
-        "name": "SHA256SUMS",
-        "bytes": 221,
-        "sha256": "449c0de70fc26488487b599f1db79d0ed92886ce48d26e0709cc1a4aea14362d"
-      }
-    ],
-    "installerVersion": "0.6.2-pr42.d8928810",
-    "updateFeedIncluded": false
+    "installer": {
+      "name": "Matebot-Setup-0.6.2-pr42.f5a0764.exe",
+      "bytes": 135498864,
+      "sha256": "4d21ed349303b2d64453b6d98201a705d61d1df262bcc3832d9153c8172f313d",
+      "sha256VerifiedByDownload": true
+    },
+    "blockmap": {
+      "name": "Matebot-Setup-0.6.2-pr42.f5a0764.exe.blockmap",
+      "bytes": 142045,
+      "sha256": "3816006b87623073b65adb4d61bac6d4b4a7cd2e0baa99dadcaf8370f9af0e65"
+    },
+    "checksums": {
+      "name": "SHA256SUMS",
+      "bytes": 219,
+      "sha256": "dc72bd0594b179b48cac3f76bf2502e7e7b00befef3f9ddc80261edca4b4f18a"
+    },
+    "updateFeedIncluded": false,
+    "note": "Downloaded the installer and hashed it locally; the result matches both SHA256SUMS and the asset digest GitHub reports."
   },
   "android": {
     "release": "https://github.com/Lizer2009/matebot/releases/tag/android",
-    "releaseTitle": "Matebot for Android 1.0.15 (15) from android-pr42.4",
-    "buildTag": "android-pr42.4",
-    "buildTagCommit": "8915828a038ff33b99d2b270b0f1308c846080c2",
+    "releaseTitle": "Matebot for Android 1.0.16 (16) from android-pr42.5",
     "apk": {
       "name": "matebot.apk",
-      "bytes": 112732802,
-      "sha256": "c6ca9d84a74c728e8cb5700544c8390613cc0c0dd71b7e3b59e3b62a41b2268c",
+      "bytes": 112732558,
+      "sha256": "a9467c9acd384f221f9644cdd0a89226c4d85be75575fe76c3878fed931d6a51",
       "downloadUrl": "https://github.com/Lizer2009/matebot/releases/download/android/matebot.apk",
       "entries": 1831,
-      "bundledApiUrl": "https://app.matebot.dev",
-      "bundledAt": "2026-11-08T07:47:47.191000Z"
+      "bundledApiUrl": "https://app.matebot.dev"
     },
     "signing": {
       "scheme": "v2",
@@ -105,7 +107,8 @@
       "certificateSha256": "55:48:3D:6B:30:18:06:1F:CB:2B:1D:5D:0B:6C:BE:05:A5:2B:5B:DC:B0:0A:56:D3:3C:8A:FA:C5:74:66:ED:E8",
       "certificateNotBefore": "2026-11-06T02:38:16Z",
       "certificateNotAfter": "2054-03-24T02:38:16Z",
-      "sameSignerAsPreviousApk": "not independently verified: the previous APK was not downloaded in this run; the certificate's validity start predates both builds and this build was signed by the project's managed EAS keystore"
+      "sameSignerAsSupersededApk": true,
+      "evidence": "Both the 1.0.15 APK and this 1.0.16 APK were downloaded and their v2 signer certificates extracted; the SHA-256 fingerprints are identical, so an in-place update is accepted."
     },
     "downloadEntry": {
       "url": "https://test.matebot.dev/api/download?platform=android",
@@ -122,25 +125,25 @@
     "prismaMigrationsAdded": [],
     "prismaSchemaChanged": false,
     "databaseMigrationRequired": false,
-    "rollbackInvariant": "Old and new images both read the same schema, so rollback is a digest swap with no data step.",
+    "rollbackInvariant": "Old and new images read the same schema, so a rollback is a digest swap with no data step.",
     "spaceBudgetNote": "No new schema objects; three image layers per architecture. The root volume was grown to 45 GiB in the previous round with about 10.65 GiB free after deployment; check df -h / and docker system df before pulling."
   },
   "gates": {
-    "ci": {
-      "runId": 42458946377,
+    "pullRequestCi": {
+      "runId": 42462085926,
       "conclusion": "success",
-      "webE2E": "passed, including the flag-off case that failed before this change"
+      "webE2E": "passed on this head, including the flag-off case that failed before this change"
     },
     "releasePrerelease": {
-      "runId": 42459014272,
+      "runId": 42462083581,
       "conclusion": "success"
     },
     "publishServerImage": {
-      "runId": 42459014276,
+      "runId": 42462083605,
       "conclusion": "success"
     },
     "releaseAndroidApk": {
-      "runId": 42458955494,
+      "runId": 42462152955,
       "conclusion": "success"
     }
   },
