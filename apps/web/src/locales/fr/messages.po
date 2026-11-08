@@ -4280,6 +4280,10 @@ msgstr "Nommez cette routine"
 msgid "Name your Bot"
 msgstr ""
 
+#: src/pages/memory-providers/HonchoSettingsForm.tsx
+msgid "Names starting with bot- are reserved for Matebot."
+msgstr ""
+
 #: src/lib/roster-status.ts
 msgid "Needs an answer"
 msgstr ""
@@ -5086,10 +5090,6 @@ msgstr "Demande de fusion"
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "En file d'attente"
-
-#: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Matebot."
-msgstr ""
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
