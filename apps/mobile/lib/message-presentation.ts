@@ -3,6 +3,19 @@ import { isToolActivityBlock } from "@matebot/core";
 import { MAX_QUOTABLE_SOURCE_LENGTH, visibleTextFromMarkdown } from "@matebot/core/message-quote";
 import { isA2uiEnabled } from "./a2ui-flag";
 
+/**
+ * What this deployment says about cards, from `/me`.
+ *
+ * Threaded through rather than read from the environment at each call site: one value
+ * must decide visibility, whether the block is drawn as a card, and whether the
+ * "cannot show" notice appears — otherwise a row can be hidden by one rule while
+ * another rule believes it is drawn.
+ */
+export type A2uiDisplayPolicy = { a2uiEnabled?: boolean };
+
+const showA2ui = (policy: A2uiDisplayPolicy | undefined) =>
+  isA2uiEnabled({ server: policy?.a2uiEnabled });
+
 export function isCenteredAgentEvent(blocks: readonly MessageBlock[]): boolean {
   return blocks.some(
     (block) =>
@@ -14,13 +27,16 @@ export function isCenteredAgentEvent(blocks: readonly MessageBlock[]): boolean {
 }
 
 /** Cards with a text field, buttons or links own the taps that land inside them. */
-export function messageHasInlineControls(blocks: readonly MessageBlock[]): boolean {
+export function messageHasInlineControls(
+  blocks: readonly MessageBlock[],
+  policy?: A2uiDisplayPolicy,
+): boolean {
   return blocks.some(
     (block) =>
       block.kind === "ask" ||
       block.kind === "app_connect" ||
       block.kind === "mcp_approval" ||
-      (block.kind === "a2ui_surface" && isA2uiEnabled()),
+      (block.kind === "a2ui_surface" && showA2ui(policy)),
   );
 }
 
@@ -35,12 +51,10 @@ function isCardBlock(block: MessageBlock): boolean {
     block.kind === "app_connect" ||
     block.kind === "choice" ||
     block.kind === "computer" ||
-    (block.kind === "a2ui_surface" && isA2uiEnabled())
+    // Always a card, served or not: the renderer either draws the surface or says it
+    // cannot. Leaving it in the text flow would print a raw block where a card belongs.
+    block.kind === "a2ui_surface"
   );
-}
-
-function isHiddenA2ui(block: MessageBlock): boolean {
-  return block.kind === "a2ui_surface" && !isA2uiEnabled();
 }
 
 /** The import setup checklist links to web settings, so mobile leaves it out. */
@@ -52,22 +66,20 @@ export function messagePresentationSegments(
   blocks: readonly MessageBlock[],
 ): MessagePresentationSegment[] {
   const content = blocks.filter(
-    (block) =>
-      !isCardBlock(block) &&
-      !isToolActivityBlock(block) &&
-      !isWebOnlyBlock(block) &&
-      !isHiddenA2ui(block),
+    (block) => !isCardBlock(block) && !isToolActivityBlock(block) && !isWebOnlyBlock(block),
   );
   return content.length > 0 ? [{ kind: "content", blocks: content }] : [];
 }
 
+/**
+ * Whether the message has anything worth a row.
+ *
+ * A card this deployment does not serve still counts: it is drawn as a sentence saying
+ * so, which is the whole point of not filtering it out here.
+ */
 export function hasVisibleMessagePresentation(blocks: readonly MessageBlock[]): boolean {
   return blocks.some(
-    (block) =>
-      !isToolActivityBlock(block) &&
-      !isDismissedChoice(block) &&
-      !isWebOnlyBlock(block) &&
-      !isHiddenA2ui(block),
+    (block) => !isToolActivityBlock(block) && !isDismissedChoice(block) && !isWebOnlyBlock(block),
   );
 }
 

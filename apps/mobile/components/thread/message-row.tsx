@@ -93,6 +93,8 @@ type MessageRowProps = {
   activityAvatarSet?: BotAvatarSet;
   activityStatus?: MobileBot["status"];
   userBubble?: UserBubble;
+  /** Whether this deployment serves interactive cards, from `/me`. */
+  a2uiEnabled?: boolean;
   inGroup: boolean;
   columnWidth: number;
   enableJump: boolean;
@@ -129,6 +131,7 @@ export const MessageRow = memo(function MessageRow({
   activityAvatarSet,
   activityStatus,
   userBubble,
+  a2uiEnabled,
   inGroup,
   columnWidth,
   enableJump,
@@ -432,6 +435,7 @@ export const MessageRow = memo(function MessageRow({
             <ThreadReadOnlyContext.Provider value={readOnly}>
               <MessageBubble
                 mentions={mentions}
+                a2uiEnabled={a2uiEnabled}
                 botId={bubbleBotId}
                 groupId={groupId}
                 message={message}

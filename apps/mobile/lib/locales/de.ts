@@ -1,4 +1,8 @@
 export const DE_MESSAGES: Record<string, string> = {
+  "Ask for the draft again to get an editable card.": "Fordern Sie den Entwurf erneut an, um eine bearbeitbare Karte zu erhalten.",
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.": "Dies ist eine ältere Karte: Sie wurde gespeichert, bevor Karten bearbeitet werden konnten, enthält also nichts zum Ausfüllen oder Bestätigen.",
+  "This card can't be shown here because interactive cards are off on this server.":
+    "Diese Karte kann nicht angezeigt werden, da interaktive Karten auf diesem Server deaktiviert sind.",
   "Add rule": "Regel hinzufügen",
   "Tool name": "Tool-Name",
   Address: "Adresse",

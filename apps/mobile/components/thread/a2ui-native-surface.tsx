@@ -1,5 +1,5 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import { emailSurfacePhase } from "@matebot/core";
+import { emailSurfacePhase, needsRecovery } from "@matebot/core";
 import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import type { NativeCatalogNode } from "../../lib/a2ui-catalog";
@@ -320,6 +320,22 @@ export function A2uiNativeSurface({
     <View testID="a2ui-native-surface">
       {block.title ? <Text>{block.title}</Text> : null}
       <A2uiCatalogNodes nodes={catalog.nodes} block={block} onAction={onAction} />
+      {/*
+        An early card stored a title and two lines of text, and nothing to press. The turn
+        around it may still say "confirm in the card above", which nothing here can
+        satisfy. It cannot grow the button that was never stored, so it says what is
+        missing and offers a way forward — the same words web uses.
+      */}
+      {needsRecovery(source) ? (
+        <View testID="a2ui-native-recovery">
+          <Text>
+            {t(
+              "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.",
+            )}
+          </Text>
+          <Text>{t("Ask for the draft again to get an editable card.")}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }

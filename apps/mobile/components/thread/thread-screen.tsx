@@ -157,6 +157,11 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     maxAttachmentsPerMessage?: number;
   }>();
   const [needsModel, setNeedsModel] = useState<boolean>();
+  /**
+   * Whether this deployment serves interactive cards. Undefined until `/me` answers,
+   * which draws cards rather than calling them unavailable.
+   */
+  const [a2uiEnabled, setA2uiEnabled] = useState<boolean>();
   // Re-read on focus so returning from Models settings updates unsent missing-model messages.
   useFocusEffect(
     useCallback(() => {
@@ -166,6 +171,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           if (cancelled) return;
           setUploadConfig(me);
           setNeedsModel(me.needsModel);
+          setA2uiEnabled(me.a2uiEnabled);
         })
         .catch(() => undefined);
       return () => {
@@ -488,6 +494,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     currentBot,
     currentBotStatus,
     userBubble,
+    a2uiEnabled,
     columnWidth,
     readSeq: readBoundary?.visit === readVisit.current.visit ? readBoundary.seq : null,
     markedUnreadMessageId,

@@ -935,6 +935,10 @@ msgstr "תוצרים"
 msgid "Ask"
 msgstr "לשאול"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Ask for the draft again to get an editable card."
+msgstr ""
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Asleep"
 msgstr "במצב שינה"
@@ -6553,6 +6557,10 @@ msgstr "הקובץ אינו טקסט UTF-8 תקין."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "הייבוא הזה כבר נוצל. יש לבחור את הקבצים שוב."
+
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm."
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this Mac"

@@ -75,6 +75,7 @@ export function useThreadRows({
   currentBot,
   currentBotStatus,
   userBubble,
+  a2uiEnabled,
   columnWidth,
   readSeq,
   markedUnreadMessageId,
@@ -95,6 +96,8 @@ export function useThreadRows({
   currentBotStatus?: string;
   userBubble?: UserBubble;
   columnWidth: number;
+  /** Whether this deployment serves interactive cards, from `/me`. */
+  a2uiEnabled?: boolean;
   /** What the user had read up to when this visit began. */
   readSeq: number | null;
   markedUnreadMessageId?: string;
@@ -154,6 +157,7 @@ export function useThreadRows({
           showBotSenderName={showBotSenderName}
           bots={mentionBots}
           members={snap?.members}
+          a2uiEnabled={a2uiEnabled}
           readOnly={readOnly}
           onCall={onCall}
           canAnswer={!readOnly && answerableAskIds.has(message.id)}

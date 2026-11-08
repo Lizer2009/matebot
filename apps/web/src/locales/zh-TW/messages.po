@@ -936,6 +936,10 @@ msgstr "成品"
 msgid "Ask"
 msgstr "詢問"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Ask for the draft again to get an editable card."
+msgstr ""
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Asleep"
 msgstr "休眠中"
@@ -6554,6 +6558,10 @@ msgstr "此檔案不是有效的 UTF-8 文字。"
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "此匯入已使用過。請重新選擇檔案。"
+
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm."
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this Mac"

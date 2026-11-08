@@ -1,4 +1,8 @@
 export const ZH_TW_MESSAGES: Record<string, string> = {
+  "Ask for the draft again to get an editable card.": "請重新索取草稿以取得可編輯的卡片。",
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.": "這是較早的卡片：它在卡片可編輯之前就已儲存，因此沒有可填寫或確認的內容。",
+  "This card can't be shown here because interactive cards are off on this server.":
+    "此卡片無法顯示，因為此伺服器已關閉互動式卡片。",
   "Add rule": "新增規則",
   "Tool name": "工具名稱",
   Address: "地址",

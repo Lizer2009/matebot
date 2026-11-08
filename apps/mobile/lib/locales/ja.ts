@@ -1,4 +1,8 @@
 export const JA_MESSAGES: Record<string, string> = {
+  "Ask for the draft again to get an editable card.": "編集可能なカードを得るには、下書きをもう一度依頼してください。",
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.": "これは古いカードです。カードを編集できるようになる前に保存されたため、入力や確認できる項目がありません。",
+  "This card can't be shown here because interactive cards are off on this server.":
+    "このサーバーではインタラクティブカードが無効なため、このカードを表示できません。",
   "Add rule": "ルールを追加",
   "Tool name": "ツール名",
   Address: "住所",

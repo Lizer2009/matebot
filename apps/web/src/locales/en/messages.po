@@ -935,6 +935,10 @@ msgstr "Artifacts"
 msgid "Ask"
 msgstr "Ask"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Ask for the draft again to get an editable card."
+msgstr "Ask for the draft again to get an editable card."
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Asleep"
 msgstr "Asleep"
@@ -6553,6 +6557,10 @@ msgstr "This file is not valid UTF-8 text."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "This import was already used. Choose the files again."
+
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm."
+msgstr "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm."
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this Mac"

@@ -143,6 +143,53 @@ describe("replaying a document an older build wrote", () => {
     expect(container.querySelectorAll("button").length).toBe(0);
   });
 
+  /**
+   * The conversation says "confirm in the card above". That card has nothing to confirm
+   * with, and it must not silently leave the instruction hanging.
+   */
+  it("says an old card has nothing to fill in or confirm, and how to get one", async () => {
+    act(() =>
+      root.render(
+        createElement(A2uiSurfaceCard, { block: block(), messages: legacyCalendarDocument() }),
+      ),
+    );
+    await settle();
+    const notice = container.querySelector('[data-testid="a2ui-surface-recovery"]');
+    expect(notice).not.toBeNull();
+    expect(notice?.textContent).toMatch(/older card/i);
+    expect(notice?.textContent).toMatch(/nothing to fill in or confirm/i);
+    // A way forward, not just a statement of the problem.
+    expect(notice?.textContent).toMatch(/ask for the draft again/i);
+    // And no claim that anything here can be confirmed.
+    expect(container.querySelectorAll("button").length).toBe(0);
+  });
+
+  it("does not show that notice on a card this build writes", async () => {
+    const schema: InteractionSurfaceSchema = {
+      schemaVersion: 1,
+      presentation: "form",
+      fields: [{ name: "name", label: "Name", kind: "text", required: true }],
+      action: { id: "create", label: "Create", requiresRevision: true },
+    };
+    const compiled = await compileInteractionSurface({
+      schema,
+      values: { name: "Weekly sync" },
+      surfaceId: SURFACE_ID,
+    });
+    if (!compiled.ok) throw new Error(compiled.error);
+    act(() =>
+      root.render(
+        createElement(A2uiSurfaceCard, {
+          block: block(),
+          messages: compiled.messages as unknown[],
+        }),
+      ),
+    );
+    await settle();
+    expect(container.querySelector('[data-testid="a2ui-surface-recovery"]')).toBeNull();
+    expect(container.querySelectorAll("input").length).toBeGreaterThan(0);
+  });
+
   it("loads an old document through its ref, as history does", async () => {
     const fetchDocument = vi.fn(async () => legacyCalendarDocument());
     act(() =>

@@ -1,4 +1,8 @@
 export const RU_MESSAGES: Record<string, string> = {
+  "Ask for the draft again to get an editable card.": "Запросите черновик заново, чтобы получить редактируемую карточку.",
+  "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm.": "Это старая карточка: она сохранена до того, как карточки стало можно редактировать, поэтому в ней нечего заполнять и нечего подтверждать.",
+  "This card can't be shown here because interactive cards are off on this server.":
+    "Эту карточку нельзя показать: интерактивные карточки отключены на этом сервере.",
   "Add rule": "Добавить правило",
   "Tool name": "Название инструмента",
   Address: "Адрес",

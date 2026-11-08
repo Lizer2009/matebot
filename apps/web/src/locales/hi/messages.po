@@ -935,6 +935,10 @@ msgstr ""
 msgid "Ask"
 msgstr "पूछें"
 
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Ask for the draft again to get an editable card."
+msgstr ""
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Asleep"
 msgstr "स्लीप में"
@@ -6553,6 +6557,10 @@ msgstr ""
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "यह इंपोर्ट पहले ही इस्तेमाल हो चुका है। फ़ाइलें फिर से चुनें।"
+
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "This is an older card: it was saved before cards could be edited, so it has nothing to fill in or confirm."
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this Mac"

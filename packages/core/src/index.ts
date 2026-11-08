@@ -123,6 +123,7 @@ export * from "./signup-policy.js";
 export * from "./speech-locale.js";
 export * from "./speech-text.js";
 export * from "./stuck-work.js";
+export * from "./surface-affordances.js";
 export * from "./surface-revision.js";
 export * from "./surface-target.js";
 export * from "./teach-playbook.js";

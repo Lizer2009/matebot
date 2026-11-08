@@ -575,7 +575,21 @@ export const Transcript = memo(function Transcript({
                               (block) => block.kind === "ask" || block.kind === "mcp_approval",
                             )
                           ? "relative w-full min-w-0 max-w-xl"
-                          : `relative ${message.blocks.some((block) => block.kind === "app_connect" || block.kind === "page") || pageView.pages.has(message.id) ? "w-full" : "w-fit"} min-w-0 ${bubbleFrameWidth(message.role)}`
+                          : `relative ${
+                              message.blocks.some(
+                                (block) =>
+                                  block.kind === "app_connect" ||
+                                  block.kind === "page" ||
+                                  // A card lays itself out at full width. Inside a `w-fit`
+                                  // frame that is circular, and the frame collapses to
+                                  // zero, so the card is present but occupies no space.
+                                  block.kind === "a2ui_surface" ||
+                                  block.kind === "choice" ||
+                                  block.kind === "mcp_approval",
+                              ) || pageView.pages.has(message.id)
+                                ? "w-full"
+                                : "w-fit"
+                            } min-w-0 ${bubbleFrameWidth(message.role)}`
                     }
                   >
                     <MessageView

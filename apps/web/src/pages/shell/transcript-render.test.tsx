@@ -163,3 +163,35 @@ it("redraws a page card's reply only when a newer card supersedes it", () => {
   act(() => root.render(<Host messages={[...earlier, card("card-2", 2)]} />));
   expect(messageRenders.get("reply")).toBe(2);
 });
+
+/**
+ * A card must not sit in a frame that has no width.
+ *
+ * The bubble frame is `w-fit` for an ordinary message, which sizes itself around its
+ * content. A card lays itself out at full width, so inside `w-fit` the two are circular
+ * and the frame collapses — the card is in the DOM but occupies nothing. The failure the
+ * reader saw was a gap where a card should be, and this is one way that gap appears.
+ */
+it.each([
+  ["a2ui_surface", "a2ui"],
+  ["app_connect", "connect"],
+  ["page", "page"],
+  ["choice", "choice"],
+])("gives a %s message a full-width frame", (kind, id) => {
+  const card = {
+    ...message(id, ""),
+    botId: "bot",
+    blocks: [{ kind, pageId: "page", version: 1, title: "Card" }],
+  } as ThreadMessage;
+  act(() => root.render(<Host messages={[card]} />));
+  const frame = container.querySelector('[data-testid="message-bubble-frame"]');
+  expect(frame).not.toBeNull();
+  expect(frame?.className).toContain("w-full");
+  expect(frame?.className).not.toMatch(/\bw-fit\b/);
+});
+
+it("keeps a plain text message sized to its content", () => {
+  act(() => root.render(<Host messages={[message("plain", "Just a sentence")]} />));
+  const frame = container.querySelector('[data-testid="message-bubble-frame"]');
+  expect(frame?.className).toContain("w-fit");
+});
