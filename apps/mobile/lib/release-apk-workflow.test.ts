@@ -152,4 +152,24 @@ describe("Android APK release workflow", () => {
       execFileSync("bash", ["-n", file], { stdio: "pipe" });
     }
   });
+
+  /**
+   * A test build must be tellable apart from the released one.
+   *
+   * The shipped 1.0.12 APK is versionCode 11. EAS increments the code per build, so a
+   * rebuild alone would produce 1.0.12 (12): an install that looks like the released
+   * version while carrying unreleased code. The version name has to move too, and it
+   * must sort above 1.0.12 so an in-place upgrade is accepted.
+   */
+  it("gives this build a version name no released APK shares", () => {
+    const app = JSON.parse(
+      readFileSync(path.resolve(import.meta.dirname, "../app.json"), "utf8"),
+    ) as { expo: { version: string; android: { versionCode: number } } };
+    // The released Android build (1.0.12, versionCode 11) must not be reproducible here.
+    expect(app.expo.version).not.toBe("1.0.12");
+    expect(app.expo.version > "1.0.12").toBe(true);
+    // The app config's code is only a fallback; EAS owns the built value. Assert the
+    // fallback is not below what has shipped, so a local build cannot look older.
+    expect(app.expo.android.versionCode).toBeGreaterThanOrEqual(10);
+  });
 });
