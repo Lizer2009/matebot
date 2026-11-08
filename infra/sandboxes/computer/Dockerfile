@@ -120,10 +120,11 @@ RUN set -eux; \
   archive="$(mktemp)"; \
   attempt=1; \
   while :; do \
-    if curl -fsSL --retry 2 --retry-delay 2 --retry-connrefused "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${gh_arch}.tar.gz" -o "$archive"; then break; fi; \
-    if [ "$attempt" -ge 5 ]; then echo "could not download gh after $attempt attempts" >&2; exit 1; fi; \
-    echo "gh download attempt $attempt failed; retrying" >&2; \
-    sleep $((attempt * 5)); \
+    if curl -fsSL --retry 3 --retry-delay 3 --retry-connrefused "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${gh_arch}.tar.gz" -o "$archive"; then break; fi; \
+    if [ "$attempt" -ge 10 ]; then echo "could not download gh after $attempt attempts" >&2; exit 1; fi; \
+    wait_seconds=$((attempt * 10)); [ "$wait_seconds" -gt 60 ] && wait_seconds=60; \
+    echo "gh download attempt $attempt failed; retrying in ${wait_seconds}s" >&2; \
+    sleep "$wait_seconds"; \
     attempt=$((attempt + 1)); \
   done; \
   echo "$gh_sha256  $archive" | sha256sum -c -; \

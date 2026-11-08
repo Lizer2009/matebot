@@ -16,19 +16,21 @@ if echo "$sha256  $dest/agent-browser" | sha256sum -c --status 2>/dev/null; then
 mkdir -p "$dest"
 binary="$(mktemp)"
 trap 'rm -f "$binary"' EXIT
-# The releases host answers 504 intermittently under load. A retry is what turns that into a
-# slow install instead of a failed job; the sha256 check below still decides whether the bytes
-# are the pinned binary, so a retry can never accept a different one.
+# The releases host answers 504 intermittently, in windows that can last minutes. A retry is
+# what turns that into a slow install instead of a failed job; the sha256 check below still
+# decides whether the bytes are the pinned binary, so a retry can never accept a different one.
 url="https://github.com/vercel-labs/agent-browser/releases/download/v${version}/agent-browser-linux-${arch}"
 attempt=1
 while :; do
-  if curl -fsSL --retry 2 --retry-delay 2 --retry-connrefused "$url" -o "$binary"; then break; fi
-  if [ "$attempt" -ge 5 ]; then
+  if curl -fsSL --retry 3 --retry-delay 3 --retry-connrefused "$url" -o "$binary"; then break; fi
+  if [ "$attempt" -ge 10 ]; then
     echo "could not download $url after $attempt attempts" >&2
     exit 1
   fi
-  echo "download attempt $attempt failed; retrying in $((attempt * 5))s" >&2
-  sleep $((attempt * 5))
+  wait_seconds=$((attempt * 10))
+  [ "$wait_seconds" -gt 60 ] && wait_seconds=60
+  echo "download attempt $attempt failed; retrying in ${wait_seconds}s" >&2
+  sleep "$wait_seconds"
   attempt=$((attempt + 1))
 done
 echo "$sha256  $binary" | sha256sum -c -
