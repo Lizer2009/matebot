@@ -4,7 +4,7 @@
     "slug": "matebot",
     "owner": "lizer-expo",
     "scheme": "matebot",
-    "version": "1.0.15",
+    "version": "1.0.16",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
