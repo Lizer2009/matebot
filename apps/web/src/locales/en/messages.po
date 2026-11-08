@@ -6519,6 +6519,10 @@ msgstr "This can't be undone."
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
 
+#: src/pages/shell/message-view.tsx
+msgid "This card can’t be shown here because interactive cards are off on this server."
+msgstr "This card can’t be shown here because interactive cards are off on this server."
+
 #: src/components/a2ui/A2uiSurfaceCard.tsx
 msgid "This card could not be shown."
 msgstr "This card could not be shown."

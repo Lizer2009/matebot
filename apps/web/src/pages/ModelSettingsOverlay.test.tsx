@@ -212,6 +212,7 @@ function account(provider: string, modelId: string) {
     canChooseHostComputer: false,
     sandboxProvider: "docker",
     mcpStdioEnabled: false,
+    a2uiEnabled: false,
     avatarStyle: "organic" as const,
     billingEnabled: false,
     ticketBoardEnabled: false,

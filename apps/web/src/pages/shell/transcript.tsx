@@ -92,6 +92,7 @@ export const Transcript = memo(function Transcript({
   onSpeak,
   onOpenComputer,
   onOpenImportSetup,
+  authUi,
   rpc,
 }: {
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -142,6 +143,11 @@ export const Transcript = memo(function Transcript({
   onSpeak: (message: ThreadMessage) => void;
   onOpenComputer: (botId?: string) => void;
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
+  /**
+   * What the server says about this deployment. The only source for whether cards are
+   * drawn, so the client cannot disagree with the server that publishes them.
+   */
+  authUi: { a2uiEnabled: boolean };
   rpc: ReturnType<typeof createSpaceRpc>;
 }) {
   const { t } = useLingui();
@@ -573,6 +579,7 @@ export const Transcript = memo(function Transcript({
                     }
                   >
                     <MessageView
+                      a2uiEnabled={authUi.a2uiEnabled}
                       artifactTarget={artifactTarget}
                       message={message}
                       markedUnread={message.id === markedUnreadMessageId}

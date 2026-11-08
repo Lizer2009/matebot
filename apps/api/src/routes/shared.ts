@@ -3,6 +3,7 @@ import {
   findConnectedModelCredential,
   hasHostedModelCredits,
   hostCredentialSource,
+  isA2uiFeatureEnabled,
   mcpStdioAvailable,
   resolveMemberMainModel,
   selectConfiguredModel,
@@ -77,6 +78,9 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
         stdioEnabled: deps.env.mcpStdioEnabled,
         allowedCommands: deps.env.mcpStdioAllowedCommands,
       }),
+    // The same setting that gates publishing a card, reported so the client draws the
+    // cards this deployment actually serves instead of guessing from a build variable.
+    a2uiEnabled: isA2uiFeatureEnabled(),
     avatarStyle: "organic",
     botAvatarSet: resolveBotAvatarSet(user.botAvatarSet),
     timezone: user.timezone ?? null,

@@ -2452,6 +2452,22 @@ describe("MCP server health", () => {
     expect((await h.client.me()).mcpStdioEnabled).toBe(false);
   });
 
+  /**
+   * The client cannot see `process.env`, and its build once lacked the flag entirely.
+   * `/me` carries the same setting the server uses to publish a card, so a card is
+   * drawn exactly when this deployment would have created it.
+   */
+  it("reports whether this deployment serves interactive cards", async () => {
+    const h = harness();
+    vi.stubEnv("FEATURE_A2UI", "1");
+    expect((await h.client.me()).a2uiEnabled).toBe(true);
+    vi.stubEnv("FEATURE_A2UI", "0");
+    expect((await h.client.me()).a2uiEnabled).toBe(false);
+    vi.stubEnv("FEATURE_A2UI", "");
+    expect((await h.client.me()).a2uiEnabled).toBe(false);
+    vi.unstubAllEnvs();
+  });
+
   it("lets only admins add or change stdio servers", async () => {
     const h = harness();
     Object.assign(h.deps.env, { adminEmails: ["someone-else@rakazo.test"] });

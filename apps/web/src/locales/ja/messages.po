@@ -6519,6 +6519,10 @@ msgstr "この操作は元に戻せません。"
 msgid "This cannot be undone."
 msgstr "この操作は元に戻せません。"
 
+#: src/pages/shell/message-view.tsx
+msgid "This card can’t be shown here because interactive cards are off on this server."
+msgstr ""
+
 #: src/components/a2ui/A2uiSurfaceCard.tsx
 msgid "This card could not be shown."
 msgstr ""

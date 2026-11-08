@@ -1063,6 +1063,7 @@ function SpaceShell() {
           ) : (
             <Transcript
               key={activeSnapshot?.threadId}
+              authUi={{ a2uiEnabled: bootstrapMe?.a2uiEnabled === true }}
               scrollRef={thread.messageScroll}
               scrollRequest={scrollRequest}
               onScrollRequestHandled={clearScrollRequest}

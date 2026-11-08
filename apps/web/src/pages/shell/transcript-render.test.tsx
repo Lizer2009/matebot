@@ -73,6 +73,7 @@ function Host({ messages }: { messages: ThreadMessage[] }) {
   return (
     <Transcript
       rpc={rpc}
+      authUi={{ a2uiEnabled: true }}
       scrollRef={scrollRef}
       scrollRequest={null}
       onScrollRequestHandled={reply}
