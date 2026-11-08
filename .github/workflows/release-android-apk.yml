@@ -109,7 +109,7 @@ jobs:
           set -euo pipefail
           notes() {
             if [[ "$GITHUB_REF" == refs/tags/android-pr* ]]; then
-              printf 'Install matebot.apk on your Android phone.\n\nBuilt from prerelease tag %s at %s. Not a stable build; the app\'s own over-the-air channel is unchanged.\n' "$SOURCE_REF" "$GITHUB_SHA"
+              printf 'Install matebot.apk on your Android phone.\n\nBuilt from prerelease tag %s at %s. Not a stable build; the over-the-air channel is unchanged.\n' "$SOURCE_REF" "$GITHUB_SHA"
             else
               printf 'Install matebot.apk on your Android phone. It updates itself over the air.\n'
             fi

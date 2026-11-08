@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -9,6 +11,49 @@ const workflow = readFileSync(
 const easConfig = JSON.parse(
   readFileSync(path.resolve(import.meta.dirname, "../eas.json"), "utf8"),
 ) as { build: Record<string, { extends?: string; android?: { buildType?: string } }> };
+
+const directory = mkdtempSync(path.join(tmpdir(), "apk-workflow-"));
+
+/**
+ * Every `run:` block in the workflow, with the indentation YAML would strip.
+ *
+ * Reading them out of the text keeps this test free of a YAML dependency while still
+ * handing `bash -n` the exact script a runner would see.
+ */
+function runScripts(text: string): string[] {
+  const lines = text.split("\n");
+  const scripts: string[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = /^(\s*)run:\s*(\||>)?\s*$/.exec(lines[index] ?? "");
+    if (!match) continue;
+    const indent = (match[1] ?? "").length;
+    const body: string[] = [];
+    let cursor = index + 1;
+    for (; cursor < lines.length; cursor += 1) {
+      const line = lines[cursor] ?? "";
+      if (line.trim() === "") {
+        body.push("");
+        continue;
+      }
+      if ((line.match(/^\s*/)?.[0] ?? "").length <= indent) break;
+      body.push(line);
+    }
+    const dedented = body
+      .map((line) =>
+        line.trim() === ""
+          ? ""
+          : line.slice(
+              Math.min(
+                ...body.filter((l) => l.trim()).map((l) => (l.match(/^\s*/)?.[0] ?? "").length),
+              ),
+            ),
+      )
+      .join("\n");
+    scripts.push(`${dedented}\n`);
+    index = cursor - 1;
+  }
+  return scripts;
+}
 
 describe("Android APK release workflow", () => {
   it("runs on demand, from release-mobile, or from a prerelease tag, never from a branch", () => {
@@ -90,5 +135,21 @@ describe("Android APK release workflow", () => {
     expect(workflow).toContain("RELEASE_TAG: android");
     expect(workflow).toContain("releases/download/android/matebot.apk");
     expect(workflow).not.toContain("gh release delete");
+  });
+
+  /**
+   * Every shell step must parse.
+   *
+   * A single quote inside a single-quoted string ended one step's script early, and
+   * the run failed only after a 30-minute Android build had already succeeded. `bash -n`
+   * catches that in milliseconds.
+   */
+  it("has a syntactically valid script in every step", () => {
+    for (const [index, script] of runScripts(workflow).entries()) {
+      const file = path.join(directory, `step-${index}.sh`);
+      writeFileSync(file, script);
+      // Throws on a parse error, which is the failure this guards.
+      execFileSync("bash", ["-n", file], { stdio: "pipe" });
+    }
   });
 });
