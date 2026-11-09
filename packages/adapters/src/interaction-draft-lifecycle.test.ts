@@ -323,3 +323,174 @@ describe("slots and plan agree after a round trip", () => {
     expect(interactionSlotsFromPlan(plan)).toEqual(slots);
   });
 });
+
+describe("the row agrees with the card about what is missing", () => {
+  it("stores the declared fields even when the plan listed none", async () => {
+    // Otherwise the card draws four controls and says three are missing, while the stored row
+    // has no fields at all — so the confirm gate passes a draft the card shows as empty.
+    const published = await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: emailPlan([]),
+      capability: "ready",
+    });
+    const { plan, slots } = storedInteraction();
+    expect(plan.fields.map((field) => field.name)).toEqual(["to", "cc", "subject", "body"]);
+    expect(published.missingRequired).toEqual(["to", "subject", "body"]);
+    expect(requiredFieldsSatisfied(plan, slots)).toBe(false);
+    const gate = confirmInteractionDraftState(
+      { status: "collecting", draftVersion: 1, confirmedVersion: null, plan, slots },
+      1,
+    );
+    expect(gate.ok).toBe(false);
+  });
+
+  it("takes required from the schema, not from the model's own flag", async () => {
+    // A model that marks the recipient optional must not make an empty recipient confirmable.
+    const published = await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: emailPlan([
+        { name: "to", value: "", required: false, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      capability: "ready",
+    });
+    const { plan, slots } = storedInteraction();
+    expect(plan.fields.find((field) => field.name === "to")?.required).toBe(true);
+    expect(published.missingRequired).toEqual(["to"]);
+    expect(requiredFieldsSatisfied(plan, slots)).toBe(false);
+  });
+
+  it("never makes an undeclared field required, because nothing can fill it", async () => {
+    // A required flag on a field with no control is a draft that can never be confirmed.
+    const published = await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+        { name: "events", required: true, status: "missing" },
+      ]),
+      capability: "ready",
+    });
+    const { plan, slots } = storedInteraction();
+    expect(plan.fields.find((field) => field.name === "events")?.required).toBe(false);
+    expect(published.missingRequired).toEqual([]);
+    expect(requiredFieldsSatisfied(plan, slots)).toBe(true);
+  });
+
+  it("reports the document it stored alongside the row", async () => {
+    // The document and the row must agree; asserting only the row let them drift before.
+    await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: emailPlan([
+        { name: "To", value: "a@example.test", required: true, status: "resolved" },
+        { name: "Subject", value: "s", required: true, status: "resolved" },
+        { name: "Body", value: "b", required: true, status: "resolved" },
+      ]),
+      capability: "ready",
+    });
+    const stored = upsertInteractionSurface.mock.calls.at(-1)?.[1] as {
+      document: Array<{ updateDataModel?: { value?: { values?: Record<string, unknown> } } }>;
+    };
+    const values = stored.document.find((message) => message.updateDataModel)?.updateDataModel
+      ?.value?.values;
+    const { slots } = storedInteraction();
+    expect(values).toEqual(slots);
+  });
+});
+
+describe("a field the person wrote is not shadowed by another spelling", () => {
+  it("keeps the typed value when the other spelling comes first", async () => {
+    // A row written before reconciliation can list `To` before `to`. Taking the first match
+    // would store the old value and silently drop the keystroke.
+    getInteraction.mockResolvedValue({
+      id: "ix-1",
+      threadId: "thread-1",
+      status: "collecting",
+      draftVersion: 1,
+      confirmedVersion: null,
+      plan: emailPlan([
+        { name: "To", value: "old@example.test", required: true, status: "resolved" },
+        { name: "to", value: "old@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      slots: { To: "old@example.test", subject: "s", body: "b" },
+      messageId: "msg-1",
+    });
+    surfaceFindFirst.mockResolvedValue({ surfaceId: "surface-1", protocolFamily: "v0_9" });
+    messageFindUnique.mockResolvedValue({ blocks: [] });
+    txMessageFindUnique.mockResolvedValue({ id: "msg-1", blocks: [] });
+    txMessageUpdate.mockResolvedValue({ id: "msg-1" });
+    txInteractionUpdateMany.mockResolvedValue({ count: 1 });
+
+    await updateInteractionFieldService(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      expectedDraftVersion: 1,
+      name: "to",
+      value: "typed@example.test",
+      origin: "user",
+    });
+
+    const data = txInteractionUpdateMany.mock.calls.at(-1)?.[0] as {
+      data: { plan: InteractionPlan; slots: Record<string, unknown> };
+    };
+    expect(data.data.slots.to).toBe("typed@example.test");
+    expect(data.data.plan.fields.filter((field) => field.name === "to")).toHaveLength(1);
+  });
+});
+
+describe("cancel always works", () => {
+  it("cancels a draft whose stored values no longer compile", async () => {
+    // The draft someone wants to get rid of is exactly the one whose values are broken. A
+    // recompile failure must not leave it uncancellable.
+    const { cancelInteractionService } = await import("./interaction-field-writer.js");
+    getInteraction.mockResolvedValue({
+      id: "ix-1",
+      threadId: "thread-1",
+      status: "collecting",
+      draftVersion: 1,
+      confirmedVersion: null,
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b".repeat(50_000), required: true, status: "resolved" },
+      ]),
+      slots: { to: "a@example.test", subject: "s" },
+      messageId: "msg-1",
+    });
+    surfaceFindFirst.mockResolvedValue({ surfaceId: "surface-1", protocolFamily: "v0_9" });
+    messageFindUnique.mockResolvedValue({ blocks: [] });
+    txMessageFindUnique.mockResolvedValue({ id: "msg-1", blocks: [] });
+    txMessageUpdate.mockResolvedValue({ id: "msg-1" });
+    txInteractionUpdateMany.mockResolvedValue({ count: 1 });
+
+    await expect(
+      cancelInteractionService(prisma, {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+        expectedDraftVersion: 1,
+        runtimeCanAbort: false,
+      }),
+    ).resolves.toEqual({ status: "cancelled", draftVersion: 2 });
+
+    const data = txInteractionUpdateMany.mock.calls.at(-1)?.[0] as {
+      data: { status: string };
+    };
+    expect(data.data.status).toBe("cancelled");
+  });
+});

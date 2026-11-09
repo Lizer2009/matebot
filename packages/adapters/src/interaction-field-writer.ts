@@ -18,6 +18,7 @@ import {
   upsertInteractionSurface,
   withTransactionRetry,
 } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 
 /**
  * The single write path for an interaction field.
@@ -389,12 +390,21 @@ export async function cancelInteractionService(
     ? (currentMessage.blocks as MessageBlock[])
     : undefined;
   const capability = capabilityFromBlocks(currentBlocks, surfaceRow.surfaceId);
+  // Cancelling must always work. A draft whose stored values no longer compile — an oversize
+  // legacy field, a leftover conflict — is exactly the draft someone wants to get rid of, so a
+  // compile failure here falls back to the existing document and still records the cancellation.
   const compiled = await compilePlanSurface({
     plan,
     surfaceId: surfaceRow.surfaceId,
     protocolFamily: protocolFamilyOf(surfaceRow.protocolFamily),
     capability,
     interactionStatus: "cancelled",
+  }).catch((error: unknown) => {
+    getLogger().warn("interaction cancel could not recompile; keeping the stored document", {
+      "interaction.id": input.interactionId,
+      reason: error instanceof Error ? error.message : "unknown",
+    });
+    return null;
   });
   const draftVersion = current.draftVersion + 1;
 
@@ -416,23 +426,30 @@ export async function cancelInteractionService(
           "这次操作已经在进行中或已经完成，不能再取消。",
         );
       }
-      const { documentRef } = await upsertInteractionSurface(tx, {
-        interactionId: input.interactionId,
-        surfaceId: surfaceRow.surfaceId,
-        protocolFamily: compiled.protocolFamily,
-        document: compiled.messages,
-        draftVersion,
-      });
+      // With no recompiled document the row is still cancelled below; the card keeps the
+      // document it already had, which is harmless because the status stamp is what a host
+      // reads to stop offering the action.
+      const documentRef = compiled
+        ? (
+            await upsertInteractionSurface(tx, {
+              interactionId: input.interactionId,
+              surfaceId: surfaceRow.surfaceId,
+              protocolFamily: compiled.protocolFamily,
+              document: compiled.messages,
+              draftVersion,
+            })
+          ).documentRef
+        : (current as { documentRef?: string }).documentRef;
       const block: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: input.interactionId,
         surfaceId: surfaceRow.surfaceId,
-        protocolFamily: compiled.protocolFamily,
+        protocolFamily: compiled?.protocolFamily ?? protocolFamilyOf(surfaceRow.protocolFamily),
         draftVersion,
         intent: plan.intent,
         title: plan.title,
         summary: plan.summary,
-        documentRef,
+        ...(documentRef ? { documentRef } : {}),
         ...(isEmailPlan(plan)
           ? emailSurfaceBlockFields({
               intent: plan.intent,
@@ -473,7 +490,7 @@ export async function cancelInteractionService(
         payload: {
           interactionId: input.interactionId,
           surfaceId: surfaceRow.surfaceId,
-          protocolFamily: compiled.protocolFamily,
+          protocolFamily: compiled?.protocolFamily ?? protocolFamilyOf(surfaceRow.protocolFamily),
           draftVersion,
           intent: plan.intent,
           title: plan.title,

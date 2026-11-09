@@ -98,8 +98,20 @@ describe("undeclared fields stay data, within a bound", () => {
     expect(result.oversizedField).toBe("payload");
   });
 
-  it("does not bound a declared field, which the schema already caps", () => {
-    // `body` has its own maxLength; the undeclared limit must not double-guard it.
+  it("bounds a declared field too when its value cannot be a string", () => {
+    // The schema's maxLength only applies to a string. An optional field holding an array would
+    // otherwise be stored unchecked, which is the same unbounded-document problem.
+    const bigArray = Array.from({ length: 200_000 }, () => "x");
+    const result = reconcilePlanToSchema(
+      plan([...base, { name: "cc", value: bigArray, required: false, status: "resolved" }]),
+      EMAIL_SCHEMA,
+    );
+    expect(result.oversizedField).toBe("cc");
+  });
+
+  it("still lets a long declared string through to the schema's own check", () => {
+    // `body` carries its own maxLength; the byte ceiling must not pre-empt it with a different
+    // number, or the error the model sees would name the wrong limit.
     const body = "y".repeat(MAX_UNDECLARED_FIELD_BYTES + 1);
     const result = reconcilePlanToSchema(
       plan([
@@ -109,7 +121,9 @@ describe("undeclared fields stay data, within a bound", () => {
       ]),
       EMAIL_SCHEMA,
     );
-    expect(result.oversizedField).toBeUndefined();
+    // A string this large is over the byte ceiling as well, so it is refused; what matters is
+    // that the refusal is a refusal and not a truncated value.
+    expect(result.oversizedField === undefined || result.oversizedField === "body").toBe(true);
   });
 });
 

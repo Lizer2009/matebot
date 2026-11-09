@@ -345,8 +345,22 @@ export function canonicalPlanFields(
     for (const field of fields) {
       const canonical = declaredNames.get(field.name.trim().toLowerCase());
       if (!canonical || !options.prefer.has(canonical.toLowerCase())) continue;
-      // First match wins: the edited field appears once in the plan it was written to.
-      if (!byCanonical.has(canonical)) byCanonical.set(canonical, { ...field, name: canonical });
+      // A field the person wrote carries a value or a source stamp; a bare placeholder does
+      // not. Prefer the one that does, so a legacy row listing `To` before `to` cannot shadow
+      // the keystroke that was just saved.
+      const existing = byCanonical.get(canonical);
+      if (!existing) {
+        byCanonical.set(canonical, { ...field, name: canonical });
+        continue;
+      }
+      // The written field is the one carrying a source stamp, or failing that the one with a
+      // value. A bare placeholder loses to both, and a stamped value beats an unstamped one
+      // even when both hold text — the unstamped one is what the row already had.
+      const rank = (candidate: InteractionField) =>
+        candidate.source ? 2 : isEmptyFieldValue(candidate.value) ? 0 : 1;
+      if (rank(field) > rank(existing)) {
+        byCanonical.set(canonical, { ...field, name: canonical });
+      }
     }
   }
   for (const field of fields) {
@@ -400,12 +414,17 @@ export function canonicalPlanFields(
  * right, then refused to confirm with "Required fields are missing", because the gate looks up
  * `slots["to"]` and the plan says `to` is required while only `To` has a value.
  *
- * So the same reconciliation has to happen on the way in. The returned plan carries the schema's
- * names for declared fields, in schema order, plus whatever undeclared fields the plan carried —
- * those stay as data for the action and are not controls.
+ * This is therefore the one place the plan meets the schema, and it decides three things:
  *
- * Returns `conflict` when two spellings of one declared field carry different values. The caller
- * refuses the plan rather than guessing which value the person meant.
+ * - the field set is the schema's, in schema order, so a plan that omitted a declared field
+ *   still stores it and the row agrees with the card about what is missing;
+ * - `required` comes from the schema, not from the model's own boolean, so the gate cannot be
+ *   talked into confirming a draft whose recipient is empty;
+ * - undeclared fields ride along as data with `required: false`, because nothing renders a
+ *   control for them and a required flag on one would make the draft permanently unconfirmable.
+ *
+ * `prefer` names the field just written by the person; it wins over any other spelling of the
+ * same name, including one that appears earlier in the plan.
  */
 export function reconcilePlanToSchema(
   plan: InteractionPlan,
@@ -418,35 +437,37 @@ export function reconcilePlanToSchema(
   oversizedField?: string;
 } {
   if (!schema) return { plan, missingRequired: [] };
-  // A field the caller just wrote wins over any other spelling of the same name. Rows written
-  // before reconciliation can hold both `to` and `To`; without this, an ordinary edit would look
-  // like a two-value conflict and the person could not change their own draft.
   const preferred = new Set((options.prefer ?? []).map((name) => name.trim().toLowerCase()));
   const reconciled = canonicalPlanFields(plan.fields, schema, { prefer: preferred });
   if (reconciled.conflict) return { plan, missingRequired: [], conflict: reconciled.conflict };
-  // An undeclared field carries data for the action, and nothing else bounds how much of it a
-  // plan may carry into the stored document.
-  for (const field of reconciled.extra) {
-    if (JSON.stringify(field.value ?? null).length > MAX_UNDECLARED_FIELD_BYTES) {
+  // Every field is bounded, declared or not. The schema's `maxLength` only guards a value that
+  // coerced to a string; an optional field holding an array or object skips that check entirely,
+  // so the same ceiling has to apply to any value that will be stored in the document.
+  for (const field of [...reconciled.fields, ...reconciled.extra]) {
+    // Counted in UTF-8 bytes, which is what the row actually stores.
+    if (
+      Buffer.byteLength(JSON.stringify(field.value ?? null), "utf8") > MAX_UNDECLARED_FIELD_BYTES
+    ) {
       return { plan, missingRequired: [], oversizedField: field.name };
     }
   }
-  const fields = [...reconciled.fields, ...reconciled.extra];
+  const declaredByName = new Map(schema.fields.map((field) => [field.name, field]));
+  const fields: InteractionField[] = schema.fields.map((declared) => {
+    const existing = reconciled.fields.find((field) => field.name === declared.name);
+    return existing
+      ? { ...existing, required: declared.required }
+      : { name: declared.name, required: declared.required, status: "missing" };
+  });
+  for (const field of reconciled.extra) fields.push({ ...field, required: false });
   const slots: Record<string, unknown> = {};
   const missingRequired: string[] = [];
-  for (const field of reconciled.fields) {
-    const empty =
-      field.value === undefined ||
-      field.value === null ||
-      (typeof field.value === "string" && field.value.trim() === "");
+  for (const field of fields) {
+    const empty = isEmptyFieldValue(field.value);
     if (empty) {
       if (field.required) missingRequired.push(field.name);
       continue;
     }
     slots[field.name] = field.value;
-  }
-  for (const field of reconciled.extra) {
-    if (field.value !== undefined) slots[field.name] = field.value;
   }
   return { plan: { ...plan, fields }, missingRequired };
 }

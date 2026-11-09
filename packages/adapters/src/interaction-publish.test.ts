@@ -89,8 +89,21 @@ describe("publishInteractionSurface", () => {
       surfaceId: "surface-1",
     });
 
+    // The compiler is handed the reconciled plan: the schema's fields in its order, so the row
+    // and the card describe the same set. `cc` is declared but was absent from the model's plan.
     expect(compileInteractionPlan).toHaveBeenCalledWith(
-      expect.objectContaining({ plan, surfaceId: "surface-1" }),
+      expect.objectContaining({
+        plan: expect.objectContaining({
+          intent: "email.compose",
+          fields: [
+            expect.objectContaining({ name: "to", value: "a@example.com" }),
+            expect.objectContaining({ name: "cc", required: false }),
+            expect.objectContaining({ name: "subject", value: "Hi" }),
+            expect.objectContaining({ name: "body", value: "Hello" }),
+          ],
+        }),
+        surfaceId: "surface-1",
+      }),
     );
     expect(createInteraction).toHaveBeenCalledWith(
       expect.anything(),
