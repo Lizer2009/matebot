@@ -26,8 +26,20 @@ export type InteractionNextStep = z.infer<typeof InteractionNextStep>;
 export const InteractionRiskLevel = z.enum(["low", "medium", "high"]);
 export type InteractionRiskLevel = z.infer<typeof InteractionRiskLevel>;
 
+/**
+ * Ceilings for a field the registered schema does not declare.
+ *
+ * An undeclared field is data the action reads (a calendar batch list), so it has to survive
+ * into the stored plan — but nothing else bounds it: `value` is `unknown`, and a model-supplied
+ * array or string would be written into the surface document and returned on every fetch. The
+ * name limit keeps a plan from smuggling structure through the key, and the serialized limit
+ * keeps one field from filling the row.
+ */
+export const MAX_INTERACTION_FIELD_NAME = 200;
+export const MAX_UNDECLARED_FIELD_BYTES = 64 * 1024;
+
 export const InteractionFieldSchema = z.object({
-  name: z.string().trim().min(1),
+  name: z.string().trim().min(1).max(MAX_INTERACTION_FIELD_NAME),
   value: z.unknown().optional(),
   required: z.boolean(),
   status: InteractionFieldStatus,
