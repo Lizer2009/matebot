@@ -27,7 +27,11 @@ async function compilePlanSurface(input: {
   protocolFamily?: A2uiProtocolFamily;
   capability?: EmailSurfaceCapability;
   status?: InteractionLifecycleStatus;
-}): Promise<{ protocolFamily: A2uiProtocolFamily; messages: unknown[] }> {
+}): Promise<{
+  protocolFamily: A2uiProtocolFamily;
+  messages: unknown[];
+  missingRequired: string[];
+}> {
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
   const stamps = emailIntent
     ? emailSurfaceBlockFields({
@@ -50,7 +54,11 @@ async function compilePlanSurface(input: {
   if (!compiled.ok) {
     throw new Error(compiled.error);
   }
-  return { protocolFamily: compiled.protocolFamily, messages: compiled.messages };
+  return {
+    protocolFamily: compiled.protocolFamily,
+    messages: compiled.messages,
+    missingRequired: compiled.missingRequired,
+  };
 }
 
 export type PublishInteractionSurfaceInput = {
@@ -85,6 +93,8 @@ export async function publishInteractionSurface(
   draftVersion: number;
   eventSeq: number;
   capability?: EmailSurfaceCapability;
+  /** Declared required fields with no value yet; the card is published and editable. */
+  missingRequired: string[];
 }> {
   const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
@@ -216,6 +226,7 @@ export async function publishInteractionSurface(
         draftVersion: interaction.draftVersion,
         eventSeq: surfaceEvent.seq,
         ...(input.capability ? { capability: input.capability } : {}),
+        missingRequired: compiled.missingRequired,
       };
     }),
   );
