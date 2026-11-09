@@ -35,7 +35,7 @@ export type DraftReadback = {
   /** What stands in the way: empty field names, or `connection`. */
   blockedBy: string[];
   /** The mailbox this draft would send from, when a connection names one. */
-  sender?: { address: string; label: string };
+  sender?: DraftSender;
 };
 
 function asText(value: unknown): string {
@@ -49,12 +49,24 @@ function isEmpty(value: string): boolean {
   return value.trim() === "";
 }
 
+export type DraftSender = {
+  /**
+   * The mailbox address, only when the server learned it from the provider's own record of the
+   * account. `Connection.displayName` is not that: it is whatever the client passed when the
+   * connection was created (a card title, an app name), so it can be a nickname or a label and
+   * must never be presented as the address a message will come from.
+   */
+  address?: string;
+  /** What the connection calls itself. Always safe to show; never a claim about the address. */
+  label: string;
+};
+
 export function describeDraftForModel(input: {
   plan: InteractionPlan;
   slots: Record<string, unknown>;
   draftVersion: number;
   capability?: EmailSurfaceCapability;
-  sender?: { address: string; label: string };
+  sender?: DraftSender;
 }): DraftReadback {
   // The plan is the authority on which fields the card shows. A slot the plan does not name is
   // data the action reads, not something the model should describe as a field.

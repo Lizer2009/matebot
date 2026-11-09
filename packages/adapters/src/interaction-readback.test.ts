@@ -142,6 +142,35 @@ describe("describeDraftForModel", () => {
     expect(readback.fields.map((field) => field.name)).not.toContain("from");
   });
 
+  it("shows only the label when the address is not known", () => {
+    // `Connection.displayName` is whatever the client passed when the connection was made — a
+    // card title, an app name. Presenting it as the sending address would be a claim the server
+    // cannot support, so only the label is reported.
+    const readback = describeDraftForModel({
+      plan: EMAIL_PLAN,
+      slots: { to: "a@example.test", subject: "s", body: "b" },
+      draftVersion: 1,
+      capability: "ready",
+      sender: { label: "Gmail" },
+    });
+    expect(readback.sender).toEqual({ label: "Gmail" });
+    expect(readback.sender?.address).toBeUndefined();
+  });
+
+  it("does not treat a label that looks like an address as the sending address", () => {
+    // A label may happen to contain an @, which is exactly why presence of one cannot be used
+    // as evidence that it is the mailbox a message will come from.
+    const readback = describeDraftForModel({
+      plan: EMAIL_PLAN,
+      slots: {},
+      draftVersion: 1,
+      capability: "ready",
+      sender: { label: "looks-like@an-address.example" },
+    });
+    expect(readback.sender).toEqual({ label: "looks-like@an-address.example" });
+    expect(readback.sender?.address).toBeUndefined();
+  });
+
   it("omits the sender when no connection names one", () => {
     const readback = describeDraftForModel({
       plan: EMAIL_PLAN,

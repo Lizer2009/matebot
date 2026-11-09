@@ -132,6 +132,15 @@ export const A2uiSurfaceBlockSchema = z.object({
   title: z.string().optional(),
   summary: z.string().optional(),
   /**
+   * What the sending connection calls itself, for a read-only row on the card.
+   *
+   * Deliberately a label and not an address: the connection's name is whatever the client passed
+   * when it was created, so it can be a nickname. The card shows it as "sending from", never as
+   * the mailbox address, and never as something the person can edit — the address is decided by
+   * the connected mailbox.
+   */
+  senderLabel: z.string().trim().min(1).optional(),
+  /**
    * Server-held document or patch pointer for later hydrate; not a client authority.
    * Prefer `a2uiSurfaceDocumentRef({ interactionId, surfaceId })` (PR-4 Option A).
    */

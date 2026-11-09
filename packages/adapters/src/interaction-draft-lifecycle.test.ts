@@ -494,3 +494,48 @@ describe("cancel always works", () => {
     expect(data.data.status).toBe("cancelled");
   });
 });
+
+describe("the card carries the connection's label, never an address", () => {
+  it("writes the label onto the block and leaves the address out", async () => {
+    // `Connection.displayName` is whatever the client passed when the connection was created —
+    // a card title, an app name — so it is a label. Presenting it as the sending address would
+    // be a claim the server cannot support.
+    await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      capability: "ready",
+      senderLabel: "Gmail",
+    });
+    const block = createThreadMessageInTransaction.mock.calls.at(-1)?.[1] as {
+      blocks: Array<Record<string, unknown>>;
+    };
+    expect(block.blocks[0]).toMatchObject({ senderLabel: "Gmail" });
+    // Nothing on the block claims to be the address.
+    expect(Object.keys(block.blocks[0] ?? {})).not.toContain("senderAddress");
+    expect(Object.keys(block.blocks[0] ?? {})).not.toContain("from");
+  });
+
+  it("omits the label when no connection named one", async () => {
+    await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      capability: "not_connected",
+    });
+    const block = createThreadMessageInTransaction.mock.calls.at(-1)?.[1] as {
+      blocks: Array<Record<string, unknown>>;
+    };
+    expect(block.blocks[0]).not.toHaveProperty("senderLabel");
+  });
+});

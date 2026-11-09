@@ -23,9 +23,14 @@ for (const viewport of [
     const card = page.getByTestId("a2ui-surface-card");
     await expect(card).toBeVisible();
 
-    // Every declared field has a control on screen.
+    // Four editable controls: to, cc, subject and body. The sender is a read-only row now.
     const inputs = card.locator("input, textarea");
-    await expect(inputs).toHaveCount(5);
+    await expect(inputs).toHaveCount(4);
+
+    // The sending mailbox is read-only: it is decided by the connection, so the card shows a
+    // label and offers no input for it.
+    await expect(card.getByTestId("a2ui-email-sender")).toBeVisible();
+    await expect(card.locator('[data-testid="a2ui-email-from"]')).toHaveCount(0);
 
     // The action is held back while the body is empty, matching the server's confirm gate.
     await expect(card.getByTestId("a2ui-email-send")).toBeDisabled();
@@ -63,7 +68,7 @@ test("a complete draft offers Send", async ({ page }) => {
   await page.goto("/e2e/fixtures/a2ui-missing-field.html?body=filled");
   await expect(page.getByTestId("fixture-missing-required")).toHaveText("none");
   const card = page.getByTestId("a2ui-surface-card");
-  await expect(card.locator("input, textarea")).toHaveCount(5);
+  await expect(card.locator("input, textarea")).toHaveCount(4);
   await expect(card.getByTestId("a2ui-email-send")).toBeEnabled();
   await page.screenshot({ path: "test-results/p0-complete-draft.png", fullPage: true });
 });

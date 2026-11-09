@@ -96,6 +96,8 @@ export type PublishInteractionSurfaceInput = {
    * a record that already ran; the original row is never rewritten.
    */
   amendsInteractionId?: string;
+  /** The connection's own label, shown read-only on the card. Never an address. */
+  senderLabel?: string;
 };
 
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
@@ -169,6 +171,9 @@ export async function publishInteractionSurface(
         summary: input.plan.summary,
         documentRef,
         ...(input.amendsInteractionId ? { amendsInteractionId: input.amendsInteractionId } : {}),
+        // The connection's own label for the card's read-only "sending from" row. Not an
+        // address, and never editable: the mailbox is decided by the connection.
+        ...(input.senderLabel ? { senderLabel: input.senderLabel } : {}),
         ...stamps,
       };
       const message = await createThreadMessageInTransaction(tx, {

@@ -18,6 +18,7 @@ import {
   loadProviderReadiness,
 } from "./interaction-email-capability.js";
 import { publishInteractionSurface } from "./interaction-publish.js";
+import type { DraftSender } from "./interaction-readback.js";
 import { describeDraftForModel } from "./interaction-readback.js";
 import type { RunContext } from "./run-context.js";
 import { runLeaseFor } from "./run-messages.js";
@@ -148,7 +149,11 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       runId: run.id,
       plan,
       lease: runLeaseFor(deps, run.id),
-      ...capabilityStamp,
+      // The stamp carries the connection's label for the card's read-only row; the publisher
+      // only accepts the label, because an address is not something it can vouch for.
+      ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),
+      ...(capabilityStamp.status ? { status: capabilityStamp.status } : {}),
+      ...(capabilityStamp.sender ? { senderLabel: capabilityStamp.sender.label } : {}),
     });
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
@@ -217,7 +222,7 @@ async function interactionPublishCapability(
 ): Promise<{
   capability?: EmailSurfaceCapability;
   status?: InteractionLifecycleStatus;
-  sender?: { address: string; label: string };
+  sender?: DraftSender;
 }> {
   const app = interactionRequiredApp(plan.intent);
   if (!app) return {};
@@ -246,17 +251,10 @@ async function interactionPublishCapability(
   return {
     capability: snapshot.surfaceCapability,
     ...(snapshot.interactionNeedsConnection ? { status: "needs_connection" as const } : {}),
-    // The sending mailbox, read from the connection row rather than from anything the model
-    // supplied. It is shown to the model as attribution so it can answer "which address will
-    // this go from" without inventing one, and it is never offered as an editable field.
-    ...(snapshot.connection
-      ? {
-          sender: {
-            address: snapshot.connection.displayName,
-            label: snapshot.connection.displayName,
-          },
-        }
-      : {}),
+    // The connection's own label, never a claim about the sending address: `displayName` is
+    // whatever the client passed when the connection was created (often the card's title), so
+    // an address is only offered when the server actually learned one from the provider.
+    ...(snapshot.connection ? { sender: { label: snapshot.connection.displayName } } : {}),
   };
 }
 

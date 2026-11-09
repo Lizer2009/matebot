@@ -28,6 +28,7 @@ export function EmailComposeEditor({
   providerMessageId,
   error: surfaceError,
   fields,
+  senderLabel,
   onFieldChange,
   onConfirm,
   onSend,
@@ -43,6 +44,8 @@ export function EmailComposeEditor({
   providerMessageId?: string;
   error?: string;
   fields: EmailDraftFields;
+  /** The connection's own label for the read-only "sending from" row. Never an address. */
+  senderLabel?: string;
   onFieldChange?: (
     name: EmailFieldName,
     value: string,
@@ -55,7 +58,6 @@ export function EmailComposeEditor({
   onDiscard?: () => void | Promise<void>;
 }) {
   const { t } = useLingui();
-  const fromId = useId();
   const toId = useId();
   const ccId = useId();
   const subjectId = useId();
@@ -243,18 +245,20 @@ export function EmailComposeEditor({
         />
       </div>
       <div className="grid gap-2 border-b border-border/60 pb-3">
-        <FieldRow
-          id={fromId}
-          testId="a2ui-email-from"
-          label={t`From`}
-          value={values.from}
-          autoComplete="email"
-          disabled={locked}
-          onChange={(value) => typed("from", value)}
-          onBlur={(value) => {
-            void commit("from", value).catch((err: unknown) => setError(messageOf(err)));
-          }}
-        />
+        {/*
+          The sending mailbox is decided by the connected account, not by this form, so it is a
+          read-only row rather than an input. It used to be an editable "From" field, which
+          invited a value the send path would ignore and could not honour.
+        */}
+        <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
+          <span className="text-[13px] text-muted-foreground">{t`From`}</span>
+          <span
+            data-testid="a2ui-email-sender"
+            className="truncate text-[15px] text-muted-foreground"
+          >
+            {senderLabel ?? ""}
+          </span>
+        </div>
         <FieldRow
           id={toId}
           testId="a2ui-email-to"

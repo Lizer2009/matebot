@@ -226,12 +226,19 @@ export function A2uiNativeSurface({
           <Text testID="a2ui-email-provider-id">{block.providerMessageId}</Text>
         ) : null}
         <A2uiSheet label={title}>
-          <A2uiTextField
-            label={t("From")}
-            value={values.from}
-            testID="a2ui-email-from"
-            onChangeText={setField("from")}
-          />
+          {/*
+            The sending mailbox is decided by the connected account, not by this form, so it is
+            read-only here. It used to be an editable "From" field, which invited a value the send
+            path would ignore.
+          */}
+          {block.senderLabel ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text style={{ fontSize: 13, opacity: 0.6 }}>{t("From")}</Text>
+              <Text testID="a2ui-email-sender" style={{ fontSize: 15, opacity: 0.6 }}>
+                {block.senderLabel}
+              </Text>
+            </View>
+          ) : null}
           <A2uiTextField
             label={t("To")}
             value={values.to}
