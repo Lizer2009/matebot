@@ -1368,6 +1368,8 @@ export const NL_MESSAGES: Record<string, string> = {
   "Needs approval": "Goedkeuring nodig",
   Discard: "Verwerpen",
   Discarded: "Verworpen",
+  "Connected account": "Verbonden account",
+  "Email address not provided": "E-mailadres niet opgegeven",
   From: "Van",
   CC: "CC",
   "Confirm this draft before sending.": "Bevestig dit concept voordat je het verzendt.",

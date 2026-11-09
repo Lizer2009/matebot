@@ -139,7 +139,7 @@ export const A2uiSurfaceBlockSchema = z.object({
    * the mailbox address, and never as something the person can edit — the address is decided by
    * the connected mailbox.
    */
-  senderLabel: z.string().trim().min(1).optional(),
+  senderLabel: z.string().trim().min(1).max(80).optional(),
   /**
    * Server-held document or patch pointer for later hydrate; not a client authority.
    * Prefer `a2uiSurfaceDocumentRef({ interactionId, surfaceId })` (PR-4 Option A).

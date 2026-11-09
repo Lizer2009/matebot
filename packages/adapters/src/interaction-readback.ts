@@ -67,6 +67,9 @@ export function describeDraftForModel(input: {
   draftVersion: number;
   capability?: EmailSurfaceCapability;
   sender?: DraftSender;
+  /** The lifecycle, so a settled card is never described as actionable. */
+  lifecycle?: string;
+  interactionStatus?: string;
 }): DraftReadback {
   // The plan is the authority on which fields the card shows. A slot the plan does not name is
   // data the action reads, not something the model should describe as a field.
@@ -79,6 +82,15 @@ export function describeDraftForModel(input: {
     .map((field) => field.name);
 
   const blockedBy = [...missingRequired];
+  // A draft that has already settled cannot be acted on again, whatever its fields say. Saying
+  // otherwise would send the model back to telling the person to press a button that refuses.
+  const settled =
+    input.lifecycle !== undefined &&
+    ["succeeded", "failed", "unknown", "cancelled"].includes(input.lifecycle);
+  const terminalStatus =
+    input.interactionStatus !== undefined &&
+    ["cancelled", "executing", "succeeded", "unknown", "failed"].includes(input.interactionStatus);
+  if (settled || terminalStatus) blockedBy.push("lifecycle");
   // A complete draft still cannot be sent without a mailbox, and saying it can would send the
   // model back to telling the person to press a button that refuses.
   if (input.capability === "not_connected" || input.capability === "requires_reauth") {
@@ -93,4 +105,24 @@ export function describeDraftForModel(input: {
     blockedBy,
     ...(input.sender ? { sender: input.sender } : {}),
   };
+}
+
+/**
+ * Read a draft back from what was stored, with the mailbox state that applies to it.
+ *
+ * Present and edit both call this after they write, so the two can never describe the same card
+ * differently, and neither describes the request it sent. The capability and the sender come from
+ * the same connection lookup the publish path uses, so a card cannot claim it can send while the
+ * mailbox behind it is gone.
+ */
+export function readbackFromStored(input: {
+  plan: InteractionPlan;
+  slots: Record<string, unknown>;
+  draftVersion: number;
+  capability?: EmailSurfaceCapability;
+  sender?: DraftSender;
+  lifecycle?: string;
+  interactionStatus?: string;
+}): DraftReadback {
+  return describeDraftForModel(input);
 }

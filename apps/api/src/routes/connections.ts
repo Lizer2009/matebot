@@ -68,6 +68,7 @@ async function reconcileConnections(
   connectorId: string,
   connectedProviders: string[],
   reconnectRefs: string[],
+  jobs?: RouterContext["deps"]["jobs"],
 ): Promise<void> {
   const connectedProviderKeys = new Set(
     connectedProviders.map((provider) => provider.trim().toLowerCase()),
@@ -135,6 +136,21 @@ async function reconcileConnections(
     });
   for (const id of connectedIds) {
     await recordSecurityEvent(connectionCreatedEvent("connections.catalog", id, owner));
+  }
+  // A row this reconciliation just marked connected is a connection the person made, even though
+  // they made it in another tab. The cards waiting on that app have to come back here too, or a
+  // draft stays "Not connected" until something else refreshes it.
+  for (const provider of new Set(
+    rows.filter((row) => connectedIds.includes(row.id)).map((row) => row.provider),
+  )) {
+    await resumeThreadsWaitingOn({ prisma, ...(jobs ? { jobs } : {}) }, owner, provider).catch(
+      (error: unknown) => {
+        getLogger().warn("connections.catalog resume failed", {
+          provider,
+          reason: error instanceof Error ? error.message : "unknown",
+        });
+      },
+    );
   }
 }
 
@@ -289,6 +305,7 @@ export function connectionsRoutes(ctx: RouterContext) {
                   provider.describe().id,
                   nowConnected,
                   reconnectRefs,
+                  deps.jobs,
                 ).catch((error) => {
                   getLogger().error(
                     `${provider.describe().id} connection reconciliation failed`,

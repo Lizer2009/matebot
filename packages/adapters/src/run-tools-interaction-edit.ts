@@ -1,6 +1,10 @@
-import type { InteractionSurfaceSchema } from "@matebot/contracts";
+import type { InteractionPlan, InteractionSurfaceSchema } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
-import type { InteractionCapability, NaturalLanguageEditDeps } from "@matebot/core";
+import type {
+  EmailSurfaceCapability,
+  InteractionCapability,
+  NaturalLanguageEditDeps,
+} from "@matebot/core";
 import {
   applyNaturalLanguageEdit,
   buildAmendment,
@@ -9,8 +13,11 @@ import {
 } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { updateInteractionFieldService } from "./interaction-field-writer.js";
+import type { DraftSender } from "./interaction-readback.js";
+import { readbackFromStored } from "./interaction-readback.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
+import { interactionPublishCapability } from "./run-tools-interaction.js";
 
 /**
  * `edit_interaction`: the model changing a card that is already in the chat.
@@ -102,10 +109,14 @@ export type EditInteractionServices = Pick<
    * Publish a correction as a new draft linked to the record it amends. Separate
    * from `applyField` because it must create a new card, never touch the record.
    */
-  publishAmendment?: (input: {
+  publishAmendment?: (input: { interactionId: string; plan: unknown }) => Promise<{
     interactionId: string;
-    plan: unknown;
-  }) => Promise<{ interactionId: string; surfaceId: string; draftVersion: number }>;
+    surfaceId: string;
+    draftVersion: number;
+    plan?: unknown;
+    slots?: Record<string, unknown>;
+    missingRequired?: string[];
+  }>;
   /**
    * The record an unqualified correction is about: the named one, or the newest
    * of any status when nothing is named and no draft is open.
@@ -129,6 +140,11 @@ async function amendExecuted(
     record: NonNullable<Awaited<ReturnType<NaturalLanguageEditDeps["loadInteraction"]>>>;
     fields: Record<string, unknown>;
     schema: InteractionSurfaceSchema;
+    /** The mailbox state for the new draft, so its readback is not a guess. */
+    capabilityStamp?: {
+      capability?: EmailSurfaceCapability;
+      sender?: DraftSender;
+    };
   },
 ): Promise<EditInteractionResult | null> {
   if (!services.publishAmendment) return null;
@@ -152,6 +168,20 @@ async function amendExecuted(
     interactionId: input.record.id,
     plan: amended.plan,
   });
+  // The correction is a new draft, and the model is told what that draft holds — not what it
+  // asked for — so a correction that leaves a required value out is not described as complete.
+  const readback =
+    published.plan && published.slots
+      ? readbackFromStored({
+          plan: published.plan as InteractionPlan,
+          slots: published.slots,
+          draftVersion: published.draftVersion,
+          ...(input.capabilityStamp?.capability
+            ? { capability: input.capabilityStamp.capability }
+            : {}),
+          ...(input.capabilityStamp?.sender ? { sender: input.capabilityStamp.sender } : {}),
+        })
+      : undefined;
   return {
     ok: true,
     amendment: true,
@@ -160,6 +190,15 @@ async function amendExecuted(
     draftVersion: published.draftVersion,
     skippedFields: amended.skippedFields,
     confirmationInvalidated: true,
+    ...(readback
+      ? {
+          fields: readback.fields,
+          missingRequired: readback.missingRequired,
+          actionable: readback.actionable,
+          blockedBy: readback.blockedBy,
+          ...(readback.sender ? { sender: readback.sender } : {}),
+        }
+      : {}),
     reply: "已新建一张关联草稿，请在卡片上确认后再执行。",
   };
 }
@@ -216,10 +255,25 @@ export async function editInteraction(
     // names it, so the correction has its own revision and its own confirmation
     // instead of rewriting history.
     const executedCapability = capability ?? capabilityForIntent(executedTarget.intent);
+    // The mailbox state for the new draft, resolved once from the connection the person has.
+    // The mailbox state for the new draft, resolved once from the connection the person has.
+    let amendmentStamp: { capability?: EmailSurfaceCapability; sender?: DraftSender } = {};
+    try {
+      amendmentStamp = await interactionPublishCapability(ctx, {
+        intent: executedTarget.intent,
+      } as InteractionPlan);
+    } catch {
+      // A correction still publishes without the stamp; it simply says less about the mailbox.
+      amendmentStamp = {};
+    }
     const amendment = await amendExecuted(services, {
       record: executedTarget,
       fields: parsed.fields,
       schema: executedCapability?.schema ?? fallbackSchema(),
+      capabilityStamp: {
+        ...(amendmentStamp.capability ? { capability: amendmentStamp.capability } : {}),
+        ...(amendmentStamp.sender ? { sender: amendmentStamp.sender } : {}),
+      },
     });
     if (amendment) return amendment;
     return { ok: false, error: "already_executed" };
@@ -252,6 +306,25 @@ export async function editInteraction(
     return { ok: false, error: result.error };
   }
 
+  // The stored row is read back rather than described from the request, so the model is told what
+  // the card became. `result.values` is the caller's own intent, not evidence. A caller without
+  // the plumbing to read it back gets the edit result alone rather than a failed edit.
+  const stored = await services.loadInteraction(result.interactionId).catch(() => null);
+  const capabilityStamp: { capability?: EmailSurfaceCapability; sender?: DraftSender } =
+    stored && stored.plan
+      ? await interactionPublishCapability(ctx, stored.plan as InteractionPlan).catch(() => ({}))
+      : {};
+  const readback =
+    stored && stored.plan
+      ? readbackFromStored({
+          plan: stored.plan as InteractionPlan,
+          slots: stored.slots,
+          draftVersion: stored.draftVersion,
+          interactionStatus: stored.status,
+          ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),
+          ...(capabilityStamp.sender ? { sender: capabilityStamp.sender } : {}),
+        })
+      : undefined;
   return {
     ok: true,
     interactionId: result.interactionId,
@@ -259,6 +332,15 @@ export async function editInteraction(
     draftVersion: result.draftVersion,
     skippedFields: result.skippedFields,
     confirmationInvalidated: result.confirmationInvalidated,
+    ...(readback
+      ? {
+          fields: readback.fields,
+          missingRequired: readback.missingRequired,
+          actionable: readback.actionable,
+          blockedBy: readback.blockedBy,
+          ...(readback.sender ? { sender: readback.sender } : {}),
+        }
+      : {}),
     reply: result.nudge,
   };
 }
@@ -293,6 +375,8 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
             ? (row.slots as Record<string, unknown>)
             : {},
         userEditedFields: userEditedFieldNames(row.plan),
+        // The readback after an edit reports the stored plan, not the caller's request.
+        plan: row.plan,
       };
     },
     listOpenSurfaces: async ({ spaceId, threadId }) => {
@@ -389,6 +473,10 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         interactionId: published.interactionId,
         surfaceId: published.surfaceId,
         draftVersion: published.draftVersion,
+        // What was stored, so the caller can describe the draft it created rather than the plan
+        // it asked for.
+        plan: published.plan,
+        slots: published.slots,
         ...(published.missingRequired?.length
           ? { missingRequired: published.missingRequired }
           : {}),

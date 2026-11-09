@@ -1409,6 +1409,8 @@ export const RU_MESSAGES: Record<string, string> = {
   "Needs approval": "Нужно одобрение",
   Discard: "Отменить",
   Discarded: "Отменено",
+  "Connected account": "Подключённый аккаунт",
+  "Email address not provided": "Адрес электронной почты не указан",
   From: "От",
   CC: "Копия",
   "Confirm this draft before sending.": "Подтвердите этот черновик перед отправкой.",

@@ -247,31 +247,34 @@ export function EmailComposeEditor({
       <div className="grid gap-2 border-b border-border/60 pb-3">
         {/*
           The sending mailbox is decided by the connected account, not by this form, so it is a
-          read-only row rather than an input. It used to be an editable "From" field, which
-          invited a value the send path would ignore and could not honour.
+          read-only row rather than an input. It only appears when a mailbox is actually available:
+          on a connection or reauthorization card, naming an account would contradict the card
+          that is asking for one.
         */}
-        <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
-          <span className="text-[13px] text-muted-foreground">{t`From`}</span>
-          <span className="min-w-0">
-            <span
-              data-testid="a2ui-email-sender"
-              className="block truncate text-[15px] text-foreground"
-            >
-              {senderLabel ?? t`Connected account`}
+        {mailbox === "ready" ? (
+          <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
+            <span className="text-[13px] text-muted-foreground">{t`From`}</span>
+            <span className="min-w-0">
+              <span
+                data-testid="a2ui-email-sender"
+                className="block truncate text-[15px] text-foreground"
+              >
+                {senderLabel ?? t`Connected account`}
+              </span>
+              {/*
+                The address is not known: the connection's name is whatever the client passed
+                when it was created, and the provider's account record does not carry the
+                mailbox. Saying so is better than showing a name where an address belongs.
+              */}
+              <span
+                data-testid="a2ui-email-sender-note"
+                className="block text-[12px] text-muted-foreground"
+              >
+                {t`Email address not provided`}
+              </span>
             </span>
-            {/*
-              The address is not known: the connection's name is whatever the client passed when
-              it was created, and the provider's account record does not carry the mailbox. Saying
-              so is better than showing a name in the place a person expects an address.
-            */}
-            <span
-              data-testid="a2ui-email-sender-note"
-              className="block text-[12px] text-muted-foreground"
-            >
-              {t`Email address not provided`}
-            </span>
-          </span>
-        </div>
+          </div>
+        ) : null}
         <FieldRow
           id={toId}
           testId="a2ui-email-to"

@@ -30,6 +30,8 @@ type Row = {
   confirmedVersion: number | null;
   slots: Record<string, unknown>;
   title: string | null;
+  /** The stored plan, which is what the readback reports rather than the request. */
+  plan?: unknown;
 };
 
 function context(
@@ -48,6 +50,17 @@ function context(
     confirmedVersion: null,
     slots: { to: "a@example.com", subject: "Hi", body: "Hello" },
     title: index === 0 ? "Email" : `Email ${index + 1}`,
+    plan: {
+      intent: "email.compose",
+      title: "Email",
+      fields: [
+        { name: "to", value: "a@example.com", required: true, status: "resolved" },
+        { name: "subject", value: "Hi", required: true, status: "resolved" },
+        { name: "body", value: "Hello", required: true, status: "resolved" },
+      ],
+      nextStep: "render",
+      riskLevel: "medium",
+    },
     ...row,
   }));
   const surfaces =
@@ -127,6 +140,7 @@ function context(
             draftVersion: row.draftVersion,
             confirmedVersion: row.confirmedVersion,
             slots: row.slots,
+            plan: row.plan,
           }
         : null;
     },
@@ -290,5 +304,63 @@ describe("edit_interaction tool", () => {
     );
     vi.unstubAllEnvs();
     expect(result).toMatchObject({ ok: false });
+  });
+});
+
+describe("edit_interaction reports what the card holds afterwards", () => {
+  beforeEach(() => {
+    vi.stubEnv("FEATURE_A2UI", "1");
+  });
+
+  it("reads the stored row back instead of echoing the requested fields", async () => {
+    // The write went through, but the row the tool reports must be the one on disk. If the
+    // readback came from the request, a field the write skipped would still be reported as set.
+    const harness = context({
+      rows: [
+        {
+          plan: {
+            intent: "email.compose",
+            title: "Email",
+            fields: [
+              { name: "to", value: "a@example.com", required: true, status: "resolved" },
+              { name: "subject", value: "旧主题", required: true, status: "resolved" },
+              { name: "body", required: true, status: "missing" },
+            ],
+            nextStep: "render",
+            riskLevel: "medium",
+          },
+          // The stored row reflects the write: the subject changed, the body is still empty.
+          slots: { to: "a@example.com", subject: "旧主题" },
+        },
+      ],
+    });
+    const result = (await editInteraction(
+      harness.ctx as never,
+      { fields: { subject: "改过的主题" }, revision: 2 },
+      harness.services,
+    )) as Record<string, unknown>;
+
+    expect(result.ok).toBe(true);
+    expect(result.draftVersion).toBe(3);
+    // The fields come from the stored plan and slots.
+    expect(result.fields).toEqual([
+      { name: "to", value: "a@example.com", required: true, filled: true },
+      { name: "subject", value: "改过的主题", required: true, filled: true },
+      { name: "body", value: "", required: true, filled: false },
+    ]);
+    expect(result.missingRequired).toEqual(["body"]);
+    expect(result.actionable).toBe(false);
+  });
+
+  it("never reports a from field the card does not have", async () => {
+    const harness = context();
+    const result = (await editInteraction(
+      harness.ctx as never,
+      { fields: { subject: "新主题" }, revision: 2 },
+      harness.services,
+    )) as Record<string, unknown>;
+    const names = (result.fields as Array<{ name: string }>).map((field) => field.name);
+    expect(names).not.toContain("from");
+    expect(names).not.toContain("sender");
   });
 });

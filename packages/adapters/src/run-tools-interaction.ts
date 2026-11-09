@@ -224,7 +224,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
 }
 
 /** Stamp the app's three-state so the card knows whether it can act yet. */
-async function interactionPublishCapability(
+export async function interactionPublishCapability(
   ctx: RunContext,
   plan: InteractionPlan,
 ): Promise<{

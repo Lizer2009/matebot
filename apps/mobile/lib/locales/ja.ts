@@ -1401,6 +1401,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Needs approval": "承認が必要",
   Discard: "破棄",
   Discarded: "破棄済み",
+  "Connected account": "接続済みアカウント",
+  "Email address not provided": "メールアドレスは未提供です",
   From: "差出人",
   CC: "CC",
   "Confirm this draft before sending.": "送信する前にこの下書きを確認してください。",

@@ -228,14 +228,19 @@ export function A2uiNativeSurface({
         <A2uiSheet label={title}>
           {/*
             The sending mailbox is decided by the connected account, not by this form, so it is
-            read-only here. It used to be an editable "From" field, which invited a value the send
-            path would ignore.
+            read-only here. It only appears when a mailbox is available, matching the web card:
+            on a connection card, naming an account would contradict the card asking for one.
           */}
-          {block.senderLabel ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ fontSize: 13, opacity: 0.6 }}>{t("From")}</Text>
-              <Text testID="a2ui-email-sender" style={{ fontSize: 15, opacity: 0.6 }}>
-                {block.senderLabel}
+          {mailbox === "ready" ? (
+            <View style={{ gap: 2 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Text style={{ fontSize: 13, opacity: 0.6 }}>{t("From")}</Text>
+                <Text testID="a2ui-email-sender" style={{ fontSize: 15 }}>
+                  {block.senderLabel ?? t("Connected account")}
+                </Text>
+              </View>
+              <Text testID="a2ui-email-sender-note" style={{ fontSize: 12, opacity: 0.6 }}>
+                {t("Email address not provided")}
               </Text>
             </View>
           ) : null}

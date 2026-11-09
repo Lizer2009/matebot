@@ -1375,6 +1375,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Needs approval": "需要批准",
   Discard: "丢弃",
   Discarded: "已丢弃",
+  "Connected account": "已连接的账号",
+  "Email address not provided": "未提供邮箱地址",
   From: "发件人",
   CC: "抄送",
   "Confirm this draft before sending.": "发送前请确认此草稿。",
