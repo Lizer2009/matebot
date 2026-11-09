@@ -112,6 +112,9 @@ export async function publishInteractionSurface(
   capability?: EmailSurfaceCapability;
   /** Declared required fields with no value yet; the card is published and editable. */
   missingRequired: string[];
+  /** The plan and slots as stored, for describing the card that was created. */
+  plan: InteractionPlan;
+  slots: Record<string, unknown>;
 }> {
   const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
@@ -247,6 +250,10 @@ export async function publishInteractionSurface(
         eventSeq: surfaceEvent.seq,
         ...(input.capability ? { capability: input.capability } : {}),
         missingRequired: compiled.missingRequired,
+        // What was stored, so the caller can describe the card it actually created rather than
+        // the plan it submitted.
+        plan: reconciledPlan,
+        slots,
       };
     }),
   );

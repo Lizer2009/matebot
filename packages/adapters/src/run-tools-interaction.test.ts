@@ -307,3 +307,50 @@ describe("selectBuiltinToolsForRun a2ui gate", () => {
     expect(tool?.description).toMatch(/explain credentials/);
   });
 });
+
+describe("present_interaction describes the card it stored", () => {
+  beforeEach(() => {
+    publishInteractionSurface.mockReset();
+    vi.stubEnv("FEATURE_A2UI", "1");
+  });
+
+  it("reports the fields, the gaps and the sender from what was published", async () => {
+    // The publisher reports what it stored; the tool passes that through so the reply can be
+    // written from the card instead of from the plan the model submitted.
+    publishInteractionSurface.mockResolvedValueOnce({
+      interactionId: "ix-1",
+      surfaceId: "surface-1",
+      messageId: "msg-1",
+      documentRef: "a2ui:interaction:ix-1:surface:surface-1",
+      draftVersion: 2,
+      eventSeq: 9,
+      capability: "ready",
+      missingRequired: ["body"],
+      plan: {
+        intent: "email.compose",
+        title: "冬天的问候",
+        fields: [
+          { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+          { name: "body", required: true, status: "missing" },
+        ],
+        nextStep: "render",
+        riskLevel: "medium",
+      },
+      slots: { to: "alex@example.test", subject: "冬天的问候" },
+    });
+    const result = (await interactionTools.present_interaction!(
+      context() as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+
+    expect(result.missingRequired).toEqual(["body"]);
+    expect(result.actionable).toBe(false);
+    expect(result.blockedBy).toEqual(["body"]);
+    expect(result.fields).toEqual([
+      { name: "to", value: "alex@example.test", required: true, filled: true },
+      { name: "subject", value: "冬天的问候", required: true, filled: true },
+      { name: "body", value: "", required: true, filled: false },
+    ]);
+  });
+});

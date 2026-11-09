@@ -18,6 +18,7 @@ import {
   loadProviderReadiness,
 } from "./interaction-email-capability.js";
 import { publishInteractionSurface } from "./interaction-publish.js";
+import { describeDraftForModel } from "./interaction-readback.js";
 import type { RunContext } from "./run-context.js";
 import { runLeaseFor } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
@@ -139,6 +140,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
   });
 
   try {
+    const capabilityStamp = await interactionPublishCapability(ctx, plan);
     const published = await publishInteractionSurface(deps.prisma, {
       spaceId: run.spaceId,
       threadId: run.threadId,
@@ -146,11 +148,24 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       runId: run.id,
       plan,
       lease: runLeaseFor(deps, run.id),
-      ...(await interactionPublishCapability(ctx, plan)),
+      ...capabilityStamp,
     });
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
     });
+    // What the card actually became, so the next sentence is written from the card rather than
+    // from the plan this turn submitted. That substitution is what produced "the recipient,
+    // subject and body are filled in" over a card with no controls. A publisher that cannot
+    // report what it stored simply contributes no readback rather than failing the turn.
+    const readback = published.plan
+      ? describeDraftForModel({
+          plan: published.plan,
+          slots: published.slots ?? {},
+          draftVersion: published.draftVersion,
+          ...(published.capability ? { capability: published.capability } : {}),
+          ...(capabilityStamp.sender ? { sender: capabilityStamp.sender } : {}),
+        })
+      : undefined;
     return {
       interactionId: published.interactionId,
       surfaceId: published.surfaceId,
@@ -164,6 +179,15 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
        */
       revision: published.draftVersion,
       ...(published.capability ? { capability: published.capability } : {}),
+      ...(readback
+        ? {
+            fields: readback.fields,
+            missingRequired: readback.missingRequired,
+            actionable: readback.actionable,
+            blockedBy: readback.blockedBy,
+            ...(readback.sender ? { sender: readback.sender } : {}),
+          }
+        : {}),
       /**
        * The declared required fields still empty. The card is published and every field is
        * editable, so this is not a failure — but a reply that calls the draft complete while
@@ -190,7 +214,11 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
 async function interactionPublishCapability(
   ctx: RunContext,
   plan: InteractionPlan,
-): Promise<{ capability?: EmailSurfaceCapability; status?: InteractionLifecycleStatus }> {
+): Promise<{
+  capability?: EmailSurfaceCapability;
+  status?: InteractionLifecycleStatus;
+  sender?: { address: string; label: string };
+}> {
   const app = interactionRequiredApp(plan.intent);
   if (!app) return {};
   const userId = ctx.context?.userId;
@@ -218,6 +246,17 @@ async function interactionPublishCapability(
   return {
     capability: snapshot.surfaceCapability,
     ...(snapshot.interactionNeedsConnection ? { status: "needs_connection" as const } : {}),
+    // The sending mailbox, read from the connection row rather than from anything the model
+    // supplied. It is shown to the model as attribution so it can answer "which address will
+    // this go from" without inventing one, and it is never offered as an editable field.
+    ...(snapshot.connection
+      ? {
+          sender: {
+            address: snapshot.connection.displayName,
+            label: snapshot.connection.displayName,
+          },
+        }
+      : {}),
   };
 }
 
