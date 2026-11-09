@@ -25,7 +25,15 @@ import { runLeaseFor } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 
 const EMAIL_REQUIRED_FIELDS = ["to", "subject", "body"] as const;
-const EMAIL_OPTIONAL_FIELDS = ["from", "cc"] as const;
+/**
+ * Fields the card lets a person fill.
+ *
+ * `from` is deliberately absent. The sending mailbox is decided by the connection, and the card
+ * shows it as a read-only row, so a `from` field would be a control that does nothing — and a
+ * readback that reported it would tell the model the card has a field nobody can edit. Older
+ * rows may still carry one; readers keep tolerating it.
+ */
+const EMAIL_OPTIONAL_FIELDS = ["cc"] as const;
 
 /** A calendar draft needs a name; its entries are optional in the first pass. */
 /**

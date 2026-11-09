@@ -16,8 +16,51 @@ import {
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { ORPCError } from "@orpc/server";
+import {
+  interactionAppForProvider,
+  resumeInteractionAfterConnection,
+} from "../interaction-resume.js";
 import { connectionCreatedEvent } from "../security-audit.js";
 import type { RouterContext } from "./context.js";
+
+/**
+ * Resume the cards in this space that were waiting for the app that just connected.
+ *
+ * The resume itself already exists and is used by onboarding; what was missing was a caller on
+ * the ordinary connect path, so a person could authorize their mailbox and watch the card behind
+ * the dialog keep saying "Not connected". The existing implementation works one thread at a time
+ * (it takes the thread's lock and rewrites that thread's surface), so this finds the waiting
+ * drafts, resolves each one's thread and bot, and calls it per thread. Nothing sends: a resumed
+ * card is editable again and still waits for its own confirmation.
+ */
+async function resumeThreadsWaitingOn(
+  deps: { prisma: PrismaClient; jobs?: RouterContext["deps"]["jobs"] },
+  actor: { spaceId: string; userId: string },
+  provider: string,
+): Promise<void> {
+  const app = interactionAppForProvider(provider);
+  if (!app) return;
+  const waiting = await deps.prisma.interaction.findMany({
+    where: { spaceId: actor.spaceId, status: "needs_connection" },
+    select: { threadId: true, thread: { select: { botId: true, userId: true } } },
+    distinct: ["threadId"],
+  });
+  for (const row of waiting) {
+    const botId = row.thread?.botId;
+    // A thread owned by someone else, or by a group, is not this person's card to resume.
+    if (!botId || row.thread?.userId !== actor.userId) continue;
+    await resumeInteractionAfterConnection(
+      { prisma: deps.prisma, ...(deps.jobs ? { jobs: deps.jobs } : {}) },
+      {
+        actor,
+        botId,
+        threadId: row.threadId,
+        provider,
+        appConnected: true,
+      },
+    );
+  }
+}
 
 async function reconcileConnections(
   prisma: PrismaClient,
@@ -766,6 +809,19 @@ export function connectionsRoutes(ctx: RouterContext) {
         if (connectedNow) {
           await recordSecurityEvent(
             connectionCreatedEvent("connections.complete", row.id, context.actor),
+          );
+          // A card that was waiting for this app becomes usable again. The resume itself already
+          // exists (it rewrites the block, republishes the document and emits the update events);
+          // what was missing was a caller here, so a person could authorize their mailbox and
+          // watch the card behind the dialog keep saying "Not connected".
+          await resumeThreadsWaitingOn(deps, context.actor, row.provider).catch(
+            (error: unknown) => {
+              // The mailbox is connected either way; a failed resume is repaired by the reconciler.
+              getLogger().warn("connections.complete resume failed", {
+                "connection.id": row.id,
+                reason: error instanceof Error ? error.message : "unknown",
+              });
+            },
           );
         }
         return {

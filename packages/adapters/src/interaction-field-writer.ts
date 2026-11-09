@@ -224,6 +224,12 @@ export async function updateInteractionFieldService(
         document: compiled.messages,
         draftVersion: changed.draftVersion,
       });
+      // What the card already says about itself, so a rebuild keeps the parts this write does
+      // not own.
+      const previousBlock = (Array.isArray(currentBlocks) ? currentBlocks : []).find(
+        (entry): entry is Extract<MessageBlock, { kind: "a2ui_surface" }> =>
+          entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId,
+      );
       const block: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: input.interactionId,
@@ -234,6 +240,9 @@ export async function updateInteractionFieldService(
         title: changed.plan.title,
         summary: changed.plan.summary,
         documentRef,
+        // The connection's label is not part of what an edit changes; a rebuild that dropped it
+        // would leave the card's read-only sender row blank after the first keystroke.
+        ...(previousBlock?.senderLabel ? { senderLabel: previousBlock.senderLabel } : {}),
         ...stamps,
       };
       if (current.messageId) {

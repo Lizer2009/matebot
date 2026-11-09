@@ -539,3 +539,49 @@ describe("the card carries the connection's label, never an address", () => {
     expect(block.blocks[0]).not.toHaveProperty("senderLabel");
   });
 });
+
+describe("the sender row survives a rebuild", () => {
+  it("keeps the connection's label when a field edit republishes the card", async () => {
+    // An edit rebuilds the block. A rebuild that dropped the label would blank the card's
+    // read-only sender row after the first keystroke.
+    messageFindUnique.mockResolvedValue({
+      blocks: [{ kind: "a2ui_surface", surfaceId: "surface-1", senderLabel: "Gmail" }],
+    });
+    txMessageFindUnique.mockResolvedValue({
+      id: "msg-1",
+      blocks: [{ kind: "a2ui_surface", surfaceId: "surface-1", senderLabel: "Gmail" }],
+    });
+    getInteraction.mockResolvedValue({
+      id: "ix-1",
+      threadId: "thread-1",
+      status: "collecting",
+      draftVersion: 1,
+      confirmedVersion: null,
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      slots: { to: "a@example.test", subject: "s", body: "b" },
+      messageId: "msg-1",
+    });
+    surfaceFindFirst.mockResolvedValue({ surfaceId: "surface-1", protocolFamily: "v0_9" });
+    txInteractionUpdateMany.mockResolvedValue({ count: 1 });
+
+    await updateInteractionFieldService(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      expectedDraftVersion: 1,
+      name: "subject",
+      value: "新主题",
+      origin: "user",
+    });
+
+    const update = txMessageUpdate.mock.calls.at(-1)?.[0] as {
+      data: { blocks: Array<Record<string, unknown>> };
+    };
+    expect(update.data.blocks[0]).toMatchObject({ senderLabel: "Gmail" });
+  });
+});

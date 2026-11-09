@@ -252,11 +252,24 @@ export function EmailComposeEditor({
         */}
         <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
           <span className="text-[13px] text-muted-foreground">{t`From`}</span>
-          <span
-            data-testid="a2ui-email-sender"
-            className="truncate text-[15px] text-muted-foreground"
-          >
-            {senderLabel ?? ""}
+          <span className="min-w-0">
+            <span
+              data-testid="a2ui-email-sender"
+              className="block truncate text-[15px] text-foreground"
+            >
+              {senderLabel ?? t`Connected account`}
+            </span>
+            {/*
+              The address is not known: the connection's name is whatever the client passed when
+              it was created, and the provider's account record does not carry the mailbox. Saying
+              so is better than showing a name in the place a person expects an address.
+            */}
+            <span
+              data-testid="a2ui-email-sender-note"
+              className="block text-[12px] text-muted-foreground"
+            >
+              {t`Email address not provided`}
+            </span>
           </span>
         </div>
         <FieldRow

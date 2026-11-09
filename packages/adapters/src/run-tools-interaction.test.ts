@@ -58,19 +58,12 @@ const toolSelectBase = {
 };
 
 describe("normalizeEmailComposePlan", () => {
-  it("adds missing from/cc/to/subject/body for email.compose", () => {
+  it("adds the fields the card lets a person fill, and not the sender", () => {
     const normalized = normalizeEmailComposePlan(emailPlan);
-    expect(normalized.fields.map((field) => field.name)).toEqual([
-      "from",
-      "cc",
-      "to",
-      "subject",
-      "body",
-    ]);
-    expect(normalized.fields.find((field) => field.name === "from")).toMatchObject({
-      required: false,
-      status: "missing",
-    });
+    // `from` is deliberately absent: the mailbox is decided by the connection and shown
+    // read-only, so a `from` field would be a control that does nothing.
+    expect(normalized.fields.map((field) => field.name)).toEqual(["cc", "to", "subject", "body"]);
+    expect(normalized.fields.find((field) => field.name === "from")).toBeUndefined();
     expect(normalized.fields.find((field) => field.name === "body")).toMatchObject({
       required: true,
       status: "missing",
