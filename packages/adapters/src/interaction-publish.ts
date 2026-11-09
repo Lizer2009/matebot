@@ -31,24 +31,40 @@ async function compilePlanSurface(input: {
   protocolFamily: A2uiProtocolFamily;
   messages: unknown[];
   missingRequired: string[];
+  /** The plan reconciled onto the registered schema, which is what the row must store. */
+  plan: InteractionPlan;
 }> {
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
+  const schema = capabilitySchema(input.plan.intent);
+  const { compileInteractionPlan, reconcilePlanToSchema } = await import("@matebot/a2ui-adapter");
+  const reconciled = reconcilePlanToSchema(input.plan, schema);
+  if (reconciled.conflict) {
+    // Two spellings of one field carrying different values: storing either would drop a value
+    // the person may have typed, so the publish is refused before anything is written.
+    throw new Error(
+      `conflicting values for field "${reconciled.conflict}"; edit the card instead of replacing it`,
+    );
+  }
+  if (reconciled.oversizedField) {
+    // An undeclared field is data the action reads, and this one is larger than the row should
+    // carry. Refusing here keeps it out of the stored document rather than truncating a value
+    // the action would then act on.
+    throw new Error(`field "${reconciled.oversizedField}" carries more data than a draft may hold`);
+  }
+  const plan = reconciled.plan;
   const stamps = emailIntent
     ? emailSurfaceBlockFields({
-        intent: input.plan.intent,
+        intent: plan.intent,
         capability: input.capability,
         interactionStatus: input.status ?? "collecting",
       })
     : {};
-  const { compileInteractionPlan } = await import("@matebot/a2ui-adapter");
   const compiled = await compileInteractionPlan({
-    plan: input.plan,
+    plan,
     surfaceId: input.surfaceId,
     protocolFamily: input.protocolFamily ?? "v0_9",
     // The registered capability's schema owns the form's labels and control kinds.
-    ...(capabilitySchema(input.plan.intent)
-      ? { schema: capabilitySchema(input.plan.intent)! }
-      : {}),
+    ...(schema ? { schema } : {}),
     ...stamps,
   });
   if (!compiled.ok) {
@@ -58,6 +74,7 @@ async function compilePlanSurface(input: {
     protocolFamily: compiled.protocolFamily,
     messages: compiled.messages,
     missingRequired: compiled.missingRequired,
+    plan,
   };
 }
 
@@ -112,7 +129,10 @@ export async function publishInteractionSurface(
     capability: emailIntent ? input.capability : undefined,
     status: input.status,
   });
-  const slots = interactionSlotsFromPlan(input.plan);
+  // Store the reconciled plan and slots: the confirm gate and the card's own controls both read
+  // these, so leaving the model's spellings here would compile a card that cannot be confirmed.
+  const reconciledPlan = compiled.plan ?? input.plan;
+  const slots = interactionSlotsFromPlan(reconciledPlan);
 
   const publishedAt = Date.now();
   return withTransactionRetry(() =>
@@ -121,12 +141,12 @@ export async function publishInteractionSurface(
         spaceId: input.spaceId,
         threadId: input.threadId,
         runId: input.runId,
-        intent: input.plan.intent,
+        intent: reconciledPlan.intent,
         status: input.status ?? "collecting",
-        plan: input.plan,
+        plan: reconciledPlan,
         slots,
-        title: input.plan.title,
-        summary: input.plan.summary,
+        title: reconciledPlan.title,
+        summary: reconciledPlan.summary,
       });
       const { documentRef } = await upsertInteractionSurface(tx, {
         interactionId: interaction.id,

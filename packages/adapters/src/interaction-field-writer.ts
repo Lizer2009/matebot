@@ -1,7 +1,14 @@
+import { reconcilePlanToSchema } from "@matebot/a2ui-adapter";
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
-import { applyInteractionFieldChange, decideCancel, emailSurfaceBlockFields } from "@matebot/core";
+import {
+  applyInteractionFieldChange,
+  decideCancel,
+  emailSurfaceBlockFields,
+  interactionCapabilityForIntent,
+  interactionSlotsFromPlan,
+} from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
   appendEventInTransaction,
@@ -51,10 +58,34 @@ async function compilePlanSurface(input: {
   effectStatus?: string | null;
   providerMessageId?: string | null;
   error?: string | null;
-}): Promise<{ protocolFamily: A2uiProtocolFamily; messages: unknown[] }> {
-  const stamps = isEmailPlan(input.plan)
+  /**
+   * The field this republish was triggered by. It wins over any other spelling of the same
+   * name, so an edit to a row that still holds two spellings is not mistaken for a conflict.
+   */
+  changedField?: string;
+}): Promise<{
+  protocolFamily: A2uiProtocolFamily;
+  messages: unknown[];
+  plan: InteractionPlan;
+}> {
+  // The same reconciliation the publish path applies. An edit republishes the card, and without
+  // this the row would drift back to the model's spellings on the first keystroke.
+  const schema = interactionCapabilityForIntent(input.plan.intent)?.schema;
+  const reconciled = reconcilePlanToSchema(input.plan, schema, {
+    ...(input.changedField ? { prefer: [input.changedField] } : {}),
+  });
+  if (reconciled.conflict) {
+    throw new Error(
+      `conflicting values for field "${reconciled.conflict}"; edit the card instead of replacing it`,
+    );
+  }
+  if (reconciled.oversizedField) {
+    throw new Error(`field "${reconciled.oversizedField}" carries more data than a draft may hold`);
+  }
+  const plan = reconciled.plan;
+  const stamps = isEmailPlan(plan)
     ? emailSurfaceBlockFields({
-        intent: input.plan.intent,
+        intent: plan.intent,
         capability: input.capability,
         interactionStatus: input.interactionStatus,
         effectStatus: input.effectStatus,
@@ -64,15 +95,16 @@ async function compilePlanSurface(input: {
     : {};
   const { compileInteractionPlan } = await import("@matebot/a2ui-adapter");
   const compiled = await compileInteractionPlan({
-    plan: input.plan,
+    plan,
     surfaceId: input.surfaceId,
     protocolFamily: input.protocolFamily ?? "v0_9",
+    ...(schema ? { schema } : {}),
     ...stamps,
   });
   if (!compiled.ok) {
     throw new Error(compiled.error);
   }
-  return { protocolFamily: compiled.protocolFamily, messages: compiled.messages };
+  return { protocolFamily: compiled.protocolFamily, messages: compiled.messages, plan };
 }
 export type UpdateInteractionFieldServiceInput = {
   spaceId: string;
@@ -148,6 +180,7 @@ export async function updateInteractionFieldService(
     protocolFamily: protocolFamilyOf(surfaceRow.protocolFamily),
     capability,
     interactionStatus: changed.status,
+    changedField: input.name,
   });
   const stamps = isEmailPlan(changed.plan)
     ? emailSurfaceBlockFields({
@@ -165,13 +198,15 @@ export async function updateInteractionFieldService(
           draftVersion: input.expectedDraftVersion,
         },
         data: {
-          slots: changed.slots as Prisma.InputJsonValue,
-          plan: changed.plan as Prisma.InputJsonValue,
+          // Both the plan and the slots are stored in the schema's spelling: the confirm gate
+          // looks values up by that name on the next turn.
+          slots: interactionSlotsFromPlan(compiled.plan) as Prisma.InputJsonValue,
+          plan: compiled.plan as Prisma.InputJsonValue,
           draftVersion: changed.draftVersion,
           confirmedVersion: null,
           status: changed.status,
-          title: changed.plan.title,
-          summary: changed.plan.summary,
+          title: compiled.plan.title,
+          summary: compiled.plan.summary,
         },
       });
       if (updated.count !== 1) {

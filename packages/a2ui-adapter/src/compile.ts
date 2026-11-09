@@ -7,7 +7,7 @@ import type {
   InteractionPlan,
   InteractionSurfaceSchema,
 } from "@matebot/contracts";
-import { InteractionPlanSchema } from "@matebot/contracts";
+import { InteractionPlanSchema, MAX_UNDECLARED_FIELD_BYTES } from "@matebot/contracts";
 import { compileInteractionSurface } from "./compile-surface.js";
 import { basicCatalogId, DEFAULT_PROTOCOL_FAMILY, protocolWireVersion } from "./protocol.js";
 import { validateA2uiMessages } from "./validate.js";
@@ -332,12 +332,23 @@ function isEmptyFieldValue(value: unknown): boolean {
 export function canonicalPlanFields(
   fields: readonly InteractionField[],
   schema: InteractionSurfaceSchema,
+  options: { prefer?: ReadonlySet<string> } = {},
 ): { fields: InteractionField[]; extra: InteractionField[]; conflict?: string } {
   const declaredNames = new Map(
     schema.fields.map((field) => [field.name.toLowerCase(), field.name]),
   );
   const byCanonical = new Map<string, InteractionField>();
   const extraByName = new Map<string, InteractionField>();
+  // A preferred name wins over every other spelling, whichever order the plan lists them in.
+  // The first pass settles those so a later duplicate cannot displace the value just written.
+  if (options.prefer && options.prefer.size > 0) {
+    for (const field of fields) {
+      const canonical = declaredNames.get(field.name.trim().toLowerCase());
+      if (!canonical || !options.prefer.has(canonical.toLowerCase())) continue;
+      // First match wins: the edited field appears once in the plan it was written to.
+      if (!byCanonical.has(canonical)) byCanonical.set(canonical, { ...field, name: canonical });
+    }
+  }
   for (const field of fields) {
     const canonical = declaredNames.get(field.name.trim().toLowerCase());
     if (!canonical) {
@@ -351,11 +362,15 @@ export function canonicalPlanFields(
       extraByName.set(field.name, field);
       continue;
     }
+    if (options.prefer?.has(canonical.toLowerCase())) continue;
     const existing = byCanonical.get(canonical);
     if (!existing) {
       byCanonical.set(canonical, { ...field, name: canonical });
       continue;
     }
+    // A value stamped with a source was written deliberately; an unstamped duplicate is a
+    // leftover placeholder from a normaliser, so the stamped one stays.
+    if (existing.source && !field.source) continue;
     // The normalisers insert a schema-named field with no value ahead of whatever the model
     // sent, so "empty placeholder, then the real value" is the common shape. A value beats an
     // empty slot; only two different values are a genuine conflict, because choosing one would
@@ -374,4 +389,64 @@ export function canonicalPlanFields(
     .map((field) => byCanonical.get(field.name))
     .filter((field): field is InteractionField => field !== undefined);
   return { fields: ordered, extra: [...extraByName.values()] };
+}
+
+/**
+ * Reconcile a whole plan onto the registered schema before it is stored.
+ *
+ * Compiling a reconciled view was not enough. The interaction row keeps the plan and the slots
+ * the client and the confirm gate read, and those were still keyed on whatever the model
+ * spelled: a draft whose values sat under `To`/`Subject`/`Body` compiled into a form that looked
+ * right, then refused to confirm with "Required fields are missing", because the gate looks up
+ * `slots["to"]` and the plan says `to` is required while only `To` has a value.
+ *
+ * So the same reconciliation has to happen on the way in. The returned plan carries the schema's
+ * names for declared fields, in schema order, plus whatever undeclared fields the plan carried —
+ * those stay as data for the action and are not controls.
+ *
+ * Returns `conflict` when two spellings of one declared field carry different values. The caller
+ * refuses the plan rather than guessing which value the person meant.
+ */
+export function reconcilePlanToSchema(
+  plan: InteractionPlan,
+  schema: InteractionSurfaceSchema | undefined,
+  options: { prefer?: readonly string[] } = {},
+): {
+  plan: InteractionPlan;
+  missingRequired: string[];
+  conflict?: string;
+  oversizedField?: string;
+} {
+  if (!schema) return { plan, missingRequired: [] };
+  // A field the caller just wrote wins over any other spelling of the same name. Rows written
+  // before reconciliation can hold both `to` and `To`; without this, an ordinary edit would look
+  // like a two-value conflict and the person could not change their own draft.
+  const preferred = new Set((options.prefer ?? []).map((name) => name.trim().toLowerCase()));
+  const reconciled = canonicalPlanFields(plan.fields, schema, { prefer: preferred });
+  if (reconciled.conflict) return { plan, missingRequired: [], conflict: reconciled.conflict };
+  // An undeclared field carries data for the action, and nothing else bounds how much of it a
+  // plan may carry into the stored document.
+  for (const field of reconciled.extra) {
+    if (JSON.stringify(field.value ?? null).length > MAX_UNDECLARED_FIELD_BYTES) {
+      return { plan, missingRequired: [], oversizedField: field.name };
+    }
+  }
+  const fields = [...reconciled.fields, ...reconciled.extra];
+  const slots: Record<string, unknown> = {};
+  const missingRequired: string[] = [];
+  for (const field of reconciled.fields) {
+    const empty =
+      field.value === undefined ||
+      field.value === null ||
+      (typeof field.value === "string" && field.value.trim() === "");
+    if (empty) {
+      if (field.required) missingRequired.push(field.name);
+      continue;
+    }
+    slots[field.name] = field.value;
+  }
+  for (const field of reconciled.extra) {
+    if (field.value !== undefined) slots[field.name] = field.value;
+  }
+  return { plan: { ...plan, fields }, missingRequired };
 }

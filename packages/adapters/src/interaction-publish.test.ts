@@ -2,9 +2,15 @@ import type { InteractionPlan } from "@matebot/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const compileInteractionPlan = vi.fn();
-vi.mock("@matebot/a2ui-adapter", () => ({
-  compileInteractionPlan: (...args: unknown[]) => compileInteractionPlan(...args),
-}));
+vi.mock("@matebot/a2ui-adapter", async () => {
+  const actual =
+    await vi.importActual<typeof import("@matebot/a2ui-adapter")>("@matebot/a2ui-adapter");
+  return {
+    compileInteractionPlan: (...args: unknown[]) => compileInteractionPlan(...args),
+    // Reconciliation runs for real: these tests assert on the row that gets stored.
+    reconcilePlanToSchema: actual.reconcilePlanToSchema,
+  };
+});
 
 const createInteraction = vi.fn();
 const upsertInteractionSurface = vi.fn();
