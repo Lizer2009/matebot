@@ -1122,3 +1122,48 @@ describe("inactive mailbox", () => {
     expect(lastSurfacePayload()).toMatchObject({ template: "action-result-success" });
   });
 });
+
+describe("confirmInteractionService on a row written before reconciliation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("confirms a draft whose values sit under the model's own spellings", async () => {
+    // Rows written by a build that stored the plan unreconciled carry `To`/`Subject`/`Body`.
+    // The gate reads the schema's names, so without reconciling on the way in the person is
+    // told their complete draft is missing fields, with no way to repair it.
+    const db = memoryPrisma(
+      readyInteraction({
+        plan: {
+          intent: "email.compose",
+          title: "Send email",
+          fields: [
+            { name: "to", required: true, status: "missing" },
+            { name: "subject", required: true, status: "missing" },
+            { name: "body", required: true, status: "missing" },
+            { name: "To", value: "a@example.com", required: true, status: "resolved" },
+            { name: "Subject", value: "Hi", required: true, status: "resolved" },
+            { name: "Body", value: "Hello", required: true, status: "resolved" },
+          ],
+          nextStep: "request_approval",
+          riskLevel: "medium",
+        },
+        slots: { To: "a@example.com", Subject: "Hi", Body: "Hello" },
+      }),
+    );
+    const result = await confirmInteractionService(db.prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      draftVersion: 2,
+      ...readyMailbox,
+    });
+    expect(result.confirmedVersion).toBe(2);
+    const effect = db.effects.get(result.idempotencyKey);
+    // The effect carries the schema's names, which is what the deliverer reads.
+    expect(effect).toMatchObject({
+      request: { slots: { to: "a@example.com", subject: "Hi", body: "Hello" } },
+    });
+  });
+});

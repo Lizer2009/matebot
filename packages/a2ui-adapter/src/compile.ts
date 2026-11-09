@@ -432,14 +432,16 @@ export function reconcilePlanToSchema(
   options: { prefer?: readonly string[] } = {},
 ): {
   plan: InteractionPlan;
+  slots: Record<string, unknown>;
   missingRequired: string[];
   conflict?: string;
   oversizedField?: string;
 } {
-  if (!schema) return { plan, missingRequired: [] };
+  if (!schema) return { plan, slots: {}, missingRequired: [] };
   const preferred = new Set((options.prefer ?? []).map((name) => name.trim().toLowerCase()));
   const reconciled = canonicalPlanFields(plan.fields, schema, { prefer: preferred });
-  if (reconciled.conflict) return { plan, missingRequired: [], conflict: reconciled.conflict };
+  if (reconciled.conflict)
+    return { plan, slots: {}, missingRequired: [], conflict: reconciled.conflict };
   // Every field is bounded, declared or not. The schema's `maxLength` only guards a value that
   // coerced to a string; an optional field holding an array or object skips that check entirely,
   // so the same ceiling has to apply to any value that will be stored in the document.
@@ -448,7 +450,7 @@ export function reconcilePlanToSchema(
     if (
       Buffer.byteLength(JSON.stringify(field.value ?? null), "utf8") > MAX_UNDECLARED_FIELD_BYTES
     ) {
-      return { plan, missingRequired: [], oversizedField: field.name };
+      return { plan, slots: {}, missingRequired: [], oversizedField: field.name };
     }
   }
   const declaredByName = new Map(schema.fields.map((field) => [field.name, field]));
@@ -469,5 +471,5 @@ export function reconcilePlanToSchema(
     }
     slots[field.name] = field.value;
   }
-  return { plan: { ...plan, fields }, missingRequired };
+  return { plan: { ...plan, fields }, slots, missingRequired };
 }
