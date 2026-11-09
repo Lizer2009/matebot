@@ -1,7 +1,14 @@
+import { reconcilePlanToSchema } from "@matebot/a2ui-adapter";
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
-import { applyInteractionFieldChange, decideCancel, emailSurfaceBlockFields } from "@matebot/core";
+import {
+  applyInteractionFieldChange,
+  decideCancel,
+  emailSurfaceBlockFields,
+  interactionCapabilityForIntent,
+  interactionSlotsFromPlan,
+} from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
   appendEventInTransaction,
@@ -11,6 +18,7 @@ import {
   upsertInteractionSurface,
   withTransactionRetry,
 } from "@matebot/db";
+import { getLogger } from "@matebot/logging";
 
 /**
  * The single write path for an interaction field.
@@ -51,10 +59,34 @@ async function compilePlanSurface(input: {
   effectStatus?: string | null;
   providerMessageId?: string | null;
   error?: string | null;
-}): Promise<{ protocolFamily: A2uiProtocolFamily; messages: unknown[] }> {
-  const stamps = isEmailPlan(input.plan)
+  /**
+   * The field this republish was triggered by. It wins over any other spelling of the same
+   * name, so an edit to a row that still holds two spellings is not mistaken for a conflict.
+   */
+  changedField?: string;
+}): Promise<{
+  protocolFamily: A2uiProtocolFamily;
+  messages: unknown[];
+  plan: InteractionPlan;
+}> {
+  // The same reconciliation the publish path applies. An edit republishes the card, and without
+  // this the row would drift back to the model's spellings on the first keystroke.
+  const schema = interactionCapabilityForIntent(input.plan.intent)?.schema;
+  const reconciled = reconcilePlanToSchema(input.plan, schema, {
+    ...(input.changedField ? { prefer: [input.changedField] } : {}),
+  });
+  if (reconciled.conflict) {
+    throw new Error(
+      `conflicting values for field "${reconciled.conflict}"; edit the card instead of replacing it`,
+    );
+  }
+  if (reconciled.oversizedField) {
+    throw new Error(`field "${reconciled.oversizedField}" carries more data than a draft may hold`);
+  }
+  const plan = reconciled.plan;
+  const stamps = isEmailPlan(plan)
     ? emailSurfaceBlockFields({
-        intent: input.plan.intent,
+        intent: plan.intent,
         capability: input.capability,
         interactionStatus: input.interactionStatus,
         effectStatus: input.effectStatus,
@@ -64,15 +96,16 @@ async function compilePlanSurface(input: {
     : {};
   const { compileInteractionPlan } = await import("@matebot/a2ui-adapter");
   const compiled = await compileInteractionPlan({
-    plan: input.plan,
+    plan,
     surfaceId: input.surfaceId,
     protocolFamily: input.protocolFamily ?? "v0_9",
+    ...(schema ? { schema } : {}),
     ...stamps,
   });
   if (!compiled.ok) {
     throw new Error(compiled.error);
   }
-  return { protocolFamily: compiled.protocolFamily, messages: compiled.messages };
+  return { protocolFamily: compiled.protocolFamily, messages: compiled.messages, plan };
 }
 export type UpdateInteractionFieldServiceInput = {
   spaceId: string;
@@ -148,6 +181,7 @@ export async function updateInteractionFieldService(
     protocolFamily: protocolFamilyOf(surfaceRow.protocolFamily),
     capability,
     interactionStatus: changed.status,
+    changedField: input.name,
   });
   const stamps = isEmailPlan(changed.plan)
     ? emailSurfaceBlockFields({
@@ -165,13 +199,15 @@ export async function updateInteractionFieldService(
           draftVersion: input.expectedDraftVersion,
         },
         data: {
-          slots: changed.slots as Prisma.InputJsonValue,
-          plan: changed.plan as Prisma.InputJsonValue,
+          // Both the plan and the slots are stored in the schema's spelling: the confirm gate
+          // looks values up by that name on the next turn.
+          slots: interactionSlotsFromPlan(compiled.plan) as Prisma.InputJsonValue,
+          plan: compiled.plan as Prisma.InputJsonValue,
           draftVersion: changed.draftVersion,
           confirmedVersion: null,
           status: changed.status,
-          title: changed.plan.title,
-          summary: changed.plan.summary,
+          title: compiled.plan.title,
+          summary: compiled.plan.summary,
         },
       });
       if (updated.count !== 1) {
@@ -354,12 +390,21 @@ export async function cancelInteractionService(
     ? (currentMessage.blocks as MessageBlock[])
     : undefined;
   const capability = capabilityFromBlocks(currentBlocks, surfaceRow.surfaceId);
+  // Cancelling must always work. A draft whose stored values no longer compile — an oversize
+  // legacy field, a leftover conflict — is exactly the draft someone wants to get rid of, so a
+  // compile failure here falls back to the existing document and still records the cancellation.
   const compiled = await compilePlanSurface({
     plan,
     surfaceId: surfaceRow.surfaceId,
     protocolFamily: protocolFamilyOf(surfaceRow.protocolFamily),
     capability,
     interactionStatus: "cancelled",
+  }).catch((error: unknown) => {
+    getLogger().warn("interaction cancel could not recompile; keeping the stored document", {
+      "interaction.id": input.interactionId,
+      reason: error instanceof Error ? error.message : "unknown",
+    });
+    return null;
   });
   const draftVersion = current.draftVersion + 1;
 
@@ -381,23 +426,30 @@ export async function cancelInteractionService(
           "这次操作已经在进行中或已经完成，不能再取消。",
         );
       }
-      const { documentRef } = await upsertInteractionSurface(tx, {
-        interactionId: input.interactionId,
-        surfaceId: surfaceRow.surfaceId,
-        protocolFamily: compiled.protocolFamily,
-        document: compiled.messages,
-        draftVersion,
-      });
+      // With no recompiled document the row is still cancelled below; the card keeps the
+      // document it already had, which is harmless because the status stamp is what a host
+      // reads to stop offering the action.
+      const documentRef = compiled
+        ? (
+            await upsertInteractionSurface(tx, {
+              interactionId: input.interactionId,
+              surfaceId: surfaceRow.surfaceId,
+              protocolFamily: compiled.protocolFamily,
+              document: compiled.messages,
+              draftVersion,
+            })
+          ).documentRef
+        : (current as { documentRef?: string }).documentRef;
       const block: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: input.interactionId,
         surfaceId: surfaceRow.surfaceId,
-        protocolFamily: compiled.protocolFamily,
+        protocolFamily: compiled?.protocolFamily ?? protocolFamilyOf(surfaceRow.protocolFamily),
         draftVersion,
         intent: plan.intent,
         title: plan.title,
         summary: plan.summary,
-        documentRef,
+        ...(documentRef ? { documentRef } : {}),
         ...(isEmailPlan(plan)
           ? emailSurfaceBlockFields({
               intent: plan.intent,
@@ -438,7 +490,7 @@ export async function cancelInteractionService(
         payload: {
           interactionId: input.interactionId,
           surfaceId: surfaceRow.surfaceId,
-          protocolFamily: compiled.protocolFamily,
+          protocolFamily: compiled?.protocolFamily ?? protocolFamilyOf(surfaceRow.protocolFamily),
           draftVersion,
           intent: plan.intent,
           title: plan.title,

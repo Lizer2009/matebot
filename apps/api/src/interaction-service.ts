@@ -1,3 +1,4 @@
+import { reconcilePlanToSchema } from "@matebot/a2ui-adapter";
 import type {
   ConnectorProvider,
   JobPublisher,
@@ -37,6 +38,7 @@ import {
   emailCapabilityAllowsSend,
   emailDeliveryOutcome,
   emailSurfaceBlockFields,
+  interactionCapabilityForIntent,
   interactionConfirmEffectRequest,
   interactionConfirmIdempotencyKey,
   interactionEffectKind,
@@ -442,8 +444,20 @@ export async function confirmInteractionService(
     throw new InteractionNotFoundError(input.interactionId);
   }
   await requireReadyMailbox(prisma, input, current.id);
-  const plan = current.plan as InteractionPlan;
-  const slots = interactionSlots(current.slots);
+  const storedPlan = current.plan as InteractionPlan;
+  // A row written before reconciliation existed can still hold the model's spellings, which the
+  // gate would read as missing fields. Reconcile a copy here rather than requiring a migration:
+  // the draft that exists today has to be confirmable, not only the ones written from now on.
+  const reconciled = reconcilePlanToSchema(
+    storedPlan,
+    interactionCapabilityForIntent(storedPlan.intent)?.schema,
+  );
+  // When reconciliation could not run or refused the row, fall back to what is stored: the gate
+  // still applies, and refusing to read the row at all would be worse than reading it as-is.
+  const reconciliationUsable =
+    !reconciled.conflict && !reconciled.oversizedField && Object.keys(reconciled.slots).length > 0;
+  const plan = reconciliationUsable ? reconciled.plan : storedPlan;
+  const slots = reconciliationUsable ? reconciled.slots : interactionSlots(current.slots);
   const confirmed = confirmInteractionDraftState(
     {
       status: current.status as InteractionLifecycleStatus,

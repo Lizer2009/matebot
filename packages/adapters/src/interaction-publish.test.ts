@@ -2,9 +2,15 @@ import type { InteractionPlan } from "@matebot/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const compileInteractionPlan = vi.fn();
-vi.mock("@matebot/a2ui-adapter", () => ({
-  compileInteractionPlan: (...args: unknown[]) => compileInteractionPlan(...args),
-}));
+vi.mock("@matebot/a2ui-adapter", async () => {
+  const actual =
+    await vi.importActual<typeof import("@matebot/a2ui-adapter")>("@matebot/a2ui-adapter");
+  return {
+    compileInteractionPlan: (...args: unknown[]) => compileInteractionPlan(...args),
+    // Reconciliation runs for real: these tests assert on the row that gets stored.
+    reconcilePlanToSchema: actual.reconcilePlanToSchema,
+  };
+});
 
 const createInteraction = vi.fn();
 const upsertInteractionSurface = vi.fn();
@@ -83,8 +89,21 @@ describe("publishInteractionSurface", () => {
       surfaceId: "surface-1",
     });
 
+    // The compiler is handed the reconciled plan: the schema's fields in its order, so the row
+    // and the card describe the same set. `cc` is declared but was absent from the model's plan.
     expect(compileInteractionPlan).toHaveBeenCalledWith(
-      expect.objectContaining({ plan, surfaceId: "surface-1" }),
+      expect.objectContaining({
+        plan: expect.objectContaining({
+          intent: "email.compose",
+          fields: [
+            expect.objectContaining({ name: "to", value: "a@example.com" }),
+            expect.objectContaining({ name: "cc", required: false }),
+            expect.objectContaining({ name: "subject", value: "Hi" }),
+            expect.objectContaining({ name: "body", value: "Hello" }),
+          ],
+        }),
+        surfaceId: "surface-1",
+      }),
     );
     expect(createInteraction).toHaveBeenCalledWith(
       expect.anything(),

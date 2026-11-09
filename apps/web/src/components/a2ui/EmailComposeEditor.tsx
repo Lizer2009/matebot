@@ -112,6 +112,16 @@ export function EmailComposeEditor({
 
   const effectiveConfirmedVersion = localConfirmedVersion ?? confirmedVersion;
   const confirmed = effectiveConfirmedVersion != null && effectiveConfirmedVersion === version;
+  /**
+   * Whether the draft has everything the send path needs.
+   *
+   * The server refuses a confirm with "Required fields are missing" (see
+   * `confirmInteractionDraftState`), so offering a live Send button on an incomplete draft just
+   * moves the refusal to the end of a round trip. The same rule is applied here so the control
+   * matches what the action will do.
+   */
+  const draftComplete =
+    values.to.trim() !== "" && values.subject.trim() !== "" && values.body.trim() !== "";
   // One rule shared with the native card; see emailSurfacePhase in @matebot/core.
   const { phase, locked } = emailSurfacePhase({
     template:
@@ -389,7 +399,7 @@ export function EmailComposeEditor({
             <Button
               type="button"
               data-testid="a2ui-email-send"
-              disabled={busy}
+              disabled={busy || !draftComplete}
               onClick={() => {
                 setBusy(true);
                 setError(null);

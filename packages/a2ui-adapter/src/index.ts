@@ -12,6 +12,7 @@ export {
   type CompileInteractionPlanInput,
   type CompileInteractionPlanResult,
   compileInteractionPlan,
+  reconcilePlanToSchema,
 } from "./compile.js";
 export {
   type CompileInteractionSurfaceInput,

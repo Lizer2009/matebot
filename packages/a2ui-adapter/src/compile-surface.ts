@@ -67,6 +67,8 @@ export type CompileInteractionSurfaceResult =
       surfaceId: string;
       messages: unknown[];
       dataModel: SurfaceDataModel;
+      /** Declared required fields with no value yet; the form is still editable. */
+      missingRequired: string[];
     }
   | { ok: false; protocolFamily: A2uiProtocolFamily; error: string };
 
@@ -125,28 +127,73 @@ function coerceValue(field: InteractionFieldSpec, raw: unknown): unknown {
   }
 }
 
-/** Validate values against the schema; compilation must not trust the client. */
+/**
+ * Whether a value counts as absent.
+ *
+ * `coerceValue` returns the empty string for a text field, so the required-empty branch below
+ * would never see it. `requiredFieldsSatisfied` in the interaction runtime trims and treats that
+ * as missing, and the confirm gate uses that rule — so a card whose body is `"   "` must be
+ * reported here as missing too, or the publish says the draft is complete while Confirm refuses.
+ */
+function isEmptyValue(raw: unknown): boolean {
+  if (raw === undefined || raw === null) return true;
+  if (typeof raw === "string") return raw.trim() === "";
+  return false;
+}
+
+/**
+ * Validate values against the schema; compilation must not trust the client.
+ *
+ * A form is a draft, so an empty required field is a normal state rather than a compile
+ * failure: the reader is looking at the card precisely in order to fill it in. Those names are
+ * collected into `missingRequired` so the caller can say which ones still need a value and hold
+ * the action back, while every other control is drawn.
+ */
 function checkValues(
   schema: InteractionSurfaceSchema,
   values: Record<string, unknown>,
-): string | undefined {
+): { error?: string; missingRequired: string[] } {
+  const missingRequired: string[] = [];
   for (const field of schema.fields) {
-    const value = coerceValue(field, values[field.name]);
+    const raw = values[field.name];
+    const value = coerceValue(field, raw);
     if (value === undefined) {
-      if (field.required) return `Missing required value: ${field.name}`;
+      // Absent is a draft's normal state: the reader is looking at the card in order to fill it
+      // in, so it becomes a named gap rather than a failed compile.
+      if (isEmptyValue(raw)) {
+        if (field.required) missingRequired.push(field.name);
+        continue;
+      }
+      // Present but unusable. A required field must not silently drop what the person supplied,
+      // so the compile is refused. An optional field keeps the old behaviour of being skipped:
+      // a plan that carries `cc: []` or a boolean `allDay` against a text control is common, and
+      // failing the whole card for it would refuse edits that used to work.
+      if (field.required) {
+        return { error: `Value for ${field.name} is not a valid ${field.kind}`, missingRequired };
+      }
       continue;
     }
     if (field.kind === "choice") {
       const allowed = new Set((field.options ?? []).map((option) => option.value));
       if (typeof value !== "string" || !allowed.has(value)) {
-        return `Value for ${field.name} is not one of its options`;
+        return { error: `Value for ${field.name} is not one of its options`, missingRequired };
       }
     }
+    // A text control can hold "   ", which coerces fine but is not a value. The confirm gate
+    // trims before deciding, so the same rule has to apply here or the card reports complete
+    // while Confirm refuses.
+    if (isEmptyValue(value)) {
+      if (field.required) missingRequired.push(field.name);
+      continue;
+    }
     if (typeof value === "string" && field.maxLength && value.length > field.maxLength) {
-      return `Value for ${field.name} exceeds ${field.maxLength} characters`;
+      return {
+        error: `Value for ${field.name} exceeds ${field.maxLength} characters`,
+        missingRequired,
+      };
     }
   }
-  return undefined;
+  return { missingRequired };
 }
 
 /** One control per field, mapped from the closed kind list. */
@@ -387,7 +434,7 @@ export async function compileInteractionSurface(
   }
 
   const valueError = checkValues(schema, input.values);
-  if (valueError) return fail(valueError);
+  if (valueError.error) return fail(valueError.error);
 
   const version = protocolWireVersion(protocolFamily);
   const catalogId = basicCatalogId(protocolFamily);
@@ -436,5 +483,6 @@ export async function compileInteractionSurface(
     surfaceId,
     messages: validated.messages as unknown[],
     dataModel,
+    missingRequired: valueError.missingRequired,
   };
 }

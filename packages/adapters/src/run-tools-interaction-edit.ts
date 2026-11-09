@@ -374,6 +374,9 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         botId: run.botId,
         runId: run.id,
         plan: parsed,
+        // A draft is only ready when its required values are all present. The status is derived
+        // from what the compile actually found, so a correction that leaves a required value out
+        // is not labelled ready while the confirm gate refuses it.
         status: "ready_for_review",
         // The record this draft corrects. The original row is never rewritten.
         amendsInteractionId: interactionId,
@@ -386,6 +389,9 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         interactionId: published.interactionId,
         surfaceId: published.surfaceId,
         draftVersion: published.draftVersion,
+        ...(published.missingRequired?.length
+          ? { missingRequired: published.missingRequired }
+          : {}),
       };
     },
     applyField: async (input) => {

@@ -164,6 +164,18 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
        */
       revision: published.draftVersion,
       ...(published.capability ? { capability: published.capability } : {}),
+      /**
+       * The declared required fields still empty. The card is published and every field is
+       * editable, so this is not a failure — but a reply that calls the draft complete while
+       * this list is non-empty is exactly the misreport the field audit found, so the model is
+       * given the list and told what it means.
+       */
+      ...(published.missingRequired?.length
+        ? {
+            missingRequired: published.missingRequired,
+            notice: `The card is on screen with ${published.missingRequired.join(", ")} still empty. Tell the user which fields need a value; do not say the draft is complete.`,
+          }
+        : {}),
       /** The only words the turn should add; the card holds everything else. */
       reply: surfaceNudgeReply(published.capability),
     };
