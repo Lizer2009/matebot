@@ -11,7 +11,12 @@ import {
 test("a group a bot creates after approval appears in the sidebar without a reload", async ({
   page,
 }, testInfo) => {
-  await signup(page, `bot-management-groups-${Date.now()}@matebot.test`, "password12", "Bot Groups");
+  await signup(
+    page,
+    `bot-management-groups-${Date.now()}@matebot.test`,
+    "password12",
+    "Bot Groups",
+  );
   await completeOnboarding(page);
   await page.waitForURL(/\/app\/[^/]+$/);
   const chiefId = activeBotId(page);

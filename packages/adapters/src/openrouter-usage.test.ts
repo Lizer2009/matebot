@@ -5,15 +5,16 @@ describe("OpenRouter attribution and usage recovery", () => {
   it("sends the normal user id and Matebot attribution while preserving request controls", async () => {
     const fetcher = vi.fn<typeof fetch>(async () => new Response("ok"));
     const controller = new AbortController();
-    await openRouterInferenceFetch(fetcher, "user_fixture", "https://app.example.test")(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        signal: controller.signal,
-        headers: { Authorization: "Bearer fixture", "X-Fixture": "kept" },
-        body: JSON.stringify({ model: "fixture", messages: [{ role: "user", content: "test" }] }),
-      },
-    );
+    await openRouterInferenceFetch(
+      fetcher,
+      "user_fixture",
+      "https://app.example.test",
+    )("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: { Authorization: "Bearer fixture", "X-Fixture": "kept" },
+      body: JSON.stringify({ model: "fixture", messages: [{ role: "user", content: "test" }] }),
+    });
     const init = fetcher.mock.calls[0]![1]!;
     const headers = new Headers(init.headers);
     expect(headers.get("HTTP-Referer")).toBe("https://app.example.test");
@@ -52,7 +53,11 @@ describe("OpenRouter attribution and usage recovery", () => {
       headers: { Authorization: "Bearer removed", "X-Old": "removed" },
       body: "{}",
     });
-    await openRouterInferenceFetch(fetcher, "user_fixture", "https://app.example.test")(request, {
+    await openRouterInferenceFetch(
+      fetcher,
+      "user_fixture",
+      "https://app.example.test",
+    )(request, {
       headers: { "X-New": "kept" },
       body: null,
     });

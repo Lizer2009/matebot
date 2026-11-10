@@ -985,7 +985,11 @@ describe("IncusSandboxProvider", () => {
 
 describe("ociImageSource", () => {
   it.each([
-    ["ghcr.io/lizer2009/matebot/computer:edge", "https://ghcr.io", "lizer2009/matebot/computer:edge"],
+    [
+      "ghcr.io/lizer2009/matebot/computer:edge",
+      "https://ghcr.io",
+      "lizer2009/matebot/computer:edge",
+    ],
     [
       "registry.example.test:5000/computer@sha256:abc",
       "https://registry.example.test:5000",

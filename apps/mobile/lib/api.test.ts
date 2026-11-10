@@ -182,7 +182,8 @@ describe("mobile API authentication", () => {
   describe.each([
     {
       name: "password reset",
-      request: () => requestPasswordReset("ada@example.test", "https://matebot.test/reset-password"),
+      request: () =>
+        requestPasswordReset("ada@example.test", "https://matebot.test/reset-password"),
       fallback: "Could not send reset email",
     },
     {

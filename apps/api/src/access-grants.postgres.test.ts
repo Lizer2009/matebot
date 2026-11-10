@@ -49,7 +49,9 @@ dbTests("access grants", () => {
   });
 
   afterAll(async () => {
-    await prisma.accessGrant.deleteMany({ where: { email: { endsWith: `${stamp}@matebot.test` } } });
+    await prisma.accessGrant.deleteMany({
+      where: { email: { endsWith: `${stamp}@matebot.test` } },
+    });
     await prisma.organization.deleteMany({ where: { id: { in: organizations } } });
     await prisma.user.deleteMany({ where: { id: { in: users } } });
     await db.prisma.$disconnect();

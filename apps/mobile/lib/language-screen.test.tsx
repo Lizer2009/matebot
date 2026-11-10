@@ -120,7 +120,11 @@ it.each(["ru", "de", "zh-TW"] as const)(
       await vi.mocked(i18n.setUiLocale).mock.results[0]!.value;
     });
     expect(i18n.getActiveUiLocale()).toBe(locale);
-    expect(resumeLiveNotifications).toHaveBeenCalledWith("https://matebot.test", "token", "space-1");
+    expect(resumeLiveNotifications).toHaveBeenCalledWith(
+      "https://matebot.test",
+      "token",
+      "space-1",
+    );
     expect(rpc).toHaveBeenCalledExactlyOnceWith("preferences/update", { locale });
     expectSelected(UI_LOCALE_LABELS[locale]);
     expect(row("English").getAttribute("aria-pressed")).toBe("false");
