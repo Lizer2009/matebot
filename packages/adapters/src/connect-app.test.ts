@@ -106,13 +106,15 @@ describe("connect_app execution", () => {
     // two is what made an earlier turn claim work it had not done.
     const f = fixture([{ ...entry, connected: true }]);
     const result = (await f.call()) as Record<string, unknown>;
-    expect(result).toMatchObject({ layer: "connection", connected: true, executed: false });
+    expect(result).toMatchObject({
+      route: { connected: true, executed: false },
+    });
     expect(String(result.message)).toMatch(/Nothing has been run/);
   });
   it("tells the model a posted catalog card is not a connection", async () => {
     const f = fixture();
     const result = (await f.call()) as Record<string, unknown>;
-    expect(result).toMatchObject({ layer: "catalog", connected: false, executed: false });
+    expect(result).toMatchObject({ route: { connected: false, executed: false } });
     expect(String(result.message)).toMatch(/not connected yet and nothing has run/);
   });
   it("dedupes replay even after the original card connects", async () => {

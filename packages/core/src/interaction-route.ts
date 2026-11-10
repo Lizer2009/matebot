@@ -281,3 +281,24 @@ export function describeRoute(route: LayerRoute): string {
       return "草稿已准备好，请在卡片上确认。";
   }
 }
+
+/**
+ * The layer discipline, stated for the model rather than for a caller.
+ *
+ * The tool results carry a `route` and a `routeNotice`, but a model that has already decided what
+ * to say can ignore both. This paragraph is the other half: the rule it is told to follow, in the
+ * same words the results use, so a reply that claims a page was a connection, or a catalog entry
+ * was a completed action, contradicts an instruction it was given.
+ *
+ * It is deliberately about *claims*, not about which tool to call: the model still chooses tools
+ * from the situation, and nothing here asks it to run a classifier.
+ */
+export const LAYER_DISCIPLINE_PROMPT = [
+  "Work happens in layers, and a later layer may only be claimed when its own evidence exists:",
+  "- Opening a page in the browser is not connecting an app. It grants no access and runs nothing.",
+  "- Showing an app in the catalog, or posting a card that offers to connect it, is not connecting it.",
+  "- Connecting an app is not doing the work. Nothing has run until something actually runs.",
+  "- A tool search returning schemas is not a completed action. Only a call that ran, and left a record, is.",
+  "- A draft card is not an action. It waits for the person to confirm it.",
+  "When a result carries a `route` with executed: false, say what was actually reached. Never tell the person an action happened because a tool returned something, and never describe a page you opened as an app you connected.",
+].join("\n");

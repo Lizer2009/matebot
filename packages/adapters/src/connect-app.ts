@@ -3,6 +3,7 @@ import type { MessageBlock } from "@matebot/contracts";
 import { appConnectCard, matchAppCatalog, matchesAppConnection } from "@matebot/core";
 import type { PrismaClient, ThreadEvents } from "@matebot/db";
 import { appendEventInTransaction, createThreadMessageInTransaction } from "@matebot/db";
+import { annotateAppCatalog, annotateAppConnected } from "./route-annotation.js";
 
 const RECENT_MESSAGES = 50;
 
@@ -45,9 +46,7 @@ export async function connectApp(
       // A connected app is still only L2/L3: the connection exists, nothing has run. Saying
       // "connected" without that distinction is what let an earlier turn report a connection as
       // though work had been done.
-      layer: "connection",
-      connected: true,
-      executed: false,
+      ...annotateAppConnected(true),
       message:
         "This app is already connected and its tools are available. Nothing has been run: no action has happened yet.",
     };
@@ -105,9 +104,7 @@ export async function connectApp(
     status: "pending",
     // A catalog card the person has not authorized yet. It is shown, not connected, and it has
     // run nothing — three different things that must not be conflated in what the model reads.
-    layer: "catalog",
-    connected: false,
-    executed: false,
+    ...annotateAppCatalog(false),
     message: committed
       ? "Connection card shown. Wait for the user to connect the app. The app is not connected yet and nothing has run."
       : "Connection card already shown. Wait for the user to connect the app. The app is not connected yet and nothing has run.",

@@ -2,12 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { SandboxProvider } from "@matebot/adapter-kit";
 import type { ComputerCommand } from "@matebot/contracts";
 import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@matebot/contracts";
-import {
-  describeRoute,
-  redactSecrets,
-  routeWebRequest,
-  sandboxCommandTimeoutMs,
-} from "@matebot/core";
+import { redactSecrets, sandboxCommandTimeoutMs } from "@matebot/core";
 import { RunHistoryWriteError } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { redactShellStreams } from "./agent-environment.js";
@@ -49,6 +44,7 @@ import {
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import { purchaseApprovalOf } from "./purchase-gate.js";
 import { resolvePurchaseCardFill, resolvePurchasePayTokenFill } from "./purchase-service.js";
+import { annotateWebEntry, withRouteAnnotation } from "./route-annotation.js";
 import type { RunContext } from "./run-context.js";
 import { addRunSecrets } from "./run-context.js";
 import { builtinOffered } from "./run-instructions.js";
@@ -291,23 +287,15 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
 /**
  * Say which layer an `browser_navigate` result belongs to.
  *
- * Opening a page in the browser is L1. It is not an app connection and not an action, and the
- * model reads this result to decide what to tell the person — so the distinction has to travel
- * with the result rather than be inferred from the tool name. `browser_snapshot` and
- * `browser_act` are not annotated: they read or drive a page already open, and this marker is
- * about the entry step.
+ * Opening a page is L1: not an app connection, not an action. The model reads this result to
+ * decide what to tell the person, so the distinction travels with it. `browser_snapshot` and
+ * `browser_act` are not annotated — they read or drive a page already open.
  */
 function withRouteLayer<T>(name: string, result: T): T {
   if (name !== "browser_navigate") return result;
-  if (!result || typeof result !== "object") return result;
   const candidate = result as unknown as { url?: unknown };
-  const url = typeof candidate.url === "string" ? candidate.url : undefined;
-  const route = routeWebRequest({ url: url ?? "about:blank" });
-  return {
-    ...(result as Record<string, unknown>),
-    route: { layer: route.layer, kind: route.kind, connected: false, executed: false },
-    routeNotice: describeRoute(route),
-  } as T;
+  const url = typeof candidate === "object" ? candidate?.url : undefined;
+  return withRouteAnnotation(result, annotateWebEntry(typeof url === "string" ? url : undefined));
 }
 
 /** Tools that drive the bot's computer: screen, page browser and shell. */
