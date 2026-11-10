@@ -163,6 +163,8 @@ jobs:
         run: python3 .github/scripts/brand-guard.py
       - name: Brand guard tests
         run: python3 .github/scripts/brand-guard.test.py
+      - name: Native module names agree across podspecs, sources, and JS
+        run: python3 scripts/native-registration-check.py
 
   # The unit suite is CPU-bound, so three runners finish in about a third of the time.
   unit-tests-shard:

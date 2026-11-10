@@ -133,29 +133,31 @@ class GuardPassesUpstreamCredit(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
 
 
-class GuardPassesExistingInstallReferences(unittest.TestCase):
-    def test_the_migration_slug_and_the_documented_folder_pass(self) -> None:
+class GuardPassesNoRuntimeReference(unittest.TestCase):
+    """No runtime code may keep the old name, including for migrating old installs.
+
+    The product was renamed in full and an install may be replaced cleanly, so there is no legacy
+    profile, slug, or folder the code has to keep recognising. A migration helper is exactly the
+    kind of thing that reintroduces the old identity, so it must fail like anything else.
+    """
+
+    def test_a_legacy_slug_constant_fails(self) -> None:
         root = make_tree(
             {
                 "apps/desktop/src/user-data-migration.ts": (
                     'export const LEGACY_PRODUCT_SLUG = "Rakazo";\n'
-                ),
-                "docs/MATEBOT_DEPLOY.md": (
-                    "**Migration**: `%APPDATA%\\Rakazo` moves on first launch.\n"
-                ),
+                )
             }
         )
         result = run_guard(root)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
 
-    def test_the_same_string_elsewhere_still_fails(self) -> None:
-        # The exemption is one file and one marker, not a shape that accepts the name anywhere.
+    def test_a_documented_old_folder_fails(self) -> None:
         root = make_tree(
             {
-                "apps/desktop/src/user-data-migration.ts": (
-                    'export const LEGACY_PRODUCT_SLUG = "Rakazo";\n'
-                ),
-                "apps/web/src/settings.tsx": '<h2>Rakazo</h2>\n',
+                "docs/MATEBOT_DEPLOY.md": (
+                    "**Migration**: `%APPDATA%\\Rakazo` moves on first launch.\n"
+                )
             }
         )
         result = run_guard(root)

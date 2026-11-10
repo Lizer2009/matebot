@@ -80,18 +80,9 @@ UPSTREAM_REPO = "https://github.com/elie222/rakazo"
 # References a migration cannot avoid: an install already has this folder, and a documented path
 # is how an operator finds it. Each entry is one file and the marker that identifies the reference,
 # so this stays a short, auditable list rather than a shape that accepts any old name.
-MIGRATION_REFERENCES = (
-    (
-        "apps/desktop/src/user-data-migration.ts",
-        "LEGACY_PRODUCT_SLUG",
-        "folder name an installed copy already uses; the app moves it on first launch",
-    ),
-    (
-        "docs/MATEBOT_DEPLOY.md",
-        "%APPDATA%\\Rakazo",
-        "documents that folder so an operator can find their existing configuration",
-    ),
-)
+# References to objects that already exist on an install cannot be renamed, but the desktop app
+# no longer reads any such path, so this list is empty rather than carrying dead entries.
+MIGRATION_REFERENCES: tuple[tuple[str, str, str], ...] = ()
 
 # A command a reader copies and runs is an instruction for this product, even when it is written
 # as prose about the upstream project: it tells them what to install.

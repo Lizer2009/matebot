@@ -102,7 +102,6 @@ import {
 } from "./setup-config.js";
 import { clearSetup, readSetup, readUiLocale, writeSetup, writeUiLocale } from "./setup-store.js";
 import { createSystemSpeech } from "./system-speech.js";
-import { resolveUserDataDir } from "./user-data-migration.js";
 import type { UserDeviceAccess } from "./user-device.js";
 import { createUserDeviceAccess, deviceName } from "./user-device.js";
 import { oauthPopupSessionPreferences, shouldOpenInAppPopup } from "./window-open.js";
@@ -168,11 +167,6 @@ markOnce("rk:main:module-evaluated");
 if (PERFORMANCE_USER_DATA) {
   app.setPath("userData", PERFORMANCE_USER_DATA);
   app.setPath("sessionData", path.join(PERFORMANCE_USER_DATA, "session"));
-} else {
-  // The display name changed from Matebot to Matebot, which moves Electron's `userData`
-  // folder. Carry a pre-rename profile over so its saved server and local stack survive.
-  const profile = resolveUserDataDir({ defaultDir: app.getPath("userData") });
-  app.setPath("userData", profile.dir);
 }
 app.once("will-finish-launching", () => markOnce("rk:main:will-finish-launching"));
 app.once("ready", () => markOnce("rk:main:ready"));

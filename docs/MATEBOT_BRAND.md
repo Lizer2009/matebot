@@ -88,9 +88,9 @@ Packaging names are set where the tooling reads them, and must stay in step:
 
 Electron names the per-user profile folder after `productName` (`%APPDATA%\Matebot` on Windows,
 `~/.config/Matebot` on Linux, `~/Library/Application Support/Matebot` on macOS), not after
-`extraMetadata.name`. That is why the migration in `user-data-migration.ts` looks for the old
-`Matebot` folder rather than the current one, and why the desktop app carries a pre-rename profile
-over on first launch instead of stranding an existing install's setup.
+`extraMetadata.name`. The desktop app uses that folder directly and does not look for a profile
+under any earlier name: a build before the rename keeps its own folder, which the operator can move
+or discard during the reinstall described in the migration guide.
 
 Names are listed in [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#环境变量命名). Everything in the
 product carries the Matebot name; what remains from upstream is credit, not identity: the licence
