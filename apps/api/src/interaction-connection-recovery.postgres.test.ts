@@ -5,7 +5,7 @@ import type { Actor } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
 import { RPCHandler } from "@orpc/server/fetch";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { markAppConnected } from "./onboarding.js";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
@@ -296,6 +296,34 @@ describePostgres("card recovery through the real connection routes", () => {
     return row;
   }
 
+  /**
+   * Everything that must be true of a recovered card, in one place.
+   *
+   * Every recovery case calls this, because "the card came back" is not the whole claim: the
+   * person's values, their provenance and the draft version have to be exactly as they were, the
+   * card must still be the same surface, and nothing may have been confirmed or sent.
+   */
+  async function expectRecovered(input: { draftVersion?: number } = {}) {
+    const block = await cardBlock();
+    expect(block).toMatchObject({ capability: "ready", template: "email-draft-card" });
+    // Same card: the block the person is looking at still points at this interaction and surface.
+    expect(block?.interactionId).toBe(interactionId);
+    expect(block?.surfaceId).toBe(surfaceId);
+
+    const row = await draft();
+    expect(row.status).toBe("collecting");
+    expect(row.draftVersion).toBe(input.draftVersion ?? 2);
+    expect(row.confirmedVersion).toBeNull();
+    expect(row.slots).toMatchObject({ to: "alex@example.test", subject: "我写的主题" });
+    const plan = row.plan as { fields: Array<{ name: string; source?: string }> };
+    expect(
+      plan.fields.filter((field) => field.source === "user").map((field) => field.name),
+    ).toEqual(["to", "subject"]);
+    // No effect row: the table the send path writes is still empty.
+    expect(await system.externalEffect.findMany({ where: { spaceId } })).toEqual([]);
+    return row;
+  }
+
   it("missing → begin → complete: the same card becomes editable and nothing is sent", async () => {
     const { provider, state, finishInBrowser } = mailboxProvider();
     const enqueued: unknown[] = [];
@@ -320,24 +348,10 @@ describePostgres("card recovery through the real connection routes", () => {
     expect((completed.json as { json: { status: string } }).json.status).toBe("connected");
 
     // The card behind the dialog, in the same message, is usable again.
-    expect(await cardBlock()).toMatchObject({
-      capability: "ready",
-      template: "email-draft-card",
-      lifecycle: "draft",
-    });
-
+    await expectRecovered();
+    expect(await cardBlock()).toMatchObject({ lifecycle: "draft" });
     const row = await draft();
-    expect(row.status).toBe("collecting");
-    // Recovery is not an edit and not a send.
-    expect(row.draftVersion).toBe(2);
-    expect(row.confirmedVersion).toBeNull();
-    expect(row.slots).toMatchObject({ to: "alex@example.test", subject: "我写的主题" });
     expect((row.slots as Record<string, unknown>).body).toBeUndefined();
-    // The person's provenance survived, so a later model edit still cannot take these.
-    const plan = row.plan as { fields: Array<{ name: string; source?: string }> };
-    expect(
-      plan.fields.filter((field) => field.source === "user").map((field) => field.name),
-    ).toEqual(["to", "subject"]);
     // Nothing ran the mailbox: no tool call, no effect row, no model turn behind the card.
     // The effect table is the database-level check — recovery cannot write one even if it tried,
     // because nothing here calls the send path that creates it.
@@ -347,7 +361,9 @@ describePostgres("card recovery through the real connection routes", () => {
   });
 
   it("does not start a model turn when the thread's card waits on another app", async () => {
-    // A calendar card is what is outstanding; connecting the mailbox is not its business.
+    // A calendar card is what is outstanding; connecting the mailbox is not its business, and
+    // the chat is not idle. The mailbox must really connect here: if it does not, `complete`
+    // returns before the resume path and this case would pass without testing anything.
     await system.interaction.update({
       where: { id: interactionId },
       data: {
@@ -361,7 +377,7 @@ describePostgres("card recovery through the real connection routes", () => {
         } as never,
       },
     });
-    const { provider } = mailboxProvider();
+    const { provider, finishInBrowser } = mailboxProvider();
     const enqueued: unknown[] = [];
     const handler = new RPCHandler(createRouter(deps(provider, enqueued)));
 
@@ -371,10 +387,15 @@ describePostgres("card recovery through the real connection routes", () => {
       displayName: "Gmail",
     });
     const connectionId = (begun.json as { json: { connectionId: string } }).json.connectionId;
-    await rpc(handler, "connections/complete", { connectionId });
+    finishInBrowser();
+    const completed = await rpc(handler, "connections/complete", { connectionId });
+    // The mailbox itself did connect; only the model turn is withheld.
+    expect((completed.json as { json: { status: string } }).json.status).toBe("connected");
 
     expect(enqueued).toEqual([]);
-    expect((await draft()).status).toBe("needs_connection");
+    const row = await draft();
+    expect(row.status).toBe("needs_connection");
+    expect(row.draftVersion).toBe(2);
   });
 
   it("revoked → begin again → complete: the card recovers without a stale state", async () => {
@@ -397,6 +418,35 @@ describePostgres("card recovery through the real connection routes", () => {
     expect(revoked.status).toBe(200);
     expect(state.calls.revoke).toBe(1);
 
+    // Revoking a mailbox does not put this card back into "waiting" by itself, and a test that
+    // forgot that would be reading the leftover "ready" from the first connect. Put the draft
+    // back in the state a person would see after the next attempt fails preflight, so the
+    // reconnect below is the thing that has to recover it.
+    await system.interaction.update({
+      where: { id: interactionId },
+      data: { status: "needs_connection", confirmedVersion: null },
+    });
+    await system.message.update({
+      where: { id: messageId },
+      data: {
+        blocks: [
+          {
+            kind: "a2ui_surface",
+            interactionId,
+            surfaceId,
+            protocolFamily: "v0_9",
+            draftVersion: 2,
+            intent: "email.compose",
+            capability: "not_connected",
+            template: "email-connection-card",
+            lifecycle: "draft",
+          },
+        ] as never,
+      },
+    });
+    expect(await cardBlock()).toMatchObject({ capability: "not_connected" });
+    expect((await draft()).status).toBe("needs_connection");
+
     // Authorizing again reuses the revoked row rather than piling up a second one.
     const again = await rpc(handler, "connections/begin", {
       connectorId: "composio",
@@ -411,12 +461,8 @@ describePostgres("card recovery through the real connection routes", () => {
     const rows = await system.connection.findMany({ where: { spaceId, userId } });
     expect(rows.filter((row) => row.provider === "gmail")).toHaveLength(1);
     expect(rows[0]?.status).toBe("connected");
-    // The card came back with the re-authorized mailbox, and the draft is still only a draft.
-    expect(await cardBlock()).toMatchObject({ capability: "ready" });
-    const row = await draft();
-    expect(row.status).toBe("collecting");
-    expect(row.confirmedVersion).toBeNull();
-    expect(row.slots).toMatchObject({ subject: "我写的主题" });
+    // The reconnect is what recovered the card, and the draft is still only a draft.
+    await expectRecovered();
   });
 
   it("reauth: a dead local row is reported as needing authorization, then recovers", async () => {
@@ -456,12 +502,11 @@ describePostgres("card recovery through the real connection routes", () => {
     state.reconnectRefs = [];
     const completed = await rpc(handler, "connections/complete", { connectionId });
     expect(completed.status).toBe(200);
-    expect(await cardBlock()).toMatchObject({ capability: "ready" });
-    expect((await draft()).status).toBe("collecting");
+    await expectRecovered();
   });
 
   it("abandoned authorization: the card stays waiting, holding the person's text", async () => {
-    const { provider, abandonInBrowser, state } = mailboxProvider();
+    const { provider, abandonInBrowser } = mailboxProvider();
     const handler = new RPCHandler(createRouter(deps(provider)));
 
     const begun = await rpc(handler, "connections/begin", {
@@ -484,8 +529,11 @@ describePostgres("card recovery through the real connection routes", () => {
     expect(row.draftVersion).toBe(2);
     expect(row.confirmedVersion).toBeNull();
     expect(row.slots).toMatchObject({ subject: "我写的主题" });
-    // And no card was resumed by a half-finished authorization.
-    expect(state.calls.begin).toBe(1);
+    // And no card was resumed by a half-finished authorization: the row is still pending, so it
+    // is not a mailbox anything could act on.
+    const rows = await system.connection.findMany({ where: { spaceId, userId } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.status).toBe("pending");
   });
 
   it("catalog reconcile resumes the waiting card too, not only the inline complete", async () => {
@@ -512,8 +560,7 @@ describePostgres("card recovery through the real connection routes", () => {
 
     const rows = await system.connection.findMany({ where: { spaceId, userId } });
     expect(rows[0]?.status).toBe("connected");
-    expect(await cardBlock()).toMatchObject({ capability: "ready" });
-    expect((await draft()).status).toBe("collecting");
+    await expectRecovered();
   });
 
   it("resumes only the connecting person's card, never another member's in the same space", async () => {
@@ -634,7 +681,223 @@ describePostgres("card recovery through the real connection routes", () => {
       threadId,
     );
 
-    expect(await cardBlock()).toMatchObject({ capability: "ready" });
-    expect((await draft()).status).toBe("collecting");
+    await expectRecovered();
+  });
+
+  it("does not pull an already-confirmed draft back to collecting", async () => {
+    // Two layers protect this: the route only looks for cards that are waiting, and the refresh
+    // itself only touches `needs_connection`. This case calls the resume directly, so it is the
+    // inner guard being tested — the route-level case below covers the outer one.
+    const { resumeInteractionAfterConnection } = await import("./interaction-resume.js");
+    await system.interaction.update({
+      where: { id: interactionId },
+      data: { status: "awaiting_approval", confirmedVersion: 2 },
+    });
+
+    const result = await resumeInteractionAfterConnection(
+      { prisma: system },
+      { actor: { spaceId, userId }, botId, threadId, provider: "gmail", appConnected: true },
+    );
+    // Nothing was waiting on this app, and no turn is started over an approved draft.
+    expect(result.refreshedInteractionIds).toEqual([]);
+    const row = await draft();
+    expect(row.status).toBe("awaiting_approval");
+    expect(row.confirmedVersion).toBe(2);
+  });
+
+  it("does not revive a cancelled card", async () => {
+    const { resumeInteractionAfterConnection } = await import("./interaction-resume.js");
+    await system.interaction.update({
+      where: { id: interactionId },
+      data: { status: "cancelled" },
+    });
+
+    const result = await resumeInteractionAfterConnection(
+      { prisma: system },
+      { actor: { spaceId, userId }, botId, threadId, provider: "gmail", appConnected: true },
+    );
+    expect(result.refreshedInteractionIds).toEqual([]);
+    expect((await draft()).status).toBe("cancelled");
+    expect(await cardBlock()).toMatchObject({ capability: "not_connected" });
+  });
+
+  it("does not revive an already-run card when its mailbox connects", async () => {
+    // The route-level version of the same guarantee: a card that succeeded stays as it is.
+    await system.interaction.update({
+      where: { id: interactionId },
+      data: { status: "succeeded" },
+    });
+    const { provider, finishInBrowser } = mailboxProvider();
+    const handler = new RPCHandler(createRouter(deps(provider)));
+    const begun = await rpc(handler, "connections/begin", {
+      connectorId: "composio",
+      provider: "gmail",
+      displayName: "Gmail",
+    });
+    const connectionId = (begun.json as { json: { connectionId: string } }).json.connectionId;
+    finishInBrowser();
+    await rpc(handler, "connections/complete", { connectionId });
+
+    const row = await draft();
+    expect(row.status).toBe("succeeded");
+  });
+
+  it("leaves a card in another space alone, even when the thread is the one resuming", async () => {
+    // The refresh query takes the space and the thread together. A card in a different space is
+    // not this person's, whatever its thread id says.
+    const otherSpaceId = `space-${randomUUID()}`;
+    const otherOrgId = `org-${otherSpaceId}`;
+    const otherThreadId = `thread-${randomUUID()}`;
+    const otherInteractionId = `ix-${randomUUID()}`;
+    const otherBotId = `bot-${randomUUID()}`;
+    await system.organization.create({
+      data: { id: otherOrgId, name: otherOrgId, slug: otherOrgId, createdAt: new Date() },
+    });
+    await system.space.create({
+      data: { id: otherSpaceId, organizationId: otherOrgId, name: "other" },
+    });
+    await system.bot.create({
+      data: { id: otherBotId, spaceId: otherSpaceId, userId, name: "Other", color: "#111111" },
+    });
+    await system.thread.create({
+      data: { id: otherThreadId, spaceId: otherSpaceId, userId, botId: otherBotId },
+    });
+    await system.interaction.create({
+      data: {
+        id: otherInteractionId,
+        spaceId: otherSpaceId,
+        threadId: otherThreadId,
+        intent: "email.compose",
+        status: "needs_connection",
+        draftVersion: 1,
+        plan: {
+          intent: "email.compose",
+          title: "别处",
+          fields: [{ name: "subject", value: "别处的主题", required: true, status: "resolved" }],
+          nextStep: "render",
+          riskLevel: "medium",
+        } as never,
+        slots: { subject: "别处的主题" } as never,
+      },
+    });
+
+    const { provider, finishInBrowser } = mailboxProvider();
+    const handler = new RPCHandler(createRouter(deps(provider)));
+    const begun = await rpc(handler, "connections/begin", {
+      connectorId: "composio",
+      provider: "gmail",
+      displayName: "Gmail",
+    });
+    const connectionId = (begun.json as { json: { connectionId: string } }).json.connectionId;
+    finishInBrowser();
+    await rpc(handler, "connections/complete", { connectionId });
+
+    // This person's card in this space recovered; the other space's did not move.
+    await expectRecovered();
+    const theirs = await getInteraction(system, otherInteractionId);
+    expect(theirs?.status).toBe("needs_connection");
+
+    await system.interaction.deleteMany({ where: { id: otherInteractionId } });
+    await system.thread.deleteMany({ where: { id: otherThreadId } });
+    await system.bot.deleteMany({ where: { id: otherBotId } });
+    await system.space.deleteMany({ where: { id: otherSpaceId } });
+    await system.organization.deleteMany({ where: { id: otherOrgId } });
+  });
+
+  it("leaves the card untouched when the authorization is refused by the provider", async () => {
+    // `begin` failing is the other way a connection does not happen. The row is marked error and
+    // the card keeps its values; nothing is resumed off a half-finished authorization.
+    const { provider, state } = mailboxProvider();
+    const handler = new RPCHandler(createRouter(deps(provider)));
+    const refused = new RPCHandler(
+      createRouter(
+        deps({
+          ...provider,
+          begin: async () => {
+            state.calls.begin += 1;
+            throw new Error("provider refused the authorization");
+          },
+        } as unknown as ManagedConnectorProvider),
+      ),
+    );
+
+    const response = await rpc(refused, "connections/begin", {
+      connectorId: "composio",
+      provider: "gmail",
+      displayName: "Gmail",
+    });
+    expect(response.status).not.toBe(200);
+
+    // The card is exactly as it was, and the failed row did not become a usable mailbox.
+    const row = await draft();
+    expect(row.status).toBe("needs_connection");
+    expect(row.draftVersion).toBe(2);
+    expect(row.slots).toMatchObject({ subject: "我写的主题" });
+    expect(await cardBlock()).toMatchObject({ capability: "not_connected" });
+    const rows = await system.connection.findMany({ where: { spaceId, userId } });
+    expect(rows.every((entry) => entry.status !== "connected")).toBe(true);
+    void handler;
+  });
+
+  it("does not refresh a card when the space and the thread disagree", async () => {
+    // `refreshWaitingInteractions` takes the space and the thread together. Thread ids are
+    // unique, so this needs a deliberately mismatched call to observe — which is the point:
+    // the query must not trust its caller to have matched them.
+    const { resumeInteractionAfterConnection } = await import("./interaction-resume.js");
+    const elsewhere = `space-${randomUUID()}`;
+    const result = await resumeInteractionAfterConnection(
+      { prisma: system },
+      {
+        actor: { spaceId: elsewhere, userId },
+        botId,
+        threadId,
+        provider: "gmail",
+        appConnected: true,
+      },
+    );
+    expect(result.refreshedInteractionIds).toEqual([]);
+    // The card in its real space was not touched by a call that named another one.
+    expect(await cardBlock()).toMatchObject({ capability: "not_connected" });
+    expect((await draft()).status).toBe("needs_connection");
+  });
+
+  it("keeps the card intact when the resume itself fails", async () => {
+    // Both resume callers swallow the error and log a warning, on the claim that the card simply
+    // stays as it is. That claim is what this pins: a broken resume must not corrupt the draft,
+    // and must not leave it half-moved.
+    const { provider, finishInBrowser } = mailboxProvider();
+    const handler = new RPCHandler(createRouter(deps(provider)));
+
+    const begun = await rpc(handler, "connections/begin", {
+      connectorId: "composio",
+      provider: "gmail",
+      displayName: "Gmail",
+    });
+    const connectionId = (begun.json as { json: { connectionId: string } }).json.connectionId;
+    finishInBrowser();
+
+    // The resume's own reads are what fail. Only the queries that look for waiting cards throw,
+    // so the connection itself still settles and the failure lands where the catch expects it.
+    const real = system.interaction.findMany.bind(system.interaction);
+    const spy = vi.spyOn(system.interaction, "findMany").mockImplementation((async (args: {
+      where?: { status?: unknown };
+    }) => {
+      if (args?.where?.status === "needs_connection") throw new Error("resume read failed");
+      return real(args as never);
+    }) as never);
+
+    const completed = await rpc(handler, "connections/complete", { connectionId });
+    // The mailbox still connected; only the resume failed.
+    expect(completed.status).toBe(200);
+    expect((completed.json as { json: { status: string } }).json.status).toBe("connected");
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+
+    const row = await draft();
+    expect(row.status).toBe("needs_connection");
+    expect(row.draftVersion).toBe(2);
+    expect(row.slots).toMatchObject({ to: "alex@example.test", subject: "我写的主题" });
+    expect(row.confirmedVersion).toBeNull();
+    expect(await system.externalEffect.findMany({ where: { spaceId } })).toEqual([]);
   });
 });
