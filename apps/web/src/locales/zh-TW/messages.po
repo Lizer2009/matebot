@@ -1770,6 +1770,10 @@ msgstr "已連線"
 msgid "Connected {0}."
 msgstr "已連線 {0}。"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Connected account"
+msgstr ""
+
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -2981,6 +2985,10 @@ msgstr "編輯資料"
 #: src/pages/Auth.tsx
 msgid "Email"
 msgstr "電子信箱"
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Email address not provided"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"

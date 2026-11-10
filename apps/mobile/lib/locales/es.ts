@@ -1319,6 +1319,8 @@ export const ES_MESSAGES: Record<string, string> = {
   "Needs approval": "Necesita aprobación",
   Discard: "Descartar",
   Discarded: "Descartado",
+  "Connected account": "Cuenta conectada",
+  "Email address not provided": "Dirección de correo no indicada",
   From: "De",
   CC: "CC",
   "Confirm this draft before sending.": "Confirma este borrador antes de enviarlo.",

@@ -248,4 +248,26 @@ describe("resumeInteractionAfterConnection", () => {
     });
     expect(result.refreshedInteractionIds).toEqual([]);
   });
+
+  it("starts nothing when the thread's outstanding card waits on another app", async () => {
+    // The person connected their mailbox in a chat whose only unfinished card is waiting for the
+    // calendar. No card was refreshed here, but that does not mean the chat was idle: a model
+    // turn would ask for an email draft the person never abandoned, and would compete with the
+    // calendar card still on screen waiting for its own connection.
+    const f = fixture({
+      interactions: [
+        { id: "ix-cal", intent: "calendar.create", status: "needs_connection", draftVersion: 1 },
+      ],
+    });
+    const result = await resumeInteractionAfterConnection(f.deps, {
+      actor,
+      botId: "bot-1",
+      threadId: "thread-1",
+      provider: "gmail",
+      appConnected: true,
+    });
+    expect(result).toEqual({ refreshedInteractionIds: [], queuedRunId: null });
+    expect(f.createdRuns).toEqual([]);
+    expect(f.enqueued).toEqual([]);
+  });
 });

@@ -93,6 +93,20 @@ function harness() {
       // A published surface counts as first feedback, so the event write records it.
       updateMany: async () => ({ count: 1 }),
     },
+    // A connected mailbox, so the capability stamp the correction reports is a real one rather
+    // than an empty object from a lookup that failed.
+    connection: {
+      findMany: async () => [
+        {
+          id: "conn-1",
+          connectorId: "composio",
+          provider: "gmail",
+          displayName: "Gmail",
+          status: "connected",
+          providerRef: "acct-1",
+        },
+      ],
+    },
     event: { create: async () => ({ id: "e", seq: 1 }) },
     $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),
     $executeRaw: async () => undefined,
@@ -136,6 +150,51 @@ describe("correcting an executed record", () => {
     expect(h.written[0]).toMatchObject({ status: "ready_for_review" });
     const plan = h.written[0]?.plan as { fields: Array<{ name: string; value: unknown }> };
     expect(plan.fields.find((field) => field.name === "subject")?.value).toBe("Corrected");
+  });
+
+  it("describes the new draft from what was stored, including the value it is missing", async () => {
+    // A correction that leaves a required value out must not be reported as complete. This is the
+    // readback the amendment returns, and it has to come from the stored plan rather than from
+    // the fields the model asked to change — those are the same words the old card used.
+    const h = harness();
+    const result = await editInteraction(
+      h.ctx,
+      { interactionId: "ix-done", revision: 4, fields: { subject: "" } },
+      servicesFor(h.ctx),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error);
+    // An empty subject is stored empty, so the readback names it as the gap.
+    expect(result.fields?.find((field: { name: string }) => field.name === "subject")?.filled).toBe(
+      false,
+    );
+    expect(result.missingRequired).toContain("subject");
+    expect(result.actionable).toBe(false);
+    expect(result.blockedBy).toContain("subject");
+    // A correction is never actionable on its own: its confirmation belongs to the new card.
+    expect(result.confirmationInvalidated).toBe(true);
+  });
+
+  it("publishes the mailbox stamp it reports, so the card and the result agree", async () => {
+    // The correction's readback names a capability and a sender. If the draft it published
+    // carried neither, the card on screen would contradict the sentence the model was given.
+    const h = harness();
+    const seen: Array<Record<string, unknown>> = [];
+    const services = servicesFor(h.ctx);
+    const result = await editInteraction(
+      h.ctx,
+      { interactionId: "ix-done", revision: 4, fields: { subject: "Corrected" } },
+      {
+        ...services,
+        publishAmendment: async (input) => {
+          seen.push(input as unknown as Record<string, unknown>);
+          return services.publishAmendment!(input);
+        },
+      },
+    );
+    expect(result.ok).toBe(true);
+    // The stamp reaches the publisher, which is what puts it on the block.
+    expect(seen[0]?.capabilityStamp).toEqual({ capability: "ready", senderLabel: "Gmail" });
   });
 
   it("says the correction still needs its own confirmation", async () => {

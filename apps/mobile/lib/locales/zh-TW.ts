@@ -1373,6 +1373,8 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Needs approval": "需要批准",
   Discard: "捨棄",
   Discarded: "已捨棄",
+  "Connected account": "已連接的帳號",
+  "Email address not provided": "未提供電子郵件地址",
   From: "寄件人",
   CC: "副本",
   "Confirm this draft before sending.": "傳送前請確認此草稿。",

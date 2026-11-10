@@ -284,6 +284,22 @@ describe("native A2UI surface", () => {
       />,
     );
     expect(text("a2ui-email-status")).toBe("Not connected");
+    // The card is asking for a mailbox, so it must not also name one.
+    expect(document.querySelector('[data-testid="a2ui-email-sender"]')).toBeNull();
+  });
+
+  it("shows the sending account as a read-only row, never as an address", () => {
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, capability: "ready", senderLabel: "Gmail" }}
+        onSend={vi.fn(async () => undefined)}
+      />,
+    );
+    expect(text("a2ui-email-sender")).toBe("Gmail");
+    // The connection's name is whatever the client called it; the mailbox is not in the record.
+    expect(text("a2ui-email-sender-note")).toBe("Email address not provided");
+    // Read-only: the sending mailbox is not one of the form's inputs.
+    expect(document.querySelector('input[aria-label="From"]')).toBeNull();
   });
 
   it("shows progress without Send", () => {

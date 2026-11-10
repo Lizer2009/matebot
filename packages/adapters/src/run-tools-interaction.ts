@@ -18,12 +18,22 @@ import {
   loadProviderReadiness,
 } from "./interaction-email-capability.js";
 import { publishInteractionSurface } from "./interaction-publish.js";
+import type { DraftSender } from "./interaction-readback.js";
+import { describeDraftForModel } from "./interaction-readback.js";
 import type { RunContext } from "./run-context.js";
 import { runLeaseFor } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 
 const EMAIL_REQUIRED_FIELDS = ["to", "subject", "body"] as const;
-const EMAIL_OPTIONAL_FIELDS = ["from", "cc"] as const;
+/**
+ * Fields the card lets a person fill.
+ *
+ * `from` is deliberately absent. The sending mailbox is decided by the connection, and the card
+ * shows it as a read-only row, so a `from` field would be a control that does nothing — and a
+ * readback that reported it would tell the model the card has a field nobody can edit. Older
+ * rows may still carry one; readers keep tolerating it.
+ */
+const EMAIL_OPTIONAL_FIELDS = ["cc"] as const;
 
 /** A calendar draft needs a name; its entries are optional in the first pass. */
 /**
@@ -139,6 +149,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
   });
 
   try {
+    const capabilityStamp = await interactionPublishCapability(ctx, plan);
     const published = await publishInteractionSurface(deps.prisma, {
       spaceId: run.spaceId,
       threadId: run.threadId,
@@ -146,11 +157,33 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       runId: run.id,
       plan,
       lease: runLeaseFor(deps, run.id),
-      ...(await interactionPublishCapability(ctx, plan)),
+      // The stamp carries the connection's label for the card's read-only row; the publisher
+      // only accepts the label, because an address is not something it can vouch for.
+      ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),
+      ...(capabilityStamp.status ? { status: capabilityStamp.status } : {}),
+      ...(capabilityStamp.sender ? { senderLabel: capabilityStamp.sender.label } : {}),
     });
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
     });
+    // What the card actually became, so the next sentence is written from the card rather than
+    // from the plan this turn submitted. That substitution is what produced "the recipient,
+    // subject and body are filled in" over a card with no controls. A publisher that cannot
+    // report what it stored simply contributes no readback rather than failing the turn.
+    const readback = published.plan
+      ? describeDraftForModel({
+          plan: published.plan,
+          slots: published.slots ?? {},
+          draftVersion: published.draftVersion,
+          ...(published.capability ? { capability: published.capability } : {}),
+          ...(capabilityStamp.sender ? { sender: capabilityStamp.sender } : {}),
+        })
+      : undefined;
+    // One list of empty required fields. The readback derives it from the stored slots and the
+    // declared fields, which is what the confirm gate reads; the publisher's own list is only a
+    // fallback for a card whose readback could not be built. Two keys of the same name in one
+    // result would let the later one silently win.
+    const missingRequired = readback?.missingRequired ?? published.missingRequired ?? [];
     return {
       interactionId: published.interactionId,
       surfaceId: published.surfaceId,
@@ -164,16 +197,24 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
        */
       revision: published.draftVersion,
       ...(published.capability ? { capability: published.capability } : {}),
+      ...(readback
+        ? {
+            fields: readback.fields,
+            missingRequired,
+            actionable: readback.actionable,
+            blockedBy: readback.blockedBy,
+            ...(readback.sender ? { sender: readback.sender } : {}),
+          }
+        : {}),
       /**
        * The declared required fields still empty. The card is published and every field is
        * editable, so this is not a failure — but a reply that calls the draft complete while
        * this list is non-empty is exactly the misreport the field audit found, so the model is
        * given the list and told what it means.
        */
-      ...(published.missingRequired?.length
+      ...(missingRequired.length
         ? {
-            missingRequired: published.missingRequired,
-            notice: `The card is on screen with ${published.missingRequired.join(", ")} still empty. Tell the user which fields need a value; do not say the draft is complete.`,
+            notice: `The card is on screen with ${missingRequired.join(", ")} still empty. Tell the user which fields need a value; do not say the draft is complete.`,
           }
         : {}),
       /** The only words the turn should add; the card holds everything else. */
@@ -186,11 +227,20 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
   }
 }
 
-/** Stamp the app's three-state so the card knows whether it can act yet. */
-async function interactionPublishCapability(
+/**
+ * Stamp the app's three-state so the card knows whether it can act yet.
+ *
+ * Only the intent decides this, so that is all it asks for. Callers that hold a full stored plan
+ * pass it; callers that only know the intent do not have to invent a plan-shaped object.
+ */
+export async function interactionPublishCapability(
   ctx: RunContext,
-  plan: InteractionPlan,
-): Promise<{ capability?: EmailSurfaceCapability; status?: InteractionLifecycleStatus }> {
+  plan: { intent: string },
+): Promise<{
+  capability?: EmailSurfaceCapability;
+  status?: InteractionLifecycleStatus;
+  sender?: DraftSender;
+}> {
   const app = interactionRequiredApp(plan.intent);
   if (!app) return {};
   const userId = ctx.context?.userId;
@@ -218,6 +268,10 @@ async function interactionPublishCapability(
   return {
     capability: snapshot.surfaceCapability,
     ...(snapshot.interactionNeedsConnection ? { status: "needs_connection" as const } : {}),
+    // The connection's own label, never a claim about the sending address: `displayName` is
+    // whatever the client passed when the connection was created (often the card's title), so
+    // an address is only offered when the server actually learned one from the provider.
+    ...(snapshot.connection ? { sender: { label: snapshot.connection.displayName } } : {}),
   };
 }
 

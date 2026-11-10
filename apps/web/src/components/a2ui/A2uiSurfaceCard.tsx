@@ -100,6 +100,7 @@ export function A2uiSurfaceCard({
             providerMessageId={block.providerMessageId}
             error={block.error}
             fields={emailFieldsFromSurfaceMessages(document.messages)}
+            {...(block.senderLabel ? { senderLabel: block.senderLabel } : {})}
             onFieldChange={onFieldChange}
             onConfirm={onConfirm}
             onSend={onSend}

@@ -52,7 +52,13 @@ type ResumeDeps = {
   };
 };
 
-/** Flip every surface waiting on this app back to an editable draft. */
+/**
+ * Flip every surface waiting on this app back to an editable draft.
+ *
+ * Also reports whether the thread has a card waiting on some *other* app. That is not this
+ * connection's business, and it means the chat is not idle: a model turn here would ask for a
+ * draft the person never abandoned, next to a card still waiting for its own app.
+ */
 async function refreshWaitingInteractions(
   tx: Prisma.TransactionClient,
   input: {
@@ -61,9 +67,11 @@ async function refreshWaitingInteractions(
     botId: string;
     app: InteractionRequiredApp;
   },
-): Promise<string[]> {
+): Promise<{ refreshed: string[]; waitingOnAnotherApp: boolean }> {
   const rows = await tx.interaction.findMany({
-    where: { threadId: input.threadId, status: "needs_connection" },
+    // Space and thread together: a thread id is unique, but the scope belongs in the query that
+    // writes, so a mistake upstream cannot let one space refresh another's card.
+    where: { spaceId: input.spaceId, threadId: input.threadId, status: "needs_connection" },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
@@ -83,8 +91,14 @@ async function refreshWaitingInteractions(
     },
   });
   const refreshed: string[] = [];
+  let waitingOnAnotherApp = false;
   for (const row of rows) {
-    if (interactionRequiredApp(row.intent) !== input.app) continue;
+    if (interactionRequiredApp(row.intent) !== input.app) {
+      // A card that waits on a different app is not a reason to start a turn, but it does mean
+      // the chat already holds unfinished work.
+      if (interactionRequiredApp(row.intent) !== undefined) waitingOnAnotherApp = true;
+      continue;
+    }
     const surface = row.surfaces[0];
     if (!surface) continue;
     const plan = row.plan as InteractionPlan;
@@ -139,7 +153,7 @@ async function refreshWaitingInteractions(
     });
     refreshed.push(row.id);
   }
-  return refreshed;
+  return { refreshed, waitingOnAnotherApp };
 }
 
 /** Queue one hidden-prompt run, unless the bot is already busy or gone from the chat. */
@@ -208,14 +222,17 @@ export async function resumeInteractionAfterConnection(
   if (!app || !input.appConnected) return { refreshedInteractionIds: [], queuedRunId: null };
   const committed = await deps.prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
-    const refreshed = await refreshWaitingInteractions(tx, {
+    const outcome = await refreshWaitingInteractions(tx, {
       spaceId: input.actor.spaceId,
       threadId: input.threadId,
       botId: input.botId,
       app,
     });
     // The refreshed card is already the next step; another run would only duplicate it.
-    if (refreshed.length > 0) return { refreshed, runId: null };
+    if (outcome.refreshed.length > 0) return { refreshed: outcome.refreshed, runId: null };
+    // Nothing of this app's was waiting, but the chat is not idle: a card is still on screen
+    // waiting for its own app. Starting a turn now would ask for a second draft beside it.
+    if (outcome.waitingOnAnotherApp) return { refreshed: outcome.refreshed, runId: null };
     const runId = await queueResumeRun(tx, {
       spaceId: input.actor.spaceId,
       userId: input.actor.userId,
@@ -223,7 +240,7 @@ export async function resumeInteractionAfterConnection(
       threadId: input.threadId,
       prompt: interactionResumePrompt({ app, provider: input.provider }),
     });
-    return { refreshed, runId };
+    return { refreshed: outcome.refreshed, runId };
   });
   if (committed.runId) {
     try {

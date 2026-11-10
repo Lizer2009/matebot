@@ -74,6 +74,7 @@ void compileInteractionPlan({ plan, surfaceId: "fixture-missing-field", schema }
                   template: "email-draft-card",
                   lifecycle: "draft",
                   capability: "ready",
+                  senderLabel: params.get("sender") ?? "Gmail · alex@example.test",
                 } as never
               }
               messages={compiled.messages as never}

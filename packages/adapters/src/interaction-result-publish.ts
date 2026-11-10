@@ -2,6 +2,7 @@ import type { InteractionPlan, MessageBlock, ResultSurface } from "@matebot/cont
 import { a2uiSurfaceDocumentRef, ResultSurfaceSchema } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { senderLabelFromBlock } from "./interaction-publish.js";
 
 /**
  * Publishing a result surface.
@@ -238,6 +239,14 @@ export async function republishResultSurface(
         },
         update: { document: compiled.messages as never, draftVersion: nextVersion },
       });
+      // An in-place result update keeps the connection's label: the card is the same card, and
+      // rebuilding it here would blank the sender row the moment the result arrives.
+      const existingBlocks = existing.messageId
+        ? ((await tx.message.findUnique({ where: { id: existing.messageId } }))?.blocks as
+            | MessageBlock[]
+            | undefined)
+        : undefined;
+      const keptSenderLabel = senderLabelFromBlock(existingBlocks, surfaceRow.surfaceId);
       const block: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: existing.id,
@@ -253,6 +262,7 @@ export async function republishResultSurface(
         }),
         template: "action-result-success",
         lifecycle: "succeeded",
+        ...(keptSenderLabel ? { senderLabel: keptSenderLabel } : {}),
       };
       if (existing.messageId) {
         const message = await tx.message.findUnique({ where: { id: existing.messageId } });

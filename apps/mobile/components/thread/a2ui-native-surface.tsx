@@ -226,12 +226,24 @@ export function A2uiNativeSurface({
           <Text testID="a2ui-email-provider-id">{block.providerMessageId}</Text>
         ) : null}
         <A2uiSheet label={title}>
-          <A2uiTextField
-            label={t("From")}
-            value={values.from}
-            testID="a2ui-email-from"
-            onChangeText={setField("from")}
-          />
+          {/*
+            The sending mailbox is decided by the connected account, not by this form, so it is
+            read-only here. It only appears when a mailbox is available, matching the web card:
+            on a connection card, naming an account would contradict the card asking for one.
+          */}
+          {mailbox === "ready" ? (
+            <View style={{ gap: 2 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Text style={{ fontSize: 13, opacity: 0.6 }}>{t("From")}</Text>
+                <Text testID="a2ui-email-sender" style={{ fontSize: 15 }}>
+                  {block.senderLabel ?? t("Connected account")}
+                </Text>
+              </View>
+              <Text testID="a2ui-email-sender-note" style={{ fontSize: 12, opacity: 0.6 }}>
+                {t("Email address not provided")}
+              </Text>
+            </View>
+          ) : null}
           <A2uiTextField
             label={t("To")}
             value={values.to}

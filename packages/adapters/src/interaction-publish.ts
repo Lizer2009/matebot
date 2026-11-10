@@ -96,7 +96,46 @@ export type PublishInteractionSurfaceInput = {
    * a record that already ran; the original row is never rewritten.
    */
   amendsInteractionId?: string;
+  /** The connection's own label, shown read-only on the card. Never an address. */
+  senderLabel?: string;
 };
+
+/**
+ * The longest sender label a block can carry.
+ *
+ * The connection row accepts any string at connect time, and the label shown on the card is
+ * often a title the model wrote. A value past this bound would make the stored block fail to
+ * parse on read, which loses the whole card rather than one line of it.
+ */
+const MAX_SENDER_LABEL_LENGTH = 80;
+
+/** The label as the block may carry it: trimmed, and empty when it would not fit. */
+function senderLabelForBlock(label: string | undefined): string | undefined {
+  const trimmed = label?.trim();
+  if (!trimmed || trimmed.length > MAX_SENDER_LABEL_LENGTH) return undefined;
+  return trimmed;
+}
+
+/**
+ * Carry the sender label over when a card is rewritten in place.
+ *
+ * Every in-place rewrite rebuilds the block from its new stamps, so a rebuild that does not copy
+ * this drops the card's read-only "sending from" row — it blanks out after a confirm, an execute
+ * or a progress update, not just after an edit. The label never changes as a card moves through
+ * its lifecycle, so the block being replaced is always the right source.
+ */
+export function senderLabelFromBlock(
+  blocks: MessageBlock[] | undefined,
+  surfaceId: string | undefined,
+): string | undefined {
+  if (!blocks) return undefined;
+  for (const entry of blocks) {
+    if (entry.kind !== "a2ui_surface") continue;
+    if (surfaceId && entry.surfaceId !== surfaceId) continue;
+    if (entry.senderLabel) return entry.senderLabel;
+  }
+  return undefined;
+}
 
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
 export async function publishInteractionSurface(
@@ -112,9 +151,13 @@ export async function publishInteractionSurface(
   capability?: EmailSurfaceCapability;
   /** Declared required fields with no value yet; the card is published and editable. */
   missingRequired: string[];
+  /** The plan and slots as stored, for describing the card that was created. */
+  plan: InteractionPlan;
+  slots: Record<string, unknown>;
 }> {
   const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
+  const senderLabel = senderLabelForBlock(input.senderLabel);
   const stamps = emailIntent
     ? emailSurfaceBlockFields({
         intent: input.plan.intent,
@@ -166,6 +209,9 @@ export async function publishInteractionSurface(
         summary: input.plan.summary,
         documentRef,
         ...(input.amendsInteractionId ? { amendsInteractionId: input.amendsInteractionId } : {}),
+        // The connection's own label for the card's read-only "sending from" row. Not an
+        // address, and never editable: the mailbox is decided by the connection.
+        ...(senderLabel ? { senderLabel } : {}),
         ...stamps,
       };
       const message = await createThreadMessageInTransaction(tx, {
@@ -247,6 +293,10 @@ export async function publishInteractionSurface(
         eventSeq: surfaceEvent.seq,
         ...(input.capability ? { capability: input.capability } : {}),
         missingRequired: compiled.missingRequired,
+        // What was stored, so the caller can describe the card it actually created rather than
+        // the plan it submitted.
+        plan: reconciledPlan,
+        slots,
       };
     }),
   );
