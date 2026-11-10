@@ -338,8 +338,11 @@ describePostgres("card recovery through the real connection routes", () => {
     expect(
       plan.fields.filter((field) => field.source === "user").map((field) => field.name),
     ).toEqual(["to", "subject"]);
-    // Nothing ran the mailbox: no tool call, no model turn behind the refreshed card.
+    // Nothing ran the mailbox: no tool call, no effect row, no model turn behind the card.
+    // The effect table is the database-level check — recovery cannot write one even if it tried,
+    // because nothing here calls the send path that creates it.
     expect(state.executed).toEqual([]);
+    expect(await system.externalEffect.findMany({ where: { spaceId } })).toEqual([]);
     expect(enqueued).toEqual([]);
   });
 
