@@ -89,7 +89,7 @@ test("an admin reviews plugin submissions from the emailed admin link", async ({
   await expect(rows).toHaveCount(3);
   await expect(rows.first()).toContainText("github.com/example/planning-notes");
   const claim = panel.getByRole("listitem", { name: "Acme Tickets" });
-  await expect(claim).toContainText("rakazo.com/integrations/acme-tickets");
+  await expect(claim).toContainText("test.matebot.dev/integrations/acme-tickets");
   await expect(claim.getByRole("button", { name: "Testing" })).toHaveCount(0);
   await expect(rows.first()).toContainText("maker@example.test");
   await rows.first().getByRole("button", { name: "Testing" }).click();
