@@ -1,4 +1,5 @@
 import type { InteractionPlan } from "@matebot/contracts";
+import { MessageBlock as MessageBlockSchema } from "@matebot/contracts";
 import {
   confirmInteractionDraftState,
   interactionSlotsFromPlan,
@@ -537,6 +538,29 @@ describe("the card carries the connection's label, never an address", () => {
       blocks: Array<Record<string, unknown>>;
     };
     expect(block.blocks[0]).not.toHaveProperty("senderLabel");
+  });
+
+  it("drops a label too long for a block instead of storing one that cannot be read", async () => {
+    // The connection row takes any label, and this one is often a title the model wrote. A block
+    // holding it verbatim would fail to parse on the way out and take the whole card with it.
+    await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      capability: "ready",
+      senderLabel: "很长".repeat(60),
+    });
+    const block = createThreadMessageInTransaction.mock.calls.at(-1)?.[1] as {
+      blocks: Array<Record<string, unknown>>;
+    };
+    expect(block.blocks[0]).not.toHaveProperty("senderLabel");
+    // The card itself is still a valid block, so the draft does not disappear with the label.
+    expect(MessageBlockSchema.safeParse(block.blocks[0]).success).toBe(true);
   });
 });
 

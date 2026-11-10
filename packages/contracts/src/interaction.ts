@@ -138,6 +138,10 @@ export const A2uiSurfaceBlockSchema = z.object({
    * when it was created, so it can be a nickname. The card shows it as "sending from", never as
    * the mailbox address, and never as something the person can edit — the address is decided by
    * the connected mailbox.
+   *
+   * Bounded like the connection label itself. The connection row accepts any string at connect
+   * time, and a title the model wrote can be long; a stored block that broke this bound would
+   * fail to parse on the way out, taking the whole card with it.
    */
   senderLabel: z.string().trim().min(1).max(80).optional(),
   /**

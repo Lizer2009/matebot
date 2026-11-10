@@ -100,6 +100,22 @@ export type PublishInteractionSurfaceInput = {
   senderLabel?: string;
 };
 
+/**
+ * The longest sender label a block can carry.
+ *
+ * The connection row accepts any string at connect time, and the label shown on the card is
+ * often a title the model wrote. A value past this bound would make the stored block fail to
+ * parse on read, which loses the whole card rather than one line of it.
+ */
+const MAX_SENDER_LABEL_LENGTH = 80;
+
+/** The label as the block may carry it: trimmed, and empty when it would not fit. */
+function senderLabelForBlock(label: string | undefined): string | undefined {
+  const trimmed = label?.trim();
+  if (!trimmed || trimmed.length > MAX_SENDER_LABEL_LENGTH) return undefined;
+  return trimmed;
+}
+
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
 export async function publishInteractionSurface(
   prisma: PrismaClient,
@@ -120,6 +136,7 @@ export async function publishInteractionSurface(
 }> {
   const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
+  const senderLabel = senderLabelForBlock(input.senderLabel);
   const stamps = emailIntent
     ? emailSurfaceBlockFields({
         intent: input.plan.intent,
@@ -173,7 +190,7 @@ export async function publishInteractionSurface(
         ...(input.amendsInteractionId ? { amendsInteractionId: input.amendsInteractionId } : {}),
         // The connection's own label for the card's read-only "sending from" row. Not an
         // address, and never editable: the mailbox is decided by the connection.
-        ...(input.senderLabel ? { senderLabel: input.senderLabel } : {}),
+        ...(senderLabel ? { senderLabel } : {}),
         ...stamps,
       };
       const message = await createThreadMessageInTransaction(tx, {
