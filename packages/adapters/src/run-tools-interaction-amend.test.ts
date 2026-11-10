@@ -138,6 +138,29 @@ describe("correcting an executed record", () => {
     expect(plan.fields.find((field) => field.name === "subject")?.value).toBe("Corrected");
   });
 
+  it("describes the new draft from what was stored, including the value it is missing", async () => {
+    // A correction that leaves a required value out must not be reported as complete. This is the
+    // readback the amendment returns, and it has to come from the stored plan rather than from
+    // the fields the model asked to change — those are the same words the old card used.
+    const h = harness();
+    const result = await editInteraction(
+      h.ctx,
+      { interactionId: "ix-done", revision: 4, fields: { subject: "" } },
+      servicesFor(h.ctx),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error);
+    // An empty subject is stored empty, so the readback names it as the gap.
+    expect(result.fields?.find((field: { name: string }) => field.name === "subject")?.filled).toBe(
+      false,
+    );
+    expect(result.missingRequired).toContain("subject");
+    expect(result.actionable).toBe(false);
+    expect(result.blockedBy).toContain("subject");
+    // A correction is never actionable on its own: its confirmation belongs to the new card.
+    expect(result.confirmationInvalidated).toBe(true);
+  });
+
   it("says the correction still needs its own confirmation", async () => {
     const h = harness();
     const result = await editInteraction(

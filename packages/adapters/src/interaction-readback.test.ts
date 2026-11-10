@@ -111,13 +111,21 @@ describe("describeDraftForModel", () => {
   it("never echoes a connection reference or provider identifier", () => {
     // The person can read the recipient off the card; they cannot read a providerRef, and a
     // model that repeats one puts it in the transcript.
+    //
+    // The values are in the plan's own fields, not just in slots: reconciliation appends a field
+    // the schema does not declare to `plan.fields`, so a plan is where such a value actually
+    // travels. Putting it in `slots` alone would test nothing, because the field list never reads
+    // slots by a name the plan does not mention.
     const readback = describeDraftForModel({
-      plan: EMAIL_PLAN,
-      slots: {
-        to: "a@example.test",
-        providerRef: "ca_live_abc123",
-        connectionId: "conn-9",
+      plan: {
+        ...EMAIL_PLAN,
+        fields: [
+          ...EMAIL_PLAN.fields,
+          { name: "providerRef", value: "ca_live_abc123", required: false, status: "resolved" },
+          { name: "connectionId", value: "conn-9", required: false, status: "resolved" },
+        ],
       },
+      slots: { to: "a@example.test", providerRef: "ca_live_abc123", connectionId: "conn-9" },
       draftVersion: 1,
       capability: "ready",
     });
@@ -126,6 +134,46 @@ describe("describeDraftForModel", () => {
     expect(serialised).not.toContain("conn-9");
     // And they are not presented as fields the card shows.
     expect(readback.fields.map((field) => field.name)).toEqual(["to", "cc", "subject", "body"]);
+  });
+
+  it("does not describe a settled card as actionable, whatever its fields say", () => {
+    // A cancelled or finished card cannot be confirmed again. Telling the model it can sends it
+    // back to instructing the person to press a button that will refuse.
+    const complete = { to: "a@example.test", subject: "s", body: "b" };
+    for (const lifecycle of ["succeeded", "failed", "unknown", "cancelled"]) {
+      const readback = describeDraftForModel({
+        plan: EMAIL_PLAN,
+        slots: complete,
+        draftVersion: 1,
+        capability: "ready",
+        lifecycle,
+      });
+      expect(readback.actionable, lifecycle).toBe(false);
+      expect(readback.blockedBy, lifecycle).toContain("lifecycle");
+    }
+    // The same holds when only the interaction status says so.
+    for (const interactionStatus of ["cancelled", "executing", "succeeded", "unknown", "failed"]) {
+      const readback = describeDraftForModel({
+        plan: EMAIL_PLAN,
+        slots: complete,
+        draftVersion: 1,
+        capability: "ready",
+        interactionStatus,
+      });
+      expect(readback.actionable, interactionStatus).toBe(false);
+      expect(readback.blockedBy, interactionStatus).toContain("lifecycle");
+    }
+    // A live draft with every value present is still actionable, so the check is not just "never".
+    const live = describeDraftForModel({
+      plan: EMAIL_PLAN,
+      slots: complete,
+      draftVersion: 1,
+      capability: "ready",
+      lifecycle: "draft",
+      interactionStatus: "ready_for_review",
+    });
+    expect(live.actionable).toBe(true);
+    expect(live.blockedBy).toEqual([]);
   });
 
   it("describes the sender as a read-only attribution, not an editable field", () => {

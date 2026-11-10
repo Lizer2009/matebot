@@ -8,6 +8,7 @@ vi.mock("./interaction-publish.js", () => ({
 }));
 
 const {
+  interactionPublishCapability,
   interactionTools,
   normalizeCalendarPlan,
   normalizeEmailComposePlan,
@@ -298,6 +299,63 @@ describe("selectBuiltinToolsForRun a2ui gate", () => {
     expect(tool?.description).toMatch(/one short sentence/);
     expect(tool?.description).toMatch(/do not restate fields/);
     expect(tool?.description).toMatch(/explain credentials/);
+  });
+});
+
+describe("interactionPublishCapability", () => {
+  const connectedMailbox = (displayName: string) => ({
+    prisma: {
+      connection: {
+        findMany: async () => [
+          {
+            id: "conn-1",
+            connectorId: "composio",
+            provider: "gmail",
+            displayName,
+            status: "connected",
+            providerRef: "acct-1",
+          },
+        ],
+      },
+    },
+  });
+
+  it("takes the sender label from the connection and never invents an address", async () => {
+    // The label is the connection's own name, which the client supplied. It is not the mailbox,
+    // so it goes to `label` and `address` stays undefined — the card can say "sending from" and
+    // still be honest that it does not know the address.
+    const ctx = {
+      deps: connectedMailbox("Gmail"),
+      run: { id: "run-1", spaceId: "space-1", threadId: "thread-1", botId: "bot-1" },
+      context: { userId: "user-1", signal: new AbortController().signal },
+    } as never;
+    const stamp = await interactionPublishCapability(ctx, { intent: "email.compose" });
+    expect(stamp.capability).toBe("ready");
+    expect(stamp.sender).toEqual({ label: "Gmail" });
+    expect(stamp.sender?.address).toBeUndefined();
+  });
+
+  it("does not treat a label that looks like an address as one", async () => {
+    const ctx = {
+      deps: connectedMailbox("alex@example.test"),
+      run: { id: "run-1", spaceId: "space-1", threadId: "thread-1", botId: "bot-1" },
+      context: { userId: "user-1", signal: new AbortController().signal },
+    } as never;
+    const stamp = await interactionPublishCapability(ctx, { intent: "email.compose" });
+    expect(stamp.sender).toEqual({ label: "alex@example.test" });
+    expect(stamp.sender?.address).toBeUndefined();
+  });
+
+  it("reports no connection when the person has none", async () => {
+    const ctx = {
+      deps: { prisma: { connection: { findMany: async () => [] } } },
+      run: { id: "run-1", spaceId: "space-1", threadId: "thread-1", botId: "bot-1" },
+      context: { userId: "user-1", signal: new AbortController().signal },
+    } as never;
+    const stamp = await interactionPublishCapability(ctx, { intent: "email.compose" });
+    expect(stamp.capability).toBe("not_connected");
+    // Nothing to name: no connection, so no sender at all.
+    expect(stamp.sender).toBeUndefined();
   });
 });
 

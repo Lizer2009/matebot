@@ -116,10 +116,11 @@ describe("an uncertain send is not retried by itself", () => {
     expect(confirmInteractionDraftState(state, 3)).toMatchObject({ ok: false, error: "terminal" });
   });
 
-  it("offers cancellation of an uncertain send as an abort request, not a silent drop", () => {
+  it("refuses to cancel an uncertain send by calling it cancelled", () => {
+    // The outcome is unknown, so cancelling would hide a possible effect. The draft stays as it
+    // is and the reason says so; it is not silently dropped and not reported as cancelled.
     const decision = decideCancel({ status: "unknown", runtimeCanAbort: true });
-    // Nothing is running any more, so there is nothing to abort: the draft is already terminal.
-    expect(decision.ok).toBe(false);
+    expect(decision).toMatchObject({ ok: false, error: "in_flight" });
   });
 
   it("will not confirm a draft that already succeeded", () => {

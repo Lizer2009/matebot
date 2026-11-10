@@ -320,9 +320,11 @@ describePostgres("draft lifecycle (PostgreSQL)", () => {
     ).toMatchObject({ ok: true });
   });
 
-  it("keeps a waiting draft's values intact so a resume can only change its status", async () => {
-    // Resume itself lives in the API (it rewrites the thread's surface); what this pins is the
-    // property that makes it safe: flipping the row's status never disturbs the draft.
+  it("keeps a waiting draft's values intact when only its status changes", async () => {
+    // This is about the row, not about resume. Resume lives in the API and rewrites the thread's
+    // surface; what is pinned here is the weaker property it relies on: a status-only write to
+    // the row leaves plan, slots and confirmation alone. The resume path itself is covered by
+    // apps/api/src/interaction-connection-recovery.postgres.test.ts.
     const published = await publish([
       { name: "to", value: "waiting@example.test", required: true, status: "resolved" },
       { name: "subject", value: "等等", required: true, status: "resolved" },

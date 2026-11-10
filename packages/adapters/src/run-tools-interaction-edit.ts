@@ -32,8 +32,25 @@ import { interactionPublishCapability } from "./run-tools-interaction.js";
  * the same code rather than two implementations that can drift.
  */
 
-export type EditInteractionResult =
+/**
+ * What a successful edit reports.
+ *
+ * The readback is optional because a caller without the plumbing to read the stored row gets the
+ * edit alone rather than a failed edit — but it is part of the result's shape, so a caller that
+ * reads it is not reading an undeclared property.
+ */
+type EditReadback =
   | {
+      fields?: Array<{ name: string; value: string; required: boolean; filled: boolean }>;
+      missingRequired?: string[];
+      actionable?: boolean;
+      blockedBy?: string[];
+      sender?: { label: string; address?: string };
+    }
+  | Record<string, never>;
+
+export type EditInteractionResult =
+  | ({
       ok: true;
       interactionId: string;
       surfaceId: string;
@@ -42,8 +59,8 @@ export type EditInteractionResult =
       confirmationInvalidated: boolean;
       /** The only words the turn should add. */
       reply: string;
-    }
-  | {
+    } & EditReadback)
+  | ({
       ok: true;
       /** True when this created a linked draft instead of editing in place. */
       amendment: true;
@@ -53,7 +70,7 @@ export type EditInteractionResult =
       skippedFields: string[];
       confirmationInvalidated: true;
       reply: string;
-    }
+    } & EditReadback)
   | {
       ok: false;
       error: string;

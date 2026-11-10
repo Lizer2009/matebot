@@ -116,6 +116,14 @@ function mailboxProvider() {
 
 describePostgres("card recovery through the real connection routes", () => {
   const stamp = randomUUID();
+  /**
+   * This file's own id prefix.
+   *
+   * Two suites in one database would otherwise delete each other's rows: `afterAll` removes by
+   * prefix, and generic prefixes like `space-` are shared. The CI harness gives each file its own
+   * database copy, but a plain `VERIFY_DATABASE=1 vitest run apps/api/src` does not.
+   */
+  const P = `connrec-${stamp}`;
   let db: ReturnType<typeof createDb>;
   let system: PrismaClient;
   let spaceId: string;
@@ -125,6 +133,7 @@ describePostgres("card recovery through the real connection routes", () => {
   let messageId: string;
   let interactionId: string;
   let surfaceId: string;
+  let orgId: string;
 
   const actor = (): Actor => ({
     spaceId,
@@ -177,18 +186,26 @@ describePostgres("card recovery through the real connection routes", () => {
   }
 
   beforeEach(async () => {
-    spaceId = `space-${randomUUID()}`;
-    userId = `user-${randomUUID()}`;
-    botId = `bot-${randomUUID()}`;
-    threadId = `thread-${randomUUID()}`;
-    messageId = `msg-${randomUUID()}`;
-    interactionId = `ix-${randomUUID()}`;
-    surfaceId = `surf-${randomUUID()}`;
-    await system.organization.create({
-      data: { id: `org-${spaceId}`, name: spaceId, slug: spaceId, createdAt: new Date() },
+    spaceId = `${P}-space-${randomUUID()}`;
+    userId = `${P}-user-${randomUUID()}`;
+    botId = `${P}-bot-${randomUUID()}`;
+    threadId = `${P}-thread-${randomUUID()}`;
+    messageId = `${P}-msg-${randomUUID()}`;
+    interactionId = `${P}-ix-${randomUUID()}`;
+    surfaceId = `${P}-surf-${randomUUID()}`;
+    // Own organization per case, and a prefix that belongs only to this file (see P).
+    const orgIdGenerated = `${P}-org-${randomUUID()}`;
+    const organization = await system.organization.create({
+      data: {
+        id: orgIdGenerated,
+        name: orgIdGenerated,
+        slug: orgIdGenerated,
+        createdAt: new Date(),
+      },
     });
+    orgId = organization.id;
     await system.space.create({
-      data: { id: spaceId, organizationId: `org-${spaceId}`, name: "space" },
+      data: { id: spaceId, organizationId: orgId, name: "space" },
     });
     await system.bot.create({
       data: { id: botId, spaceId, userId, name: "Matebot", color: "#3b82f6" },
@@ -272,13 +289,13 @@ describePostgres("card recovery through the real connection routes", () => {
 
   afterAll(async () => {
     if (!db) return;
-    await system.interaction.deleteMany({ where: { spaceId: { startsWith: "space-" } } });
-    await system.message.deleteMany({ where: { threadId: { startsWith: "thread-" } } });
-    await system.connection.deleteMany({ where: { spaceId: { startsWith: "space-" } } });
-    await system.thread.deleteMany({ where: { spaceId: { startsWith: "space-" } } });
-    await system.bot.deleteMany({ where: { spaceId: { startsWith: "space-" } } });
-    await system.space.deleteMany({ where: { id: { startsWith: "space-" } } });
-    await system.organization.deleteMany({ where: { id: { startsWith: "org-space-" } } });
+    await system.interaction.deleteMany({ where: { spaceId: { startsWith: P } } });
+    await system.message.deleteMany({ where: { threadId: { startsWith: P } } });
+    await system.connection.deleteMany({ where: { spaceId: { startsWith: P } } });
+    await system.thread.deleteMany({ where: { spaceId: { startsWith: P } } });
+    await system.bot.deleteMany({ where: { spaceId: { startsWith: P } } });
+    await system.space.deleteMany({ where: { id: { startsWith: P } } });
+    await system.organization.deleteMany({ where: { id: { startsWith: `${P}-org` } } });
     await db.prisma.$disconnect();
     await db.pool.end();
   });
