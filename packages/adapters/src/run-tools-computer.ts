@@ -293,9 +293,20 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
  */
 function withRouteLayer<T>(name: string, result: T): T {
   if (name !== "browser_navigate") return result;
-  const candidate = result as unknown as { url?: unknown };
-  const url = typeof candidate === "object" ? candidate?.url : undefined;
-  return withRouteAnnotation(result, annotateWebEntry(typeof url === "string" ? url : undefined));
+  const candidate = (typeof result === "object" && result !== null ? result : {}) as {
+    url?: unknown;
+    ok?: unknown;
+    error?: unknown;
+    fallback?: unknown;
+  };
+  // A navigation that failed or fell back to the desktop did not open a page. The tool reports
+  // that with `error`/`fallback`, and `ok: false`; anything else is a page that did open.
+  const failed =
+    candidate.ok === false ||
+    typeof candidate.error === "string" ||
+    typeof candidate.fallback === "string";
+  const url = typeof candidate.url === "string" ? candidate.url : undefined;
+  return withRouteAnnotation(result, annotateWebEntry(url, !failed));
 }
 
 /** Tools that drive the bot's computer: screen, page browser and shell. */

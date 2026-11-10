@@ -26,22 +26,22 @@ describe("every annotation says the same thing the same way", () => {
   });
 
   it("marks a connected app as connected but not executed", () => {
-    expect(annotateAppConnected(true)).toMatchObject({
-      route: { connected: true, executed: false, effectId: null },
+    expect(annotateAppConnected()).toMatchObject({
+      route: { layer: "connection", kind: "connected", connected: true, executed: false },
     });
   });
 
   it("marks a catalog card as neither connected nor executed", () => {
-    expect(annotateAppCatalog(false)).toMatchObject({
-      route: { connected: false, executed: false },
+    expect(annotateAppCatalog()).toMatchObject({
+      route: { layer: "catalog", kind: "catalog", connected: false, executed: false },
     });
   });
 
   it("never reports an effect id for anything that did not execute", () => {
     const annotations = [
       annotateWebEntry("https://example.test"),
-      annotateAppConnected(true),
-      annotateAppCatalog(false),
+      annotateAppConnected(),
+      annotateAppCatalog(),
       annotateConnectorCall({ tool: "COMPOSIO_SEARCH_TOOLS" }),
       // A name that looks like an action, with no ledger row behind it.
       annotateConnectorCall({ tool: "GMAIL_SEND_EMAIL" }),

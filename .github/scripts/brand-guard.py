@@ -359,15 +359,14 @@ SANCTIONED_VISIBLE = re.compile(
 # constant like `SUBMIT_PLUGIN_URL = "https://rakazo.com/plugins/submit/"` — a URL a shipped app
 # opens in the user's browser — was excused by the same rule that excuses a credit line. A URL
 # assigned to a name, or used as an href, is product navigation and has to be decided explicitly.
-# Only the old *product* host, and only where it is our own navigation. Crediting the upstream
-# project (`github.com/elie222/rakazo`), naming its App Store listing, or linking its own terms
-# from the page that describes its hosted service are attributions, not this product's links.
-PRODUCT_URL = re.compile(
-    r"""(=\s*["'`]https?://(?:www\.)?rakazo\.com/"""
-    r"""|href=\{["'`]https?://(?:www\.)?rakazo\.com/"""
-    r"""|openURL\(\s*["'`]https?://(?:www\.)?rakazo\.com/)""",
-    re.I,
-)
+# A URL the product itself sends people to is not attribution, whoever owns the host.
+#
+# The old rule required one of three exact shapes (`= "…"`, `href={"…"}`, `openURL("…")`), so the
+# same defect written as an object literal, a bare origin constant, a template string, or
+# `router.push("…")` passed. This matches any string literal or template head containing the old
+# *product* host; crediting the upstream project is handled by the exemption below, which is about
+# the anchor's meaning rather than about the surrounding punctuation.
+PRODUCT_URL = re.compile(r"""["'`]https?://(?:www\.)?rakazo\.com""", re.I)
 
 # Lines that are about the upstream project on purpose: the page that describes its hosted
 # service, and constants whose name says they point at upstream.

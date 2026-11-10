@@ -85,8 +85,18 @@ describe("opening a page reports the web layer, not a connection", () => {
     expect(seen).toContain('"connected":false');
     expect(seen).toContain('"executed":false');
     // The sentence it may repeat must not claim a connection or a completed action.
-    expect(seen).toContain("没有连接任何应用");
-    expect(seen).not.toMatch(/已连接|已执行/);
+    expect(seen).toContain("No app was connected");
+    expect(seen).not.toMatch(/connected the app|executed the action/i);
+  });
+
+  it("does not claim a refused navigation opened a page", async () => {
+    // The browser refuses a bad URL before it opens anything. A sentence saying the page opened
+    // would be a quotable claim about something that did not happen — the overclaim this whole
+    // layer marker exists to prevent, produced by the marker itself.
+    const seen = await runPageTool("browser_navigate", { url: "ftp://files.example.test/x" });
+    expect(seen).toContain('"opened":false');
+    expect(seen).toContain("This page was not opened");
+    expect(seen).not.toContain("This page was opened in the browser");
   });
 
   it("does not annotate a snapshot, which reads a page already open", async () => {

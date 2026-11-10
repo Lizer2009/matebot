@@ -29,6 +29,12 @@ export type RouteAnnotation = {
     connected: boolean;
     executed: boolean;
     effectId: string | null;
+    /**
+     * For a web entry: whether the page actually opened.
+     *
+     * Absent for every other layer, which have no such question to answer.
+     */
+    opened?: boolean;
   };
   routeNotice: string;
 };
@@ -45,14 +51,21 @@ function annotationFor(route: LayerRoute): RouteAnnotation {
       // Only an executed route has a ledger row to name. A discovered one has none, and saying
       // otherwise is the conflation this exists to prevent.
       effectId: route.kind === "executed" ? route.effectId : null,
+      ...(route.kind === "web" ? { opened: route.opened } : {}),
     },
     routeNotice: describeRoute(route),
   };
 }
 
-/** A page was opened in the browser: L1. It is not an app connection and runs nothing. */
-export function annotateWebEntry(url: string | undefined): RouteAnnotation {
-  return annotationFor(routeWebRequest({ url: url ?? "about:blank" }));
+/**
+ * A page was opened in the browser: L1. It is not an app connection and runs nothing.
+ *
+ * `opened` is what the result says, not what was asked for. A navigation the browser refused —
+ * a malformed URL, a non-http scheme, a host the egress guard blocked — must not be described as
+ * a page that opened, or the model has a positive sentence for something that did not happen.
+ */
+export function annotateWebEntry(url: string | undefined, opened = true): RouteAnnotation {
+  return annotationFor(routeWebRequest({ url: url ?? "about:blank", opened }));
 }
 
 /**
@@ -106,18 +119,18 @@ export function withRouteAnnotation<T>(result: T, annotation: RouteAnnotation): 
 }
 
 /**
- * An app the person has connected. L3: the connection exists, and nothing has been run yet.
+ * An app the person has connected. L3, satisfied: the connection exists, nothing has run.
  *
- * There is deliberately no route kind for this in the classifier — a connected app is a fact about
- * the world, not a step in a request — so the annotation states it directly. `executed` is always
- * false: connecting is not doing the work.
+ * This uses the classifier's own vocabulary rather than a second set of labels. A connected app
+ * is the same layer as `needs_connection` with its condition met — not `catalog`, which is the
+ * layer for an app that was merely shown.
  */
-export function annotateAppConnected(connected: boolean): Pick<RouteAnnotation, "route"> {
+export function annotateAppConnected(): Pick<RouteAnnotation, "route"> {
   return {
     route: {
-      layer: "catalog",
-      kind: "catalog",
-      connected,
+      layer: "connection",
+      kind: "connected",
+      connected: true,
       executed: false,
       effectId: null,
     },
@@ -125,6 +138,14 @@ export function annotateAppConnected(connected: boolean): Pick<RouteAnnotation, 
 }
 
 /** A catalog card offering an app. L2: shown, not connected, and it has run nothing. */
-export function annotateAppCatalog(connected: boolean): Pick<RouteAnnotation, "route"> {
-  return annotateAppConnected(connected);
+export function annotateAppCatalog(): Pick<RouteAnnotation, "route"> {
+  return {
+    route: {
+      layer: "catalog",
+      kind: "catalog",
+      connected: false,
+      executed: false,
+      effectId: null,
+    },
+  };
 }

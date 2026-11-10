@@ -138,6 +138,20 @@ class ProductLinksToTheOldHost(unittest.TestCase):
         result = run_guard(root)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
 
+    def test_the_same_defect_in_other_shapes_is_caught(self) -> None:
+        # The first rule only matched `= "…"`, `href={"…"}` and `openURL("…")`, so the identical
+        # mistake written as a table, a bare origin, or a router call passed the guard.
+        cases = {
+            "object literal": 'export const links = { submit: "https://rakazo.com/plugins/submit/" };\n',
+            "bare origin": 'const OLD = "https://rakazo.com";\n',
+            "router call": 'router.push("https://rakazo.com/terms/");\n',
+            "template head": 'const u = `https://rakazo.com/privacy/`;\n',
+        }
+        for label, source in cases.items():
+            root = make_tree({"packages/contracts/src/x.ts": source})
+            result = run_guard(root)
+            self.assertEqual(result.returncode, 1, f"{label} passed: {result.stdout}")
+
     def test_attribution_to_the_upstream_project_still_passes(self) -> None:
         # Crediting the upstream project is not the same as sending users to the old product.
         root = make_tree(

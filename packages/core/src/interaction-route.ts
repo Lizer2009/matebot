@@ -31,10 +31,18 @@ export type InteractionLayer = (typeof INTERACTION_LAYERS)[number];
 /** Where a request stopped, and what it is waiting for before it can go further. */
 export type LayerRoute =
   | {
-      /** A URL is opened for the person. Not authorization, and not an app capability. */
+      /**
+       * A URL was opened for the person — or was asked for and could not be.
+       *
+       * `opened` matters: a navigation can be refused before the browser touches it (a bad URL,
+       * a scheme that is not http, a host the egress guard already blocked). Reporting that as a
+       * page that was opened hands the model a quotable sentence about something that did not
+       * happen, which is the exact failure this module exists to prevent.
+       */
       layer: "web";
       kind: "web";
       url: string;
+      opened: boolean;
       /** Always false: opening a page never establishes a connection. */
       connected: false;
       /** Always false: a page is not a registered capability with a button. */
@@ -56,6 +64,20 @@ export type LayerRoute =
       kind: "needs_connection";
       app: InteractionRequiredApp;
       provider: string;
+      executable: false;
+    }
+  | {
+      /**
+       * The app is authorized. This is the same layer as `needs_connection`, satisfied.
+       *
+       * It is deliberately not `catalog`: L2 means the app was merely shown, which is what an
+       * unauthorized offer is. Reporting a live connection as L2 would put it *below* the
+       * unconnected case in the layer order.
+       */
+      layer: "connection";
+      kind: "connected";
+      app: string;
+      connected: true;
       executable: false;
     }
   | {
@@ -117,18 +139,23 @@ export function routeIsActionable(route: LayerRoute): boolean {
 }
 
 /**
- * A tool that returns tool *schemas* rather than acting: the connector's own meta-search.
+ * A tool that returns tool *schemas* rather than acting: a catalog search, a schema load, or the
+ * built-in `find_tool`.
  *
- * The name has to end in `SEARCH_TOOL` or `SEARCH_TOOLS`. Matching any name that merely contains
- * "search" would also catch real actions — `GOOGLE_SEARCH_CONSOLE_SUBMIT_SITEMAP` writes,
- * `SLACK_SEARCH_MESSAGES` and `NOTION_SEARCH` read a workspace — and silently deny them their
- * effect row, which is the opposite of what this predicate is for.
+ * Every one of these hands the model a description of a tool and nothing more. They are the calls
+ * whose result is most easily mistaken for capability, so they must say "discovered, not
+ * executed".
  *
- * This is a name heuristic, which is why it is kept narrow: a connector whose meta-tool is named
- * something else is simply not detected, and its call is treated as ordinary. That failure is
- * visible; the other one silently swallows a write.
+ * The match is by the suffix the catalog wrappers actually use (`_search_tools`, `_load_tool`)
+ * rather than by any name containing "search": `GOOGLE_SEARCH_CONSOLE_SUBMIT_SITEMAP` writes and
+ * `SLACK_SEARCH_MESSAGES` reads a workspace, and denying those their effect row would be the
+ * opposite of what this predicate is for.
+ *
+ * This remains a name heuristic, which is why it is kept to suffixes: a connector whose wrapper
+ * is named differently is not detected and is treated as an ordinary call. That failure is
+ * visible in the ledger; the other one silently swallows a write.
  */
-const DISCOVERY_TOOL = /(^|_)SEARCH_TOOLS?$/i;
+const DISCOVERY_TOOL = /(^|_)(SEARCH_TOOLS?|LOAD_TOOL)$|^find_tool$/i;
 
 /** Whether a tool call is a search. A search result is discovered, never executed. */
 export function isDiscoveryTool(tool: string): boolean {
@@ -198,8 +225,8 @@ export function routeAppRequest(input: {
     };
   }
   return {
-    layer: "catalog",
-    kind: "catalog",
+    layer: "connection",
+    kind: "connected",
     app: input.label ?? input.app,
     connected: true,
     executable: false,
@@ -250,8 +277,15 @@ export function routeIntentRequest(input: {
 }
 
 /** Route a request that is only "open this page". */
-export function routeWebRequest(input: { url: string }): LayerRoute {
-  return { layer: "web", kind: "web", url: input.url, connected: false, executable: false };
+export function routeWebRequest(input: { url: string; opened?: boolean }): LayerRoute {
+  return {
+    layer: "web",
+    kind: "web",
+    url: input.url,
+    opened: input.opened ?? true,
+    connected: false,
+    executable: false,
+  };
 }
 
 /**
@@ -264,21 +298,24 @@ export function routeWebRequest(input: { url: string }): LayerRoute {
 export function describeRoute(route: LayerRoute): string {
   switch (route.kind) {
     case "web":
-      return "已在浏览器中打开这个页面；这没有连接任何应用，也没有执行任何操作。";
+      // Whether it opened is part of the fact, not an assumption.
+      return route.opened
+        ? "This page was opened in the browser. No app was connected and nothing was executed."
+        : "This page was not opened. No app was connected and nothing was executed.";
     case "catalog":
-      return route.connected
-        ? "这个应用已经连接；接下来可以创建草稿。"
-        : "这个应用可以连接，但还没有授权。";
+      return "This app is offered in the catalog and is not connected yet.";
+    case "connected":
+      return "This app is connected. Nothing has been executed.";
     case "needs_connection":
       return route.app === "calendar"
-        ? "要先连接日历，才能创建日程。"
-        : "要先连接邮箱，才能起草或发送邮件。";
+        ? "A calendar must be connected before an event can be created."
+        : "A mailbox must be connected before mail can be drafted or sent.";
     case "discovered":
-      return "找到了可以使用的工具；还没有执行，先确认要做什么。";
+      return "A tool was found. It has not been executed; confirm what to do first.";
     case "executed":
-      return "已经执行，执行记录可以核对。";
+      return "This ran, and the execution record can be checked.";
     case "draft":
-      return "草稿已准备好，请在卡片上确认。";
+      return "The draft is ready. Confirm it on the card.";
   }
 }
 
@@ -301,4 +338,5 @@ export const LAYER_DISCIPLINE_PROMPT = [
   "- A tool search returning schemas is not a completed action. Only a call that ran, and left a record, is.",
   "- A draft card is not an action. It waits for the person to confirm it.",
   "When a result carries a `route` with executed: false, say what was actually reached. Never tell the person an action happened because a tool returned something, and never describe a page you opened as an app you connected.",
+  "A result's `routeNotice` states the fact in English. Convey it in the language you are replying in; do not paste the English sentence into a reply.",
 ].join("\n");

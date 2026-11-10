@@ -35,10 +35,10 @@ describe("opening a page is not connecting an app", () => {
 
   it("says it opened a page, not that anything is connected", () => {
     const text = describeRoute(routeWebRequest({ url: "https://notion.so" }));
-    expect(text).toContain("页面");
-    expect(text).toContain("没有连接任何应用");
+    expect(text).toContain("page");
+    expect(text).toContain("No app was connected");
     // It must not claim the app is usable or that work happened.
-    expect(text).not.toMatch(/已连接|已执行|授权成功/);
+    expect(text).not.toMatch(/was connected\b.*app|has been executed/i);
   });
 });
 
@@ -63,7 +63,9 @@ describe("a catalog entry is not an executable capability", () => {
       label: "Gmail",
       connections: connectedGmail,
     });
-    expect(route.kind).toBe("catalog");
+    // A live connection is L3 satisfied, not L2: `catalog` is the layer for an app merely shown,
+    // and putting a connected app below an unconnected one would invert the layer order.
+    expect(route).toMatchObject({ layer: "connection", kind: "connected", connected: true });
     expect(routeDidExecute(route)).toBe(false);
     expect(routeIsActionable(route)).toBe(false);
   });
@@ -98,6 +100,17 @@ describe("a tool search is not a tool call", () => {
     const route = classifyToolCall({ tool: "COMPOSIO_SEARCH_TOOLS" });
     expect(route).toMatchObject({ kind: "discovered", executed: false, effectId: null });
     expect(routeDidExecute(route)).toBe(false);
+  });
+
+  it("treats a schema load and the built-in find_tool as discovery too", () => {
+    // A schema lookup is the result a model is most likely to read as "ready to run", so every
+    // wrapper that returns one has to say it discovered rather than executed.
+    for (const tool of ["connectors_search_tools", "connectors_load_tool", "find_tool"]) {
+      const route = classifyToolCall({ tool, effectId: "effect-1" });
+      expect(route, tool).toMatchObject({ kind: "discovered", executed: false, effectId: null });
+    }
+    // A tool that merely loads its own data is still an ordinary action.
+    expect(isDiscoveryTool("GMAIL_LOAD_MESSAGE")).toBe(false);
   });
 
   it("does not treat a real action merely named after search as discovery", () => {
@@ -154,8 +167,8 @@ describe("a tool search is not a tool call", () => {
 
   it("says only that a tool was found when it was only found", () => {
     const text = describeRoute(classifyToolCall({ tool: "COMPOSIO_SEARCH_TOOLS" }));
-    expect(text).toContain("还没有执行");
-    expect(text).not.toContain("已经执行");
+    expect(text).toContain("has not been executed");
+    expect(text).not.toMatch(/has been executed/i);
   });
 });
 

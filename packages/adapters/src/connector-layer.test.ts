@@ -51,7 +51,7 @@ describe("a connector result says which layer it reached", () => {
     >;
     expect(result.route).toMatchObject({ layer: "tool", kind: "discovered", executed: false });
     expect(result.route).toMatchObject({ effectId: null });
-    expect(String(result.routeNotice)).toContain("还没有执行");
+    expect(String(result.routeNotice)).toContain("has not been executed");
   });
 
   it("refuses to call a search executed even when it somehow has an effect id", async () => {
