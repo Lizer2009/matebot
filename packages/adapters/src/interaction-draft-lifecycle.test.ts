@@ -496,6 +496,64 @@ describe("cancel always works", () => {
   });
 });
 
+describe("the label survives every rebuild of the card", () => {
+  it("keeps the label when the card is cancelled", async () => {
+    // A cancelled card still shows which mailbox it would have used. The cancel path rebuilds the
+    // block from its new stamps, so without carrying the label over the row blanks at the moment
+    // the person is deciding what to do next.
+    const { cancelInteractionService } = await import("./interaction-field-writer.js");
+    getInteraction.mockResolvedValue({
+      id: "ix-1",
+      threadId: "thread-1",
+      status: "collecting",
+      draftVersion: 1,
+      confirmedVersion: null,
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      slots: { to: "a@example.test", subject: "s", body: "b" },
+      messageId: "msg-1",
+    });
+    surfaceFindFirst.mockResolvedValue({ surfaceId: "surface-1", protocolFamily: "v0_9" });
+    messageFindUnique.mockResolvedValue({ blocks: [] });
+    txMessageFindUnique.mockResolvedValue({
+      id: "msg-1",
+      blocks: [
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "surface-1",
+          draftVersion: 1,
+          intent: "email.compose",
+          capability: "ready",
+          senderLabel: "Gmail",
+        },
+      ],
+    });
+    txMessageUpdate.mockResolvedValue({ id: "msg-1" });
+    txInteractionUpdateMany.mockResolvedValue({ count: 1 });
+
+    await cancelInteractionService(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      expectedDraftVersion: 1,
+      runtimeCanAbort: false,
+    });
+
+    const written = txMessageUpdate.mock.calls.at(-1)?.[0] as {
+      data: { blocks: Array<Record<string, unknown>> };
+    };
+    expect(written.data.blocks[0]).toMatchObject({
+      senderLabel: "Gmail",
+      lifecycle: "draft",
+    });
+  });
+});
+
 describe("the card carries the connection's label, never an address", () => {
   it("writes the label onto the block and leaves the address out", async () => {
     // `Connection.displayName` is whatever the client passed when the connection was created —

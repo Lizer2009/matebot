@@ -19,6 +19,7 @@ import {
   withTransactionRetry,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { senderLabelFromBlock } from "./interaction-publish.js";
 
 /**
  * The single write path for an interaction field.
@@ -449,7 +450,7 @@ export async function cancelInteractionService(
             })
           ).documentRef
         : (current as { documentRef?: string }).documentRef;
-      const block: MessageBlock = {
+      const cancelledBlock: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: input.interactionId,
         surfaceId: surfaceRow.surfaceId,
@@ -471,9 +472,14 @@ export async function cancelInteractionService(
         const message = await tx.message.findUnique({ where: { id: current.messageId } });
         if (message) {
           const existing = Array.isArray(message.blocks) ? (message.blocks as MessageBlock[]) : [];
+          // A cancelled card still shows which mailbox it would have used; dropping the label
+          // here would blank that row at the moment the person is deciding what to do next.
+          const cancelledLabel = senderLabelFromBlock(existing, surfaceRow.surfaceId);
           const blocks = existing.map((entry) =>
             entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId
-              ? block
+              ? cancelledLabel
+                ? { ...cancelledBlock, senderLabel: cancelledLabel }
+                : cancelledBlock
               : entry,
           );
           await tx.message.update({

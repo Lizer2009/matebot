@@ -4,6 +4,7 @@ import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebo
 import { batchResultRows, buildResultSurface, emailSurfaceBlockFields } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import { appendEventInTransaction, withTransactionRetry } from "@matebot/db";
+import { senderLabelFromBlock } from "./interaction-publish.js";
 
 function capabilityFromBlocks(
   blocks: MessageBlock[] | undefined,
@@ -117,6 +118,9 @@ export async function projectInteractionEmailSurface(
       interactionId: input.interaction.id,
       surfaceId: surfaceRow.surfaceId,
     });
+    // The card keeps the connection's label across a confirm, an execute or a progress stamp;
+    // rebuilding without it would blank the read-only sender row mid-lifecycle.
+    const senderLabel = senderLabelFromBlock(existing, surfaceRow.surfaceId);
     const block: MessageBlock = {
       kind: "a2ui_surface",
       interactionId: input.interaction.id,
@@ -130,6 +134,7 @@ export async function projectInteractionEmailSurface(
         ? { summary: input.interaction.summary ?? input.plan.summary }
         : {}),
       documentRef,
+      ...(senderLabel ? { senderLabel } : {}),
       ...stamps,
     };
     const blocks = existing.map((entry) =>

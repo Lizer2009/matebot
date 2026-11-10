@@ -116,6 +116,27 @@ function senderLabelForBlock(label: string | undefined): string | undefined {
   return trimmed;
 }
 
+/**
+ * Carry the sender label over when a card is rewritten in place.
+ *
+ * Every in-place rewrite rebuilds the block from its new stamps, so a rebuild that does not copy
+ * this drops the card's read-only "sending from" row — it blanks out after a confirm, an execute
+ * or a progress update, not just after an edit. The label never changes as a card moves through
+ * its lifecycle, so the block being replaced is always the right source.
+ */
+export function senderLabelFromBlock(
+  blocks: MessageBlock[] | undefined,
+  surfaceId: string | undefined,
+): string | undefined {
+  if (!blocks) return undefined;
+  for (const entry of blocks) {
+    if (entry.kind !== "a2ui_surface") continue;
+    if (surfaceId && entry.surfaceId !== surfaceId) continue;
+    if (entry.senderLabel) return entry.senderLabel;
+  }
+  return undefined;
+}
+
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
 export async function publishInteractionSurface(
   prisma: PrismaClient,
