@@ -200,7 +200,7 @@ Cursor 集成说明：[self-host-integrations.md](./self-host-integrations.md#en
 
 ## Fork CI 说明
 
-GitHub Actions 在上游组织使用 Incredibuild runner（`incredibuild-ubuntu-latest`）。**Lizer2009/matebot** 无该标签时，`ci.yml` / `playwright.yml` 回退到 `ubuntu-latest`，必需检查（Lint and typecheck、Unit tests、Checks 等）应能在 fork PR 上完成。
+本仓库的 `ci.yml` / `playwright.yml` 统一在 `ubuntu-latest` 上运行。上游组织使用的 `incredibuild-ubuntu-latest` 标签在本仓库不存在；若把 `runs-on` 指向该标签，run 会创建成功但永远没有 runner 被分配（0 jobs，pending），必需检查因此不会产生结果。
 
 - **Vercel**：fork PR 上若出现「Authorization required to deploy」，为预期行为，可忽略（非 merge 阻塞项，除非 fork 单独配置了 Vercel 必需检查）。
 - **生产 deploy / Tailscale / Expo OTA**：仅 upstream `main` push 且配置了 secrets 时运行；fork 不依赖这些 job。
