@@ -171,6 +171,28 @@ describe("describeDraftForModel", () => {
     expect(readback.sender?.address).toBeUndefined();
   });
 
+  it("reports only the card's declared fields, never the data behind them", () => {
+    // A calendar batch list is stored as a field the schema does not declare, and an older row
+    // can still carry a `from`. The card renders the schema's fields and nothing else, so a
+    // readback that listed these would tell the model there are controls nobody can use — and
+    // in `from`'s case would say the mailbox is editable.
+    const readback = describeDraftForModel({
+      plan: {
+        ...EMAIL_PLAN,
+        fields: [
+          ...EMAIL_PLAN.fields,
+          { name: "from", value: "stale@example.test", required: false, status: "resolved" },
+          { name: "attachments", value: [{ name: "a.pdf" }], required: false, status: "resolved" },
+        ],
+      },
+      slots: { to: "a@example.test", subject: "s", body: "b" },
+      draftVersion: 1,
+      capability: "ready",
+    });
+    expect(readback.fields.map((field) => field.name)).toEqual(["to", "cc", "subject", "body"]);
+    expect(JSON.stringify(readback)).not.toContain("stale@example.test");
+  });
+
   it("omits the sender when no connection names one", () => {
     const readback = describeDraftForModel({
       plan: EMAIL_PLAN,

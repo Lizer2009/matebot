@@ -256,12 +256,9 @@ export async function editInteraction(
     // instead of rewriting history.
     const executedCapability = capability ?? capabilityForIntent(executedTarget.intent);
     // The mailbox state for the new draft, resolved once from the connection the person has.
-    // The mailbox state for the new draft, resolved once from the connection the person has.
     let amendmentStamp: { capability?: EmailSurfaceCapability; sender?: DraftSender } = {};
     try {
-      amendmentStamp = await interactionPublishCapability(ctx, {
-        intent: executedTarget.intent,
-      } as InteractionPlan);
+      amendmentStamp = await interactionPublishCapability(ctx, { intent: executedTarget.intent });
     } catch {
       // A correction still publishes without the stamp; it simply says less about the mailbox.
       amendmentStamp = {};
@@ -310,21 +307,20 @@ export async function editInteraction(
   // the card became. `result.values` is the caller's own intent, not evidence. A caller without
   // the plumbing to read it back gets the edit result alone rather than a failed edit.
   const stored = await services.loadInteraction(result.interactionId).catch(() => null);
-  const capabilityStamp: { capability?: EmailSurfaceCapability; sender?: DraftSender } =
-    stored && stored.plan
-      ? await interactionPublishCapability(ctx, stored.plan as InteractionPlan).catch(() => ({}))
-      : {};
-  const readback =
-    stored && stored.plan
-      ? readbackFromStored({
-          plan: stored.plan as InteractionPlan,
-          slots: stored.slots,
-          draftVersion: stored.draftVersion,
-          interactionStatus: stored.status,
-          ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),
-          ...(capabilityStamp.sender ? { sender: capabilityStamp.sender } : {}),
-        })
-      : undefined;
+  const storedPlan = stored?.plan ?? null;
+  const capabilityStamp: { capability?: EmailSurfaceCapability; sender?: DraftSender } = storedPlan
+    ? await interactionPublishCapability(ctx, storedPlan as InteractionPlan).catch(() => ({}))
+    : {};
+  const readback = storedPlan
+    ? readbackFromStored({
+        plan: storedPlan as InteractionPlan,
+        slots: stored?.slots ?? {},
+        draftVersion: stored?.draftVersion ?? result.draftVersion,
+        ...(stored?.status ? { interactionStatus: stored.status } : {}),
+        ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),
+        ...(capabilityStamp.sender ? { sender: capabilityStamp.sender } : {}),
+      })
+    : undefined;
   return {
     ok: true,
     interactionId: result.interactionId,

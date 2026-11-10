@@ -349,6 +349,46 @@ describe("A2uiSurfaceCard", () => {
     expect(container.querySelector('[data-testid="a2ui-email-connect"]')).toBeNull();
   });
 
+  it("shows the sending account as a read-only row, never as an address", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+      senderLabel: "Gmail",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={vi.fn()} />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-sender"]')?.textContent).toBe("Gmail");
+    // The connection's name is whatever the client called it; the record holds no mailbox.
+    expect(container.querySelector('[data-testid="a2ui-email-sender-note"]')?.textContent).toBe(
+      "Email address not provided",
+    );
+    // Read-only: the sending mailbox is not one of the form's inputs.
+    expect(container.querySelector('input[aria-label="From"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-from"]')).toBeNull();
+  });
+
+  it("does not name a sending account on a card that is asking for one", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "not_connected",
+      senderLabel: "Gmail",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onConnect={vi.fn()} />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-connect"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="a2ui-email-sender"]')).toBeNull();
+  });
+
   it("shows Send after a successful connect", async () => {
     const onConnect = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);

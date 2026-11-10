@@ -179,6 +179,11 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
           ...(capabilityStamp.sender ? { sender: capabilityStamp.sender } : {}),
         })
       : undefined;
+    // One list of empty required fields. The readback derives it from the stored slots and the
+    // declared fields, which is what the confirm gate reads; the publisher's own list is only a
+    // fallback for a card whose readback could not be built. Two keys of the same name in one
+    // result would let the later one silently win.
+    const missingRequired = readback?.missingRequired ?? published.missingRequired ?? [];
     return {
       interactionId: published.interactionId,
       surfaceId: published.surfaceId,
@@ -195,7 +200,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       ...(readback
         ? {
             fields: readback.fields,
-            missingRequired: readback.missingRequired,
+            missingRequired,
             actionable: readback.actionable,
             blockedBy: readback.blockedBy,
             ...(readback.sender ? { sender: readback.sender } : {}),
@@ -207,10 +212,9 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
        * this list is non-empty is exactly the misreport the field audit found, so the model is
        * given the list and told what it means.
        */
-      ...(published.missingRequired?.length
+      ...(missingRequired.length
         ? {
-            missingRequired: published.missingRequired,
-            notice: `The card is on screen with ${published.missingRequired.join(", ")} still empty. Tell the user which fields need a value; do not say the draft is complete.`,
+            notice: `The card is on screen with ${missingRequired.join(", ")} still empty. Tell the user which fields need a value; do not say the draft is complete.`,
           }
         : {}),
       /** The only words the turn should add; the card holds everything else. */
@@ -223,10 +227,15 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
   }
 }
 
-/** Stamp the app's three-state so the card knows whether it can act yet. */
+/**
+ * Stamp the app's three-state so the card knows whether it can act yet.
+ *
+ * Only the intent decides this, so that is all it asks for. Callers that hold a full stored plan
+ * pass it; callers that only know the intent do not have to invent a plan-shaped object.
+ */
 export async function interactionPublishCapability(
   ctx: RunContext,
-  plan: InteractionPlan,
+  plan: { intent: string },
 ): Promise<{
   capability?: EmailSurfaceCapability;
   status?: InteractionLifecycleStatus;

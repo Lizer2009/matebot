@@ -1,5 +1,6 @@
 import type { InteractionPlan } from "@matebot/contracts";
 import type { EmailSurfaceCapability } from "@matebot/core";
+import { interactionCapabilityForIntent } from "@matebot/core";
 
 /**
  * What the model is told about a card, in terms it can act on.
@@ -73,9 +74,28 @@ export function describeDraftForModel(input: {
 }): DraftReadback {
   // The plan is the authority on which fields the card shows. A slot the plan does not name is
   // data the action reads, not something the model should describe as a field.
-  const fields: DraftFieldReadback[] = input.plan.fields.map((field) => {
+  //
+  // A stored plan can still carry fields the registered schema does not declare: a calendar
+  // batch list is kept as data for the action, and an older row may still hold a `from`. Those
+  // never become controls, so reporting them would tell the model there are fields nobody can
+  // edit. The schema, when the intent has one, decides what the card has — including when it
+  // declares no fields at all, as a read-only result surface does. Only an unregistered intent
+  // falls back to the plan's own list.
+  const schema = interactionCapabilityForIntent(input.plan.intent)?.schema;
+  const declared = new Map((schema?.fields ?? []).map((field) => [field.name, field.required]));
+  const surfaces = schema
+    ? input.plan.fields.filter((field) => declared.has(field.name))
+    : input.plan.fields;
+  const fields: DraftFieldReadback[] = surfaces.map((field) => {
     const value = asText(input.slots[field.name] ?? field.value);
-    return { name: field.name, value, required: field.required, filled: !isEmpty(value) };
+    return {
+      name: field.name,
+      value,
+      // The schema owns requiredness, so a row that recorded a stale `required: false` for a
+      // field the schema requires is not reported as optional.
+      required: declared.get(field.name) ?? field.required,
+      filled: !isEmpty(value),
+    };
   });
   const missingRequired = fields
     .filter((field) => field.required && !field.filled)
