@@ -5,6 +5,7 @@ import {
   annotateAppConnected,
   annotateConnectorCall,
   annotateWebEntry,
+  effectDidExecute,
   withRouteAnnotation,
 } from "./route-annotation.js";
 
@@ -89,5 +90,44 @@ describe("the model is told the same discipline the results carry", () => {
   it("does not ask the model to run a classifier or name internal kinds", () => {
     // The instruction is about claims, not about calling a function or echoing enum values.
     expect(LAYER_DISCIPLINE_PROMPT).not.toMatch(/call .*classify|routeWebRequest|classifyToolCall/);
+  });
+});
+
+describe("an effect row existing is not proof the tool ran", () => {
+  it("reports not-executed while the effect is still intended", () => {
+    // The ledger row is created before the tool runs. Reading its id as "it happened" is exactly
+    // the overclaim this whole phase exists to remove.
+    const pending = annotateConnectorCall({
+      tool: "GMAIL_SEND_EMAIL",
+      effectId: "effect-1",
+      effectStatus: "intended",
+    });
+    expect(pending.route).toMatchObject({ executed: false, effectId: null });
+  });
+
+  it("reports not-executed while the effect is only approved", () => {
+    const approved = annotateConnectorCall({
+      tool: "GMAIL_SEND_EMAIL",
+      effectId: "effect-1",
+      effectStatus: "approved",
+    });
+    expect(approved.route).toMatchObject({ executed: false, effectId: null });
+  });
+
+  it("reports executed for each status a completed attempt ends in", () => {
+    for (const effectStatus of ["executing", "completed", "uncertain"]) {
+      const done = annotateConnectorCall({
+        tool: "GMAIL_SEND_EMAIL",
+        effectId: "effect-1",
+        effectStatus,
+      });
+      expect(done.route, effectStatus).toMatchObject({ executed: true, effectId: "effect-1" });
+    }
+  });
+
+  it("treats an unknown status as not executed", () => {
+    expect(effectDidExecute("something-new")).toBe(false);
+    expect(effectDidExecute(undefined)).toBe(false);
+    expect(effectDidExecute("")).toBe(false);
   });
 });

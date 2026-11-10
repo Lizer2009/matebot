@@ -56,16 +56,47 @@ export function annotateWebEntry(url: string | undefined): RouteAnnotation {
 }
 
 /**
+ * An effect status that means the tool actually ran.
+ *
+ * The ledger row is created *before* a tool runs, with status `intended`. So the existence of an
+ * id is not evidence of execution — only a status the run reached after calling the tool is.
+ * These are the statuses a completed attempt ends in; anything else is a plan or an approval.
+ */
+const EXECUTED_EFFECT_STATUSES: ReadonlySet<string> = new Set([
+  "executing",
+  "completed",
+  "uncertain",
+]);
+
+/**
+ * Whether this effect row shows the tool ran, as opposed to being requested or approved.
+ *
+ * A caller that does not know the status gets the conservative answer: not executed. The
+ * annotation is what the model repeats to the person, so an unknown status must not become a
+ * claim that something happened.
+ */
+export function effectDidExecute(status: string | null | undefined): boolean {
+  return typeof status === "string" && EXECUTED_EFFECT_STATUSES.has(status);
+}
+
+/**
  * A connector call, classified from the ledger rather than from the tool name alone.
  *
- * `effectId` is the receipt. A call without one is reported as discovered even when its name looks
- * like an action, because nothing recorded that it ran.
+ * `effectId` is the receipt, but only once the row says the tool ran. A call whose effect is still
+ * `intended` — or approved and not yet run — is reported as discovered, because nothing has
+ * happened yet even though a row exists.
  */
 export function annotateConnectorCall(input: {
   tool: string;
   effectId?: string | null;
+  effectStatus?: string | null;
 }): RouteAnnotation {
-  return annotationFor(classifyToolCall(input));
+  // A status the caller supplied must say the tool ran; a caller that supplies none is treated
+  // as not having run, unless it is a tool that never gets an effect (a search).
+  const ran = input.effectStatus === undefined ? true : effectDidExecute(input.effectStatus);
+  return annotationFor(
+    classifyToolCall({ tool: input.tool, effectId: ran ? input.effectId : null }),
+  );
 }
 
 /** Merge an annotation onto a tool result without replacing what the tool already reported. */

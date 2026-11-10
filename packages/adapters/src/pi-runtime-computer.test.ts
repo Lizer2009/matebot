@@ -136,7 +136,11 @@ describe("Pi computer tool dispatch", () => {
     expect(fakeAgentState.result).toMatchObject({
       content: [{ type: "text" }, { type: "image", mimeType: "image/png", data: "iVBORw0KGgo=" }],
     });
-    expect(fakeAgentState.systemPrompt).toBe("Follow the user's instructions.");
+    // A bot's own instructions are kept, and the product's layer rules are added: the constraint
+    // on what may be claimed is not part of anyone's persona, so custom instructions cannot
+    // remove it.
+    expect(fakeAgentState.systemPrompt).toContain("Follow the user's instructions.");
+    expect(fakeAgentState.systemPrompt).toContain(LAYER_DISCIPLINE_PROMPT);
   });
 
   it("keeps the run alive when a graphical tool returns an error object", async () => {

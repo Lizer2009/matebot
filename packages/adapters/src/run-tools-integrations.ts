@@ -66,7 +66,13 @@ export async function connectorTool(ctx: RunContext, call: ToolCall) {
     // adding a marker to every connector result would change a payload read all over the product
     // for a distinction that only matters where a search could be mistaken for work done.
     return call.finish(
-      isDiscoveryTool(name) ? withConnectorLayer(name, result, applied?.effect.id) : result,
+      isDiscoveryTool(name)
+        ? withConnectorLayer(
+            name,
+            result,
+            applied?.effect as { id: string; status?: string } | undefined,
+          )
+        : result,
     );
   }
   return call.finish({ error: `unknown tool ${name}` });
@@ -79,9 +85,23 @@ export async function connectorTool(ctx: RunContext, call: ToolCall) {
  * same as "the work was done". Only discovery calls are annotated: a real action's own payload is
  * what the model needs, and changing that shape everywhere would be a wide change for a
  * distinction that only matters where a search could be mistaken for work.
+ *
+ * The effect's status travels with its id: the row exists before the tool runs, so an id alone
+ * would let a refused or replayed call be reported as work that happened.
  */
-function withConnectorLayer<T>(name: string, result: T, effectId: string | undefined): T {
-  return withRouteAnnotation(result, annotateConnectorCall({ tool: name, effectId }));
+function withConnectorLayer<T>(
+  name: string,
+  result: T,
+  effect: { id: string; status?: string } | undefined,
+): T {
+  return withRouteAnnotation(
+    result,
+    annotateConnectorCall({
+      tool: name,
+      effectId: effect?.id,
+      ...(effect?.status ? { effectStatus: effect.status } : {}),
+    }),
+  );
 }
 
 /** Web, cloud agents, MCP servers, app connections and connector tools. */
