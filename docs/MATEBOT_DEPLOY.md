@@ -175,7 +175,7 @@ gh workflow run release-android-apk.yml --repo Lizer2009/matebot --ref main
 | 移动端 | URL scheme `matebot://`、bundle id `com.matebot.app` |
 | 桌面 | `productName` / `appId`、安装包与可执行文件名、AppData 目录名 |
 
-**已有部署升级**：旧名下的 `.env`、数据库角色、Compose 卷不会自动改名，升级前需要一次性迁移（变量名批量替换、`ALTER ROLE`/`ALTER DATABASE` 改名、卷改名或保持卷名只换配置）。迁移步骤见发布说明；未执行迁移的部署会读不到原有密钥或连不上原数据库。
+**已有部署升级**：旧名下的 `.env`、数据库角色、Compose 卷不会自动改名，升级前需要一次性迁移：变量名批量替换、`ALTER ROLE`/`ALTER DATABASE` 改名、卷改名或保持卷名只换配置。完整步骤与验收项见 [Matebot identity migration](./matebot-identity-migration.md)。未执行迁移的部署会读不到原有密钥或连不上原数据库。
 
 **桌面配置目录迁移**：旧构建把配置写在以旧显示名命名的目录（Windows 为 `%APPDATA%\Rakazo`，macOS 为 `~/Library/Application Support/Rakazo`）。新构建启动时若新目录不存在而旧目录存在，会整体迁移过去（同盘为 rename，跨盘为复制后删除）。若两个目录都存在，则以新目录为准，旧目录保留不动。
 
