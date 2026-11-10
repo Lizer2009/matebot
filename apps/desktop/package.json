@@ -1,7 +1,7 @@
 {
   "name": "@matebot/desktop",
   "productName": "Matebot",
-  "version": "0.6.2-pr42.7f14a669",
+  "version": "0.7.0-pr48.74a731a09",
   "author": {
     "name": "Matebot"
   },
@@ -46,7 +46,13 @@
     },
     "files": [
       "dist/**/*",
-      "package.json"
+      "package.json",
+      "!**/*.test.ts",
+      "!**/*.test.tsx",
+      "!**/*.test.js",
+      "!**/*.spec.ts",
+      "!**/*.spec.tsx",
+      "!**/*.spec.js"
     ],
     "extraResources": [
       {
