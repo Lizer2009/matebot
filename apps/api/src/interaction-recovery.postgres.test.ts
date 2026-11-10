@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
 import type { InteractionPlan } from "@matebot/contracts";
+import {
+  applyNaturalLanguageEdit,
+  interactionCapabilityForIntent,
+  userEditedFieldNames,
+} from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -166,6 +171,82 @@ describePostgres("connection recovery (PostgreSQL)", () => {
     expect(block).toMatchObject({ capability: "ready", template: "email-draft-card" });
     // Nothing was sent and nothing was confirmed by the recovery itself.
     expect(block?.lifecycle).toBe("draft");
+  });
+
+  it("keeps the person's own field out of reach after the card recovers", async () => {
+    // The subject was typed by the person before the mailbox existed. Recovery must not make it
+    // fair game for a later model edit, which is the whole point of the provenance stamp.
+    await system.interaction.update({
+      where: { id: interactionId },
+      data: {
+        plan: plan([
+          {
+            name: "to",
+            value: "alex@example.test",
+            required: true,
+            status: "resolved",
+            source: "user",
+          },
+          {
+            name: "subject",
+            value: "我写的主题",
+            required: true,
+            status: "resolved",
+            source: "user",
+          },
+          { name: "body", required: true, status: "missing" },
+        ]) as never,
+      },
+    });
+
+    const applied: string[] = [];
+    const services = {
+      loadInteraction: async () => {
+        const row = await getInteraction(system, interactionId);
+        if (!row) return null;
+        return {
+          id: row.id,
+          spaceId: row.spaceId,
+          threadId: row.threadId,
+          intent: row.intent,
+          status: row.status,
+          draftVersion: row.draftVersion,
+          confirmedVersion: row.confirmedVersion,
+          slots: row.slots as Record<string, unknown>,
+          userEditedFields: userEditedFieldNames(row.plan),
+          plan: row.plan,
+        };
+      },
+      listOpenSurfaces: async () => [
+        {
+          taskId: interactionId,
+          surfaceId: `surface-${stamp}`,
+          intent: "email.compose",
+          label: "Email",
+          status: "draft" as const,
+        },
+      ],
+      applyField: async (input: { name: string; expectedDraftVersion: number }) => {
+        applied.push(input.name);
+        return { draftVersion: input.expectedDraftVersion + 1 };
+      },
+    };
+
+    const result = await applyNaturalLanguageEdit(services, {
+      spaceId,
+      threadId,
+      botId,
+      // The model quotes the current revision, so this is not a stale-edit refusal.
+      revision: 1,
+      fields: { subject: "模型改的主题", to: "model@example.test" },
+      schema: interactionCapabilityForIntent("email.compose")!.schema,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error);
+    // Both fields were the person's, so the model changed nothing at all.
+    expect(applied).toEqual([]);
+    expect(result.skippedFields.sort()).toEqual(["subject", "to"]);
   });
 
   it("does not start a model turn when the thread's card waits on another app", async () => {
