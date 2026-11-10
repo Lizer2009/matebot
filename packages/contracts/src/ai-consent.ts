@@ -2,7 +2,14 @@ import * as z from "zod";
 import { SettingsScopeSchema } from "./settings-scope.js";
 
 export const AI_DISCLOSURE_VERSION = "2026-09-14";
-export const AI_PRIVACY_URL = "https://rakazo.com/privacy/";
+/**
+ * The privacy page's path on the product's marketing site.
+ *
+ * A path, not an origin: the host differs per deployment, and the app composes this with the
+ * marketing origin it resolved. The server already lets an operator override the whole URL with
+ * `PRIVACY_POLICY_URL`, which is the right lever for a deployment with its own policy.
+ */
+export const AI_PRIVACY_PATH = "/privacy/";
 export const AiDataUseSchema = z.enum(["model", "voice", "memory"]);
 export type AiDataUse = z.infer<typeof AiDataUseSchema>;
 export const AI_DATA_DISCLOSURES: Record<AiDataUse, string> = {

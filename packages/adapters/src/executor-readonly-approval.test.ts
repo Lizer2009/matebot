@@ -758,6 +758,24 @@ describe("connector read-only metadata and approval enforcement", () => {
     reviewMock.mockReset();
   });
 
+  it("records no effect for the provider's tool search, because a search runs nothing", async () => {
+    // A search returns schemas. Giving it an effect row would put "this ran" in the ledger for
+    // something that never acted, which is the difference between finding a tool and using one.
+    const f = fixture({ name: "COMPOSIO_SEARCH_TOOLS", readOnly: false });
+    f.setCalls([{ args: { query: "send email" }, executionId: "call-1" }]);
+    await f.run();
+    expect(f.effects).toEqual([]);
+  });
+
+  it("still records an effect for a real connector action", async () => {
+    // The control: the same fixture with a real tool does write its row, so the case above is
+    // about the search and not about the fixture failing to record anything at all.
+    const f = fixture({ name: "GMAIL_SEND_EMAIL", readOnly: false });
+    f.setCalls([{ args: { to: "a@example.test" }, executionId: "call-1" }]);
+    await f.run();
+    expect(f.effects.length).toBeGreaterThan(0);
+  });
+
   it.each(["shell", "write_file"])(
     "forces owner approval for webhook-triggered %s despite an allow rule",
     async (name) => {

@@ -63,6 +63,7 @@ vi.mock("./pi-openai-compatible-provider.js", () => ({
   registerOpenAiCompatibleRuntime: (models: unknown) => models,
 }));
 
+import { LAYER_DISCIPLINE_PROMPT } from "@matebot/core";
 import { COMPUTER_SCREEN_UNAVAILABLE } from "./computer-screens.js";
 import { defaultSystemPrompt, PiAgentRuntime } from "./pi-runtime.js";
 
@@ -86,6 +87,18 @@ describe("Pi computer tool dispatch", () => {
     }
     expect(defaultSystemPrompt(true)).toContain("a real computer");
     expect(defaultSystemPrompt(false)).toContain("a persistent sandbox filesystem and shell");
+  });
+
+  it("tells the model which claims each layer allows, in the production prompt", () => {
+    // The tool results carry a route, but a model that already decided what to say can ignore
+    // them. This is the instruction half: what it may claim about a page, a catalog entry, a
+    // connection, a search, and a draft.
+    for (const prompt of [defaultSystemPrompt(true), defaultSystemPrompt(false)]) {
+      expect(prompt).toContain(LAYER_DISCIPLINE_PROMPT);
+      expect(prompt).toMatch(/Opening a page in the browser is not connecting an app/);
+      expect(prompt).toMatch(/tool search returning schemas is not a completed action/);
+      expect(prompt).toMatch(/draft card is not an action/);
+    }
   });
 
   it("forwards screenshots as image content for any Pi model provider", async () => {
@@ -123,7 +136,11 @@ describe("Pi computer tool dispatch", () => {
     expect(fakeAgentState.result).toMatchObject({
       content: [{ type: "text" }, { type: "image", mimeType: "image/png", data: "iVBORw0KGgo=" }],
     });
-    expect(fakeAgentState.systemPrompt).toBe("Follow the user's instructions.");
+    // A bot's own instructions are kept, and the product's layer rules are added: the constraint
+    // on what may be claimed is not part of anyone's persona, so custom instructions cannot
+    // remove it.
+    expect(fakeAgentState.systemPrompt).toContain("Follow the user's instructions.");
+    expect(fakeAgentState.systemPrompt).toContain(LAYER_DISCIPLINE_PROMPT);
   });
 
   it("keeps the run alive when a graphical tool returns an error object", async () => {

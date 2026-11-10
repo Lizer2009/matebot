@@ -853,11 +853,6 @@ const TESTIMONIALS: HomeCopy["testimonials"]["items"] = [
   },
   {
     quote:
-      "Im a co-founder and cto, loving rakazo, we have it running against private on qwen 3.8 with strong hw/gpus - all private.",
-    attribution: "@bc101101",
-  },
-  {
-    quote:
       "I use it to find cheap servers and computer parts on ebay and all other marketplaces and send me everything he decided is a good deal.",
     attribution: "@michaelortnerit",
   },
@@ -865,15 +860,6 @@ const TESTIMONIALS: HomeCopy["testimonials"]["items"] = [
     quote:
       "Hermes is good but more complicated setup. Matebot has better multi agent workflow and simpler to setup",
     attribution: "@notabot_92732",
-  },
-  {
-    quote: "ive been using rakazo for 1 month in claude oauth no problems yet",
-    attribution: "@hey_cabron",
-  },
-  {
-    quote:
-      "I set up the mobile app today with expo, first time using expo but was easy with rakazo walking me through",
-    attribution: "@mithril0x",
   },
 ];
 

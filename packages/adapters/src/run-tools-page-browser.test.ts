@@ -77,6 +77,35 @@ describe("page tools hide the run's secrets, also where a snapshot quotes them",
   });
 });
 
+describe("opening a page reports the web layer, not a connection", () => {
+  it("marks a browser_navigate result as L1 and says nothing was connected or run", async () => {
+    const seen = await runPageTool("browser_navigate", { url });
+    // The model reads this result to write its reply, so the distinction travels with it.
+    expect(seen).toContain('"layer":"web"');
+    expect(seen).toContain('"connected":false');
+    expect(seen).toContain('"executed":false');
+    // The sentence it may repeat must not claim a connection or a completed action.
+    expect(seen).toContain("No app was connected");
+    expect(seen).not.toMatch(/connected the app|executed the action/i);
+  });
+
+  it("does not claim a refused navigation opened a page", async () => {
+    // The browser refuses a bad URL before it opens anything. A sentence saying the page opened
+    // would be a quotable claim about something that did not happen — the overclaim this whole
+    // layer marker exists to prevent, produced by the marker itself.
+    const seen = await runPageTool("browser_navigate", { url: "ftp://files.example.test/x" });
+    expect(seen).toContain('"opened":false');
+    expect(seen).toContain("This page was not opened");
+    expect(seen).not.toContain("This page was opened in the browser");
+  });
+
+  it("does not annotate a snapshot, which reads a page already open", async () => {
+    // The marker is about the entry step. A snapshot of an already-open page is not an entry.
+    const seen = await runPageTool("browser_snapshot", { url });
+    expect(seen).not.toContain('"layer":"web"');
+  });
+});
+
 describe("page tools save a page's file downloads in the calling bot's own folder", () => {
   // A saved name never has a backslash: the helper turns one into an underscore.
   const nameSecret = 'zq"xv-mk';

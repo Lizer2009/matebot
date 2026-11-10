@@ -10,7 +10,7 @@ const starsLabel = await githubStarsLabel();
 
 <BaseLayout
   title="Terms · Matebot"
-  description="The licence and terms for using Matebot, and the upstream terms for the hosted Rakazo service."
+  description="The licence and terms for using Matebot."
 >
   <div class="container">
     <Header starsLabel={starsLabel} />
@@ -18,10 +18,11 @@ const starsLabel = await githubStarsLabel();
       <h1>Terms of Service</h1>
       <p><strong>Last updated: November 5, 2026</strong></p>
       <p>
-        Matebot is self-hosted open source software, not a hosted product. The{" "}
+        Matebot is open source software you can run yourself, and it can also be offered to you as a
+        service by whoever operates the Matebot you sign in to. The{" "}
         <a href={`${GITHUB_URL}/blob/main/LICENSE`}>Apache License 2.0</a> in this repository governs your
-        use of the code, and the person or organization operating the server you connect to is responsible
-        for that deployment and for its own terms.
+        use of the code. The operator of the server you connect to is responsible for that deployment,
+        including any paid plan it offers and its own terms.
       </p>
 
       <h2>Open-source software</h2>
@@ -29,9 +30,9 @@ const starsLabel = await githubStarsLabel();
         The Matebot source code is available under the{" "}
         <a href={`${GITHUB_URL}/blob/main/LICENSE`}>Apache License 2.0</a>. That license, not this page,
         governs your use of the code. Matebot is a fork of the Apache-2.0{" "}
-        <a href={UPSTREAM_URL}>Rakazo</a> project by Inbox Zero Inc., and the upstream license and notices
-        carry over unchanged. A third party that operates a self-hosted Matebot deployment is responsible
-        for that deployment and its own terms.
+        <a href={UPSTREAM_URL}>Rakazo</a> project by Inbox Zero Inc., and the upstream copyright notices
+        and license text carry over unchanged. The upstream project is credited; the Matebot name and the
+        changes in this repository are not the upstream project's.
       </p>
 
       <h2>Your account</h2>
@@ -76,12 +77,17 @@ const starsLabel = await githubStarsLabel();
         recorded in the <a href={GITHUB_URL}>repository</a>.
       </p>
 
-      <h2>Hosted Rakazo service</h2>
+      <h2>Paid plans</h2>
       <p>
-        If you use the hosted service the upstream project operates rather than a self-hosted Matebot, that
-        service has its own{" "}
-        <a href="https://rakazo.com/terms/">terms</a> and{" "}
-        <a href="https://rakazo.com/privacy/">privacy policy</a>. They describe that service, not this one.
+        Some deployments offer paid features. Any such plan, its price, what it includes, how it renews,
+        how it can be cancelled, and how a refund is handled are set by the operator of the server you
+        signed in to, and are shown to you before you pay. Payment is taken by that operator's payment
+        processor. This page does not set those terms.
+      </p>
+      <p>
+        If you cancel, access to paid features ends as described by that operator. Deleting your account
+        removes your data from that deployment as described in the{" "}
+        <a href="/privacy/">privacy policy</a>.
       </p>
 
       <h2>Contact</h2>

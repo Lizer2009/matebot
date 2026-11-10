@@ -16,6 +16,7 @@ import {
   decisiveActionApprovalRules,
   displayName,
   humanizeToolName,
+  isDiscoveryTool,
   newSiteOutcome,
   outboundSiteGate,
   planActionGate,
@@ -393,11 +394,17 @@ export async function gateToolCall(
       : toolEffectIdempotencyKey(runId, replayEffectToolName, args, occurrence));
   // Connector read-only hints must not bypass approval, review, or replay decisions.
   // A fetch to a new site is gated like any action, so it needs an effect to approve.
+  // A discovery call is not an action. The provider's search tool returns schemas; recording it
+  // as an effect would put a row in the ledger that later reads as "this ran", which is exactly
+  // the confusion between finding a tool and executing one. It therefore gets no effect at all,
+  // the same way a read-only tool that needs no approval does.
+  const discoveryOnly = isDiscoveryTool(approvalName) || isDiscoveryTool(name);
   const applied =
-    READ_ONLY_AGENT_TOOLS.has(name) &&
-    siteGate !== "new" &&
-    nextApprovedTool !== name &&
-    !approvedEffectKey
+    discoveryOnly ||
+    (READ_ONLY_AGENT_TOOLS.has(name) &&
+      siteGate !== "new" &&
+      nextApprovedTool !== name &&
+      !approvedEffectKey)
       ? undefined
       : await recordEffect(
           deps,

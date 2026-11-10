@@ -203,6 +203,25 @@ export function inferScript(
   // A message that carries an attachment has provider prose appended after the
   // user's words, so the instruction is matched at the start and anything after
   // the JSON object is ignored.
+  // Any tool the runtime offers, so a controlled test can drive the layer paths — opening a page,
+  // offering an app, a connector call — through the real dispatcher rather than around it. The
+  // A2UI tools below keep their own branch because they also fix the assistant's words.
+  const anyTool =
+    /^(?:@\S+\s+)?call (?!present_interaction|present_result|refresh_result|edit_interaction|cancel_interaction)([a-z_]+) with (\{[\s\S]*\})/.exec(
+      words.trim(),
+    );
+  if (anyTool) {
+    const args = jsonObject(anyTool[2]!);
+    if (args) {
+      return [
+        {
+          assistant: "Handled.",
+          toolCalls: [{ name: anyTool[1]!, args }],
+          complete: true,
+        },
+      ];
+    }
+  }
   const a2ui =
     /^(?:@\S+\s+)?call (present_interaction|present_result|refresh_result|edit_interaction|cancel_interaction) with (\{[\s\S]*\})/.exec(
       words.trim(),

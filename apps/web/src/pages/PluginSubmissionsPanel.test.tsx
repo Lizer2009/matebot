@@ -155,13 +155,13 @@ it("shows the page a claim is for", async () => {
     );
   });
   await vi.waitFor(() => {
-    if (!container.querySelector('a[href="https://rakazo.com/integrations/notes/"]'))
+    if (!container.querySelector('a[href="https://test.matebot.dev/integrations/notes/"]'))
       throw new Error("Loading");
   });
   const row = container.querySelector('[data-testid="plugin-submission"]');
   const links = [...(row?.querySelectorAll("a") ?? [])].map((link) => link.getAttribute("href"));
   expect(links).toEqual([
-    "https://rakazo.com/integrations/notes/",
+    "https://test.matebot.dev/integrations/notes/",
     submission.website,
     "mailto:owner@notes.example.test",
   ]);

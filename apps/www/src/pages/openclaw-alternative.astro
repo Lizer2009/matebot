@@ -48,7 +48,7 @@ const card = vsCard("openclaw-alternative");
       <p class="alt-note">Updated {OPENCLAW_UPDATED}.</p>
       {
         card && (
-          <VsCard otherName="OpenClaw" rakazo={card.rakazo} other={card.other} />
+          <VsCard otherName="OpenClaw" matebot={card.matebot} other={card.other} />
         )
       }
       <SetupSteps />
@@ -96,8 +96,8 @@ const card = vsCard("openclaw-alternative");
               COMPARISON_ROWS.map((row) => (
                 <tr>
                   <th scope="row">{row.aspect}</th>
-                  <td><InlineCode text={row.rakazo} /></td>
-                  <td><InlineCode text={row.openclaw} /></td>
+                  <td><InlineCode text={row.matebot} /></td>
+                  <td><InlineCode text={row.other} /></td>
                 </tr>
               ))
             }

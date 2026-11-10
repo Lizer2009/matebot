@@ -106,6 +106,114 @@ class GuardPassesRealLegacyIdentities(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
+class ProductLinksToTheOldHost(unittest.TestCase):
+    """A URL the product links to is not attribution, however the host is owned.
+
+    This is the defect that shipped in an APK: `SUBMIT_PLUGIN_URL` pointed at the old domain, and
+    the guard excused it because the host text was on the same line as the sanctioned-attribution
+    pattern. Nothing in the scan asked *who the link is for*.
+    """
+
+    def test_a_url_constant_pointing_at_the_old_host_is_a_defect(self) -> None:
+        root = make_tree(
+            {
+                "packages/contracts/src/domain.ts": (
+                    'export const SUBMIT_PLUGIN_URL = "https://rakazo.com/plugins/submit/";\n'
+                )
+            }
+        )
+        result = run_guard(root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("VISIBLE DEFECTS", result.stdout)
+
+    def test_an_href_and_an_openurl_are_both_defects(self) -> None:
+        root = make_tree(
+            {
+                "apps/web/src/pages/x.tsx": '<a href="https://rakazo.com/privacy/">Privacy</a>\n',
+                "apps/mobile/app/y.tsx": (
+                    'void Linking.openURL("https://rakazo.com/terms/");\n'
+                ),
+            }
+        )
+        result = run_guard(root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+
+    def test_the_same_defect_in_other_shapes_is_caught(self) -> None:
+        # The first rule only matched `= "…"`, `href={"…"}` and `openURL("…")`, so the identical
+        # mistake written as a table, a bare origin, or a router call passed the guard.
+        cases = {
+            "object literal": 'export const links = { submit: "https://rakazo.com/plugins/submit/" };\n',
+            "bare origin": 'const OLD = "https://rakazo.com";\n',
+            "router call": 'router.push("https://rakazo.com/terms/");\n',
+            "template head": 'const u = `https://rakazo.com/privacy/`;\n',
+        }
+        for label, source in cases.items():
+            root = make_tree({"packages/contracts/src/x.ts": source})
+            result = run_guard(root)
+            self.assertEqual(result.returncode, 1, f"{label} passed: {result.stdout}")
+
+    def test_an_install_command_naming_the_upstream_repo_is_a_defect(self) -> None:
+        # Someone following "install this" must clone the project they are installing. The guide
+        # said `git clone .../elie222/rakazo`, which installs the upstream project instead.
+        cases = {
+            "clone": "export const SOURCE = `git clone https://github.com/elie222/rakazo.git`;\n",
+            "mkdir": "export const INSTALL = `mkdir -p rakazo && cd rakazo &&`;\n",
+            "curl": (
+                "export const FETCH = `curl -fsSLO "
+                "https://raw.githubusercontent.com/elie222/rakazo/main/x.sh`;\n"
+            ),
+        }
+        for label, source in cases.items():
+            root = make_tree({"apps/www/src/guide.ts": source})
+            result = run_guard(root)
+            self.assertEqual(result.returncode, 1, f"{label} passed: {result.stdout}")
+
+    def test_the_same_command_in_a_comment_or_docs_is_allowed(self) -> None:
+        # Documentation about the upstream project's own install is attribution, not an
+        # instruction for this product.
+        root = make_tree(
+            {
+                "apps/www/src/x.ts": (
+                    "// Upstream: git clone https://github.com/elie222/rakazo.git\n"
+                    'export const URL = "https://github.com/elie222/rakazo";\n'
+                )
+            }
+        )
+        result = run_guard(root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_attribution_to_the_upstream_project_still_passes(self) -> None:
+        # Crediting the upstream project is not the same as sending users to the old product.
+        root = make_tree(
+            {
+                "apps/www/src/site.ts": (
+                    'export const UPSTREAM_URL = "https://github.com/elie222/rakazo";\n'
+                ),
+                "apps/www/src/pages/terms.astro": (
+                    'const X = "https://rakazo.com/terms/"; // upstream terms\n'
+                ),
+            }
+        )
+        result = run_guard(root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_a_link_inside_the_upstream_service_section_passes(self) -> None:
+        # The terms page links Rakazo's own terms *about that service*. The heading is above the
+        # link, which is why the rule looks at the section rather than only the line.
+        root = make_tree(
+            {
+                "apps/www/src/pages/terms.astro": (
+                    "<h2>Hosted Rakazo service</h2>\n"
+                    "<p>If you use the hosted service the upstream project operates, that\n"
+                    "service has its own <a href=\"https://rakazo.com/terms/\">terms</a>.\n"
+                    "</p>\n"
+                )
+            }
+        )
+        result = run_guard(root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
 class SpecificityOrdering(unittest.TestCase):
     def test_the_narrow_rule_reports_a_narrow_reason(self) -> None:
         sys.path.insert(0, str(GUARD.parent))

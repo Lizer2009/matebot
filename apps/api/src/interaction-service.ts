@@ -327,6 +327,21 @@ function rejectUnlessMailboxReady(
 }
 
 /**
+ * A settled draft is never moved back to "waiting for a connection".
+ *
+ * Both projectors below rewrite the row's status and the card. That is right for a live draft
+ * whose mailbox is missing, but wrong for a record that already ended: a cancelled or executed
+ * card that someone tries to confirm again must keep the state it has, or a discard would be
+ * undone by the very act of trying to send what was discarded. The guard lives here, at the
+ * write, so neither caller has to remember it.
+ */
+const SETTLED_STATUSES = ["cancelled", "succeeded", "unknown", "failed", "executing"] as const;
+
+function isSettled(status: string): boolean {
+  return (SETTLED_STATUSES as readonly string[]).includes(status);
+}
+
+/**
  * A preflight miss must land on the card, not in prose: refresh the same surface
  * into its connection/reconnect template so the user has a button to press.
  */
@@ -336,13 +351,20 @@ async function projectCapabilityGate(
   capability: EmailSurfaceCapability,
 ): Promise<void> {
   const current = await getInteraction(prisma, target.interactionId);
-  if (!current) return;
+  if (!current || isSettled(current.status)) return;
   await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
-      await tx.interaction.updateMany({
-        where: { id: current.id, draftVersion: current.draftVersion },
+      // Re-checked in the write's own scope: a concurrent cancel can settle the row between the
+      // read above and this update, and the newer terminal state must win.
+      const claimed = await tx.interaction.updateMany({
+        where: {
+          id: current.id,
+          draftVersion: current.draftVersion,
+          status: { notIn: [...SETTLED_STATUSES] },
+        },
         data: { status: "needs_connection" },
       });
+      if (claimed.count !== 1) return;
       await projectInteractionEmailSurface(tx, {
         interaction: {
           id: current.id,
@@ -370,13 +392,19 @@ async function projectMailboxGate(
   snapshot: ReturnType<typeof emailCapabilityFromRows>,
 ): Promise<void> {
   const current = await getInteraction(prisma, input.interactionId);
-  if (!current) return;
+  if (!current || isSettled(current.status)) return;
   await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
-      await tx.interaction.updateMany({
-        where: { id: current.id, draftVersion: current.draftVersion },
+      // Same guard as projectCapabilityGate: a card that has ended keeps its state.
+      const claimed = await tx.interaction.updateMany({
+        where: {
+          id: current.id,
+          draftVersion: current.draftVersion,
+          status: { notIn: [...SETTLED_STATUSES] },
+        },
         data: { status: "needs_connection" },
       });
+      if (claimed.count !== 1) return;
       await projectInteractionEmailSurface(tx, {
         interaction: {
           id: current.id,

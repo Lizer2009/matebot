@@ -40,7 +40,7 @@ const card = vsCard(page.slug);
       </section>
     ))
   }
-  {card && <VsCard otherName={page.otherName} rakazo={card.rakazo} other={card.other} />}
+  {card && <VsCard otherName={page.otherName} matebot={card.matebot} other={card.other} />}
   {page.slug === "hermes-alternative" && <SetupSteps />}
 
   <div class="alt-table-wrap">
@@ -58,7 +58,7 @@ const card = vsCard(page.slug);
           page.rows.map((row) => (
             <tr>
               <th scope="row">{row.topic}</th>
-              <td><InlineCode text={row.rakazo} /></td>
+              <td><InlineCode text={row.matebot} /></td>
               <td><InlineCode text={row.other} /></td>
             </tr>
           ))

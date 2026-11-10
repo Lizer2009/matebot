@@ -44,6 +44,7 @@ import {
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import { purchaseApprovalOf } from "./purchase-gate.js";
 import { resolvePurchaseCardFill, resolvePurchasePayTokenFill } from "./purchase-service.js";
+import { annotateWebEntry, withRouteAnnotation } from "./route-annotation.js";
 import type { RunContext } from "./run-context.js";
 import { addRunSecrets } from "./run-context.js";
 import { builtinOffered } from "./run-instructions.js";
@@ -279,8 +280,33 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
       name,
       result,
     );
-    return browserResultForModel(result);
+    return browserResultForModel(withRouteLayer(name, result));
   }, call.finish);
+}
+
+/**
+ * Say which layer an `browser_navigate` result belongs to.
+ *
+ * Opening a page is L1: not an app connection, not an action. The model reads this result to
+ * decide what to tell the person, so the distinction travels with it. `browser_snapshot` and
+ * `browser_act` are not annotated — they read or drive a page already open.
+ */
+function withRouteLayer<T>(name: string, result: T): T {
+  if (name !== "browser_navigate") return result;
+  const candidate = (typeof result === "object" && result !== null ? result : {}) as {
+    url?: unknown;
+    ok?: unknown;
+    error?: unknown;
+    fallback?: unknown;
+  };
+  // A navigation that failed or fell back to the desktop did not open a page. The tool reports
+  // that with `error`/`fallback`, and `ok: false`; anything else is a page that did open.
+  const failed =
+    candidate.ok === false ||
+    typeof candidate.error === "string" ||
+    typeof candidate.fallback === "string";
+  const url = typeof candidate.url === "string" ? candidate.url : undefined;
+  return withRouteAnnotation(result, annotateWebEntry(url, !failed));
 }
 
 /** Tools that drive the bot's computer: screen, page browser and shell. */

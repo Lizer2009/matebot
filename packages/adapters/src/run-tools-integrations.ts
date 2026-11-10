@@ -1,8 +1,10 @@
+import { isDiscoveryTool } from "@matebot/core";
 import { normalizedHttpUrl } from "@matebot/core/egress";
 import { executeCloudAgentTool } from "./cloud-agent-service.js";
 import { collectLogIds } from "./composio-connector.js";
 import { connectApp } from "./connect-app.js";
 import { addMcpServerFromTool } from "./mcp-server-tool.js";
+import { annotateConnectorCall, withRouteAnnotation } from "./route-annotation.js";
 import type { RunContext } from "./run-context.js";
 import { runScopedToolExecutionId } from "./run-effects.js";
 import { flushProgress, publishMidTurnNarration, showNarrationStatus } from "./run-progress.js";
@@ -25,7 +27,7 @@ export async function cloudAgentTool(ctx: RunContext, call: ToolCall) {
 
 export async function connectorTool(ctx: RunContext, call: ToolCall) {
   const { deps, run, bot, thread, context } = ctx;
-  const { name, args, effectKey, connectorCall } = call;
+  const { name, args, effectKey, connectorCall, applied } = call;
   if (deps.connector) {
     let result: unknown = { error: `unknown tool ${name}` };
     for await (const event of deps.connector.execute(
@@ -60,9 +62,46 @@ export async function connectorTool(ctx: RunContext, call: ToolCall) {
         }
       }
     }
-    return call.finish(result);
+    // Only a discovery call is annotated. A real action's own result is what the model needs, and
+    // adding a marker to every connector result would change a payload read all over the product
+    // for a distinction that only matters where a search could be mistaken for work done.
+    return call.finish(
+      isDiscoveryTool(name)
+        ? withConnectorLayer(
+            name,
+            result,
+            applied?.effect as { id: string; status?: string } | undefined,
+          )
+        : result,
+    );
   }
   return call.finish({ error: `unknown tool ${name}` });
+}
+
+/**
+ * Say which layer a connector result belongs to: discovery or execution.
+ *
+ * The model reads this result to write its reply, and "the tool returned something" is not the
+ * same as "the work was done". Only discovery calls are annotated: a real action's own payload is
+ * what the model needs, and changing that shape everywhere would be a wide change for a
+ * distinction that only matters where a search could be mistaken for work.
+ *
+ * The effect's status travels with its id: the row exists before the tool runs, so an id alone
+ * would let a refused or replayed call be reported as work that happened.
+ */
+function withConnectorLayer<T>(
+  name: string,
+  result: T,
+  effect: { id: string; status?: string } | undefined,
+): T {
+  return withRouteAnnotation(
+    result,
+    annotateConnectorCall({
+      tool: name,
+      effectId: effect?.id,
+      ...(effect?.status ? { effectStatus: effect.status } : {}),
+    }),
+  );
 }
 
 /** Web, cloud agents, MCP servers, app connections and connector tools. */

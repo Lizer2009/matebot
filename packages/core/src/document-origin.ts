@@ -27,10 +27,9 @@ export const DEFAULT_DOCUMENT_ORIGIN = "https://test.matebot.dev";
  * operator never configured that host, so a pre-approved fetch to it would be a
  * weaker guard than asking. Only a configured origin is exempt.
  */
-export function documentOriginConfigured(
-  env: Record<string, string | undefined> = process.env,
-): boolean {
-  return isValidOrigin(env[DOCUMENT_ORIGIN_ENV]?.trim());
+export function documentOriginConfigured(env?: Record<string, string | undefined>): boolean {
+  const source = env ?? (typeof process === "undefined" ? {} : process.env);
+  return isValidOrigin(source[DOCUMENT_ORIGIN_ENV]?.trim());
 }
 
 /**
@@ -40,11 +39,16 @@ export function documentOriginConfigured(
  * malformed or hostile value becomes the default, never a `javascript:` URL the
  * model might be told to fetch.
  */
-export function documentOriginFromEnv(
-  env: Record<string, string | undefined> = process.env,
-): string {
-  const raw = env[DOCUMENT_ORIGIN_ENV]?.trim();
-  return isValidOrigin(raw) ? new URL(raw!).origin : DEFAULT_DOCUMENT_ORIGIN;
+export function documentOriginFromEnv(env?: Record<string, string | undefined>): string {
+  // A browser bundle has no `process`. Reading it unconditionally would throw at module scope
+  // and take the whole module graph down with it — a plugin list that simply never renders,
+  // with no error anybody sees. In that environment the default is the only answer available,
+  // which is what an unconfigured build gets anyway.
+  const source = env ?? (typeof process === "undefined" ? {} : process.env);
+  const raw = source[DOCUMENT_ORIGIN_ENV]?.trim();
+  if (!isValidOrigin(raw)) return DEFAULT_DOCUMENT_ORIGIN;
+  // `isValidOrigin` already proved this parses; the assertion only tells TypeScript so.
+  return new URL(raw as string).origin;
 }
 
 function isValidOrigin(raw: string | undefined): boolean {

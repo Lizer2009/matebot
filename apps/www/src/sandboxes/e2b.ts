@@ -63,7 +63,7 @@ export const e2b: Sandbox = {
       heading: "Limits",
       bullets: [
         "Matebot doesn't expose a region choice, a custom image, or E2B's own snapshots, volumes or network rules.",
-        "Computers use the `rakazo-computer` template at 2 vCPU and 4 GB once you build it. Before that, they use E2B's stock desktop, which reserves 8 vCPU and 8 GB each.",
+        "Computers use your own E2B template at 2 vCPU and 4 GB once you build it. Before that, they use E2B's stock desktop, which reserves 8 vCPU and 8 GB each.",
         "An existing computer keeps the size it was created with until it is replaced.",
         "Like other hosted providers that bill while running, a computer is paused after two hours of continuous uptime by default unless a bot is still working on it or you are in control.",
       ],

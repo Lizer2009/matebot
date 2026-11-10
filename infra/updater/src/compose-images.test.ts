@@ -37,7 +37,9 @@ const publishWorkflow = parse(readFileSync(publishWorkflowFile, "utf8")) as {
 };
 
 const appServices = ["api", "worker", "web", "supervisor", "migrate"] as const;
-const FIRST_PARTY_IMAGE = /ghcr\.io\/elie222\/rakazo\/([a-z0-9][a-z0-9._-]*)/g;
+// This product's registry namespace. It named the upstream one, so the cross-check below matched
+// nothing and could not notice the compose file pulling another product's images.
+const FIRST_PARTY_IMAGE = /ghcr\.io\/lizer2009\/matebot\/([a-z0-9][a-z0-9._-]*)/g;
 
 function firstPartyImageNames(value: unknown): string[] {
   if (typeof value !== "string") return [];
@@ -61,11 +63,13 @@ describe("the images compose file", () => {
       "web",
       "worker",
     ]);
+    // The default this file pulls is this product's image. It used to name the upstream
+    // namespace, so someone installing from this repository fetched a different product.
     for (const service of appServices) {
-      expect(compose.services[service]?.image).toContain("ghcr.io/elie222/rakazo/app");
+      expect(compose.services[service]?.image).toContain("ghcr.io/lizer2009/matebot/app");
       expect(compose.services[service]?.image).toContain("RAKAZO_IMAGE_TAG");
     }
-    expect(compose.services.computer?.image).toContain("ghcr.io/elie222/rakazo/computer");
+    expect(compose.services.computer?.image).toContain("ghcr.io/lizer2009/matebot/computer");
     expect(compose.services.computer?.image).toContain("RAKAZO_COMPUTER_IMAGE_TAG");
     expect(compose.services.postgres?.image).toMatch(
       /^\$\{POSTGRES_IMAGE:-postgres:16@sha256:[0-9a-f]{64}\}$/,
@@ -77,7 +81,33 @@ describe("the images compose file", () => {
     expect(firstPartyImageNames(null)).toEqual([]);
     expect(firstPartyImageNames(true)).toEqual([]);
     expect(firstPartyImageNames(7091)).toEqual([]);
-    expect(firstPartyImageNames("ghcr.io/elie222/rakazo/computer:edge")).toEqual(["computer"]);
+    expect(firstPartyImageNames("ghcr.io/lizer2009/matebot/computer:edge")).toEqual(["computer"]);
+  });
+
+  it("keeps the documented override working over the Matebot default", () => {
+    // The default points at this product, and an operator who pinned RAKAZO_IMAGE keeps that
+    // pin: repointing the default must not take away an explicit choice.
+    const resolve = (value: string, env: Record<string, string>) =>
+      value.replace(
+        /\$\{([A-Za-z_][A-Za-z0-9_]*)(:-)?([^}]*)\}/g,
+        (_m, name: string, fallback: string | undefined, fallbackValue: string) =>
+          fallback ? env[name] || fallbackValue : (env[name] ?? ""),
+      );
+    for (const service of appServices) {
+      const image = compose.services[service]?.image as string;
+      expect(resolve(image, {})).toBe("ghcr.io/lizer2009/matebot/app:edge");
+      expect(
+        resolve(image, { RAKAZO_IMAGE: "registry.example.test/mine/app", RAKAZO_IMAGE_TAG: "v9" }),
+      ).toBe("registry.example.test/mine/app:v9");
+    }
+    const computer = compose.services.computer?.image as string;
+    expect(resolve(computer, {})).toBe("ghcr.io/lizer2009/matebot/computer:edge");
+    expect(
+      resolve(computer, {
+        RAKAZO_COMPUTER_IMAGE: "registry.example.test/mine/computer",
+        RAKAZO_COMPUTER_IMAGE_TAG: "v9",
+      }),
+    ).toBe("registry.example.test/mine/computer:v9");
   });
 
   it("only references first-party images that the publish matrix publishes", () => {

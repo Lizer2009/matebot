@@ -205,7 +205,10 @@ ALLOWED = [
      "link to the upstream repository; the licence requires naming the source"),
     (r"^https://raw\.githubusercontent\.com/elie222/rakazo.*$",
      "upstream install script, referenced when documenting the original project"),
-    (r"^https://rakazo\.com.*$", "the upstream hosted service's own pages"),
+    # A blanket allowance for `rakazo.com` was removed: it excused the product's own links to the
+    # old host. The one place a link to the upstream service is legitimate — the terms page
+    # describing that service — no longer needs it, and the product-URL rule below is what
+    # catches a regression.
     (r"^Rakazo$",
      "the upstream project's own name and the brand of the hosted service it belongs to; "
      "used when stating what this product is a fork of, which is a licence obligation"),
@@ -348,10 +351,66 @@ def classify(token: str) -> tuple[str, str] | None:
 
 # A visible line where the old name appears as the *product*, not as the upstream project.
 SANCTIONED_VISIBLE = re.compile(
-    r"(upstream|Built on Rakazo|Hosted Rakazo|fork of|elie222/rakazo|rakazo[.]com"
+    r"(upstream|Built on Rakazo|Hosted Rakazo|fork of|elie222/rakazo"
     r"|rakazo[.](example|invalid|test)|Rakazo project|shared with Rakazo)",
     re.I,
 )
+
+# A link the product itself sends people to is not attribution, whoever owns the host.
+#
+# This was the hole: `rakazo.com` sat in the sanctioned list as "upstream attribution", so a
+# constant like `SUBMIT_PLUGIN_URL = "https://rakazo.com/plugins/submit/"` — a URL a shipped app
+# opens in the user's browser — was excused by the same rule that excuses a credit line. A URL
+# assigned to a name, or used as an href, is product navigation and has to be decided explicitly.
+# A URL the product itself sends people to is not attribution, whoever owns the host.
+#
+# The old rule required one of three exact shapes (`= "…"`, `href={"…"}`, `openURL("…")`), so the
+# same defect written as an object literal, a bare origin constant, a template string, or
+# `router.push("…")` passed. This matches any string literal or template head containing the old
+# *product* host; crediting the upstream project is handled by the exemption below, which is about
+# the anchor's meaning rather than about the surrounding punctuation.
+PRODUCT_URL = re.compile(r"""["'`]https?://(?:www\.)?rakazo\.com""", re.I)
+
+# Lines that are about the upstream project on purpose: the page that describes its hosted
+# service, and constants whose name says they point at upstream.
+UPSTREAM_LINKING = re.compile(
+    r"(UPSTREAM|upstream|elie222|Hosted Rakazo|describe that service)", re.I
+)
+
+
+# A command a reader copies and runs is a product instruction, even when it names the upstream
+# repository: someone following "install this" must clone the project they are installing.
+COPIED_COMMAND = re.compile(
+    r"(git\s+clone\s+\S*elie222/rakazo|raw\.githubusercontent\.com/elie222/rakazo"
+    r"|curl[^\n]*elie222/rakazo|mkdir\s+-p\s+rakazo|cd\s+rakazo(?![\w-]))",
+    re.I,
+)
+
+
+def _in_comment(lines: list[str], index: int) -> bool:
+    """Whether this line is a comment, where naming the upstream repository is documentation."""
+    stripped = lines[index].strip()
+    return stripped.startswith(("#", "//", "*", "<!--"))
+
+
+# A command a reader copies and runs is a product instruction, even when it names the upstream
+# repository: someone following "install this" must clone the project they are installing.
+COPIED_COMMAND = re.compile(
+    r"(git\s+clone\s+\S*elie222/rakazo|raw\.githubusercontent\.com/elie222/rakazo"
+    r"|curl[^\n]*elie222/rakazo|mkdir\s+-p\s+rakazo|cd\s+rakazo(?![\w-]))",
+    re.I,
+)
+
+
+def _in_upstream_section(lines: list[str], index: int, window: int = 12) -> bool:
+    """Whether this line sits in a section that is explicitly about the upstream service.
+
+    The terms page has a "Hosted Rakazo service" section that links Rakazo's own terms and
+    privacy policy. Those belong to that service, not to this product, so they are attribution —
+    but the heading is a few lines above the link, not on it.
+    """
+    start = max(0, index - window)
+    return any(UPSTREAM_LINKING.search(line) for line in lines[start:index])
 
 VISIBLE_SLOT = re.compile(
     r"""(<title>[^<]*rakazo|<h[1-6][^>]*>[^<]*rakazo|aria-label="[^"]*rakazo"""
@@ -376,8 +435,23 @@ def _visible_defects():
             text = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        for number, line in enumerate(text.splitlines(), 1):
+        all_lines = text.splitlines()
+        for number, line in enumerate(all_lines, 1):
             if "rakazo" not in line.lower():
+                continue
+            # A product URL is checked before the attribution excuse, because the old host
+            # appearing there means we are linking people to it, not crediting it.
+            # A command someone copies is never attribution, wherever it sits: it tells them what
+            # to install, and "install the upstream project" is the wrong instruction here.
+            if COPIED_COMMAND.search(line) and not _in_comment(all_lines, number - 1):
+                found.append((path, number, line.strip()[:120]))
+                continue
+            if (
+                PRODUCT_URL.search(line)
+                and not UPSTREAM_LINKING.search(line)
+                and not _in_upstream_section(all_lines, number - 1)
+            ):
+                found.append((path, number, line.strip()[:120]))
                 continue
             if not VISIBLE_SLOT.search(line):
                 continue

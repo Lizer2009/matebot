@@ -39,9 +39,17 @@ grep -q '^RAKAZO_IMAGE=ghcr.io/lizer2009/matebot/app$' "$tmp/cwd/.env" ||
 grep -q '^RAKAZO_COMPUTER_IMAGE=ghcr.io/lizer2009/matebot/computer$' "$tmp/cwd/.env" ||
   fail "matebot .env missing fork computer image"
 
-# Upstream installer keeps elie222 defaults when invoked directly.
-cp "$root/.env.images.example" "$tmp/cwd/"
+# The upstream installer is exercised against the upstream image defaults. This repository's own
+# `.env.images.example` names this product's images now, so the fixture starts from it and puts the
+# upstream image lines back: the installer under test here is the upstream one, and the example is
+# only a source of the required secrets.
 rm -f "$tmp/cwd/.env"
+cp "$root/.env.images.example" "$tmp/cwd/.env.images.example"
+sed -i.bak \
+  -e 's|^RAKAZO_IMAGE=.*|RAKAZO_IMAGE=ghcr.io/elie222/rakazo/app|' \
+  -e 's|^RAKAZO_COMPUTER_IMAGE=.*|RAKAZO_COMPUTER_IMAGE=ghcr.io/elie222/rakazo/computer|' \
+  "$tmp/cwd/.env.images.example"
+rm -f "$tmp/cwd/.env.images.example.bak"
 out2="$(
   cd "$tmp/cwd" && PATH="$tmp/bin:$PATH" bash "$upstream" --local --prepare-only 2>&1
 )" || fail "upstream prepare-only failed: $out2"

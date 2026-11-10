@@ -4,7 +4,8 @@ import type {
   PluginSubmissionReview,
   PluginSubmissionStatus,
 } from "@matebot/contracts";
-import { integrationPageUrl } from "@matebot/contracts";
+import { integrationPagePath, onMarketingSite } from "@matebot/contracts";
+import { documentOriginFromEnv } from "@matebot/core";
 import {
   Button,
   Dialog,
@@ -134,7 +135,12 @@ export function PluginSubmissionsPanel() {
                   </h3>
                   {submission.source ? <ExternalLink href={submission.source} /> : null}
                   {submission.claim ? (
-                    <ExternalLink href={integrationPageUrl(submission.claim)} />
+                    <ExternalLink
+                      href={onMarketingSite(
+                        documentOriginFromEnv(),
+                        integrationPagePath(submission.claim),
+                      )}
+                    />
                   ) : null}
                   {submission.website ? (
                     <div>
