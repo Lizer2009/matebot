@@ -161,7 +161,8 @@ describePostgres("connection recovery (PostgreSQL)", () => {
     expect(row.confirmedVersion).toBeNull();
 
     const message = await system.message.findUnique({ where: { id: messageId } });
-    const block = (message?.blocks as Array<Record<string, unknown>>)[0];
+    if (!message) throw new Error("message missing");
+    const [block] = message.blocks as Array<Record<string, unknown>>;
     expect(block).toMatchObject({ capability: "ready", template: "email-draft-card" });
     // Nothing was sent and nothing was confirmed by the recovery itself.
     expect(block?.lifecycle).toBe("draft");
