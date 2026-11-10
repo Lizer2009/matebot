@@ -331,7 +331,7 @@ install_persistence() {
   fi
   cat >"$UNIT_PATH" <<EOF
 [Unit]
-Description=Restrict Matebot bot-computer egress (matebot-c* bridges)
+Description=Restrict Matebot bot-computer egress (matebot-* bridges)
 After=docker.service
 Wants=docker.service
 
@@ -362,7 +362,7 @@ case "$mode" in
     require_root "$@"
     apply_rules
     install_persistence
-    echo "Computer egress restricted: matebot-c* bridges drop non-public and host-bound traffic."
+    echo "Computer egress restricted: matebot-* bridges drop non-public and host-bound traffic."
     ;;
   --apply)
     apply_rules
