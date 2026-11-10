@@ -299,6 +299,91 @@ verify("field protection, cancel, and executed records against a real database",
     expect(surfaces).toBe(1);
   });
 
+  /**
+   * R4: what the person discards through the product route cannot be sent afterwards.
+   *
+   * Cancelling a draft and then confirming it is the sequence that matters — every later step
+   * (confirm, execute) has to refuse, not just the cancel returning 200. This goes through the
+   * same `threads.cancelInteraction` the Discard button calls, on the real row.
+   */
+  it("refuses to confirm a draft the person discarded through the product route", async () => {
+    process.env.FEATURE_A2UI = "1";
+    await seed("ready_for_review");
+    const handler = router(deps());
+
+    const cancelled = await rpc(handler, "threads/cancelInteraction", {
+      botId,
+      interactionId: ixId,
+      draftVersion: 2,
+    });
+    expect(cancelled.status).toBe(200);
+
+    // Confirming the discarded draft must not go through at its old revision.
+    const confirmed = await rpc(handler, "threads/confirmInteraction", {
+      botId,
+      interactionId: ixId,
+      draftVersion: 2,
+    });
+    expect(confirmed.status).not.toBe(200);
+
+    const row = await runAsTenant({ spaceId, userId }, () =>
+      prisma.interaction.findUnique({ where: { id: ixId } }),
+    );
+    expect(row?.status).toBe("cancelled");
+    // Nothing was confirmed, so nothing can execute from it.
+    expect(row?.confirmedVersion).toBeNull();
+  });
+
+  it("refuses to execute a draft the person discarded", async () => {
+    process.env.FEATURE_A2UI = "1";
+    await seed("ready_for_review");
+    const handler = router(deps());
+
+    await rpc(handler, "threads/cancelInteraction", {
+      botId,
+      interactionId: ixId,
+      draftVersion: 2,
+    });
+    const executed = await rpc(handler, "threads/executeInteraction", {
+      botId,
+      interactionId: ixId,
+      draftVersion: 2,
+    });
+    expect(executed.status).not.toBe(200);
+
+    // No effect row was created: a discarded card sends nothing.
+    const effects = await runAsTenant({ spaceId, userId }, () =>
+      prisma.externalEffect.findMany({ where: { spaceId } }),
+    );
+    expect(effects).toEqual([]);
+  });
+
+  it("refuses to edit a draft the person discarded", async () => {
+    // A discarded card cannot be quietly brought back by a later field write either.
+    process.env.FEATURE_A2UI = "1";
+    await seed("ready_for_review");
+    const handler = router(deps());
+
+    await rpc(handler, "threads/cancelInteraction", {
+      botId,
+      interactionId: ixId,
+      draftVersion: 2,
+    });
+    const edited = await rpc(handler, "threads/updateInteractionField", {
+      botId,
+      interactionId: ixId,
+      expectedDraftVersion: 3,
+      name: "subject",
+      value: "还想改",
+    });
+    expect(edited.status).not.toBe(200);
+
+    const row = await runAsTenant({ spaceId, userId }, () =>
+      prisma.interaction.findUnique({ where: { id: ixId } }),
+    );
+    expect(row?.status).toBe("cancelled");
+  });
+
   it("refuses to cancel a record that already executed", async () => {
     process.env.FEATURE_A2UI = "1";
     await seed("succeeded");
