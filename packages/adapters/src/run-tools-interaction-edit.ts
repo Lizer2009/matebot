@@ -126,7 +126,12 @@ export type EditInteractionServices = Pick<
    * Publish a correction as a new draft linked to the record it amends. Separate
    * from `applyField` because it must create a new card, never touch the record.
    */
-  publishAmendment?: (input: { interactionId: string; plan: unknown }) => Promise<{
+  publishAmendment?: (input: {
+    interactionId: string;
+    plan: unknown;
+    /** The mailbox stamp for the new draft, so the card it publishes matches its readback. */
+    capabilityStamp?: { capability?: EmailSurfaceCapability; senderLabel?: string };
+  }) => Promise<{
     interactionId: string;
     surfaceId: string;
     draftVersion: number;
@@ -184,6 +189,18 @@ async function amendExecuted(
   const published = await services.publishAmendment({
     interactionId: input.record.id,
     plan: amended.plan,
+    ...(input.capabilityStamp
+      ? {
+          capabilityStamp: {
+            ...(input.capabilityStamp.capability
+              ? { capability: input.capabilityStamp.capability }
+              : {}),
+            ...(input.capabilityStamp.sender?.label
+              ? { senderLabel: input.capabilityStamp.sender.label }
+              : {}),
+          },
+        }
+      : {}),
   });
   // The correction is a new draft, and the model is told what that draft holds — not what it
   // asked for — so a correction that leaves a required value out is not described as complete.
@@ -462,7 +479,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
       });
       return load(newest?.id);
     },
-    publishAmendment: async ({ interactionId, plan }) => {
+    publishAmendment: async ({ interactionId, plan, capabilityStamp }) => {
       const { publishInteractionSurface } = await import("./interaction-publish.js");
       const parsed = InteractionPlanSchema.parse(plan);
       const published = await publishInteractionSurface(prisma, {
@@ -477,6 +494,9 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         status: "ready_for_review",
         // The record this draft corrects. The original row is never rewritten.
         amendsInteractionId: interactionId,
+        // The same mailbox facts the readback reports, so the card and the result agree.
+        ...(capabilityStamp?.capability ? { capability: capabilityStamp.capability } : {}),
+        ...(capabilityStamp?.senderLabel ? { senderLabel: capabilityStamp.senderLabel } : {}),
       });
       await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
         // The card is persisted; a missed wake-up is picked up on the next read.
