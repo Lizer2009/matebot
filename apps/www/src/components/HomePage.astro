@@ -514,6 +514,25 @@ const structuredData = homeStructuredData({
 
     const loopWidth = () => marqueeGroup.offsetWidth;
 
+    // The loop wraps at one group's width, so the track has to be able to scroll that far. With
+    // few quotes a single group is narrower than the viewport, the scroll position clamps before
+    // the wrap point, and the strip stalls then snaps. Repeat the group until the track overhangs
+    // by at least one group, which is what makes the wrap seamless at every width.
+    const track = marqueeGroup.parentElement;
+    const ensureClones = () => {
+      if (!track) return;
+      const groupWidth = marqueeGroup.offsetWidth;
+      if (groupWidth <= 0) return;
+      const needed = groupWidth + marquee.clientWidth;
+      while (track.scrollWidth < needed && track.children.length < 12) {
+        const clone = marqueeGroup.cloneNode(true) as HTMLElement;
+        clone.setAttribute("aria-hidden", "true");
+        clone.setAttribute("inert", "");
+        clone.setAttribute("data-testimonial-clone", "");
+        track.appendChild(clone);
+      }
+    };
+
     const normalize = (value: number) => {
       const width = loopWidth();
       if (width <= 0) return 0;
@@ -555,6 +574,8 @@ const structuredData = homeStructuredData({
         marquee.scrollLeft = 0;
         return;
       }
+      // Clones are only rendered while animated, so measure once that class is applied.
+      ensureClones();
       resume();
     };
 

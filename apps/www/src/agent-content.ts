@@ -145,7 +145,9 @@ Account holders can permanently delete their account and associated personal Spa
 
 export const PRIVACY_MARKDOWN = `# Matebot privacy
 
-Last updated: September 14, 2026
+Last updated: November 10, 2026
+
+"We" below means the operator of the deployment you use. This page describes what the Matebot software handles; the operator of the server you connect to decides what is enabled and is responsible for the deployment.
 
 Matebot processes account details, user-provided bot content, connection information, and technical records needed to operate and secure the service. Content comes from what you enter, upload, record, or authorize your bots to access. Matebot does not sell personal information or use Matebot content for third-party advertising.
 
@@ -155,7 +157,7 @@ Supported connections include OpenAI, Anthropic, Google, OpenRouter, Vercel AI G
 
 Permission records include the recipient, Space, disclosure version, and time. Choose Not now to decline, or withdraw permission in Account → AI data sharing for new mobile actions. Stop existing runs and disable routines separately. Withdrawal cannot recall data already sent. Web, desktop, and self-hosted server workflows do not use this mobile permission flow.
 
-Services we select must provide protection equal to or greater than the safeguards in our complete policy, including limited processing purposes, security, retention, and deletion protections. We review provider terms and safeguards before enabling a provider. Self-hosted operators are responsible for the services they select and their agreements. Provider terms govern processing and retention after receipt; provider policy links are available in AI data sharing and in the complete policy.
+An operator who enables a provider is responsible for that choice and for its terms. Where a provider is enabled, provider terms govern processing and retention after receipt; provider policy links are available in AI data sharing and in the complete policy.
 
 You can delete your account and associated personal Space data from Account. The server operator controls information sent to that deployment, so send any privacy request you cannot complete in the app to them.
 
@@ -164,11 +166,13 @@ Read the [complete privacy policy](${SITE_URL}/privacy/) for account information
 
 export const TERMS_MARKDOWN = `# Matebot terms
 
-Last updated: November 5, 2026
+Last updated: November 10, 2026
 
-Matebot is self-hosted open source software, not a hosted product. The [Apache License 2.0](https://github.com/Lizer2009/matebot/blob/main/LICENSE) governs your use of the code, and the person or organization operating the server you connect to is responsible for that deployment and its own terms.
+Matebot is open source software under the [Apache License 2.0](https://github.com/Lizer2009/matebot/blob/main/LICENSE). You can run it yourself, or someone can offer it to you as a service. The person or organization operating the server you connect to is responsible for that deployment and its own terms.
 
 Matebot is a fork of the Apache-2.0 [Rakazo](https://github.com/elie222/rakazo) project by Inbox Zero Inc., and the upstream license and notices carry over unchanged.
+
+Some deployments offer paid features. Any such plan, its price, what it includes, how it renews, how it can be cancelled, and how a refund is handled are set by the operator of the server you signed in to; the price and renewal terms are shown in the app before you pay. Payment is taken by that operator's payment processor. This page does not set those terms.
 
 You are responsible for your account and for actions your bots take on your behalf, including in scheduled routines; give bots only the access they need and require approval for actions that are hard to undo. AI output can be wrong, so review it before relying on it, and do not use Matebot where an error could cause serious harm. Do not use it to break the law, send spam or malware, access systems without authorization, abuse its computers, or violate the terms of connected providers. You keep ownership of your content and bot output, and you pay any fees charged by third-party services, including usage on your own API keys.
 
@@ -242,7 +246,7 @@ ${BRAND_COLORS.map((color) => `- ${color.name}: \`${color.hex}\``).join("\n")}
 
 Write Matebot with a capital M in text. Do not alter the mark or imply an endorsement.
 
-Logos are free to use under the terms in [the repository](https://github.com/Lizer2009/matebot). This site is a fork of Matebot; its own brand assets are separate.
+Logos are free to use under the terms in [the repository](https://github.com/Lizer2009/matebot). This site is a fork of [Rakazo](https://github.com/elie222/rakazo); its own brand assets are separate.
 `;
 
 export const PLUGIN_SUBMIT_MARKDOWN = `# Submit a plugin to Matebot

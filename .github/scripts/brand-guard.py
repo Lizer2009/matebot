@@ -138,15 +138,29 @@ def _iter_files():
         )
 
 
+# Credit that carries no link of its own: a heading naming what the product was built on, where the
+# paragraph beneath it points at the upstream repository. Kept to this one shape so a heading that
+# names the old product as this product still fails.
+BUILT_ON = re.compile(r"^<h[1-6][^>]*>\s*Built on Rakazo\s*</h[1-6]>$|^#+\s*Built on Rakazo\s*$")
+
+
+# Credit often links through a constant rather than the literal URL, because the site keeps one
+# definition of the upstream repository. Recognising the name is what makes those lines credit.
+UPSTREAM_CONST = re.compile(r"\{UPSTREAM_URL\}")
+
+
 def is_attribution(path: pathlib.Path, line: str) -> bool:
     """Whether this line credits the project this product was forked from.
 
-    Credit means a link to the upstream repository. A line that names the old product without
-    pointing at where it came from is this product using the old name, not crediting anything.
+    Credit means a link to the upstream repository, either written out or through the constant the
+    site defines for it, or the heading that introduces such a link. A line that names the old
+    product without pointing at where it came from is this product using the old name, not credit.
     """
     if COPIED_COMMAND.search(line):
         return False
-    return UPSTREAM_REPO in line
+    if BUILT_ON.match(line):
+        return True
+    return bool(UPSTREAM_REPO in line or UPSTREAM_CONST.search(line))
 
 
 def is_migration_reference(path: pathlib.Path, line: str) -> tuple[bool, str]:
