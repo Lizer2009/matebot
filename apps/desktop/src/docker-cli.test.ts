@@ -183,7 +183,7 @@ describe("classifyDockerFailure", () => {
     ["Error response from daemon: manifest unknown", "image-not-found"],
     ["pull access denied for ghcr.io/x/y, repository does not exist", "image-not-found"],
     [
-      'Error response from daemon: failed to resolve reference "ghcr.io/elie222/rakazo/computer:v0.3.5": ghcr.io/elie222/rakazo/computer:v0.3.5: not found',
+      'Error response from daemon: failed to resolve reference "ghcr.io/lizer2009/matebot/computer:v0.3.5": ghcr.io/lizer2009/matebot/computer:v0.3.5: not found',
       "image-not-found",
     ],
     ["Get https://ghcr.io/v2/: dial tcp: lookup ghcr.io: no such host", "network"],

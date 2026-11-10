@@ -18,7 +18,7 @@ postgres("call isolation and cooldown (PostgreSQL)", () => {
     try {
       const runs = await fixture(async () => {
         await prisma.user.create({
-          data: { id: userId, name: "Call tester", email: `${id}@rakazo.test` },
+          data: { id: userId, name: "Call tester", email: `${id}@matebot.test` },
         });
         await prisma.organization.create({
           data: { id: organizationId, name: "Call tests", slug: id, createdAt: new Date() },

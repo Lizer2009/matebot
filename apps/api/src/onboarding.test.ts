@@ -35,7 +35,7 @@ function fixture(catalog: unknown[]) {
   const actor = {
     userId: "user",
     spaceId: "space",
-    email: "user@rakazo.test",
+    email: "user@matebot.test",
     isDeploymentOwner: true,
   };
   return { deps, actor, tx };

@@ -536,7 +536,7 @@ describe("inbound webhook HTTP route", () => {
           return new Promise(() => undefined);
         },
       });
-      const request = new Request("https://rakazo.example.test/webhook", {
+      const request = new Request("https://matebot.example.test/webhook", {
         method: "POST",
         headers:
           kind === "declared"

@@ -47,7 +47,7 @@ it("asks after the sixth message and never again once dismissed", async () => {
   // The toaster mounts toasts on its own timers.
   await vi.waitFor(() => expect(prompt()).not.toBeNull());
   const link = prompt()?.querySelector("a");
-  expect(link?.getAttribute("href")).toBe("https://github.com/elie222/rakazo");
+  expect(link?.getAttribute("href")).toBe("https://github.com/Lizer2009/matebot");
 
   const notNow = [...(prompt()?.querySelectorAll("button") ?? [])].find(
     (button) => button.textContent === "Not now",

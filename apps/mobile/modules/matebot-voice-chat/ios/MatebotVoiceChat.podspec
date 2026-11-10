@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name           = 'RakazoVoiceChat'
+  s.name           = 'MatebotVoiceChat'
   s.version        = '0.1.0'
   s.summary        = 'Starts the voice chat a Shortcuts action asked for'
   s.author         = ''

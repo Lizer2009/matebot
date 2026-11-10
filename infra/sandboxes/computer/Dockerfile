@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
 COPY xcapture.c .
-RUN cc -O3 -fPIC -shared -Wall -Wextra -Werror -o librakazo-xcapture.so xcapture.c \
+RUN cc -O3 -fPIC -shared -Wall -Wextra -Werror -o libmatebot-xcapture.so xcapture.c \
     -lX11 -lXext -lXdamage -lXfixes -lXtst -lpng
 
 FROM debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251
@@ -154,7 +154,7 @@ COPY --chmod=755 control.py /usr/local/bin/matebot-computer-control
 # Tells the supervisor this control service accepts scrolls aimed at a point and sideways
 # scrolls; it sends those to older images through its fallback instead.
 LABEL matebot.control.aimedScroll="1"
-COPY --from=capture-builder /build/librakazo-xcapture.so /usr/local/lib/librakazo-xcapture.so
+COPY --from=capture-builder /build/libmatebot-xcapture.so /usr/local/lib/libmatebot-xcapture.so
 COPY --chmod=755 matebot-browser /usr/local/bin/matebot-browser
 COPY --chmod=755 matebot-focus-or-launch /usr/local/bin/matebot-focus-or-launch
 COPY --chmod=755 matebot-page-browser /usr/local/bin/matebot-page-browser

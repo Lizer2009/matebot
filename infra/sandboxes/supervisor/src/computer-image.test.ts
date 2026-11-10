@@ -18,7 +18,7 @@ import { COMPUTER_IMAGE_CONTEXT_FILES } from "./computer-spec.js";
 
 const context = path.resolve(import.meta.dirname, "../../computer");
 const noContext = path.join(import.meta.dirname, "no-such-computer-context");
-const published = "ghcr.io/elie222/rakazo/computer:edge";
+const published = "ghcr.io/lizer2009/matebot/computer:edge";
 const local = "matebot/computer:local";
 const image = { "container.image.name": published };
 const progressLine = '{"status":"Downloading"}\n';

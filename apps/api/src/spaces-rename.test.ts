@@ -8,7 +8,7 @@ import { createRouter } from "./router.js";
 const actor = {
   spaceId: "space-current",
   userId: "user-1",
-  email: "user@rakazo.test",
+  email: "user@matebot.test",
   isDeploymentOwner: false,
 } satisfies Actor;
 

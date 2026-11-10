@@ -2,7 +2,7 @@
 
 本文列出从 [`MATEBOT_A2UI_ORCHESTRATION_SPEC.md`](./MATEBOT_A2UI_ORCHESTRATION_SPEC.md) **采纳**、且**不违反** [`matebot-a2ui-integration-design.md`](./matebot-a2ui-integration-design.md) v1.1 的条款。分类与否决理由见 [`matebot-a2ui-orchestration-gap-analysis.md`](./matebot-a2ui-orchestration-gap-analysis.md)。
 
-文档 only。`FEATURE_A2UI` 默认关闭。不改 `RAKAZO_*`。
+文档 only。`FEATURE_A2UI` 默认关闭。不改 `MATEBOT_*`。
 
 ---
 
@@ -34,4 +34,4 @@
 
 ## 明确不采纳
 
-平行 Conversation/Run、新 Approval 产品表、新 `ActionExecution` 表（除非未来 PR 证明 `ExternalEffect` 无法表达并行多笔副作用）、把 A2UI 并进 page-kit、为 A2UI 建 WebSocket 聊天总线、默认打开 `a2ui` flag、重命名 `RAKAZO_*`。
+平行 Conversation/Run、新 Approval 产品表、新 `ActionExecution` 表（除非未来 PR 证明 `ExternalEffect` 无法表达并行多笔副作用）、把 A2UI 并进 page-kit、为 A2UI 建 WebSocket 聊天总线、默认打开 `a2ui` flag、重命名 `MATEBOT_*`。

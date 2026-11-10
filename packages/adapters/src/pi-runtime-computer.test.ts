@@ -84,6 +84,7 @@ describe("Pi computer tool dispatch", () => {
       expect(prompt).toContain(`You are a ${PRODUCT_DISPLAY_NAME} bot with`);
       // It introduces this product, and never the project it was forked from.
       expect(prompt).not.toContain("Rakazo");
+      expect(prompt).not.toContain("RAKAZO_");
     }
     expect(defaultSystemPrompt(true)).toContain("a real computer");
     expect(defaultSystemPrompt(false)).toContain("a persistent sandbox filesystem and shell");

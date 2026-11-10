@@ -89,7 +89,7 @@ describeLive("real model and sandbox computer journey", () => {
       method: "POST",
       headers: { "content-type": "application/json", origin: "http://127.0.0.1:5173" },
       body: JSON.stringify({
-        email: `computer-${stamp}@rakazo.test`,
+        email: `computer-${stamp}@matebot.test`,
         password: "password12",
         name: "Computer E2E",
       }),

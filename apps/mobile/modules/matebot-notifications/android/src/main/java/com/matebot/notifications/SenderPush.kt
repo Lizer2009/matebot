@@ -58,10 +58,10 @@ internal object SenderPush {
       data.optString("kind") in setOf("help", "takeover", "failure") -> Channels.ATTENTION
       else -> Channels.MESSAGES
     }
-    createRakazoChannels(context)
+    createMatebotChannels(context)
     @Suppress("DEPRECATION")
     val builder = (if (Build.VERSION.SDK_INT >= 26) Notification.Builder(context, channel) else Notification.Builder(context))
-      .setSmallIcon(R.drawable.ic_rakazo_notification)
+      .setSmallIcon(R.drawable.ic_matebot_notification)
       .setContentTitle(title)
       .setContentText(body)
       .setStyle(Notification.BigTextStyle().bigText(body))

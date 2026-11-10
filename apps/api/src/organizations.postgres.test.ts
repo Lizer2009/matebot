@@ -68,7 +68,7 @@ describePostgres("organizations (PostgreSQL)", () => {
   async function signup(): Promise<Actor> {
     const userId = `orgs-${++sequence}-${suffix}`;
     users.push(userId);
-    const email = `${userId}@rakazo.test`;
+    const email = `${userId}@matebot.test`;
     await system.user.create({ data: { id: userId, name: userId, email, emailVerified: false } });
     const { spaceId } = await bootstrapUserSpace(
       system,

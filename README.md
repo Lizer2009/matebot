@@ -6,7 +6,7 @@
 a schedule, and keep their memory and history across the web, desktop, and phone clients. It runs on
 your own server, with your own model credentials, and needs no local desktop to operate.
 
-This repository is a fork of **[Matebot](https://github.com/elie222/rakazo)**, the Apache-2.0 project
+This repository is a fork of **[Rakazo](https://github.com/elie222/rakazo)**, the Apache-2.0 project
 it is built on. Matebot keeps that licence, its notices, and a clear attribution to upstream; the
 differences are the product name, the packaging, and the deployment this fork runs.
 
@@ -95,9 +95,9 @@ independent long random values. Docker sandboxes also need a dedicated
 `SANDBOX_SUPERVISOR_TOKEN`. You can also set `OPENROUTER_API_KEY`, or connect a supported
 model provider during onboarding.
 
-Environment variables keep their `RAKAZO_*` names in this release, so an existing `.env` keeps
-working unchanged. See [configuration names](./docs/MATEBOT_DEPLOY.md#环境变量命名) for the mapping
-and what a rename would touch.
+Environment variables, database roles, and Compose project and volume names all use the Matebot
+names. A deployment created before the rename needs a one-time migration of its `.env` and database;
+see [configuration names](./docs/MATEBOT_DEPLOY.md#环境变量命名).
 
 For host-side development with Docker Desktop, set `SANDBOX_CONTROL_VIA_LOOPBACK=true`
 in `.env`. The supervisor discovers Docker Desktop's user socket automatically;
@@ -235,8 +235,8 @@ desktop app moves that profile into its new location on first launch, so your sa
 driver setup, and local Compose stack carry over. If both folders exist, the new one wins and the old
 one is left alone.
 
-Nothing else needs to change: environment variables keep their `RAKAZO_*` names, the database role
-is still `matebot_app`, and Compose volumes keep their existing project names.
+Nothing else needs to change: environment variables, the database role, and the Compose project and
+volume names already use their Matebot names.
 
 ## UI language
 
@@ -330,9 +330,10 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow and test m
 
 ## Upstream
 
-Matebot tracks [Lizer2009/matebot](https://github.com/elie222/rakazo). The upstream README, its demo,
-and its store listings describe upstream's hosted product, which this fork does not operate. To
-follow or contribute to the code Matebot builds on, start at that repository.
+Matebot is developed independently from the [Rakazo](https://github.com/elie222/rakazo) project it forked at
+version 0.6.0. The upstream README, its demo, and its store listings describe upstream's hosted
+product, which this fork does not operate. Matebot's own source lives in this repository.
 
 Matebot is licensed under the [Apache License 2.0](./LICENSE), the same licence as upstream. That
-licence and the notices it requires stay in place; the Matebot name and marks are this fork's.
+licence and the notices it requires stay in place; [NOTICE](./NOTICE) records the upstream project
+this fork came from. The Matebot name and marks are this fork's.

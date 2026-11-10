@@ -20,7 +20,7 @@ postgres("tool effects under the run lease (PostgreSQL)", () => {
       const userId = `${id}-user`;
       const organizationId = `${id}-org`;
       await prisma.user.create({
-        data: { id: userId, name: "Effect tester", email: `${id}@rakazo.test` },
+        data: { id: userId, name: "Effect tester", email: `${id}@matebot.test` },
       });
       await prisma.organization.create({
         data: { id: organizationId, name: "Effect tests", slug: id, createdAt: new Date() },

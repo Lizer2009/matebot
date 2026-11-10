@@ -14,7 +14,7 @@
 #   - multicast and reserved space.
 #
 # Rules key on the deterministic bridge names the supervisor assigns in
-# restricted mode (matebot-c<hash>), never on Docker's dynamic subnets — so
+# restricted mode (matebot-<hash>), never on Docker's dynamic subnets — so
 # computer churn, network recreate, and subnet reuse need no firewall changes.
 #
 # Same-bridge peers stay reachable: the supervisor and web screen proxy join the
@@ -38,7 +38,7 @@ IPTABLES="${MATEBOT_IPTABLES:-iptables}"
 IP6TABLES="${MATEBOT_IP6TABLES:-ip6tables}"
 SYSTEMCTL="${MATEBOT_SYSTEMCTL:-systemctl}"
 IF_INET6="${MATEBOT_IF_INET6:-/proc/net/if_inet6}"
-BRIDGE_PREFIX="matebot-c"
+BRIDGE_PREFIX="matebot-"
 INSTALLED_PATH=/usr/local/sbin/matebot-computer-egress
 UNIT_PATH=/etc/systemd/system/matebot-computer-egress.service
 
@@ -79,7 +79,7 @@ EOF
 }
 
 # One rule per line: "<chain> <args>". Order matters: same-bridge traffic
-# (-i and -o both matebot-c*) must be returned to Docker's own chains before the
+# (-i and -o both matebot-*) must be returned to Docker's own chains before the
 # destination drops, and in INPUT the established accept must precede the
 # catch-all drop so host- and supervisor-initiated connections to the computer
 # (control endpoint, published screen port) keep working while the computer can

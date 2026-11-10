@@ -3,7 +3,7 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")" && pwd)"
 matebot="$root/install-images-matebot.sh"
-upstream="$root/install-images.sh"
+shared="$root/install-images.sh"
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
 [[ -x "$matebot" ]] || fail "install-images-matebot.sh is not executable"
@@ -39,21 +39,20 @@ grep -q '^MATEBOT_IMAGE=ghcr.io/lizer2009/matebot/app$' "$tmp/cwd/.env" ||
 grep -q '^MATEBOT_COMPUTER_IMAGE=ghcr.io/lizer2009/matebot/computer$' "$tmp/cwd/.env" ||
   fail "matebot .env missing fork computer image"
 
-# The upstream installer is exercised against the upstream image defaults. This repository's own
-# `.env.images.example` names this product's images now, so the fixture starts from it and puts the
-# upstream image lines back: the installer under test here is the upstream one, and the example is
-# only a source of the required secrets.
+# Both installers are exercised, and each keeps the image defaults from its own env example. The
+# shared installer is run against a mirror's image names so the test proves an operator override
+# survives, not that a particular registry is baked in.
 rm -f "$tmp/cwd/.env"
 cp "$root/.env.images.example" "$tmp/cwd/.env.images.example"
 sed -i.bak \
-  -e 's|^MATEBOT_IMAGE=.*|MATEBOT_IMAGE=ghcr.io/elie222/rakazo/app|' \
-  -e 's|^MATEBOT_COMPUTER_IMAGE=.*|MATEBOT_COMPUTER_IMAGE=ghcr.io/elie222/rakazo/computer|' \
+  -e 's|^MATEBOT_IMAGE=.*|MATEBOT_IMAGE=registry.example.test/mine/app|' \
+  -e 's|^MATEBOT_COMPUTER_IMAGE=.*|MATEBOT_COMPUTER_IMAGE=registry.example.test/mine/computer|' \
   "$tmp/cwd/.env.images.example"
 rm -f "$tmp/cwd/.env.images.example.bak"
 out2="$(
-  cd "$tmp/cwd" && PATH="$tmp/bin:$PATH" bash "$upstream" --local --prepare-only 2>&1
-)" || fail "upstream prepare-only failed: $out2"
-grep -q '^MATEBOT_IMAGE=ghcr.io/elie222/rakazo/app$' "$tmp/cwd/.env" ||
-  fail "upstream .env must keep official image defaults"
+  cd "$tmp/cwd" && PATH="$tmp/bin:$PATH" bash "$shared" --local --prepare-only 2>&1
+)" || fail "shared installer prepare-only failed: $out2"
+grep -q '^MATEBOT_IMAGE=registry.example.test/mine/app$' "$tmp/cwd/.env" ||
+  fail "shared installer .env must keep the configured image override"
 
 echo "OK: install-images-matebot defaults"

@@ -23,7 +23,7 @@ export type StartupTarget =
 const SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//;
 
 /**
- * Accepts what a person would actually type ("localhost:5173", "rakazo.example.com")
+ * Accepts what a person would actually type ("localhost:5173", "matebot.example.com")
  * and returns a canonical http(s) origin, or null when the input can never
  * securely address a Matebot server.
  */

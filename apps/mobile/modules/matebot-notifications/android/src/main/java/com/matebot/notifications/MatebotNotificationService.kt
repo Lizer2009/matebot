@@ -64,12 +64,12 @@ class MatebotNotificationService : Service() {
       manager.cancelAll()
       state.edit().putBoolean(THREAD_NOTIFICATION_IDS, true).apply()
     }
-    createRakazoChannels(this)
+    createMatebotChannels(this)
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     // Channel names follow the current locale; recreating an existing channel updates its copy.
-    createRakazoChannels(this)
+    createMatebotChannels(this)
     val generation = synchronized(sessionLock) {
       if (intent?.getBooleanExtra(EXTRA_RESET_TOKEN, false) == true) tokenCache.reset()
       intent?.getStringExtra(EXTRA_MUTED_BOT_ID)?.let { botId ->
@@ -263,7 +263,7 @@ class MatebotNotificationService : Service() {
   private fun post(run: RunRecord, copy: NotificationCopy) {
     if (!run.notificationsEnabled || isOpenThread(run)) return
     val notification = builder(copy.channel)
-      .setSmallIcon(R.drawable.ic_rakazo_notification)
+      .setSmallIcon(R.drawable.ic_matebot_notification)
       .setContentTitle(copy.title)
       .setContentText(copy.body)
       .setStyle(Notification.BigTextStyle().bigText(copy.body))
@@ -319,7 +319,7 @@ class MatebotNotificationService : Service() {
 
   private fun liveStatusIcon(run: RunRecord, avatarStyle: String): Icon {
     if (avatarStyle != "organic") {
-      return Icon.createWithResource(this, R.drawable.ic_rakazo_notification)
+      return Icon.createWithResource(this, R.drawable.ic_matebot_notification)
     }
     val bitmap = Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
@@ -1052,7 +1052,7 @@ internal fun localizedContext(base: Context, tag: String): Context {
   return base.createConfigurationContext(configuration)
 }
 
-internal fun createRakazoChannels(base: Context) {
+internal fun createMatebotChannels(base: Context) {
   if (Build.VERSION.SDK_INT < 26) return
   val context = localizedContext(base, NotificationStorage(base).locale)
   listOf(

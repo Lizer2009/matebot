@@ -16,7 +16,7 @@ describePostgres("backing off a routine on refused model accounts (PostgreSQL)",
   let db: ReturnType<typeof createDb>;
   let system: PrismaClient;
   let identity: { userId: string; spaceId: string; botId: string; threadId: string };
-  const address = `routine-backoff-${randomUUID()}@rakazo.test`;
+  const address = `routine-backoff-${randomUUID()}@matebot.test`;
 
   beforeAll(async () => {
     db = createDb(url!);

@@ -25,13 +25,13 @@ describe("server address normalization", () => {
     expect(normalizeServerUrl("127.0.0.1:5173")).toBe("http://127.0.0.1:5173");
     expect(normalizeServerUrl("localhost:5173")).toBe("http://localhost:5173");
     expect(normalizeServerUrl("192.168.1.20:3100")).toBe("http://192.168.1.20:3100");
-    expect(normalizeServerUrl("rakazo.example.com")).toBe("https://rakazo.example.com");
+    expect(normalizeServerUrl("matebot.example.com")).toBe("https://matebot.example.com");
   });
 
   it("keeps an explicit secure scheme and port but stores only the origin", () => {
-    expect(normalizeServerUrl("https://rakazo.example.com")).toBe("https://rakazo.example.com");
-    expect(normalizeServerUrl("https://rakazo.example.com:8443/team")).toBe(
-      "https://rakazo.example.com:8443",
+    expect(normalizeServerUrl("https://matebot.example.com")).toBe("https://matebot.example.com");
+    expect(normalizeServerUrl("https://matebot.example.com:8443/team")).toBe(
+      "https://matebot.example.com:8443",
     );
   });
 
@@ -44,7 +44,7 @@ describe("server address normalization", () => {
   });
 
   it("rejects cleartext public servers but permits private-network development", () => {
-    expect(normalizeServerUrl("http://rakazo.example.com")).toBeNull();
+    expect(normalizeServerUrl("http://matebot.example.com")).toBeNull();
     expect(normalizeServerUrl("http://10.0.0.8:3100")).toBe("http://10.0.0.8:3100");
     expect(normalizeServerUrl("http://[fd00::1]:3100")).toBe("http://[fd00::1]:3100");
     expect(normalizeServerUrl("100.101.102.103:3100")).toBe("http://100.101.102.103:3100");
@@ -70,7 +70,7 @@ describe("server address normalization", () => {
   );
 
   it("rejects embedded credentials rather than writing them to disk", () => {
-    expect(normalizeServerUrl("https://user:secret@rakazo.example.com")).toBeNull();
+    expect(normalizeServerUrl("https://user:secret@matebot.example.com")).toBeNull();
   });
 });
 
@@ -87,13 +87,13 @@ describe("managed local open URL", () => {
   it("rejects a different loopback origin even when both are local", () => {
     expect(managedLocalOpenUrl("http://127.0.0.1:5199", DEFAULT_LOCAL_WEB_URL)).toBeNull();
     expect(managedLocalOpenUrl("http://localhost:5173", DEFAULT_LOCAL_WEB_URL)).toBeNull();
-    expect(managedLocalOpenUrl("https://rakazo.example.com", DEFAULT_LOCAL_WEB_URL)).toBeNull();
+    expect(managedLocalOpenUrl("https://matebot.example.com", DEFAULT_LOCAL_WEB_URL)).toBeNull();
   });
 });
 
 describe("desktop stack token transport", () => {
   it("allows HTTPS and loopback HTTP only", () => {
-    expect(maySendDesktopStackToken("https://rakazo.example.com")).toBe(true);
+    expect(maySendDesktopStackToken("https://matebot.example.com")).toBe(true);
     expect(maySendDesktopStackToken("http://127.0.0.1:5173")).toBe(true);
     expect(maySendDesktopStackToken("http://localhost:5173")).toBe(true);
     expect(maySendDesktopStackToken("http://10.0.0.8:5173")).toBe(false);
@@ -103,7 +103,7 @@ describe("desktop stack token transport", () => {
 
 describe("saved setup", () => {
   it("round-trips through the on-disk format", () => {
-    const setup = { mode: "existing", serverUrl: "https://rakazo.example.com" } as const;
+    const setup = { mode: "existing", serverUrl: "https://matebot.example.com" } as const;
     expect(parseStoredSetup(serializeSetup(setup))).toEqual(setup);
   });
 
@@ -153,15 +153,15 @@ describe("server request headers", () => {
   const access = { "CF-Access-Client-Id": "id.access", "CF-Access-Client-Secret": "secret" };
   const setup = {
     mode: "existing",
-    serverUrl: "https://rakazo.example.com",
+    serverUrl: "https://matebot.example.com",
     headers: access,
   } as const;
 
   it("saves headers for an existing server and drops an empty set", () => {
     expect(parseStoredSetup(serializeSetup(setup))).toEqual(setup);
     expect(
-      parseSetupInput({ mode: "existing", serverUrl: "https://rakazo.example.com", headers: {} }),
-    ).toEqual({ mode: "existing", serverUrl: "https://rakazo.example.com" });
+      parseSetupInput({ mode: "existing", serverUrl: "https://matebot.example.com", headers: {} }),
+    ).toEqual({ mode: "existing", serverUrl: "https://matebot.example.com" });
   });
 
   it("refuses headers Matebot owns and headers for a new local instance", () => {
@@ -173,18 +173,18 @@ describe("server request headers", () => {
   });
 
   it("adds them only to the saved server, websockets included", () => {
-    expect(serverHeadersFor("https://rakazo.example.com/rpc/me", setup)).toEqual(access);
-    expect(serverHeadersFor("wss://rakazo.example.com/novnc/websockify", setup)).toEqual(access);
-    expect(serverHeadersFor("https://rakazo.example.com.evil/rpc", setup)).toEqual({});
-    expect(serverHeadersFor("http://rakazo.example.com/rpc", setup)).toEqual({});
+    expect(serverHeadersFor("https://matebot.example.com/rpc/me", setup)).toEqual(access);
+    expect(serverHeadersFor("wss://matebot.example.com/novnc/websockify", setup)).toEqual(access);
+    expect(serverHeadersFor("https://matebot.example.com.evil/rpc", setup)).toEqual({});
+    expect(serverHeadersFor("http://matebot.example.com/rpc", setup)).toEqual({});
     expect(serverHeadersFor("https://accounts.example.com/", setup)).toEqual({});
     expect(serverHeadersFor("not a url", setup)).toEqual({});
-    expect(serverHeadersFor("https://rakazo.example.com/", null)).toEqual({});
+    expect(serverHeadersFor("https://matebot.example.com/", null)).toEqual({});
   });
 });
 
 describe("startup target", () => {
-  const saved = { mode: "existing", serverUrl: "https://rakazo.example.com" } as const;
+  const saved = { mode: "existing", serverUrl: "https://matebot.example.com" } as const;
 
   it("runs setup on a first launch", () => {
     expect(resolveStartupTarget({})).toEqual({ kind: "setup" });
@@ -193,7 +193,7 @@ describe("startup target", () => {
   it("opens the saved instance on later launches", () => {
     expect(resolveStartupTarget({ saved })).toEqual({
       kind: "app",
-      url: "https://rakazo.example.com",
+      url: "https://matebot.example.com",
       source: "saved",
     });
   });
@@ -237,8 +237,8 @@ describe("bundled renderer eligibility", () => {
     expect(servesBundledRenderer("http://matebot.localhost:5173", true)).toBe(true);
     expect(servesBundledRenderer(DEFAULT_LOCAL_WEB_URL, false)).toBe(false);
     expect(servesBundledRenderer("http://127.0.0.1:3100", false)).toBe(false);
-    expect(servesBundledRenderer("https://rakazo.example.com", true)).toBe(false);
-    expect(servesBundledRenderer("https://rakazo.example.com:8443", true)).toBe(false);
+    expect(servesBundledRenderer("https://matebot.example.com", true)).toBe(false);
+    expect(servesBundledRenderer("https://matebot.example.com:8443", true)).toBe(false);
     expect(servesBundledRenderer("http://192.168.1.20:3100", true)).toBe(false);
     expect(servesBundledRenderer("http://10.0.0.8:3100", true)).toBe(false);
     expect(servesBundledRenderer("http://matebot.local:3100", true)).toBe(false);

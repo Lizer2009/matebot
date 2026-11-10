@@ -260,7 +260,7 @@ async function prepareAccount(bench: Bench, sizes: number[]): Promise<Account> {
   const context = await newContext(bench);
   try {
     const page = await context.newPage();
-    const email = `benchmark-${Date.now()}@rakazo.test`;
+    const email = `benchmark-${Date.now()}@matebot.test`;
     const response = await page.request.post("/api/auth/sign-up/email", {
       data: { email, password: "password12", name: "Benchmark User" },
       headers: { origin: bench.webOrigin },

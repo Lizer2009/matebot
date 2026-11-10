@@ -23,7 +23,7 @@ dbTests("access grants", () => {
   async function signUp(name: string, emailVerified = true): Promise<Actor> {
     const id = `grant-${name}-${stamp}`;
     const createdAt = new Date();
-    const email = `${id}@rakazo.test`;
+    const email = `${id}@matebot.test`;
     await prisma.user.create({ data: { id, name, email, emailVerified } });
     await prisma.organization.create({ data: { id, name, slug: id, createdAt } });
     await prisma.space.create({
@@ -37,7 +37,7 @@ dbTests("access grants", () => {
     return { userId: id, spaceId: id, email, isDeploymentOwner: false };
   }
 
-  const emailFor = (name: string) => `grant-${name}-${stamp}@rakazo.test`;
+  const emailFor = (name: string) => `grant-${name}-${stamp}@matebot.test`;
   const grant = (email: string, input: { creditCents?: number; freeMonths?: number }) =>
     createAccessGrant(prisma, admin.userId, { email: email.toUpperCase(), ...input });
 
@@ -49,7 +49,7 @@ dbTests("access grants", () => {
   });
 
   afterAll(async () => {
-    await prisma.accessGrant.deleteMany({ where: { email: { endsWith: `${stamp}@rakazo.test` } } });
+    await prisma.accessGrant.deleteMany({ where: { email: { endsWith: `${stamp}@matebot.test` } } });
     await prisma.organization.deleteMany({ where: { id: { in: organizations } } });
     await prisma.user.deleteMany({ where: { id: { in: users } } });
     await db.prisma.$disconnect();

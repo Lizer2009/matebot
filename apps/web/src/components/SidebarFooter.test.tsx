@@ -35,7 +35,7 @@ async function render(
   onBoard?: () => void,
   logos?: Array<{ name: string; logo?: string }>,
 ) {
-  const email = "account@rakazo.test";
+  const email = "account@matebot.test";
   await act(async () =>
     root.render(
       <DesktopUpdatesProvider>
@@ -271,7 +271,7 @@ async function renderOrganizations(
         <SidebarFooter
           name="Demo User"
           initials="DU"
-          email="account@rakazo.test"
+          email="account@matebot.test"
           open
           onOpenChange={() => {}}
           onIntegrations={() => {}}

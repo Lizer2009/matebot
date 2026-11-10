@@ -16,7 +16,7 @@ FEATURE_A2UI=1
 
 Accepted values: `1`, `true`, `on` (case-insensitive). Omit or set `0`/`false`/`off` to keep A2UI RPC gated and hide `present_interaction` from agent tool selection.
 
-Restart the API and Worker containers/processes after changing env. No `RAKAZO_*` renames.
+Restart the API and Worker containers/processes after changing env. No `MATEBOT_*` renames.
 
 ### Web (Vite)
 

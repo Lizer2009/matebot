@@ -4,7 +4,7 @@ Chat with your bots, answer their questions, watch their computers and take call
 
 ## Install
 
-- iPhone: [App Store](https://apps.apple.com/app/rakazo/id6801531099).
+- iPhone: use the web app, or build the client yourself ([Mobiles builds](./mobile-release.md)).
 - Android: [Matebot APK](https://github.com/Lizer2009/matebot/releases/download/android/matebot.apk).
   See [Mobile builds and store releases](./mobile-release.md#android-apk).
 

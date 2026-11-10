@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name           = 'RakazoNetworkCache'
+  s.name           = 'MatebotNetworkCache'
   s.version        = '0.1.0'
   s.summary        = 'Clears the system HTTP cache'
   s.author         = ''

@@ -4,7 +4,7 @@
 
 **Matebot** 是一个由你自己掌控的自托管 AI 队友：持久运行的机器人可以使用真实的电脑、按计划执行任务，并在网页、桌面和手机客户端之间保留记忆与历史。它运行在你自己的服务器上，使用你自己的模型凭据，也不需要本地桌面环境。
 
-本仓库是 **[Matebot](https://github.com/elie222/rakazo)** 的分叉，Matebot 构建在它的 Apache-2.0 代码之上。Matebot 保留该许可证、其声明，以及清晰的上游署名；差异在于产品名称、打包方式和本 fork 运行的部署。
+本仓库是 **[Rakazo](https://github.com/elie222/rakazo)** 的分叉，Matebot 构建在它的 Apache-2.0 代码之上。Matebot 保留该许可证、其声明，以及清晰的上游署名；差异在于产品名称、打包方式和本 fork 运行的部署。
 
 | | |
 | --- | --- |
@@ -74,7 +74,7 @@ cp .env.example .env
 
 用 `openssl rand -hex 16` 生成两个值，分别填入 `POSTGRES_PASSWORD` 与 `POSTGRES_APP_PASSWORD`，再写入 `DATABASE_MIGRATION_URL` 与 `DATABASE_URL`。应用使用自己的 `matebot_app` 登录，行级安全策略作用于该角色；迁移以所有者身份执行（见[数据库角色](docs/self-host-configuration.md#database-roles)）。`BETTER_AUTH_SECRET`、`ENCRYPTION_KEY` 与 `SCREEN_PROXY_SECRET` 应各自使用独立的长随机值。Docker 沙箱还需要专属的 `SANDBOX_SUPERVISOR_TOKEN`。你也可以设置 `OPENROUTER_API_KEY`，或在引导过程中连接受支持的模型提供方。
 
-本版本中环境变量仍保留 `RAKAZO_*` 命名，因此已有 `.env` 无需修改即可继续使用。映射关系与改名会影响的范围见[环境变量命名](./docs/MATEBOT_DEPLOY.md#环境变量命名)。
+环境变量、数据库角色与 Compose 项目及卷名均已统一为 Matebot 命名。重命名之前创建的部署需要一次性迁移 `.env` 与数据库，见[环境变量命名](./docs/MATEBOT_DEPLOY.md#环境变量命名)。
 
 使用 Docker Desktop 进行主机侧开发时，在 `.env` 中设置 `SANDBOX_CONTROL_VIA_LOOPBACK=true`。supervisor 会自动发现 Docker Desktop 的用户 socket；`DOCKER_HOST` 或 `DOCKER_SOCKET` 可覆盖为其他 Docker 运行时。
 
@@ -142,7 +142,7 @@ chmod +x Matebot-*.AppImage
 
 早期构建以 Matebot 为名发布，其桌面配置目录名称不同。桌面应用会在首次启动时把该目录迁移到新位置，因此已保存的服务器、屏幕驱动设置与本地 Compose 栈都会保留。若新旧两个目录同时存在，则以新目录为准，旧目录保持不变。
 
-除此之外无需其他改动：环境变量仍保留 `RAKAZO_*` 命名，数据库角色仍是 `matebot_app`，Compose 卷沿用原有项目名。
+除此之外无需其他改动：环境变量、数据库角色与 Compose 项目及卷名均已是 Matebot 命名。
 
 ## 界面语言
 
@@ -230,6 +230,6 @@ pnpm test:e2e
 
 ## 上游
 
-Matebot 跟踪 [Lizer2009/matebot](https://github.com/elie222/rakazo)。上游 README、演示与商店页面介绍的是上游的托管产品，本 fork 并不运营该服务。想了解或参与 Matebot 所基于的代码，请从该仓库开始。
+Matebot 基于 [Rakazo](https://github.com/elie222/rakazo) 项目 0.6.0 版本分叉后独立开发。上游 README、演示与商店页面介绍的是上游的托管产品，本 fork 并不运营该服务。Matebot 自身的源码就在本仓库。
 
 Matebot 采用 [Apache License 2.0](./LICENSE) 许可，与上游一致。该许可证及其要求的声明保持不变；Matebot 名称与标识属于本 fork。

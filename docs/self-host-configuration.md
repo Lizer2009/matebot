@@ -11,17 +11,18 @@ common ones with short notes.
 
 Do not commit `.env`. Never put `COMPOSIO_API_KEY`, OpenRouter keys, or provider tokens in git, logs, or chat.
 
-## Settings whose names start with the project's former name
+## Names that already exist on a deployment
 
-Some settings, host paths, and object names begin with `RAKAZO_` or `matebot`. They are not the
-product's name and they are not a preference: they are names that already exist on a running
-deployment, and the software on both sides of an upgrade has to agree on them. `MATEBOT_IMAGE`,
-`MATEBOT_COMPOSE_PROJECT_NAME`, and the rest are read exactly as documented here, and a stack that
-has been running for a while has a Compose project, volumes, and a database role under those
-names. Renaming one changes what the software looks for, so it is not something to tidy up: a
-renamed Compose project starts against empty volumes. Setting the variable is still the supported
-way to configure the behaviour it names. A deployment that wants different names for these
-objects needs a planned move of the data, not a rename.
+Settings, host paths, and object names all use the Matebot names: `MATEBOT_*` for settings, the
+`matebot` Compose project with its `pgdata`, `appdata`, and `webassets` volumes, and the `matebot` /
+`matebot_app` database roles. `MATEBOT_IMAGE`, `MATEBOT_COMPOSE_PROJECT_NAME`, and the rest are read
+exactly as documented here.
+
+A stack created before the rename still carries the old names, and the software looks for the new
+ones, so it needs a one-time migration rather than a fresh start: rename the settings in `.env`,
+rename the database roles and database, and either rename the volumes or point the Compose project
+at them. Renaming only the Compose project without moving the volumes starts an empty database. See
+[configuration names](./MATEBOT_DEPLOY.md#环境变量命名).
 
 The same applies to the file names under `/etc/matebot` and the unit names that systemd has
 installed. Where a document shows one of these names in a command, it is the literal name on the

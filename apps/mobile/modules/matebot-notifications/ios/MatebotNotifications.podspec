@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name = 'RakazoNotifications'
+  s.name = 'MatebotNotifications'
   s.version = '0.1.0'
   s.summary = 'Native incoming call notifications'
   s.author = ''

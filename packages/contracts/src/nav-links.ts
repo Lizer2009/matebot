@@ -10,8 +10,8 @@ const RESERVED_PREFIXES = ["/app", "/api", "/rpc", "/novnc", "/health"];
 
 function isSameOriginPath(path: string) {
   if (!path.startsWith("/") || path.startsWith("//") || /[\\\s]/.test(path)) return false;
-  const url = new URL(path, "http://rakazo.invalid");
-  if (url.origin !== "http://rakazo.invalid") return false;
+  const url = new URL(path, "http://matebot.invalid");
+  if (url.origin !== "http://matebot.invalid") return false;
   return !RESERVED_PREFIXES.some(
     (prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`),
   );

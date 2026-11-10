@@ -3,7 +3,7 @@ import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from 
 
 test("asks for a GitHub star after a few messages", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 720 });
-  await signup(page, `star-prompt-${Date.now()}@rakazo.test`, "password12", "Sample");
+  await signup(page, `star-prompt-${Date.now()}@matebot.test`, "password12", "Sample");
   await completeOnboarding(page);
   await rpc(page, "onboarding/dismissFocus", { botId: activeBotId(page) });
   await page.evaluate(() => localStorage.setItem("matebot.githubStarPrompt.sent", "5"));
@@ -16,7 +16,7 @@ test("asks for a GitHub star after a few messages", async ({ page }, testInfo) =
   await expect(prompt).toBeVisible();
   await expect(prompt.getByRole("link", { name: "Star on GitHub" })).toHaveAttribute(
     "href",
-    "https://github.com/elie222/rakazo",
+    "https://github.com/Lizer2009/matebot",
   );
   await captureScreenshot(page, testInfo, "github-star-prompt");
 

@@ -18,7 +18,7 @@ describePostgres("space search with CONTENT_ENCRYPTION on and off (PostgreSQL)",
   const actor: Actor = {
     userId,
     spaceId,
-    email: `${userId}@rakazo.test`,
+    email: `${userId}@matebot.test`,
     isDeploymentOwner: false,
   };
   let on: ReturnType<typeof createDb>;
@@ -39,7 +39,7 @@ describePostgres("space search with CONTENT_ENCRYPTION on and off (PostgreSQL)",
       off = createDb(databaseUrl!, { encryptContent: false });
       const prisma = on.prisma;
       await prisma.user.create({
-        data: { id: userId, name: userId, email: `${userId}@rakazo.test`, emailVerified: false },
+        data: { id: userId, name: userId, email: `${userId}@matebot.test`, emailVerified: false },
       });
       await prisma.organization.create({
         data: { id: organizationId, name: "Search", slug: organizationId, createdAt: new Date() },

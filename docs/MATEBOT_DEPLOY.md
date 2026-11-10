@@ -163,17 +163,23 @@ gh workflow run release-android-apk.yml --repo Lizer2009/matebot --ref main
 
 ### 环境变量命名
 
-P2 重命名（`@matebot/*` → `@matebot/*`）**只改 npm 包名与导入路径**，环境变量保持原样，避免已在运行的部署在拉取新镜像后读不到密钥：
+所有身份统一使用 Matebot 命名，不再保留旧名的兼容分支或别名：
 
-| 保持不变的名称 | 原因 |
+| 身份 | 当前值 |
 | --- | --- |
-| `RAKAZO_*`（`MATEBOT_HOST`、`MATEBOT_IMAGE`、`MATEBOT_DOCKER_BINARY`、`MATEBOT_PASSKEY_RP_ID` 等） | 已存在于各实例 `.env`；改名会让旧配置静默失效 |
-| Postgres 角色 `matebot_app`、`POSTGRES_USER=matebot` | 角色与已有卷一起创建，改名需要 `ALTER ROLE` 与停机 |
-| Compose 项目名 `matebot-desktop`、卷名 `pgdata` | 改名会让已有的桌面栈与数据库变成“新栈”，看起来像数据丢失 |
-| 移动端 URL scheme `matebot://`、bundle id `com.matebot.app` | 已随 Expo 项目重链改为 Matebot 自有身份；自托管实例的 `PASSKEY_*_APP_IDS` 需按新 bundle id 配置 |
-| OpenRouter 归因 `HTTP-Referer: https://rakazo.com` | 上游归因值；改动属于归因策略变更，不是品牌改名 |
+| 环境变量前缀 | `MATEBOT_*`（`MATEBOT_HOST`、`MATEBOT_IMAGE`、`MATEBOT_DOCKER_BINARY`、`MATEBOT_PASSKEY_RP_ID` 等） |
+| Postgres 角色 / 库 | 迁移角色 `matebot`、应用角色 `matebot_app`、库名 `matebot` |
+| Compose 项目名 | `matebot`（镜像栈）、`matebot-prod`（生产栈） |
+| 卷名 | `pgdata`、`appdata`、`webassets` |
+| 镜像 | `ghcr.io/lizer2009/matebot/{app,computer,updater}` |
+| 移动端 | URL scheme `matebot://`、bundle id `com.matebot.app` |
+| 桌面 | `productName` / `appId`、安装包与可执行文件名、AppData 目录名 |
 
-**已改的品牌面**：npm 包名 `@matebot/*`、根包名 `matebot`、桌面 `productName` / `appId` / 安装包与可执行文件名、AppData 目录名、窗口与设置页文案、www 站点与 README。
+**已有部署升级**：旧名下的 `.env`、数据库角色、Compose 卷不会自动改名，升级前需要一次性迁移（变量名批量替换、`ALTER ROLE`/`ALTER DATABASE` 改名、卷改名或保持卷名只换配置）。迁移步骤见发布说明；未执行迁移的部署会读不到原有密钥或连不上原数据库。
+
+**桌面配置目录迁移**：旧构建把配置写在以旧显示名命名的目录（Windows 为 `%APPDATA%\Rakazo`，macOS 为 `~/Library/Application Support/Rakazo`）。新构建启动时若新目录不存在而旧目录存在，会整体迁移过去（同盘为 rename，跨盘为复制后删除）。若两个目录都存在，则以新目录为准，旧目录保留不动。
+
+**OpenRouter 归因**：`HTTP-Referer` 仍指向上游站点。它属于归因策略而不仅是品牌字符串，改动需要单独决定，因此本次重命名未触碰。
 
 **桌面配置目录迁移**：旧构建把配置写在以显示名命名的目录（Windows 为 `%APPDATA%\Matebot`，macOS 为 `~/Library/Application Support/Matebot`）。新构建启动时若新目录不存在而旧目录存在，会整体迁移过去（同盘为 rename，跨盘为复制后删除）。若两个目录都存在，则以新目录为准，旧目录保留不动。
 
@@ -181,26 +187,16 @@ P2 重命名（`@matebot/*` → `@matebot/*`）**只改 npm 包名与导入路�
 
 Cursor 集成说明：[self-host-integrations.md](./self-host-integrations.md#enable-cursor)。本 fork 的 Cloud Agent **改代码**流程见 [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md)（与服务器上 `CLOUD_AGENT_*` 互补）。
 
-## 与 upstream 同步（Git）
+## 与 upstream 的关系（Git）
 
-本仓库自 0.6.0 起为独立开发基线，不再合并上游分支。以下记录为历史同步点，仅作来历参考：
+本仓库自 0.6.0 起为独立开发基线，不再合并上游分支。上游代码只作为 Apache-2.0 的来历与署名保留在 `LICENSE` 与 README 中，日常开发与发布都在本仓库内完成。
 
-```bash
-git remote add upstream https://github.com/elie222/rakazo.git   # 仅首次
-git fetch upstream
-git checkout main
-git merge upstream/main   # 或 rebase，按团队习惯
-git push origin main
-```
-
-### 跟踪 commit（2026-11-04 自本仓库观测）
+### 历史同步点（仅作来历参考）
 
 | Ref | SHA | 说明 |
 | --- | --- | --- |
 | `origin/main`（Lizer2009/matebot） | `b722f80f2e51181056c539396293b6051898abad` | fork 默认分支 |
-| `upstream/main` | `d97c5fd70d90ef37ef86758d20b67d3077f9f5b2` | `git fetch https://github.com/elie222/rakazo.git main` |
-
-合并前请重新 `git fetch upstream` 并更新上表。冲突热点见 [MATEBOT_PLAN §4.2](./MATEBOT_PLAN.md#42-推荐-git-工作流)。
+| 分叉时点的上游 `main` | `d97c5fd70d90ef37ef86758d20b67d3077f9f5b2` | fork 的代码起点 |
 
 ## Fork CI 说明
 

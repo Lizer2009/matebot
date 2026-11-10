@@ -10,7 +10,7 @@ import {
 
 test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `bot-organize-${stamp}@rakazo.test`, "password12", "Test User");
+  await signup(page, `bot-organize-${stamp}@matebot.test`, "password12", "Test User");
   await completeOnboarding(page);
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);
@@ -69,7 +69,7 @@ test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
 });
 
 test("deleting a section keeps its bots and groups", async ({ page }, testInfo) => {
-  await signup(page, `section-delete-${Date.now()}@rakazo.test`, "password12", "Section Delete");
+  await signup(page, `section-delete-${Date.now()}@matebot.test`, "password12", "Section Delete");
   await completeOnboarding(page);
   const chiefId = activeBotId(page);
   const alpha = await rpc<{ id: string }>(page, "bots/create", {
@@ -111,7 +111,7 @@ test("deleting a section keeps its bots and groups", async ({ page }, testInfo) 
 });
 test("bots can be reordered by drag or keyboard and keep that order", async ({ page }) => {
   const stamp = Date.now();
-  await signup(page, `bot-reorder-${stamp}@rakazo.test`, "password12", "Bot Order");
+  await signup(page, `bot-reorder-${stamp}@matebot.test`, "password12", "Bot Order");
   await completeOnboarding(page);
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);
@@ -224,7 +224,7 @@ test("bots can be reordered by drag or keyboard and keep that order", async ({ p
 
 test("chat composer controls are vertically centered", async ({ page }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `composer-layout-${stamp}@rakazo.test`, "password12", "Composer Layout");
+  await signup(page, `composer-layout-${stamp}@matebot.test`, "password12", "Composer Layout");
   await completeOnboarding(page);
 
   const bar = page.getByTestId("composer-bar");
@@ -295,7 +295,7 @@ test("chat composer controls are vertically centered", async ({ page }, testInfo
 
 test("group chats share every context-menu action", async ({ page }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `group-organize-${stamp}@rakazo.test`, "password12", "Group Menu");
+  await signup(page, `group-organize-${stamp}@matebot.test`, "password12", "Group Menu");
   await completeOnboarding(page);
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);

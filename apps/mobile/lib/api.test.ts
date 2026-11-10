@@ -182,7 +182,7 @@ describe("mobile API authentication", () => {
   describe.each([
     {
       name: "password reset",
-      request: () => requestPasswordReset("ada@example.test", "https://rakazo.test/reset-password"),
+      request: () => requestPasswordReset("ada@example.test", "https://matebot.test/reset-password"),
       fallback: "Could not send reset email",
     },
     {
@@ -366,7 +366,7 @@ describe("mobile API authentication", () => {
           passwordAuth: true,
           sso: null,
           passwordReset: true,
-          resetUrl: "https://rakazo.test/reset-password",
+          resetUrl: "https://matebot.test/reset-password",
         }),
       )
       .mockResolvedValueOnce(jsonResponse({ status: true }));
@@ -376,9 +376,9 @@ describe("mobile API authentication", () => {
       passwordAuth: true,
       sso: null,
       passwordReset: true,
-      resetUrl: "https://rakazo.test/reset-password",
+      resetUrl: "https://matebot.test/reset-password",
     });
-    await requestPasswordReset("ada@example.test", "https://rakazo.test/reset-password");
+    await requestPasswordReset("ada@example.test", "https://matebot.test/reset-password");
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
@@ -387,7 +387,7 @@ describe("mobile API authentication", () => {
         method: "POST",
         body: JSON.stringify({
           email: "ada@example.test",
-          redirectTo: "https://rakazo.test/reset-password",
+          redirectTo: "https://matebot.test/reset-password",
         }),
       }),
     );
@@ -399,7 +399,7 @@ describe("mobile API authentication", () => {
       vi.fn(async () =>
         jsonResponse({
           passwordReset: true,
-          resetUrl: "https://rakazo.test/reset-password",
+          resetUrl: "https://matebot.test/reset-password",
           billing: false,
         }),
       ),
@@ -408,7 +408,7 @@ describe("mobile API authentication", () => {
       passwordAuth: true,
       sso: null,
       passwordReset: true,
-      resetUrl: "https://rakazo.test/reset-password",
+      resetUrl: "https://matebot.test/reset-password",
       billing: false,
     });
   });

@@ -16,7 +16,14 @@ export const CLIENT_KINDS = ["web", "mobile"] as const;
 export type ClientKind = (typeof CLIENT_KINDS)[number];
 export type MinimumClientBuilds = Partial<Record<ClientKind, string>>;
 
-export const IOS_APP_STORE_URL = "https://apps.apple.com/app/rakazo/id6801531099";
+/**
+ * Where an iOS user without an installable build goes: this deployment's own download page.
+ *
+ * There is deliberately no App Store link here. The store listing that exists belongs to the
+ * upstream project this fork was taken from, and sending this product's users to it would hand
+ * them a different product.
+ */
+export const IOS_DOWNLOAD_PATH = "/download/";
 /** The rolling `android` release keeps one download URL across builds (docs/mobile-release.md). */
 export const ANDROID_APK_URL =
   "https://github.com/Lizer2009/matebot/releases/download/android/matebot.apk";

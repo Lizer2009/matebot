@@ -283,7 +283,7 @@ describePostgres("account import (PostgreSQL)", () => {
   const actor: Actor = {
     userId,
     spaceId: baseSpaceId,
-    email: `${userId}@rakazo.test`,
+    email: `${userId}@matebot.test`,
     isDeploymentOwner: false,
   };
   const stored = new Map<string, Uint8Array>();

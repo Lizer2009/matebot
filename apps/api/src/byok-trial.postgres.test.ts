@@ -20,7 +20,7 @@ dbTests("own-key trial", () => {
   const actor: Actor = {
     userId,
     spaceId,
-    email: `trial-${stamp}@rakazo.test`,
+    email: `trial-${stamp}@matebot.test`,
     isDeploymentOwner: false,
   };
   const provider = new BillingEmulator({ modelCredits: true, namespace: `trial-${stamp}` });

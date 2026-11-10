@@ -21,7 +21,7 @@ dbTests("referrals", () => {
   async function newOrganization(name: string): Promise<Actor & { organizationId: string }> {
     const id = `referral-${name}-${stamp}`;
     const createdAt = new Date();
-    const email = `${id}@rakazo.test`;
+    const email = `${id}@matebot.test`;
     await prisma.user.create({ data: { id, name, email, emailVerified: false } });
     await prisma.organization.create({ data: { id, name, slug: id, createdAt } });
     await prisma.space.create({

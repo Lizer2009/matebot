@@ -3,7 +3,7 @@
 **Product name:** Matebot (not Metabot)
 
 **Positioning:** A self-hosted AI teammate you own. This repository is a fork of
-[Matebot](https://github.com/elie222/rakazo); upstream credit and Apache-2.0 attribution stay in
+[Rakazo](https://github.com/elie222/rakazo); upstream credit and Apache-2.0 attribution stay in
 place.
 
 ## Colors
@@ -92,6 +92,6 @@ Electron names the per-user profile folder after `productName` (`%APPDATA%\Mateb
 `Matebot` folder rather than the current one, and why the desktop app carries a pre-rename profile
 over on first launch instead of stranding an existing install's setup.
 
-Names that deliberately keep their upstream value are listed in
-[MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#环境变量命名): the `RAKAZO_*` environment variables, the
-`matebot_app` database role, and the upstream attribution values.
+Names are listed in [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#环境变量命名). Everything in the
+product carries the Matebot name; what remains from upstream is credit, not identity: the licence
+and its notices, and prose that says which project this fork came from.

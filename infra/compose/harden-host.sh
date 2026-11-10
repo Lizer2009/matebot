@@ -81,7 +81,7 @@ APT::Periodic::Unattended-Upgrade "1";
 APT::Periodic::AutocleanInterval "7";
 EOF
 
-cat >/etc/apt/apt.conf.d/52rakazo-unattended-upgrades <<'EOF'
+cat >/etc/apt/apt.conf.d/52matebot-unattended-upgrades <<'EOF'
 Unattended-Upgrade::Remove-Unused-Dependencies "true";
 Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
 Unattended-Upgrade::Automatic-Reboot "false";

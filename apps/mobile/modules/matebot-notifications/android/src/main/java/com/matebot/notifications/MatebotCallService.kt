@@ -57,7 +57,7 @@ class MatebotCallService : Service() {
 
   private fun startForegroundCompat(title: String) {
     val notification = builder()
-      .setSmallIcon(R.drawable.ic_rakazo_notification)
+      .setSmallIcon(R.drawable.ic_matebot_notification)
       .setContentTitle(title)
       .setContentText(getString(R.string.matebot_call_text))
       .setContentIntent(openApp())

@@ -10,7 +10,7 @@ import {
 
 test("command palette switches bots and runs actions", async ({ page }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `cmdk-bots-${stamp}@rakazo.test`, "password12", "CmdK Bots");
+  await signup(page, `cmdk-bots-${stamp}@matebot.test`, "password12", "CmdK Bots");
   await completeOnboarding(page);
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);

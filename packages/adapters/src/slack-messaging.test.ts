@@ -93,7 +93,7 @@ function mentionWebhook(retryNum?: number, text = "<@UBOT> ship it?"): Request {
   const signature = createHmac("sha256", signingSecret)
     .update(`v0:${timestamp}:${body}`)
     .digest("hex");
-  return new Request("https://rakazo.test/api/v1/messaging/webhook/slack", {
+  return new Request("https://matebot.test/api/v1/messaging/webhook/slack", {
     method: "POST",
     headers: {
       "content-type": "application/json",

@@ -11,7 +11,7 @@ import {
 test("a new space chooses what it can use, and a skill can be limited to some spaces", async ({
   page,
 }, testInfo) => {
-  await signup(page, `availability-${Date.now()}@rakazo.test`, "password12", "Space Owner");
+  await signup(page, `availability-${Date.now()}@matebot.test`, "password12", "Space Owner");
   await completeOnboarding(page);
   await rpc(page, "agentSkills/create", {
     content: [

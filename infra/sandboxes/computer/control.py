@@ -49,7 +49,7 @@ class NativeCapture:
     """Persistent MIT-SHM frame source with native lossless PNG encoding."""
 
     def __init__(self, display):
-        library = ctypes.CDLL("/usr/local/lib/librakazo-xcapture.so")
+        library = ctypes.CDLL("/usr/local/lib/libmatebot-xcapture.so")
         library.matebot_xcapture_open.argtypes = [ctypes.c_char_p]
         library.matebot_xcapture_open.restype = ctypes.c_void_p
         library.matebot_xcapture_png.argtypes = [

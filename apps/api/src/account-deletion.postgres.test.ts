@@ -130,7 +130,7 @@ describePostgres("account deletion on bot computers (PostgreSQL)", () => {
       data: [ids.leaver, ids.stayer].map((id) => ({
         id,
         name: id,
-        email: `${id}@rakazo.test`,
+        email: `${id}@matebot.test`,
         emailVerified: false,
       })),
     });

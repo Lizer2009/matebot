@@ -57,7 +57,7 @@ describePostgres("account export (PostgreSQL)", () => {
         data: [exporter, other, importer].map((id) => ({
           id,
           name: id,
-          email: `${id}@rakazo.test`,
+          email: `${id}@matebot.test`,
           emailVerified: false,
         })),
       });
@@ -427,7 +427,7 @@ describePostgres("account export (PostgreSQL)", () => {
     const actor: Actor = {
       userId: importer,
       spaceId: importerSpace,
-      email: `${importer}@rakazo.test`,
+      email: `${importer}@matebot.test`,
       isDeploymentOwner: false,
     };
     try {

@@ -69,7 +69,7 @@ internal object IncomingCalls {
       .putExtra("call", call.toString()), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     @Suppress("DEPRECATION")
     val builder = (if (Build.VERSION.SDK_INT >= 26) Notification.Builder(context, CHANNEL) else Notification.Builder(context).setPriority(Notification.PRIORITY_MAX).setDefaults(Notification.DEFAULT_ALL))
-      .setSmallIcon(R.drawable.ic_rakazo_notification).setContentTitle(call.optString("botName"))
+      .setSmallIcon(R.drawable.ic_matebot_notification).setContentTitle(call.optString("botName"))
       .setCategory(Notification.CATEGORY_CALL).setVisibility(Notification.VISIBILITY_PUBLIC)
       .setContentIntent(open).setOngoing(Build.VERSION.SDK_INT >= 26).setOnlyAlertOnce(true)
     if (Build.VERSION.SDK_INT >= 26) builder.setTimeoutAfter(maxOf(1, expiry(call) - System.currentTimeMillis()))

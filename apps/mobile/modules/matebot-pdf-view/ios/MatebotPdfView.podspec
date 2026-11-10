@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name           = 'RakazoPdfView'
+  s.name           = 'MatebotPdfView'
   s.version        = '0.1.0'
   s.summary        = 'Shows a local PDF with PDFKit'
   s.author         = ''

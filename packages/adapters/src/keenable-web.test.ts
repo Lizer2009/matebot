@@ -44,7 +44,7 @@ describe("optional Keenable web provider", () => {
       expect(request.url).toBe("https://api.keenable.ai/mcp");
       expect(request.headers.get("x-keenable-title")).toBe("matebot");
       expect(request.headers.get("user-agent")).toBe(
-        "Matebot/0.1 (+https://github.com/elie222/rakazo; web tools)",
+        "Matebot/0.1 (+https://github.com/Lizer2009/matebot; web tools)",
       );
       expect(request.headers.has("x-api-key")).toBe(false);
       expect(request.headers.has("authorization")).toBe(false);

@@ -309,7 +309,7 @@ MATEBOT_IPTABLES="$bin/missing-iptables" MATEBOT_IP6TABLES="$bin/missing-ip6tabl
 docs="$root/../../docs/self-host-docker-computers.md"
 grep -q 'restrict-computer-egress.sh' "$docs" || fail "self-host-docker-computers.md does not mention the script"
 grep -q 'SANDBOX_COMPUTER_EGRESS' "$docs" || fail "self-host-docker-computers.md does not document the flag"
-grep -q 'https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose/restrict-computer-egress.sh' "$docs" ||
+grep -q 'https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose/restrict-computer-egress.sh' "$docs" ||
   fail "self-host-docker-computers.md does not point VM hosts at the egress script"
 grep -q 'name: matebot-computer-egress' "$docs" ||
   fail "self-host-docker-computers.md does not keep the VM egress helper in its own Compose project"

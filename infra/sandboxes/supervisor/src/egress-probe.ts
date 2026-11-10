@@ -5,7 +5,7 @@ import type Docker from "dockerode";
  * Restricted egress is enforced by host firewall rules the supervisor cannot see
  * (infra/compose/restrict-computer-egress.sh); without them a restricted computer
  * network is as open as any other. Before the first restricted computer starts, a
- * throwaway container on a `matebot-c*` bridge tries TCP to that bridge's gateway,
+ * throwaway container on a `matebot-*` bridge tries TCP to that bridge's gateway,
  * which is the Docker host. The ruleset's INPUT drop makes every attempt time out;
  * a refused or accepted connection means the host answered, so the rules are missing.
  * The script inserts that INPUT drop after its DOCKER-USER destination drops, so it
@@ -18,7 +18,7 @@ import type Docker from "dockerode";
  * names still passes.
  */
 export const EGRESS_PROBE_NETWORK = "matebot-egress-probe";
-// Matches the ruleset's `matebot-c+` interface pattern and Linux's 15-byte limit.
+// Matches the ruleset's `matebot-+` interface pattern and Linux's 15-byte limit.
 export const EGRESS_PROBE_BRIDGE = "matebot-cprobe";
 // 22 is open or allowed on most servers, 1 is closed nearly everywhere: either one
 // answering is enough to show the host takes connections from computer bridges.

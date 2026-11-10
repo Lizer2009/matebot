@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { oauthPopupSessionPreferences, shouldOpenInAppPopup } from "./window-open.js";
 
-const appOrigin = "https://rakazo.example.com";
+const appOrigin = "https://matebot.example.com";
 
 describe("desktop child windows", () => {
   it("keeps same-origin app routes in Electron", () => {
@@ -10,7 +10,7 @@ describe("desktop child windows", () => {
 
   it("opens ordinary external links outside Electron", () => {
     expect(
-      shouldOpenInAppPopup(appOrigin, "https://github.com/elie222/rakazo/pull/395", "_blank"),
+      shouldOpenInAppPopup(appOrigin, "https://github.com/Lizer2009/matebot/pull/395", "_blank"),
     ).toBe(false);
   });
 

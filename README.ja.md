@@ -6,7 +6,7 @@
 スケジュールで作業し、Web・デスクトップ・モバイルの各クライアントでメモリと履歴を保ちます。自分のサーバーと自分のモデル認証情報で
 動作し、ローカルにデスクトップ環境を必要としません。
 
-このリポジトリは **[Matebot](https://github.com/elie222/rakazo)** のフォークです。Matebot はその Apache-2.0 のコードの上に
+このリポジトリは **[Rakazo](https://github.com/elie222/rakazo)** のフォークです。Matebot はその Apache-2.0 のコードの上に
 構築されており、ライセンス、その通知、上流への明確なクレジットを保持します。違いは製品名、パッケージング、
 そしてこのフォークが運用するデプロイです。
 
@@ -114,7 +114,7 @@ Node.js 22.x 系の 22.22.2 以降、Node.js 24.x、または Node.js 26 以降�
 pnpm 9、Docker が必要です。Node.js 23.x と 25.x はサポートしていません。
 
 ```bash
-git clone https://github.com/elie222/rakazo.git
+git clone https://github.com/Lizer2009/matebot.git
 cd matebot
 cp .env.example .env
 ```
@@ -302,9 +302,9 @@ pnpm test:e2e
 
 ## 上流
 
-Matebot は [Lizer2009/matebot](https://github.com/elie222/rakazo) を追跡しています。上流の README、デモ、ストアの掲載は
-上流のホスト型製品についてのもので、このフォークはそのサービスを運用していません。Matebot が基づくコードを
-知りたい場合や貢献したい場合は、そのリポジトリから始めてください。
+Matebot は、フォーク元である [Rakazo](https://github.com/elie222/rakazo) プロジェクトの 0.6.0 から独立して開発されています。
+上流の README、デモ、ストアの掲載は上流のホスト型製品についてのもので、このフォークはそのサービスを運用していません。
+Matebot 自身のソースはこのリポジトリにあります。
 
 Matebot は上流と同じ [Apache License 2.0](./LICENSE) で提供されています。このライセンスと必要な通知はそのまま残り、
 Matebot の名称とマークはこのフォークのものです。

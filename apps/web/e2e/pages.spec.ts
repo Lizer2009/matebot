@@ -59,7 +59,7 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
 }, testInfo) => {
   await page.addInitScript(() => localStorage.setItem("matebot.uiAppearance", "dark"));
   await page.setViewportSize({ width: 1280, height: 860 });
-  await signup(page, `pages-${Date.now()}@rakazo.test`, "password12", "Page Owner");
+  await signup(page, `pages-${Date.now()}@matebot.test`, "password12", "Page Owner");
   await completeOnboarding(page);
 
   const title = "Test dashboard (example data)";
@@ -411,7 +411,7 @@ test("a page's failures, a deleted page's card, and the Library's Share, search 
   test.setTimeout(240_000);
   await page.addInitScript(() => localStorage.setItem("matebot.uiAppearance", "dark"));
   await page.setViewportSize({ width: 1280, height: 860 });
-  await signup(page, `pages-states-${Date.now()}@rakazo.test`, "password12", "Page States");
+  await signup(page, `pages-states-${Date.now()}@matebot.test`, "password12", "Page States");
   await completeOnboarding(page);
   // The command palette caches its own page list; new cards must not trip over it.
   await page.keyboard.press("ControlOrMeta+K");
@@ -684,7 +684,7 @@ test("a group's pages show in its settings, and the palette finds and opens a pa
 }, testInfo) => {
   await page.addInitScript(() => localStorage.setItem("matebot.uiAppearance", "dark"));
   await page.setViewportSize({ width: 1280, height: 860 });
-  await signup(page, `pages-group-${Date.now()}@rakazo.test`, "password12", "Group Pages");
+  await signup(page, `pages-group-${Date.now()}@matebot.test`, "password12", "Group Pages");
   await completeOnboarding(page);
   const planner = await createNamedBot(page, "Planner");
   const writer = await createNamedBot(page, "Writer");
@@ -780,7 +780,7 @@ test("a page acts for its reader only after a click in it, never on load or from
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 860 });
-  await signup(page, `pages-rogue-${Date.now()}@rakazo.test`, "password12", "Rogue Reader");
+  await signup(page, `pages-rogue-${Date.now()}@matebot.test`, "password12", "Rogue Reader");
   await completeOnboarding(page);
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.evaluate(() => navigator.clipboard.writeText("untouched"));

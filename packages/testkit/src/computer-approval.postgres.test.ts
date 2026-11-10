@@ -100,7 +100,7 @@ describe.skipIf(!databaseAvailable)("offline Pi computer approval", () => {
           method: "POST",
           headers: { "content-type": "application/json", origin: fixtureOrigin },
           body: JSON.stringify({
-            email: `computer-approval-${randomUUID()}@rakazo.test`,
+            email: `computer-approval-${randomUUID()}@matebot.test`,
             password: "password12",
             name: "Computer approval fixture",
           }),

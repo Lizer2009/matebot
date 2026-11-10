@@ -778,7 +778,7 @@ class ControlArgvTest(unittest.TestCase):
                 path.write_text(contents)
             stub = Path(tmp) / "xstub.c"
             stub.write_text(XSTUB_C)
-            library_path = Path(tmp) / "librakazo-xcapture.so"
+            library_path = Path(tmp) / "libmatebot-xcapture.so"
             compiled = subprocess.run(
                 [
                     "cc",
@@ -1055,7 +1055,7 @@ class XcaptureKeyTest(unittest.TestCase):
                 path.write_text(content)
             stub = root / "x11_stub.c"
             stub.write_text(cls.stub_source())
-            library_path = root / "librakazo-xcapture.so"
+            library_path = root / "libmatebot-xcapture.so"
             compiled = subprocess.run(
                 [
                     "cc",

@@ -1282,7 +1282,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   startSupervisor();
 }
 
-// Enforcement is host-side (DOCKER-USER/INPUT on matebot-c* bridges); the flag only
+// Enforcement is host-side (DOCKER-USER/INPUT on matebot-* bridges); the flag only
 // names the interfaces. Refuse restricted computers until a probe shows the host
 // rules are in place. Only success is cached, so installing the rules needs no restart.
 // `auto` keeps the first answer a completed probe gives: restricted when the rules are in place,

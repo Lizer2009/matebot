@@ -41,7 +41,7 @@ describeHistory("routines.history late starts", () => {
   });
 
   it("returns the due time a late run recorded, unchanged by later schedule edits", async () => {
-    const cookie = await signup(app, `routine-late-${stamp}@rakazo.test`, "Late User");
+    const cookie = await signup(app, `routine-late-${stamp}@matebot.test`, "Late User");
     const bot = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Brief",
       title: "Brief",

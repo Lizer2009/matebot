@@ -77,15 +77,15 @@ describe("graphical computer spec", () => {
     // Explicit "" stands for unset, so exported MATEBOT_COMPUTER_IMAGE* values cannot leak in.
     expect(resolveComputerImage("", "")).toBe("matebot/computer:local");
     expect(resolveComputerImage("", "edge")).toBe("matebot/computer:local");
-    expect(resolveComputerImage("ghcr.io/elie222/rakazo/computer", "edge")).toBe(
-      "ghcr.io/elie222/rakazo/computer:edge",
+    expect(resolveComputerImage("ghcr.io/lizer2009/matebot/computer", "edge")).toBe(
+      "ghcr.io/lizer2009/matebot/computer:edge",
     );
-    expect(resolveComputerImage("ghcr.io/elie222/rakazo/computer", "")).toBe(
-      "ghcr.io/elie222/rakazo/computer",
+    expect(resolveComputerImage("ghcr.io/lizer2009/matebot/computer", "")).toBe(
+      "ghcr.io/lizer2009/matebot/computer",
     );
     // Compose already appends the tag, so a tagged or pinned image is never tagged twice.
-    expect(resolveComputerImage("ghcr.io/elie222/rakazo/computer:edge", "edge")).toBe(
-      "ghcr.io/elie222/rakazo/computer:edge",
+    expect(resolveComputerImage("ghcr.io/lizer2009/matebot/computer:edge", "edge")).toBe(
+      "ghcr.io/lizer2009/matebot/computer:edge",
     );
     expect(resolveComputerImage("registry.example.com:5000/matebot/computer", "v1.2.3")).toBe(
       "registry.example.com:5000/matebot/computer:v1.2.3",
@@ -381,7 +381,7 @@ describe("graphical computer spec", () => {
   it("derives deterministic host bridge names within the 15-byte interface limit", () => {
     for (const botId of ["bot", "a/b", "bot with spaces", "x".repeat(80)]) {
       const name = computerBridgeNameFor(botId);
-      expect(name).toMatch(/^matebot-c[0-9a-f]{7}$/);
+      expect(name).toMatch(/^matebot-[0-9a-f]{7}$/);
       expect(Buffer.byteLength(name)).toBeLessThanOrEqual(15);
       expect(computerBridgeNameFor(botId)).toBe(name);
     }
@@ -451,13 +451,13 @@ describe("graphical computer spec", () => {
   });
 
   it("pulls a missing computer image only from a registry the name spells out", () => {
-    expect(isRegistryQualifiedImage("ghcr.io/elie222/rakazo/computer:edge")).toBe(true);
+    expect(isRegistryQualifiedImage("ghcr.io/lizer2009/matebot/computer:edge")).toBe(true);
     expect(isRegistryQualifiedImage("registry.test/matebot/computer@sha256:0123")).toBe(true);
     expect(isRegistryQualifiedImage("localhost:5000/matebot/computer")).toBe(true);
     expect(isRegistryQualifiedImage("localhost/matebot/computer:local")).toBe(true);
     expect(isRegistryQualifiedImage("docker.io/matebot/computer:edge")).toBe(true);
     expect(isRegistryQualifiedImage("Registry/matebot/computer:edge")).toBe(true);
-    expect(isRegistryQualifiedImage("rakazO/computer:edge")).toBe(true);
+    expect(isRegistryQualifiedImage("matebOt/computer:edge")).toBe(true);
     expect(isRegistryQualifiedImage("matebot/computer:local")).toBe(false);
     expect(isRegistryQualifiedImage("matebot/computer@sha256:0123")).toBe(false);
     expect(isRegistryQualifiedImage("computer:local")).toBe(false);
