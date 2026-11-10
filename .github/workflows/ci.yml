@@ -12,13 +12,9 @@ permissions:
 # without stopping work already in progress. Main reruns only what the deploy needs; the pull
 # request already ran the rest against the then-current main, and the nightly run refreshes the
 # E2E screenshot baseline.
-# Superseded PR checks cancel together through each job's own group. The run-level group is keyed
-# by run id rather than PR number: a run whose jobs wait for a runner label that no pool serves
-# stays queued indefinitely, and with a PR-keyed group it would hold that group forever, so every
-# later run on the same PR would sit at zero jobs behind work that can never start.
 concurrency:
-  group: ci-${{ github.run_id }}
-  cancel-in-progress: false
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Testcontainers pulls Docker Hub images through Google's public mirror: anonymous Docker Hub pulls
 # from shared runner IPs fail intermittently with "authentication required" or rate limits.
