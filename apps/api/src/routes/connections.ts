@@ -40,15 +40,21 @@ async function resumeThreadsWaitingOn(
 ): Promise<void> {
   const app = interactionAppForProvider(provider);
   if (!app) return;
+  // Scoped to this person's own threads in the database, not filtered after the fact: another
+  // member's waiting draft in the same space is never read, let alone resumed. A group thread
+  // has no bot and cannot be resumed here, so it is excluded by the same condition.
   const waiting = await deps.prisma.interaction.findMany({
-    where: { spaceId: actor.spaceId, status: "needs_connection" },
-    select: { threadId: true, thread: { select: { botId: true, userId: true } } },
+    where: {
+      spaceId: actor.spaceId,
+      status: "needs_connection",
+      thread: { userId: actor.userId, botId: { not: null } },
+    },
+    select: { threadId: true, thread: { select: { botId: true } } },
     distinct: ["threadId"],
   });
   for (const row of waiting) {
     const botId = row.thread?.botId;
-    // A thread owned by someone else, or by a group, is not this person's card to resume.
-    if (!botId || row.thread?.userId !== actor.userId) continue;
+    if (!botId) continue;
     await resumeInteractionAfterConnection(
       { prisma: deps.prisma, ...(deps.jobs ? { jobs: deps.jobs } : {}) },
       {

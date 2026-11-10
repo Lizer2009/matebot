@@ -69,7 +69,9 @@ async function refreshWaitingInteractions(
   },
 ): Promise<{ refreshed: string[]; waitingOnAnotherApp: boolean }> {
   const rows = await tx.interaction.findMany({
-    where: { threadId: input.threadId, status: "needs_connection" },
+    // Space and thread together: a thread id is unique, but the scope belongs in the query that
+    // writes, so a mistake upstream cannot let one space refresh another's card.
+    where: { spaceId: input.spaceId, threadId: input.threadId, status: "needs_connection" },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
