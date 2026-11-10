@@ -14,7 +14,7 @@ import {
   isRendererAssetMiss,
 } from "./renderer-assets.js";
 
-const root = path.resolve("/tmp/rakazo-renderer");
+const root = path.resolve("/tmp/matebot-renderer");
 const origin = "https://app.example.com";
 
 describe("bundled desktop renderer", () => {

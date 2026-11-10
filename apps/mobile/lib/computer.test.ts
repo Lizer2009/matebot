@@ -303,10 +303,10 @@ describe("readScreenUrl", () => {
 
 describe("screen page states", () => {
   it("takes only the exact state message a screen page posts", () => {
-    expect(screenPageState('{"rakazoScreen":"connected"}')).toBe("connected");
-    expect(screenPageState('{"rakazoScreen":"disconnected"}')).toBe("disconnected");
-    expect(screenPageState('{"rakazoScreen":"connected","detail":"text"}')).toBeNull();
-    expect(screenPageState('{"rakazoScreen":"reconnect"}')).toBeNull();
+    expect(screenPageState('{"matebotScreen":"connected"}')).toBe("connected");
+    expect(screenPageState('{"matebotScreen":"disconnected"}')).toBe("disconnected");
+    expect(screenPageState('{"matebotScreen":"connected","detail":"text"}')).toBeNull();
+    expect(screenPageState('{"matebotScreen":"reconnect"}')).toBeNull();
     expect(screenPageState('["connected"]')).toBeNull();
     expect(screenPageState('"connected"')).toBeNull();
     expect(screenPageState("null")).toBeNull();
@@ -351,18 +351,18 @@ describe("screen page redirects and origin", () => {
         }) as unknown as Response,
     );
     await expect(
-      screenPageStatus("https://app.example.test/novnc/x?rakazo_probe=1", followed),
+      screenPageStatus("https://app.example.test/novnc/x?matebot_probe=1", followed),
     ).resolves.toBe(0);
     const same = vi.fn(
       async () =>
         ({
           status: 204,
-          url: "https://app.example.test/novnc/x?rakazo_probe=1",
+          url: "https://app.example.test/novnc/x?matebot_probe=1",
           type: "default",
         }) as unknown as Response,
     );
     await expect(
-      screenPageStatus("https://app.example.test/novnc/x?rakazo_probe=1", same),
+      screenPageStatus("https://app.example.test/novnc/x?matebot_probe=1", same),
     ).resolves.toBe(204);
     const redirected = vi.fn(
       async () => ({ status: 200, redirected: true, type: "basic" }) as unknown as Response,

@@ -11,7 +11,7 @@ import type { ToolkitDirectoryEntry } from "./composio-catalog-cache.js";
 import type { ComposioClient, ComposioSession } from "./composio-connector.js";
 import type { EmulatedGithubRelease } from "./release-watch.js";
 import {
-  DEFAULT_RAKAZO_EMULATED_RELEASES,
+  DEFAULT_MATEBOT_EMULATED_RELEASES,
   RELEASE_WATCH_GITHUB_TOOL_NAMES,
 } from "./release-watch.js";
 
@@ -159,7 +159,7 @@ const GITHUB_TOOLS: SessionTools = [
       type: "object",
       properties: {
         owner: { type: "string", description: "Repository owner, e.g. elie222" },
-        repo: { type: "string", description: "Repository name, e.g. rakazo" },
+        repo: { type: "string", description: "Repository name, e.g. matebot" },
       },
       required: ["owner", "repo"],
     },
@@ -214,7 +214,7 @@ export class FakeComposioClient implements ComposioClient {
   failAccountList = false;
   private readonly sessionsById = new Map<string, ComposioSession>();
   private readonly mailboxesByUser = new Map<string, Mailbox>();
-  private githubReleases: EmulatedGithubRelease[] = [...DEFAULT_RAKAZO_EMULATED_RELEASES];
+  private githubReleases: EmulatedGithubRelease[] = [...DEFAULT_MATEBOT_EMULATED_RELEASES];
   private nextId = 0;
 
   constructor(private readonly directory: readonly ToolkitDirectoryEntry[] = DEFAULT_DIRECTORY) {}
@@ -423,7 +423,7 @@ export class FakeComposioClient implements ComposioClient {
 
   private runGithub(tool: string, args: Record<string, unknown>): Record<string, unknown> {
     const owner = String(args.owner ?? args.owner_name ?? "elie222");
-    const repo = String(args.repo ?? args.repository ?? "rakazo");
+    const repo = String(args.repo ?? args.repository ?? "matebot");
     const matched = this.githubReleases.filter(
       (release) =>
         release.owner.toLowerCase() === owner.toLowerCase() &&

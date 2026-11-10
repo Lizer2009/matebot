@@ -87,7 +87,7 @@ describe("CreateBotDialog", () => {
     await render(onCreate);
     expect(document.querySelector('[role="tablist"]')).toBeNull();
     const family = Number(
-      document.querySelector(".rakazo-organic-avatar")?.getAttribute("data-shape-family"),
+      document.querySelector(".matebot-organic-avatar")?.getAttribute("data-shape-family"),
     );
     await typeName("Scout");
     await click(button("Create"));
@@ -98,11 +98,11 @@ describe("CreateBotDialog", () => {
 
   it("sends the Matebot preview id without an organic family", async () => {
     const onCreate = vi.fn(async (_input: CreateBotDialogInput) => undefined);
-    await render(onCreate, "rakazo");
+    await render(onCreate, "matebot");
     await typeName("Scout");
     await click(button("Create"));
     const input = onCreate.mock.lastCall![0];
-    const preview = document.querySelector(".rakazo-logo-avatar")!;
+    const preview = document.querySelector(".matebot-logo-avatar")!;
     expect(input).toMatchObject({ name: "Scout" });
     expect(input).not.toHaveProperty("avatarFamily");
     expect(input.id).toMatch(/^c[a-z0-9]{24}$/);
@@ -113,7 +113,7 @@ describe("CreateBotDialog", () => {
     const onCreate = vi
       .fn(async (_input: CreateBotDialogInput) => undefined)
       .mockRejectedValueOnce(new Error("Try again"));
-    await render(onCreate, "rakazo");
+    await render(onCreate, "matebot");
     await click(button("Color #00C972"));
     await typeName("Scout");
     await click(button("Create"));
@@ -127,7 +127,7 @@ describe("CreateBotDialog", () => {
     await render(onCreate);
     await click(button("Shape 2"));
     await click(button("Color #00C972"));
-    const preview = document.querySelector(".rakazo-organic-avatar");
+    const preview = document.querySelector(".matebot-organic-avatar");
     const family = Number(preview?.getAttribute("data-shape-family"));
     await typeName("Scout");
     await click(button("Create"));
@@ -169,11 +169,11 @@ it("retains the preview identity and colour through rerenders and a retry", asyn
   const onCreate = vi
     .fn(async (_input: CreateBotDialogInput) => undefined)
     .mockRejectedValueOnce(new Error("Try again"));
-  await render(onCreate, "rakazo");
-  const colour = document.querySelector(".rakazo-logo-avatar")!.getAttribute("data-color");
+  await render(onCreate, "matebot");
+  const colour = document.querySelector(".matebot-logo-avatar")!.getAttribute("data-color");
   await typeName("First name");
-  await render(onCreate, "rakazo");
-  expect(document.querySelector(".rakazo-logo-avatar")!.getAttribute("data-color")).toBe(colour);
+  await render(onCreate, "matebot");
+  expect(document.querySelector(".matebot-logo-avatar")!.getAttribute("data-color")).toBe(colour);
   await click(button("Create"));
   const first = onCreate.mock.lastCall![0];
   await typeName("Retry name");

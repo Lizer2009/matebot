@@ -82,7 +82,7 @@ export const docker: Sandbox = {
         "Install Docker Engine 26 or newer with the Compose plugin on the machine that will run Matebot.",
         "Run the installer from the [self-hosting guide](/docs/self-host/). It writes a `.env` with random secrets, including the `SANDBOX_SUPERVISOR_TOKEN` the supervisor needs, and starts Matebot with `SANDBOX_PROVIDER=docker`.",
         "On Linux Docker Engine, let the installer apply the restricted-networking rules when it asks for sudo, or run `sudo bash infra/compose/restrict-computer-egress.sh` later.",
-        "Optionally change the limits with `RAKAZO_COMPUTER_MEMORY`, `RAKAZO_COMPUTER_CPUS` and `RAKAZO_COMPUTER_PIDS_LIMIT`, or share host folders with `SANDBOX_COMPUTER_MOUNTS`, as described in [Docker computers](/docs/self-host-docker-computers/).",
+        "Optionally change the limits with `MATEBOT_COMPUTER_MEMORY`, `MATEBOT_COMPUTER_CPUS` and `MATEBOT_COMPUTER_PIDS_LIMIT`, or share host folders with `SANDBOX_COMPUTER_MOUNTS`, as described in [Docker computers](/docs/self-host-docker-computers/).",
         "Sign up, open a bot and open its computer to check that the desktop comes up.",
       ],
     },

@@ -59,7 +59,7 @@ function renameHarness(target: TargetSpace, currentOrganizationId: string | null
       screenProxySecret: "fake-test-secret",
       sandboxProvider: "fake",
     },
-    dataDir: "/tmp/rakazo-space-rename-test",
+    dataDir: "/tmp/matebot-space-rename-test",
   } as unknown as RouterDeps;
   return { update, transaction, handler: new RPCHandler(createRouter(deps)) };
 }

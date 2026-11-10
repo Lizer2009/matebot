@@ -22,7 +22,7 @@ describeWithDatabase("structured @ mention targets", () => {
   let app: App;
   let prisma: AppHandles["prisma"];
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-mention-targets-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-mention-targets-"));
 
   beforeAll(async () => {
     const { createApp } = await import("@matebot/api/app");

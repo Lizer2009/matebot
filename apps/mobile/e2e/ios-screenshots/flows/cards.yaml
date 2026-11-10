@@ -4,8 +4,8 @@ name: Request cards
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
-      RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_EMAIL}
-- openLink: "matebot:///thread?botId=${RAKAZO_SCREENSHOT_CARDS_BOT_ID}&name=Support"
+      MATEBOT_ACTIVE_EMAIL: ${MATEBOT_SCREENSHOT_EMAIL}
+- openLink: "matebot:///thread?botId=${MATEBOT_SCREENSHOT_CARDS_BOT_ID}&name=Support"
 - extendedWaitUntil:
     visible: ".*api.example.test.*"
     timeout: 20000

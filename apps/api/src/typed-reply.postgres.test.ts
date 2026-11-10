@@ -731,7 +731,7 @@ describe.skipIf(!enabled)("typed replies to waiting cards (PostgreSQL)", () => {
     expect(sandbox.execute).toHaveBeenCalledWith(
       expect.objectContaining({ providerRef: `ref-${run.id}` }),
       expect.objectContaining({
-        argv: expect.arrayContaining(["rakazo-cancel-run-work", computer.id, run.id]),
+        argv: expect.arrayContaining(["matebot-cancel-run-work", computer.id, run.id]),
       }),
       expect.objectContaining({ cancelRunWork: true, runId: run.id }),
     );

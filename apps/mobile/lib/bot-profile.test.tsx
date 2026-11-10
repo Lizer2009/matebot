@@ -207,7 +207,7 @@ beforeEach(() => {
   session.generation += 1;
   requestContext.mockImplementation(async () => ({
     apiBase: "https://api.example",
-    headers: { "x-rakazo-space-id": "space-a" },
+    headers: { "x-matebot-space-id": "space-a" },
     sessionGeneration: session.generation,
   }));
 });
@@ -782,7 +782,7 @@ describe("routines screen", () => {
       {
         requestContext: {
           apiBase: "https://api.example",
-          headers: { "x-rakazo-space-id": "space-a" },
+          headers: { "x-matebot-space-id": "space-a" },
           sessionGeneration: session.generation,
         },
       },
@@ -947,7 +947,7 @@ describe("routines screen", () => {
       {
         requestContext: {
           apiBase: "https://api.example",
-          headers: { "x-rakazo-space-id": "space-a" },
+          headers: { "x-matebot-space-id": "space-a" },
           sessionGeneration: session.generation,
         },
       },

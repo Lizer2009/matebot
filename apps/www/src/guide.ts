@@ -294,7 +294,7 @@ These work on your own deployment. Each turns on from \`.env\`.
 - **Purchases with Stripe Link.** \`PAYMENT_WALLET_PROVIDER=link\`. Each purchase waits for your approval in Link.
 - **Cursor cloud agents.** \`CLOUD_AGENT_PROVIDER=cursor\`, \`CURSOR_API_KEY\`, and \`CLOUD_AGENT_SPACE_ID\`.
 - **Ticket board.** \`TICKET_BOARD_ENABLED=true\`.
-- **Local models and local MCP servers.** \`RAKAZO_LOCAL_MODELS\`, and \`MCP_STDIO_ENABLED\` with \`MCP_STDIO_ALLOWED_COMMANDS\`.
+- **Local models and local MCP servers.** \`MATEBOT_LOCAL_MODELS\`, and \`MCP_STDIO_ENABLED\` with \`MCP_STDIO_ALLOWED_COMMANDS\`.
 
 The [full guide](${DOCS_URL}) lists every setting for each one.
 
@@ -324,7 +324,7 @@ Use the same installer on a VPS when bots should stay running. Images Compose bi
 ${PUBLISHED_IMAGES_SERVER}
 \`\`\`
 
-Before the second command, set \`RAKAZO_HOST\` to the hostname and set \`BETTER_AUTH_URL\`, \`WEB_ORIGIN\`, and \`API_URL\` to that same \`https://\` origin. For a remote computer instead of local Docker, set \`SANDBOX_PROVIDER\` to \`e2b\`, \`daytona\`, \`createos\`, or \`boat\` and add that provider's API key.
+Before the second command, set \`MATEBOT_HOST\` to the hostname and set \`BETTER_AUTH_URL\`, \`WEB_ORIGIN\`, and \`API_URL\` to that same \`https://\` origin. For a remote computer instead of local Docker, set \`SANDBOX_PROVIDER\` to \`e2b\`, \`daytona\`, \`createos\`, or \`boat\` and add that provider's API key.
 
 \`\`\`Caddyfile
 ${CADDY_SNIPPET}

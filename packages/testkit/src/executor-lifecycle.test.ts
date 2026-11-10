@@ -32,7 +32,7 @@ describeIntegration("run executor lifecycle", () => {
   let handles: Awaited<ReturnType<typeof createApp>>;
   let db: Awaited<ReturnType<typeof createApp>>["prisma"];
   const destination = new DestinationEmulator();
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-executor-lifecycle-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-executor-lifecycle-"));
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   beforeAll(async () => {

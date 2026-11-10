@@ -38,7 +38,7 @@ if (!parsed) {
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required");
 
 const { prisma, pool } = createDb(process.env.DATABASE_URL, {
-  applicationName: "rakazo-home-storage",
+  applicationName: "matebot-home-storage",
   keyProvider: contentKeyProviderFromEnv(),
 });
 const write = (line: string) => process.stdout.write(`${line}\n`);

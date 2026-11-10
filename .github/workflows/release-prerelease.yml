@@ -96,7 +96,7 @@ jobs:
       - name: Build renderer and Electron main process
         run: pnpm --filter @matebot/web build && pnpm --filter @matebot/desktop build
         env:
-          RAKAZO_ALLOW_DEV_SECRETS: "1"
+          MATEBOT_ALLOW_DEV_SECRETS: "1"
       # Unsigned, like `desktop-windows-installer`: no certificate exists for a fork
       # build, and this installer is for a controlled test machine, not distribution.
       - name: Package the unsigned installer

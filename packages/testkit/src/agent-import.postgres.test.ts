@@ -112,7 +112,7 @@ describeIntegration("agent import", () => {
   let db: PrismaClient;
   let stop: () => Promise<void>;
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-agent-import-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-agent-import-"));
 
   beforeAll(async () => {
     const { createApp } = await import("@matebot/api/app");
@@ -1023,7 +1023,7 @@ describeIntegration("agent import", () => {
     // Short enough that a JSON parse error quotes it whole, so a leaked error would show it.
     const canary = "ph7f3e9";
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-api", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-api", sinks: [sink] }));
     try {
       for (const ciphertext of [
         (await store.put(`${canary} is not JSON`, putContext, { recordId: secret.id })).ciphertext,
@@ -1057,7 +1057,7 @@ describeIntegration("agent import", () => {
         "imported mcp server credential could not be read",
       );
     } finally {
-      installLogger(createLogger({ service: "rakazo-api", level: "off", sinks: [] }));
+      installLogger(createLogger({ service: "matebot-api", level: "off", sinks: [] }));
     }
 
     // A record without the requirements it was shown (older data) counts as not done.
@@ -1249,7 +1249,7 @@ async function raw(app: App, cookie: string, proc: string, body: unknown, spaceI
       "content-type": "application/json",
       cookie,
       origin: "http://127.0.0.1:5173",
-      ...(spaceId ? { "x-rakazo-space-id": spaceId } : {}),
+      ...(spaceId ? { "x-matebot-space-id": spaceId } : {}),
     },
     body: JSON.stringify({ json: body }),
   });

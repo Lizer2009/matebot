@@ -8,7 +8,7 @@ import {
   signup,
 } from "./helpers";
 
-const DENSITY_KEY = "rakazo.botsSidebarDensity";
+const DENSITY_KEY = "matebot.botsSidebarDensity";
 
 test("compact bot sidebar hides previews and preserves roster status accessibly", async ({
   page,

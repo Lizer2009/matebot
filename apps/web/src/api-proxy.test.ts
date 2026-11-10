@@ -33,7 +33,7 @@ async function startPreview(
   target: string,
   allowedHosts: string[] | true = ["app.example.test", ".team.example.test"],
 ) {
-  const root = await mkdtemp(path.join(tmpdir(), "rakazo-api-proxy-"));
+  const root = await mkdtemp(path.join(tmpdir(), "matebot-api-proxy-"));
   cleanup.push(() => rm(root, { recursive: true, force: true }));
   await mkdir(path.join(root, "dist"));
   await writeFile(path.join(root, "dist", "index.html"), "<!doctype html>");

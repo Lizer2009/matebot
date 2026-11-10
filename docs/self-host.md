@@ -48,7 +48,7 @@ that HTTPS URL.
 Images Compose binds web to loopback (`127.0.0.1:5173`). Terminate TLS on the host and proxy
 there. Vite preview same-origin-proxies `/api` and `/rpc`, so do not expose `:3100`. Set
 `BETTER_AUTH_URL`, `WEB_ORIGIN`, and `API_URL` to that same HTTPS origin, and set
-`RAKAZO_HOST` to its hostname (for example, `app.example.com`). Cookies and CORS follow those
+`MATEBOT_HOST` to its hostname (for example, `app.example.com`). Cookies and CORS follow those
 origins.
 
 ```Caddyfile
@@ -77,7 +77,7 @@ If the installer, Compose downloads, or image pulls are blocked, use the
 
 On Windows, if an older clone with `core.autocrlf=true` leaves the computer pane hung on boot (`bash\r` in sandbox logs): from a clean worktree, set `git config core.autocrlf false`, run `git add --renormalize . && git checkout -- .`, then rebuild with `pnpm sandbox:build`.
 
-Compose runs Postgres, the sandbox supervisor (Docker socket), API, worker, and a Vite preview of the web app. Bot computers are sibling containers (`rakazo/computer:local`) on separate per-bot networks; only the supervisor and screen proxy join each one. The API process does not get an unrestricted Docker socket; the supervisor owns the lifecycle.
+Compose runs Postgres, the sandbox supervisor (Docker socket), API, worker, and a Vite preview of the web app. Bot computers are sibling containers (`matebot/computer:local`) on separate per-bot networks; only the supervisor and screen proxy join each one. The API process does not get an unrestricted Docker socket; the supervisor owns the lifecycle.
 
 Postgres stays on the Compose network only (not published on the host), matching the images
 compose. Credentials come from `.env` (`POSTGRES_PASSWORD` is required). Prefer a URI-safe value
@@ -96,7 +96,7 @@ Do not publish Postgres on a public interface.
 
 Same as the README quick start: `.env` from `.env.example`, `pnpm sandbox:build`, `pnpm dev`, then the URL it prints ([http://127.0.0.1:5173](http://127.0.0.1:5173) by default, or `http://localhost:5173` — both loopback hosts are trusted). Electron: `pnpm --filter @matebot/desktop dev` while that stack is up, choosing **Existing instance** with that address. The desktop app's **This computer** option instead installs and runs the published images itself with Docker Compose (see [Published images](#published-images-no-checkout)), using port 45173 by default so it can run alongside `pnpm dev`. If that port is occupied, the app selects and remembers another loopback port. The managed API gets a Docker-assigned loopback port; all desktop traffic uses the web origin.
 
-For source development in WSL, keep the checkout and `data` directory in the Linux filesystem (for example, `~/rakazo`), and run `pnpm dev` as your normal user. The host-run supervisor matches bot container UID/GID to that user. If Docker Desktop container IPs are unreachable, set `SANDBOX_CONTROL_VIA_LOOPBACK=true` in `.env`; this publishes the token-protected control service on a random loopback port. Leave this unset for the Compose-hosted supervisor.
+For source development in WSL, keep the checkout and `data` directory in the Linux filesystem (for example, `~/matebot`), and run `pnpm dev` as your normal user. The host-run supervisor matches bot container UID/GID to that user. If Docker Desktop container IPs are unreachable, set `SANDBOX_CONTROL_VIA_LOOPBACK=true` in `.env`; this publishes the token-protected control service on a random loopback port. Leave this unset for the Compose-hosted supervisor.
 
 Compose bot homes mount only their own subdirectory of the application volume using Docker volume semantics. Docker's internal volume paths are never used as host bind mounts.
 

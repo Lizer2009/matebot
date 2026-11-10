@@ -152,7 +152,7 @@ describe("account preferences", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -390,7 +390,7 @@ describe("account preferences", () => {
       new Request("http://127.0.0.1/rpc/preferences/update", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ json: { botAvatarSet: "rakazo" } }),
+        body: JSON.stringify({ json: { botAvatarSet: "matebot" } }),
       }),
       { prefix: "/rpc", context: { actor } },
     );
@@ -398,11 +398,11 @@ describe("account preferences", () => {
     expect(response.status).toBe(200);
     expect(update).toHaveBeenCalledWith({
       where: { id: "user-1" },
-      data: { botAvatarSet: "rakazo" },
+      data: { botAvatarSet: "matebot" },
     });
     expect(botFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { userId: "user-1", avatarSetPinned: false, avatarSet: { not: "rakazo" } },
+        where: { userId: "user-1", avatarSetPinned: false, avatarSet: { not: "matebot" } },
       }),
     );
   });
@@ -625,7 +625,7 @@ describe("billing", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -788,7 +788,7 @@ describe("model setup gate", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -962,7 +962,7 @@ describe("thread answer delivery", () => {
     const answerRunInput = vi.fn().mockResolvedValue(true);
     const enqueue = vi.fn().mockRejectedValue(new Error("job broker unavailable"));
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-api", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-api", sinks: [sink] }));
     const prisma = {
       bot: {
         findFirst: vi.fn().mockResolvedValue({
@@ -983,7 +983,7 @@ describe("thread answer delivery", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -1023,7 +1023,7 @@ describe("thread answer delivery", () => {
     );
     expect(enqueue).toHaveBeenCalledOnce();
     expect(sink.events.some((event) => event.message === "thread answer enqueue")).toBe(true);
-    installLogger(createLogger({ service: "rakazo-api", level: "off", sinks: [] }));
+    installLogger(createLogger({ service: "matebot-api", level: "off", sinks: [] }));
   });
 });
 
@@ -1051,7 +1051,7 @@ describe("oversized one-time answer", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -1104,7 +1104,7 @@ describe("secret request dismissal", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -1291,7 +1291,7 @@ describe("thread stream authorization", () => {
       prisma,
       events: { follow: vi.fn(() => follow) },
       env: { webOrigin: "http://127.0.0.1:5173", screenProxySecret: "fake-test-secret" },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -1393,7 +1393,7 @@ describe("MCP server deletion", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -1540,7 +1540,7 @@ describe("MCP prepared credential updates", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "space",
@@ -1655,7 +1655,7 @@ describe("MCP pre-registered OAuth client", () => {
         mcpStdioAllowedCommands: allowedCommands,
         adminEmails: ["owner@rakazo.test"],
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -2200,7 +2200,7 @@ describe("MCP loopback endpoints", () => {
         sandboxProvider: "fake",
         mcpAllowPrivateEndpoint,
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     return { create, handler: new RPCHandler(createRouter(deps)) };
   }
@@ -2377,7 +2377,7 @@ describe("MCP server health", () => {
         mcpStdioAllowedCommands: ["npx"],
         adminEmails: ["owner@rakazo.test"],
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const clientFor = (actor: Partial<Actor> = {}) =>
       createRouterClient(createRouter(deps), {
@@ -2892,7 +2892,7 @@ describe("private API connectors", () => {
         sandboxProvider: "fake",
         mcpAllowPrivateEndpoint,
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     return { create, handler: new RPCHandler(createRouter(deps)) };
   }
@@ -2989,7 +2989,7 @@ describe("connections.begin", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -3081,7 +3081,7 @@ describe("connections.begin", () => {
           screenProxySecret: "fake-test-secret",
           sandboxProvider: "fake",
         },
-        dataDir: "/tmp/rakazo-router-test",
+        dataDir: "/tmp/matebot-router-test",
       } as unknown as RouterDeps),
     );
     try {
@@ -3152,7 +3152,7 @@ describe("connections.begin", () => {
           screenProxySecret: "fake-test-secret",
           sandboxProvider: "fake",
         },
-        dataDir: "/tmp/rakazo-router-test",
+        dataDir: "/tmp/matebot-router-test",
       } as unknown as RouterDeps),
     );
 
@@ -3379,7 +3379,7 @@ describe("connections.complete", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const actor = {
       spaceId: "workspace-1",
@@ -3445,7 +3445,7 @@ describe("connections.complete", () => {
             screenProxySecret: "fake-test-secret",
             sandboxProvider: "fake",
           },
-          dataDir: "/tmp/rakazo-router-test",
+          dataDir: "/tmp/matebot-router-test",
         } as unknown as RouterDeps),
       );
       let releaseSlot = () => {};
@@ -3571,7 +3571,7 @@ describe("connections.complete", () => {
           screenProxySecret: "fake-test-secret",
           sandboxProvider: "fake",
         },
-        dataDir: "/tmp/rakazo-router-test",
+        dataDir: "/tmp/matebot-router-test",
       } as unknown as RouterDeps),
     );
     const completeRequest = (connectionId: string, spaceId: string, userId: string) =>
@@ -3613,7 +3613,7 @@ describe("connections.complete", () => {
   });
 
   afterEach(() => {
-    installLogger(createLogger({ service: "rakazo-api", level: "off", sinks: [] }));
+    installLogger(createLogger({ service: "matebot-api", level: "off", sinks: [] }));
   });
 
   function pollFixture(status: string) {
@@ -3677,7 +3677,7 @@ describe("connections.complete", () => {
       } as unknown as RouterDeps),
     );
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-api", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-api", sinks: [sink] }));
     async function complete(connectionId = row.id, signal?: AbortSignal) {
       return call("complete", connectionId, signal);
     }
@@ -3890,7 +3890,7 @@ describe("connections.complete", () => {
       },
     );
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-api", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-api", sinks: [sink] }));
 
     await client.connections.catalog({ connectorId: "composio" });
     await client.connections.catalog({ connectorId: "composio" });
@@ -3936,7 +3936,7 @@ describe("updater owner gate", () => {
         sandboxProvider: "fake",
         gitSha: "deadbeef",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     return { deps, handler: new RPCHandler(createRouter(deps)) };
   }
@@ -4059,7 +4059,7 @@ describe("computer screen url", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "e2b",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const handler = new RPCHandler(createRouter(deps));
     const response = await handle(
@@ -4211,7 +4211,7 @@ describe("computer terminal and file transfer", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "docker",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const handler = new RPCHandler(createRouter(deps));
     const call = async (procedure: string, json: Record<string, unknown>) => {
@@ -4875,7 +4875,7 @@ describe("OpenAI-compatible model probes", () => {
   });
 
   it("still rejects saved keys on public HTTP endpoints", async () => {
-    vi.stubEnv("RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC", "1");
+    vi.stubEnv("MATEBOT_OPENAI_COMPAT_ALLOW_PUBLIC", "1");
     try {
       const { client, fetch, load } = fixture();
       const baseUrl = "http://example.invalid/v1";
@@ -9038,7 +9038,7 @@ describe("groups.archive", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
       sandbox: { releaseScreen, execute },
       jobs: { cancel: vi.fn().mockResolvedValue(undefined) },
     } as unknown as RouterDeps;
@@ -9175,7 +9175,7 @@ describe("groups.remove", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
       sandbox: { releaseScreen, execute },
       jobs: { cancel: vi.fn().mockResolvedValue(undefined) },
       artifacts: { remove: vi.fn() },
@@ -9268,7 +9268,7 @@ describe("groups.remove", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
       sandbox: { releaseScreen: vi.fn(), execute: vi.fn(() => []) },
       jobs: { cancel: vi.fn().mockResolvedValue(undefined) },
       artifacts: { remove: removeArtifact },
@@ -9521,7 +9521,7 @@ describe("export.bot", () => {
   });
 
   async function homeWith(files: Record<string, string | Uint8Array>) {
-    const root = await mkdtemp(path.join(tmpdir(), "rakazo-export-"));
+    const root = await mkdtemp(path.join(tmpdir(), "matebot-export-"));
     roots.push(root);
     const home = new LocalAgentHomeStore(root);
     for (const [file, content] of Object.entries(files)) {
@@ -9535,7 +9535,7 @@ describe("export.bot", () => {
   async function exportManifest(
     scope: "team" | "dedicated",
     home: LocalAgentHomeStore,
-    appearance?: { color: string; avatarSet?: "organic" | "rakazo" },
+    appearance?: { color: string; avatarSet?: "organic" | "matebot" },
   ) {
     const prisma = {
       bot: {
@@ -9562,7 +9562,7 @@ describe("export.bot", () => {
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "docker",
       },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const client = createRouterClient(createRouter(deps), { context: { actor } as never });
     const manifest = await client.export.bot({ botId: "bot-1" });
@@ -9578,9 +9578,9 @@ describe("export.bot", () => {
     async (color) => {
       const manifest = await exportManifest("team", await homeWith({}), {
         color,
-        avatarSet: "rakazo",
+        avatarSet: "matebot",
       });
-      expect(manifest.bot).toMatchObject({ color, avatarSet: "rakazo" });
+      expect(manifest.bot).toMatchObject({ color, avatarSet: "matebot" });
     },
   );
 
@@ -9669,7 +9669,7 @@ describe("link favicons", () => {
       prisma: {} as PrismaClient,
       favicons: { favicon },
       env: { webOrigin: "http://127.0.0.1:5173", screenProxySecret: "fake-test-secret" },
-      dataDir: "/tmp/rakazo-router-test",
+      dataDir: "/tmp/matebot-router-test",
     } as unknown as RouterDeps;
     const client = createRouterClient(createRouter(deps), { context: { actor } });
     return { client, favicon };

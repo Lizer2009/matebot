@@ -13,7 +13,7 @@ import { skillReadFromTool } from "./skill-tools.js";
  * server and a Cursor cloud agent — without a network read.
  */
 
-vi.stubEnv("RAKAZO_MARKETING_URL", "https://docs.example.test");
+vi.stubEnv("MATEBOT_MARKETING_URL", "https://docs.example.test");
 
 /** Only the builtin lookup runs; a builtin skill never touches the table. */
 function prisma() {
@@ -34,7 +34,7 @@ describe("skill_read on the product help skill", () => {
     const content = String(result.content ?? "");
     expect(content).toContain("docs.example.test/docs/integrations/");
     // Nothing points at the previous product's host any more.
-    expect(content).not.toMatch(/rakazo\.com/i);
+    expect(content).not.toMatch(/matebot\.com/i);
   });
 
   it("can answer how to connect an MCP server without fetching anything", async () => {

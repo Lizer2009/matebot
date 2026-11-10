@@ -17,9 +17,9 @@ Docker computer topology:
 
 | Variable | Default | Accepts |
 | --- | --- | --- |
-| `RAKAZO_COMPUTER_MEMORY` | `2g` | `2g`, `1536m`, a byte count. Minimum `6m`, Docker's own floor. Also caps swap, so the ceiling holds. |
-| `RAKAZO_COMPUTER_CPUS` | `2` | Whole or fractional cores, e.g. `1.5` |
-| `RAKAZO_COMPUTER_PIDS_LIMIT` | `2048` | A positive integer |
+| `MATEBOT_COMPUTER_MEMORY` | `2g` | `2g`, `1536m`, a byte count. Minimum `6m`, Docker's own floor. Also caps swap, so the ceiling holds. |
+| `MATEBOT_COMPUTER_CPUS` | `2` | Whole or fractional cores, e.g. `1.5` |
+| `MATEBOT_COMPUTER_PIDS_LIMIT` | `2048` | A positive integer |
 
 Set any of them to `0`, `none` or `unlimited` to remove that ceiling. A malformed value fails the
 supervisor at startup naming the variable, rather than surfacing later as a failed bot.
@@ -41,7 +41,7 @@ over SSH) but not the Docker host, the LAN, or link-local cloud metadata such as
 It takes two parts:
 
 1. `SANDBOX_COMPUTER_EGRESS=restricted` gives each computer network a deterministic host
-   bridge name (`rakazo-c…`) instead of a generic `br-*`.
+   bridge name (`matebot-c…`) instead of a generic `br-*`.
 2. The host ruleset, applied once per Docker host:
 
    ```bash
@@ -51,14 +51,14 @@ It takes two parts:
    `install-images.sh` downloads and runs it (asking for sudo) and records the result in
    `.env`. Where the rules cannot be installed (macOS, Windows, Docker Desktop, rootless
    Docker, no iptables, or a failed run) it writes `SANDBOX_COMPUTER_EGRESS=open` and says
-   why. The script drops forwarded traffic from `rakazo-c*` bridges to all non-public IPv4/IPv6
+   why. The script drops forwarded traffic from `matebot-c*` bridges to all non-public IPv4/IPv6
    destinations via the `DOCKER-USER` chain, adds an `INPUT` drop so computers cannot open
    connections to the host (established replies to host-initiated control and screen
    connections still flow), and installs a systemd oneshot so the rules return after a
    reboot. `--print` shows the exact rules without changing anything; `--remove` uninstalls.
 
 Before the first restricted computer starts, the supervisor checks that the host drops
-connections from a `rakazo-c*` bridge. Without the ruleset, computers fail to start with an
+connections from a `matebot-c*` bridge. Without the ruleset, computers fail to start with an
 error naming the script instead of running unrestricted; run the script (no restart needed)
 or set `SANDBOX_COMPUTER_EGRESS=open` and recreate the supervisor.
 
@@ -74,7 +74,7 @@ whenever the rules are missing. A host-run supervisor (`pnpm dev`) and the deskt
 rules cannot reach.
 
 Screen streaming is unaffected: the supervisor and web proxy join each computer's bridge,
-and the ruleset exempts traffic whose in- and out-interface are both `rakazo-c*` before
+and the ruleset exempts traffic whose in- and out-interface are both `matebot-c*` before
 any drop (that exemption is load-bearing on hosts where `br_netfilter` feeds bridged
 frames through `FORWARD`). Rules match interface names rather than subnets, so computer
 create/delete cycles need no firewall maintenance; deleting a computer removes its
@@ -100,7 +100,7 @@ skips IPv6 servers, so if those three are all IPv6 nothing is checked.
 If computers must reach LAN services, an internal proxy, or endpoints bound to the host,
 set `SANDBOX_COMPUTER_EGRESS=open`, recreate the supervisor, and run
 `sudo bash infra/compose/restrict-computer-egress.sh --remove`. The flag alone does not
-uninstall the host rules, which keep matching the still-named `rakazo-c*` bridges until
+uninstall the host rules, which keep matching the still-named `matebot-c*` bridges until
 removed.
 
 The ruleset requires Linux Docker Engine with the iptables backend; Docker Desktop, rootless
@@ -124,7 +124,7 @@ Save the following as `egress.yml` beside that script and start it with
 `docker compose -f egress.yml up -d`. The name keeps it in its own Compose project:
 
 ```yaml
-name: rakazo-computer-egress
+name: matebot-computer-egress
 services:
   computer-egress:
     image: alpine:3

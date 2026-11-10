@@ -102,13 +102,13 @@ export function injectNovncStorageShim(html: string, { viewOnly = false } = {}) 
   // VideoDecoder.flush() never returns, so the page never starts. Screens never use H.264.
   try { delete window.VideoDecoder; } catch {}
   // The app cannot look into this sandboxed frame, so tell it how the screen is doing.
-  const report = (rakazoScreen, detail) => {
+  const report = (matebotScreen, detail) => {
     try {
-      window.parent.postMessage(detail ? { rakazoScreen, detail } : { rakazoScreen }, "*");
+      window.parent.postMessage(detail ? { matebotScreen, detail } : { matebotScreen }, "*");
     } catch {}
     // The mobile app's WebView hears only the state word: no URL and none of the page's text.
     try {
-      window.ReactNativeWebView?.postMessage(JSON.stringify({ rakazoScreen }));
+      window.ReactNativeWebView?.postMessage(JSON.stringify({ matebotScreen }));
     } catch {}
   };
   // A reconnected screen takes the keyboard back when the app asks; nothing else is accepted.
@@ -119,7 +119,7 @@ export function injectNovncStorageShim(html: string, { viewOnly = false } = {}) 
       !data ||
       typeof data !== "object" ||
       Object.keys(data).length !== 1 ||
-      data.rakazoScreenFocus !== true
+      data.matebotScreenFocus !== true
     )
       return;
     const canvas = document.querySelector("#screen canvas, #noVNC_container canvas, canvas");
@@ -134,7 +134,7 @@ export function injectNovncStorageShim(html: string, { viewOnly = false } = {}) 
   const sync = () => {
     const root = document.documentElement;
     const status = document.getElementById("noVNC_status");
-    const failure = root.getAttribute("data-rakazo-screen-error");
+    const failure = root.getAttribute("data-matebot-screen-error");
     const statusError =
       status && status.classList.contains("noVNC_open") && status.classList.contains("noVNC_status_error");
     const connecting =
@@ -162,7 +162,7 @@ export function injectNovncStorageShim(html: string, { viewOnly = false } = {}) 
     sync();
     new MutationObserver(sync).observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["class", "data-rakazo-screen-error"],
+      attributeFilter: ["class", "data-matebot-screen-error"],
       childList: true,
       subtree: true,
     });

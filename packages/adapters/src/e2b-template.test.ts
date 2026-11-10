@@ -19,7 +19,7 @@ describe("E2B computer template", () => {
       string,
       Record<string, unknown>,
     ];
-    expect(name).toBe("rakazo-computer");
+    expect(name).toBe("matebot-computer");
     expect(options).toMatchObject({ apiKey: "e2b_test", cpuCount: 2, memoryMB: 4096 });
     expect(JSON.parse(await Template.toJSON(template, false))).toMatchObject({
       fromTemplate: E2B_DESKTOP_TEMPLATE,

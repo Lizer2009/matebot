@@ -14,15 +14,15 @@ import { helpers, kit } from "./kit/index.js";
 import { PageLanguage } from "./kit/labels.js";
 import { PAGE_STYLES } from "./kit/styles.js";
 
-/** What the host's boot script passes to `RakazoPage.mount`; `code` comes from `pageViewerCode`. */
+/** What the host's boot script passes to `MatebotPage.mount`; `code` comes from `pageViewerCode`. */
 type PageBoot = { code: string; theme: "light" | "dark"; errorTitle: string; lang?: string };
 
 type PageFactory = (exports: { default?: unknown }, ...globals: unknown[]) => void;
 
 declare global {
   interface Window {
-    RakazoPage?: { mount: (boot: PageBoot) => void };
-    __rakazoPageFactory?: PageFactory;
+    MatebotPage?: { mount: (boot: PageBoot) => void };
+    __matebotPageFactory?: PageFactory;
   }
 }
 
@@ -34,11 +34,11 @@ declare global {
  */
 function loadPage(code: string): ComponentType {
   const script = document.createElement("script");
-  script.text = `window.__rakazoPageFactory=function(exports,require,${PAGE_GLOBALS.join(",")}){(function(){${code}\n})()};`;
+  script.text = `window.__matebotPageFactory=function(exports,require,${PAGE_GLOBALS.join(",")}){(function(){${code}\n})()};`;
   document.head.append(script);
   script.remove();
-  const factory = window.__rakazoPageFactory;
-  delete window.__rakazoPageFactory;
+  const factory = window.__matebotPageFactory;
+  delete window.__matebotPageFactory;
   if (typeof factory !== "function") throw new Error("The page's code could not be run.");
   const exports: { default?: unknown } = {};
   const modules: Record<string, unknown> = {
@@ -73,7 +73,7 @@ const HOOKS: Record<(typeof PAGE_HOOKS)[number], unknown> = {
 function reportHeight() {
   const post = () =>
     window.parent?.postMessage(
-      { type: "rakazo-page:height", height: document.body.scrollHeight },
+      { type: "matebot-page:height", height: document.body.scrollHeight },
       "*",
     );
   if (typeof ResizeObserver === "undefined") {
@@ -120,4 +120,4 @@ const style = document.createElement("style");
 style.textContent = PAGE_STYLES;
 document.head.append(style);
 
-window.RakazoPage = { mount };
+window.MatebotPage = { mount };

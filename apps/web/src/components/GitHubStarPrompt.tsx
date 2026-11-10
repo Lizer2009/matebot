@@ -3,8 +3,8 @@ import { Button, buttonVariants, toast } from "@matebot/ui-web";
 import { Star } from "lucide-react";
 
 // Separate keys so a count written by another tab can never undo a dismissal.
-export const STAR_PROMPT_SENT_KEY = "rakazo.githubStarPrompt.sent";
-export const STAR_PROMPT_DISMISSED_KEY = "rakazo.githubStarPrompt.dismissed";
+export const STAR_PROMPT_SENT_KEY = "matebot.githubStarPrompt.sent";
+export const STAR_PROMPT_DISMISSED_KEY = "matebot.githubStarPrompt.dismissed";
 const REPOSITORY_URL = "https://github.com/elie222/rakazo";
 const MESSAGES_BEFORE_ASKING = 5;
 const TOAST_ID = "github-star-prompt";

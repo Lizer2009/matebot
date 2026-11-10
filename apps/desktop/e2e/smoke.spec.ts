@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { RakazoDesktop } from "@matebot/contracts";
+import type { MatebotDesktop } from "@matebot/contracts";
 import { _electron as electron, expect, test } from "@playwright/test";
 
 const fixture = `<!doctype html>
@@ -14,7 +14,7 @@ test("launches with a narrow preload bridge and an isolated renderer", async () 
     cwd: path.resolve(import.meta.dirname, ".."),
     env: {
       ...process.env,
-      RAKAZO_WEB_URL: `data:text/html;charset=utf-8,${encodeURIComponent(fixture)}`,
+      MATEBOT_WEB_URL: `data:text/html;charset=utf-8,${encodeURIComponent(fixture)}`,
     },
   });
 
@@ -24,7 +24,8 @@ test("launches with a narrow preload bridge and an isolated renderer", async () 
     await expect(page).toHaveTitle("Matebot desktop smoke");
 
     const renderer = await page.evaluate(async () => {
-      const desktop = (window as typeof window & { rakazoDesktop?: RakazoDesktop }).rakazoDesktop;
+      const desktop = (window as typeof window & { matebotDesktop?: MatebotDesktop })
+        .matebotDesktop;
 
       return {
         computerKeys: desktop?.computer ? Object.keys(desktop.computer).sort() : [],

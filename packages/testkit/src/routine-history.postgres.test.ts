@@ -21,7 +21,7 @@ describeHistory("routines.history late starts", () => {
   let prisma: PrismaClient;
   let stop: () => Promise<void>;
   const stamp = Date.now();
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-routine-history-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-routine-history-"));
 
   beforeAll(async () => {
     const { createApp } = await import("@matebot/api/app");

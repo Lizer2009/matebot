@@ -83,7 +83,7 @@ test("Matebot credits are chosen like a provider, with nothing else to fill in",
   await page.getByRole("option", { name: "Matebot credits", exact: true }).click();
   await expect(page.getByRole("combobox", { name: "Model", exact: true })).toHaveCount(0);
   await expect(page.getByLabel(/API key/)).toHaveCount(0);
-  await captureScreenshot(page, testInfo, "onboarding-rakazo-credits");
+  await captureScreenshot(page, testInfo, "onboarding-matebot-credits");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect.poll(() => funding).toEqual({ funding: "credits" });
 });

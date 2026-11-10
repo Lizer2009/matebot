@@ -74,7 +74,7 @@ describePostgres("saved home retention (PostgreSQL)", () => {
     vi.useFakeTimers({ toFake: ["Date"], now });
     id = `retention-${randomBytes(6).toString("hex")}`;
     docker = `${id}-docker`;
-    root = await mkdtemp(path.join(tmpdir(), "rakazo-retention-"));
+    root = await mkdtemp(path.join(tmpdir(), "matebot-retention-"));
     storage = new MemoryObjectStorage();
     home = new ObjectAgentHomeStore(root, storage, new PrismaAgentHomeRecords(system, ring()));
     email = new EmailEmulator();
@@ -100,7 +100,7 @@ describePostgres("saved home retention (PostgreSQL)", () => {
         createdAt: new Date(now - 100 * DAY),
       },
     });
-    const files = await mkdtemp(path.join(tmpdir(), "rakazo-retention-files-"));
+    const files = await mkdtemp(path.join(tmpdir(), "matebot-retention-files-"));
     await writeFile(path.join(files, "notes.md"), "keep me");
     await home.commit(id, files, context);
     await system.computer.update({

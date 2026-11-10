@@ -6,7 +6,7 @@ x-app-environment: &app-environment
   # Runtime
   NODE_ENV: ${NODE_ENV:-production}
   # The app's own login, subject to row-level security (docs/self-host-configuration.md#database-roles).
-  DATABASE_URL: postgres://rakazo_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
+  DATABASE_URL: postgres://matebot_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-matebot}
   REALTIME_DATABASE_URL:
   DB_POOL_MAX:
   DATA_DIR: /data
@@ -31,21 +31,21 @@ x-app-environment: &app-environment
   API_URL:
   # The origin this deployment's own documentation lives on; the help skill builds
   # its page links from it (packages/core/src/document-origin.ts).
-  RAKAZO_MARKETING_URL:
+  MATEBOT_MARKETING_URL:
   MAX_UPLOAD_SIZE_MB:
   MAX_ATTACHMENTS_PER_MESSAGE:
-  RAKAZO_UPDATE_RESTART_SUPERVISOR:
+  MATEBOT_UPDATE_RESTART_SUPERVISOR:
   TICKET_BOARD_ENABLED:
   # Optional A2UI gate (default off). API + worker both read it for present_interaction.
   FEATURE_A2UI:
   USER_DEVICES_ENABLED:
   BOT_MESSAGE_MAX_HOPS:
-  RAKAZO_MESSAGE_USER_MAX_CHARS:
+  MATEBOT_MESSAGE_USER_MAX_CHARS:
   TEACH_RECORDING_TTL_MS:
   PHONE_CALLS_ENABLED:
   PHONE_CALL_RING_SECONDS:
   PHONE_CALL_COOLDOWN_MINUTES:
-  RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP:
+  MATEBOT_SECRETS_ALLOW_PRIVATE_HTTP:
   EXPO_ACCESS_TOKEN:
   APNS_VOIP_KEY_ID:
   APNS_VOIP_TEAM_ID:
@@ -90,7 +90,7 @@ x-app-environment: &app-environment
   PI_DEFAULT_MODEL:
   PI_DEFAULT_CREDENTIALS:
   PI_SESSION_RECORDING:
-  RAKAZO_LIVE_MODEL_CATALOG:
+  MATEBOT_LIVE_MODEL_CATALOG:
   OPENROUTER_API_KEY:
   ANTHROPIC_API_KEY:
   TYPESAFE_API_KEY:
@@ -99,19 +99,19 @@ x-app-environment: &app-environment
   MODEL_STREAM_TIMEOUT_MS:
   MODEL_CONNECT_TIMEOUT_MS:
   MODEL_STREAM_IDLE_TIMEOUT_MS:
-  RAKAZO_LOCAL_MODELS:
-  RAKAZO_LOCAL_MODELS_URL:
-  RAKAZO_LOCAL_VISION_MODELS:
-  RAKAZO_LOCAL_REASONING_MODELS:
-  RAKAZO_LOCAL_CONTEXT_WINDOW:
-  RAKAZO_LOCAL_MAX_TOKENS:
-  RAKAZO_OPENAI_COMPATIBLE_VISION_MODELS:
-  RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC:
-  RAKAZO_OPENAI_COMPAT_PRIVATE_HOSTS:
-  RAKAZO_AUTO_REVIEW_PROVIDER:
-  RAKAZO_AUTO_REVIEW_MODEL:
-  RAKAZO_AUTO_REVIEW_MIN_CONFIDENCE:
-  RAKAZO_AUTO_REVIEW_TIMEOUT_MS:
+  MATEBOT_LOCAL_MODELS:
+  MATEBOT_LOCAL_MODELS_URL:
+  MATEBOT_LOCAL_VISION_MODELS:
+  MATEBOT_LOCAL_REASONING_MODELS:
+  MATEBOT_LOCAL_CONTEXT_WINDOW:
+  MATEBOT_LOCAL_MAX_TOKENS:
+  MATEBOT_OPENAI_COMPATIBLE_VISION_MODELS:
+  MATEBOT_OPENAI_COMPAT_ALLOW_PUBLIC:
+  MATEBOT_OPENAI_COMPAT_PRIVATE_HOSTS:
+  MATEBOT_AUTO_REVIEW_PROVIDER:
+  MATEBOT_AUTO_REVIEW_MODEL:
+  MATEBOT_AUTO_REVIEW_MIN_CONFIDENCE:
+  MATEBOT_AUTO_REVIEW_TIMEOUT_MS:
   RELEASE_WATCH_EVAL_MODEL:
   FISH_TTS_MODEL:
   FISH_ASR_MODEL:
@@ -298,9 +298,9 @@ services:
       # USER/PASSWORD/DB apply only on first volume init. Keep existing values in
       # .env, or ALTER ROLE / rename in place. Recreate the volume only after backup
       # (or when it is disposable); down -v deletes all DB state.
-      POSTGRES_USER: ${POSTGRES_USER:-rakazo}
+      POSTGRES_USER: ${POSTGRES_USER:-matebot}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: ${POSTGRES_DB:-rakazo}
+      POSTGRES_DB: ${POSTGRES_DB:-matebot}
     volumes:
       # Postgres 18 keeps each major version's cluster in /var/lib/postgresql/<major>/docker.
       - postgres:/var/lib/postgresql
@@ -309,7 +309,7 @@ services:
       # upgrade-postgres.sh (docs/self-host-upgrading.md#upgrading-to-postgres-18).
       - pgdata:/var/lib/postgresql/16/docker:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rakazo} -d ${POSTGRES_DB:-rakazo}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-matebot} -d ${POSTGRES_DB:-matebot}"]
       interval: 3s
       timeout: 5s
       retries: 20
@@ -324,10 +324,10 @@ services:
       SUPERVISOR_HOST: "0.0.0.0"
       SUPERVISOR_PORT: "7091"
       DOCKER_SOCKET: /var/run/docker.sock
-      RAKAZO_COMPUTER_IMAGE: rakazo/computer:local
-      RAKAZO_COMPUTER_MEMORY: ${RAKAZO_COMPUTER_MEMORY:-2g}
-      RAKAZO_COMPUTER_CPUS: ${RAKAZO_COMPUTER_CPUS:-2}
-      RAKAZO_COMPUTER_PIDS_LIMIT: ${RAKAZO_COMPUTER_PIDS_LIMIT:-2048}
+      MATEBOT_COMPUTER_IMAGE: matebot/computer:local
+      MATEBOT_COMPUTER_MEMORY: ${MATEBOT_COMPUTER_MEMORY:-2g}
+      MATEBOT_COMPUTER_CPUS: ${MATEBOT_COMPUTER_CPUS:-2}
+      MATEBOT_COMPUTER_PIDS_LIMIT: ${MATEBOT_COMPUTER_PIDS_LIMIT:-2048}
       SANDBOX_COMMAND_TIMEOUT_MS: ${SANDBOX_COMMAND_TIMEOUT_MS:-300000}
       SANDBOX_TEAM_SCREEN_LIMIT: ${SANDBOX_TEAM_SCREEN_LIMIT:-0}
       SANDBOX_SUPERVISOR_TOKEN: ${SANDBOX_SUPERVISOR_TOKEN:?Set SANDBOX_SUPERVISOR_TOKEN in .env}
@@ -352,7 +352,7 @@ services:
         condition: service_completed_successfully
 
   computer:
-    image: rakazo/computer:local
+    image: matebot/computer:local
     build:
       context: ../sandboxes/computer
     command: ["true"]
@@ -366,7 +366,7 @@ services:
       - ../../data:/data
 
   # Applies migrations as the database owner, creates the runtime login, and exits. Only this
-  # container gets the owner login: the API and worker connect as rakazo_app, which row-level
+  # container gets the owner login: the API and worker connect as matebot_app, which row-level
   # security binds, so code running in either cannot find a login that bypasses it.
   migrate:
     build:
@@ -376,8 +376,8 @@ services:
     command: ["pnpm", "db:deploy"]
     restart: "no"
     environment:
-      DATABASE_URL: postgres://rakazo_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
-      DATABASE_MIGRATION_URL: postgres://${POSTGRES_USER:-rakazo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
+      DATABASE_URL: postgres://matebot_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-matebot}
+      DATABASE_MIGRATION_URL: postgres://${POSTGRES_USER:-matebot}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-matebot}
     depends_on:
       postgres:
         condition: service_healthy
@@ -415,8 +415,8 @@ services:
       SIGNUPS_ENABLED:
       SIGNUP_ALLOWLIST:
       SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Set SCREEN_PROXY_SECRET in .env}
-      RAKAZO_DESKTOP_STACK_TOKEN:
-      RAKAZO_GIT_SHA:
+      MATEBOT_DESKTOP_STACK_TOKEN:
+      MATEBOT_GIT_SHA:
       SENTRY_BROWSER_DSN: ${SENTRY_BROWSER_DSN:-}
       PRIVACY_POLICY_URL:
       EMAIL_PROVIDER:
@@ -431,13 +431,13 @@ services:
       CRISP_WEBSITE_ID:
       INTEGRATIONS_CATALOG_URL:
       TEAM_CHAT_BOT_ID:
-      SLACK_RAKAZO_BOT_ID:
+      SLACK_MATEBOT_BOT_ID:
       TEAM_CHAT_JUDGE_PROVIDER:
       TEAM_CHAT_JUDGE_MODEL:
       SPACE_TEARDOWN_TIMEOUT_MS:
-      RAKAZO_MIN_CLIENT_BUILD:
-      RAKAZO_NAV_LINKS:
-      RAKAZO_ADMIN_EMAILS:
+      MATEBOT_MIN_CLIENT_BUILD:
+      MATEBOT_NAV_LINKS:
+      MATEBOT_ADMIN_EMAILS:
       VOICE_SUMMARY_MIN_CHARS:
     healthcheck:
       test:
@@ -503,12 +503,12 @@ services:
     environment:
       API_PROXY_TARGET: http://api:3100
       SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Set SCREEN_PROXY_SECRET in .env}
-      RAKAZO_HOST: ${RAKAZO_HOST:-localhost}
-      RAKAZO_CSP_SCRIPT_SRC: ${RAKAZO_CSP_SCRIPT_SRC:-}
-      RAKAZO_CSP_CONNECT_SRC: ${RAKAZO_CSP_CONNECT_SRC:-}
+      MATEBOT_HOST: ${MATEBOT_HOST:-localhost}
+      MATEBOT_CSP_SCRIPT_SRC: ${MATEBOT_CSP_SCRIPT_SRC:-}
+      MATEBOT_CSP_CONNECT_SRC: ${MATEBOT_CSP_CONNECT_SRC:-}
       CRISP_WEBSITE_ID:
     ports:
-      - "${RAKAZO_WEB_BIND:-127.0.0.1}:5173:5173"
+      - "${MATEBOT_WEB_BIND:-127.0.0.1}:5173:5173"
     depends_on:
       - api
 

@@ -21,7 +21,7 @@ const SIGNATURE = /^[A-Za-z0-9+/]{86}==$/;
  * signed so a feed cannot relabel an older signed build as a newer release.
  */
 export function linuxUpdateSignatureMessage(version: string, fileName: string, sha512Hex: string) {
-  return Buffer.from(`rakazo-linux-update-v1\n${version}\n${fileName}\n${sha512Hex}\n`, "utf8");
+  return Buffer.from(`matebot-linux-update-v1\n${version}\n${fileName}\n${sha512Hex}\n`, "utf8");
 }
 
 export async function sha512File(file: string) {

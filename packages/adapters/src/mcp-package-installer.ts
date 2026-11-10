@@ -143,7 +143,7 @@ export function defaultMcpPackagesRoot(env: NodeJS.ProcessEnv = process.env): st
     accessSync(dataDir, constants.W_OK);
     return join(dataDir, "mcp-packages");
   } catch {
-    return join(tmpdir(), "rakazo-mcp-packages");
+    return join(tmpdir(), "matebot-mcp-packages");
   }
 }
 

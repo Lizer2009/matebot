@@ -13,7 +13,7 @@ const describePostgres =
 describePostgres("ticket board app wiring", () => {
   it.each([false, true])("threads the environment flag through HTTP (%s)", async (enabled) => {
     vi.stubEnv("TICKET_BOARD_ENABLED", String(enabled));
-    const dataDir = await mkdtemp(join(tmpdir(), "rakazo-board-test-"));
+    const dataDir = await mkdtemp(join(tmpdir(), "matebot-board-test-"));
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,

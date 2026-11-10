@@ -881,7 +881,7 @@ async function* walkDesktopWorkspace(
 }
 
 function resolveExecuteCwd(requestCwd: string | undefined, home: string) {
-  if (!requestCwd || requestCwd === "/home/rakazo" || requestCwd === "/home/user") return home;
+  if (!requestCwd || requestCwd === "/home/matebot" || requestCwd === "/home/user") return home;
   return path.resolve(home, requestCwd);
 }
 

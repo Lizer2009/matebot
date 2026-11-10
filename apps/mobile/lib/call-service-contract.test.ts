@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { UI_LOCALES } from "./ui-locale";
 
 const mobileRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const nativeRoot = resolve(mobileRoot, "modules/rakazo-notifications/android/src/main");
+const nativeRoot = resolve(mobileRoot, "modules/matebot-notifications/android/src/main");
 
 function source(path: string) {
   return readFileSync(resolve(nativeRoot, path), "utf8");
@@ -16,12 +16,12 @@ describe("Android call foreground service", () => {
     const manifest = source("AndroidManifest.xml");
     expect(manifest).toContain("android.permission.FOREGROUND_SERVICE_MICROPHONE");
     expect(manifest).toContain("android.permission.WAKE_LOCK");
-    expect(manifest).toContain('android:name=".RakazoCallService"');
+    expect(manifest).toContain('android:name=".MatebotCallService"');
     expect(manifest).toContain('android:foregroundServiceType="microphone"');
   });
 
   it("starts immediately as a foreground service and holds a partial wake lock", () => {
-    const service = source("java/com/rakazo/notifications/RakazoCallService.kt");
+    const service = source("java/com/matebot/notifications/MatebotCallService.kt");
     expect(service).toContain("startForeground");
     expect(service).toContain("FOREGROUND_SERVICE_TYPE_MICROPHONE");
     expect(service).toContain("PowerManager.PARTIAL_WAKE_LOCK");
@@ -43,7 +43,7 @@ describe("Android call foreground service", () => {
       ja: "values-ja",
       es: "values-es",
     } as const satisfies Record<(typeof UI_LOCALES)[number], string>;
-    const keys = ["rakazo_call_channel", "rakazo_call_title", "rakazo_call_text"];
+    const keys = ["matebot_call_channel", "matebot_call_title", "matebot_call_text"];
     for (const locale of UI_LOCALES) {
       const xml = source(`res/${directories[locale]}/call_strings.xml`);
       for (const key of keys) expect(xml).toContain(`name="${key}"`);
@@ -52,7 +52,7 @@ describe("Android call foreground service", () => {
 
   // call-card-keep-awake.test.tsx covers the call card starting the service instead of keep-awake.
   it("is exposed to the JS bridge", () => {
-    const module = source("java/com/rakazo/notifications/RakazoNotificationsModule.kt");
+    const module = source("java/com/matebot/notifications/MatebotNotificationsModule.kt");
     expect(module).toContain('AsyncFunction("startCall")');
     expect(module).toContain('AsyncFunction("stopCall")');
   });

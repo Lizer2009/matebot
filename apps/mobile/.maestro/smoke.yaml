@@ -9,13 +9,13 @@ name: Matebot mobile smoke
 - tapOn: "Sign in"
 - runFlow:
     when:
-      true: ${typeof RAKAZO_MOBILE_API_URL !== "undefined" && RAKAZO_MOBILE_API_URL != null && RAKAZO_MOBILE_API_URL.trim() !== ""}
+      true: ${typeof MATEBOT_MOBILE_API_URL !== "undefined" && MATEBOT_MOBILE_API_URL != null && MATEBOT_MOBILE_API_URL.trim() !== ""}
     file: helpers/server.yaml
 - assertVisible: "Sign in to Matebot"
 - tapOn: "Email"
-- inputText: ${RAKAZO_E2E_EMAIL}
+- inputText: ${MATEBOT_E2E_EMAIL}
 - tapOn: "Password"
-- inputText: ${RAKAZO_E2E_PASSWORD}
+- inputText: ${MATEBOT_E2E_PASSWORD}
 - hideKeyboard
 - tapOn: "Sign in"
 
@@ -29,9 +29,9 @@ name: Matebot mobile smoke
     visible: "Message…"
     timeout: 30000
 - tapOn: "Message…"
-- inputText: ${RAKAZO_E2E_MESSAGE}
+- inputText: ${MATEBOT_E2E_MESSAGE}
 - pressKey: Enter
-- assertVisible: ${RAKAZO_E2E_MESSAGE}
+- assertVisible: ${MATEBOT_E2E_MESSAGE}
 
 - tapOn: "Bot actions"
 - tapOn: "Open computer"

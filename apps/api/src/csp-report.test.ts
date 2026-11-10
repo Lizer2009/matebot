@@ -50,11 +50,11 @@ let sink: TestSink;
 
 beforeEach(() => {
   sink = createTestSink();
-  installLogger(createLogger({ service: "rakazo-api", sinks: [sink] }));
+  installLogger(createLogger({ service: "matebot-api", sinks: [sink] }));
 });
 
 afterEach(() => {
-  installLogger(createLogger({ service: "rakazo-api", level: "off", sinks: [] }));
+  installLogger(createLogger({ service: "matebot-api", level: "off", sinks: [] }));
 });
 
 function post(

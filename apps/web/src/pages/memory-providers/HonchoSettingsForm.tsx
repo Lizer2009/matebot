@@ -9,13 +9,13 @@ const RESOURCE_ID_PATTERN = /^[A-Za-z0-9_-]{0,512}$/;
 /**
  * Peers Matebot writes to, so they cannot be chosen as the user's own.
  *
- * `rakazo-shared` is the identifier earlier releases of this product already created in the
+ * `matebot-shared` is the identifier earlier releases of this product already created in the
  * memory provider. It keeps its spelling because the peer exists out there under that name:
  * renaming the check would let a user select a peer this app writes to. The name is an
  * interoperability detail, not this product's name, which is why the message below explains
  * it rather than presenting it as one.
  */
-const LEGACY_SHARED_PEER_ID = "rakazo-shared";
+const LEGACY_SHARED_PEER_ID = "matebot-shared";
 function isReservedPeerId(value: string): boolean {
   return value === LEGACY_SHARED_PEER_ID || value.startsWith("bot-");
 }

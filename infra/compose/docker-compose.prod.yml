@@ -1,4 +1,4 @@
-name: rakazo-prod
+name: matebot-prod
 
 # Bounded container logs even on hosts without infra/compose/docker-daemon.json;
 # same driver and limits it installs, so both layers agree.
@@ -16,13 +16,13 @@ x-app-environment: &app-environment
   # Runtime
   NODE_ENV: production
   # The app's own login, subject to row-level security (docs/self-host-configuration.md#database-roles).
-  DATABASE_URL: postgres://rakazo_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
+  DATABASE_URL: postgres://matebot_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-matebot}
   REALTIME_DATABASE_URL:
   DB_POOL_MAX:
   DATA_DIR: /data
   # The origin this deployment's own documentation lives on; the help skill builds
   # its page links from it (packages/core/src/document-origin.ts).
-  RAKAZO_MARKETING_URL:
+  MATEBOT_MARKETING_URL:
   ENCRYPTION_KEY:
   ENCRYPTION_MASTER_KEYS:
   MASTER_KEY_PROVIDER:
@@ -44,18 +44,18 @@ x-app-environment: &app-environment
   API_URL:
   MAX_UPLOAD_SIZE_MB:
   MAX_ATTACHMENTS_PER_MESSAGE:
-  RAKAZO_UPDATE_RESTART_SUPERVISOR:
+  MATEBOT_UPDATE_RESTART_SUPERVISOR:
   TICKET_BOARD_ENABLED:
   # Optional A2UI gate (default off). API + worker both read it for present_interaction.
   FEATURE_A2UI:
   USER_DEVICES_ENABLED:
   BOT_MESSAGE_MAX_HOPS:
-  RAKAZO_MESSAGE_USER_MAX_CHARS:
+  MATEBOT_MESSAGE_USER_MAX_CHARS:
   TEACH_RECORDING_TTL_MS:
   PHONE_CALLS_ENABLED:
   PHONE_CALL_RING_SECONDS:
   PHONE_CALL_COOLDOWN_MINUTES:
-  RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP:
+  MATEBOT_SECRETS_ALLOW_PRIVATE_HTTP:
   EXPO_ACCESS_TOKEN:
   APNS_VOIP_KEY_ID:
   APNS_VOIP_TEAM_ID:
@@ -100,7 +100,7 @@ x-app-environment: &app-environment
   PI_DEFAULT_MODEL:
   PI_DEFAULT_CREDENTIALS:
   PI_SESSION_RECORDING:
-  RAKAZO_LIVE_MODEL_CATALOG:
+  MATEBOT_LIVE_MODEL_CATALOG:
   OPENROUTER_API_KEY:
   ANTHROPIC_API_KEY:
   TYPESAFE_API_KEY:
@@ -109,19 +109,19 @@ x-app-environment: &app-environment
   MODEL_STREAM_TIMEOUT_MS:
   MODEL_CONNECT_TIMEOUT_MS:
   MODEL_STREAM_IDLE_TIMEOUT_MS:
-  RAKAZO_LOCAL_MODELS:
-  RAKAZO_LOCAL_MODELS_URL:
-  RAKAZO_LOCAL_VISION_MODELS:
-  RAKAZO_LOCAL_REASONING_MODELS:
-  RAKAZO_LOCAL_CONTEXT_WINDOW:
-  RAKAZO_LOCAL_MAX_TOKENS:
-  RAKAZO_OPENAI_COMPATIBLE_VISION_MODELS:
-  RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC:
-  RAKAZO_OPENAI_COMPAT_PRIVATE_HOSTS:
-  RAKAZO_AUTO_REVIEW_PROVIDER:
-  RAKAZO_AUTO_REVIEW_MODEL:
-  RAKAZO_AUTO_REVIEW_MIN_CONFIDENCE:
-  RAKAZO_AUTO_REVIEW_TIMEOUT_MS:
+  MATEBOT_LOCAL_MODELS:
+  MATEBOT_LOCAL_MODELS_URL:
+  MATEBOT_LOCAL_VISION_MODELS:
+  MATEBOT_LOCAL_REASONING_MODELS:
+  MATEBOT_LOCAL_CONTEXT_WINDOW:
+  MATEBOT_LOCAL_MAX_TOKENS:
+  MATEBOT_OPENAI_COMPATIBLE_VISION_MODELS:
+  MATEBOT_OPENAI_COMPAT_ALLOW_PUBLIC:
+  MATEBOT_OPENAI_COMPAT_PRIVATE_HOSTS:
+  MATEBOT_AUTO_REVIEW_PROVIDER:
+  MATEBOT_AUTO_REVIEW_MODEL:
+  MATEBOT_AUTO_REVIEW_MIN_CONFIDENCE:
+  MATEBOT_AUTO_REVIEW_TIMEOUT_MS:
   RELEASE_WATCH_EVAL_MODEL:
   FISH_TTS_MODEL:
   FISH_ASR_MODEL:
@@ -311,9 +311,9 @@ services:
     pids_limit: 200
     mem_limit: 2g
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-rakazo}
+      POSTGRES_USER: ${POSTGRES_USER:-matebot}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: ${POSTGRES_DB:-rakazo}
+      POSTGRES_DB: ${POSTGRES_DB:-matebot}
     volumes:
       # Postgres 18 keeps each major version's cluster in /var/lib/postgresql/<major>/docker.
       - postgres:/var/lib/postgresql
@@ -324,7 +324,7 @@ services:
     networks:
       - data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rakazo} -d ${POSTGRES_DB:-rakazo}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-matebot} -d ${POSTGRES_DB:-matebot}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -336,7 +336,7 @@ services:
     profiles: [pitr]
     # Tagged with a hash of Dockerfile.pitr and pitr-agent.sh, so a deploy builds it once per change
     # instead of on every run (compose-service.test.ts checks the hash).
-    image: rakazo-pitr:aa7cf1bde2aa8051
+    image: matebot-pitr:b11e9939d8dde296
     build:
       context: .
       dockerfile: Dockerfile.pitr
@@ -359,7 +359,7 @@ services:
       # Stops pg_receivewal and uploads with the container, not only the script.
       TINI_KILL_PROCESS_GROUP: "1"
       PGHOST: postgres
-      PGUSER: rakazo_pitr
+      PGUSER: matebot_pitr
       PGDATABASE: postgres
       PGPASSWORD: ${PITR_DATABASE_PASSWORD:-}
       PITR_AGE_RECIPIENTS:
@@ -373,7 +373,7 @@ services:
       PITR_RETAIN_DAYS:
       PITR_MAX_WAL_GB:
     volumes:
-      - pitrspool:/var/lib/rakazo-pitr
+      - pitrspool:/var/lib/matebot-pitr
     tmpfs:
       - /tmp
     networks:
@@ -383,17 +383,17 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "rakazo-pitr", "health"]
+      test: ["CMD", "matebot-pitr", "health"]
       interval: 1m
       timeout: 20s
       retries: 3
       start_period: 2m
 
   # Applies migrations as the database owner, creates the runtime login, and exits. Only this
-  # container gets the owner login: the API and worker connect as rakazo_app, which row-level
+  # container gets the owner login: the API and worker connect as matebot_app, which row-level
   # security binds, so code running in either cannot find a login that bypasses it.
   migrate:
-    image: ${RAKAZO_IMAGE:-ghcr.io/lizer2009/matebot/app}:${RAKAZO_IMAGE_TAG:-local}
+    image: ${MATEBOT_IMAGE:-ghcr.io/lizer2009/matebot/app}:${MATEBOT_IMAGE_TAG:-local}
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
@@ -410,8 +410,8 @@ services:
     pids_limit: 256
     mem_limit: 1536m
     environment:
-      DATABASE_URL: postgres://rakazo_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
-      DATABASE_MIGRATION_URL: postgres://${POSTGRES_USER:-rakazo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
+      DATABASE_URL: postgres://matebot_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-matebot}
+      DATABASE_MIGRATION_URL: postgres://${POSTGRES_USER:-matebot}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-matebot}
     networks:
       - data
     depends_on:
@@ -424,8 +424,8 @@ services:
     #
     # The default tag is `local`, which no registry serves, so a fresh install builds from the
     # checkout via `up -d --build` instead of failing on a `pull` of an image that does not exist
-    # yet. Once a release is published, pin RAKAZO_IMAGE_TAG to it and the pull path takes over.
-    image: ${RAKAZO_IMAGE:-ghcr.io/lizer2009/matebot/app}:${RAKAZO_IMAGE_TAG:-local}
+    # yet. Once a release is published, pin MATEBOT_IMAGE_TAG to it and the pull path takes over.
+    image: ${MATEBOT_IMAGE:-ghcr.io/lizer2009/matebot/app}:${MATEBOT_IMAGE_TAG:-local}
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
@@ -444,7 +444,7 @@ services:
       - ALL
     # Chat runs execute in the API that receives them, so it gets the worker's headroom.
     pids_limit: 512
-    mem_limit: ${RAKAZO_API_MEMORY_LIMIT:-2g}
+    mem_limit: ${MATEBOT_API_MEMORY_LIMIT:-2g}
     environment:
       <<: *app-environment
       # Sign-in, sessions, billing and inbound webhooks: API only.
@@ -469,8 +469,8 @@ services:
       SIGNUPS_ENABLED:
       SIGNUP_ALLOWLIST:
       SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Set SCREEN_PROXY_SECRET in .env}
-      RAKAZO_DESKTOP_STACK_TOKEN:
-      RAKAZO_GIT_SHA:
+      MATEBOT_DESKTOP_STACK_TOKEN:
+      MATEBOT_GIT_SHA:
       SENTRY_BROWSER_DSN: ${SENTRY_BROWSER_DSN:-}
       PRIVACY_POLICY_URL:
       EMAIL_PROVIDER:
@@ -485,13 +485,13 @@ services:
       CRISP_WEBSITE_ID:
       INTEGRATIONS_CATALOG_URL:
       TEAM_CHAT_BOT_ID:
-      SLACK_RAKAZO_BOT_ID:
+      SLACK_MATEBOT_BOT_ID:
       TEAM_CHAT_JUDGE_PROVIDER:
       TEAM_CHAT_JUDGE_MODEL:
       SPACE_TEARDOWN_TIMEOUT_MS:
-      RAKAZO_MIN_CLIENT_BUILD:
-      RAKAZO_NAV_LINKS:
-      RAKAZO_ADMIN_EMAILS:
+      MATEBOT_MIN_CLIENT_BUILD:
+      MATEBOT_NAV_LINKS:
+      MATEBOT_ADMIN_EMAILS:
       VOICE_SUMMARY_MIN_CHARS:
     expose:
       - "3100"
@@ -520,7 +520,7 @@ services:
       start_interval: 1s
 
   worker:
-    image: ${RAKAZO_IMAGE:-ghcr.io/lizer2009/matebot/app}:${RAKAZO_IMAGE_TAG:-local}
+    image: ${MATEBOT_IMAGE:-ghcr.io/lizer2009/matebot/app}:${MATEBOT_IMAGE_TAG:-local}
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
@@ -548,7 +548,7 @@ services:
     cap_drop:
       - ALL
     pids_limit: 512
-    mem_limit: ${RAKAZO_WORKER_MEMORY_LIMIT:-2g}
+    mem_limit: ${MATEBOT_WORKER_MEMORY_LIMIT:-2g}
     environment:
       <<: *app-environment
       GRAPHILE_WORKER_CONCURRENCY:
@@ -564,7 +564,7 @@ services:
         condition: service_healthy
 
   web:
-    image: ${RAKAZO_IMAGE:-ghcr.io/lizer2009/matebot/app}:${RAKAZO_IMAGE_TAG:-local}
+    image: ${MATEBOT_IMAGE:-ghcr.io/lizer2009/matebot/app}:${MATEBOT_IMAGE_TAG:-local}
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
@@ -591,10 +591,10 @@ services:
       # Keep that fixed so pids_limit holds on many-core hosts (#2430).
       RAYON_NUM_THREADS: "4"
       API_PROXY_TARGET: http://api:3100
-      RAKAZO_HOST: ${RAKAZO_HOST:-app.example.com}
+      MATEBOT_HOST: ${MATEBOT_HOST:-app.example.com}
       SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Set SCREEN_PROXY_SECRET in .env}
-      RAKAZO_CSP_SCRIPT_SRC: ${RAKAZO_CSP_SCRIPT_SRC:-}
-      RAKAZO_CSP_CONNECT_SRC: ${RAKAZO_CSP_CONNECT_SRC:-}
+      MATEBOT_CSP_SCRIPT_SRC: ${MATEBOT_CSP_SCRIPT_SRC:-}
+      MATEBOT_CSP_CONNECT_SRC: ${MATEBOT_CSP_CONNECT_SRC:-}
       CRISP_WEBSITE_ID:
     expose:
       - "5173"
@@ -626,7 +626,7 @@ services:
     profiles: [updater]
     # Pinned separately from the application image: the updater does not recreate itself, so moving
     # its own version is an operator action, not something an update can do underneath itself.
-    image: ${RAKAZO_UPDATER_IMAGE:-ghcr.io/lizer2009/matebot/updater}:${RAKAZO_UPDATER_IMAGE_TAG:-local}
+    image: ${MATEBOT_UPDATER_IMAGE:-ghcr.io/lizer2009/matebot/updater}:${MATEBOT_UPDATER_IMAGE_TAG:-local}
     build:
       context: ../..
       dockerfile: infra/updater/Dockerfile
@@ -644,21 +644,21 @@ services:
       NODE_ENV: production
       # Keep interpolation optional so deployments that do not enable this profile need no token.
       # resolveUpdaterConfig still refuses to start the sidecar without a dedicated secure value.
-      RAKAZO_UPDATER_TOKEN: ${RAKAZO_UPDATER_TOKEN:-}
-      RAKAZO_UPDATER_HOST: "0.0.0.0"
-      RAKAZO_UPDATER_PORT: "7092"
-      RAKAZO_IMAGE: ${RAKAZO_IMAGE:-ghcr.io/lizer2009/matebot/app}
+      MATEBOT_UPDATER_TOKEN: ${MATEBOT_UPDATER_TOKEN:-}
+      MATEBOT_UPDATER_HOST: "0.0.0.0"
+      MATEBOT_UPDATER_PORT: "7092"
+      MATEBOT_IMAGE: ${MATEBOT_IMAGE:-ghcr.io/lizer2009/matebot/app}
       # `-p` is available to Compose interpolation but is not injected into containers unless it is
       # declared here. The sidecar must target the project the operator actually started.
-      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-rakazo-prod}
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-matebot-prod}
       # Must equal the host path it is mounted from, or every relative bind mount in this file would
-      # resolve somewhere else. /srv/rakazo is the supported Linux production layout.
-      RAKAZO_DEPLOY_DIR: ${RAKAZO_DEPLOY_DIR:-/srv/rakazo}
+      # resolve somewhere else. /srv/matebot is the supported Linux production layout.
+      MATEBOT_DEPLOY_DIR: ${MATEBOT_DEPLOY_DIR:-/srv/matebot}
       # A deployment that layers an overlay has to be reconciled with the same file list and the
       # same services the operator runs by hand, so these are read from the environment rather
       # than pinned to the base stack. Defaults reproduce the previous behaviour exactly.
-      RAKAZO_COMPOSE_FILE: ${RAKAZO_COMPOSE_FILE:-infra/compose/docker-compose.prod.yml}
-      RAKAZO_UPDATE_SERVICES: ${RAKAZO_UPDATE_SERVICES:-}
+      MATEBOT_COMPOSE_FILE: ${MATEBOT_COMPOSE_FILE:-infra/compose/docker-compose.prod.yml}
+      MATEBOT_UPDATE_SERVICES: ${MATEBOT_UPDATE_SERVICES:-}
       COMPOSE_PATH_SEPARATOR: ${COMPOSE_PATH_SEPARATOR:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_FORMAT: ${LOG_FORMAT:-}
@@ -671,7 +671,7 @@ services:
       SENTRY_RELEASE: ${SENTRY_RELEASE:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${RAKAZO_DEPLOY_DIR:-/srv/rakazo}:${RAKAZO_DEPLOY_DIR:-/srv/rakazo}
+      - ${MATEBOT_DEPLOY_DIR:-/srv/matebot}:${MATEBOT_DEPLOY_DIR:-/srv/matebot}
     networks:
       - control
     healthcheck:
@@ -698,7 +698,7 @@ services:
     pids_limit: 128
     mem_limit: 256m
     environment:
-      RAKAZO_HOST: ${RAKAZO_HOST:-app.example.com}
+      MATEBOT_HOST: ${MATEBOT_HOST:-app.example.com}
       # Go listens with multipath TCP by default, which widens the kernel attack surface.
       GODEBUG: multipathtcp=0
     ports:

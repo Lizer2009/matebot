@@ -36,8 +36,8 @@ export function masterKeysFromEnv(env: NodeJS.ProcessEnv = process.env): MasterK
       hkdfSync(
         "sha256",
         Buffer.from(resolveEncryptionKey(env), "utf8"),
-        Buffer.from("rakazo"),
-        "rakazo/content-master-key/v1",
+        Buffer.from("matebot"),
+        "matebot/content-master-key/v1",
         32,
       ),
     ),
@@ -59,7 +59,7 @@ export function masterKeysFromEnv(env: NodeJS.ProcessEnv = process.env): MasterK
 }
 
 function wrapAad(context: KeyWrapContext): Buffer {
-  return Buffer.from(`rakazo/space-key/v1\0${context.spaceId}\0${context.version}`);
+  return Buffer.from(`matebot/space-key/v1\0${context.spaceId}\0${context.version}`);
 }
 
 /** Default provider: AES-256-GCM key wrapping under master keys held in process memory. */

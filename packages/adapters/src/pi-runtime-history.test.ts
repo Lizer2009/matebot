@@ -121,15 +121,15 @@ describe("Pi history replay", () => {
     expect(reply).toEqual({
       role: "assistant",
       content: [{ type: "text", text: "Hello" }],
-      api: "rakazo-history",
-      provider: "rakazo-history",
+      api: "matebot-history",
+      provider: "matebot-history",
       model: "history",
       usage: expect.objectContaining({ input: 0, output: 0, totalTokens: 0 }),
       stopReason: "stop",
       timestamp: Date.parse("2026-01-02T03:04:06.000Z"),
-      rakazoHistory: true,
-      rakazoMessageId: "m2",
-      rakazoCreatedAt: "2026-01-02T03:04:06.000Z",
+      matebotHistory: true,
+      matebotMessageId: "m2",
+      matebotCreatedAt: "2026-01-02T03:04:06.000Z",
     });
   });
 

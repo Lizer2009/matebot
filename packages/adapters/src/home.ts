@@ -26,7 +26,7 @@ import {
   shouldSkipPortableWorkspaceFile,
 } from "./workspace-save-policy.js";
 
-const STAGING_PREFIX = "rakazo-workspace-";
+const STAGING_PREFIX = "matebot-workspace-";
 /** Staging directories in use are touched this often, so other processes can tell them apart. */
 const STAGING_HEARTBEAT_MS = 30_000;
 /** A staging directory untouched this long belongs to a process that died. */

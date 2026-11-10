@@ -29,7 +29,7 @@ describeLive("real model and sandbox computer journey", () => {
     ]) {
       if (!process.env[key]) throw new Error(`${key} is required for pnpm test:computer`);
     }
-    dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-computer-e2e-"));
+    dataDir = mkdtempSync(path.join(tmpdir(), "matebot-computer-e2e-"));
     const { createApp } = await import("@matebot/api/app");
     handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,

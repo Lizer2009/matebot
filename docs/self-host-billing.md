@@ -16,7 +16,7 @@ start on Standard; existing subscribers keep the price they signed up at. A `nul
 price makes the plan free, hides the other tiers, and ends paid own-key subscriptions at their
 period end; a `null` yearly price offers that tier monthly only, and a `null` monthly price on Pro
 or Max hides it. Billing reads a plan's tier from its price's lookup key, which Matebot creates as
-`rakazo_byok_<tier>_<monthly|yearly>_<cents>` (Standard's keys name no tier), so keep those keys
+`matebot_byok_<tier>_<monthly|yearly>_<cents>` (Standard's keys name no tier), so keep those keys
 on any price you create by hand. Before selling a tier, make sure the sandbox account can run its
 computer size; a computer that cannot start at its size starts at its current one.
 

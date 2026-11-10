@@ -35,7 +35,7 @@ afterEach(async () => {
 });
 
 async function fixture(provider: "fake" | "desktop" = "fake") {
-  const root = await mkdtemp(path.join(tmpdir(), "rakazo-recovery-"));
+  const root = await mkdtemp(path.join(tmpdir(), "matebot-recovery-"));
   roots.push(root);
   const sandbox: SandboxProvider =
     provider === "desktop" ? new DesktopSandboxProvider({ root }) : new FakeSandboxProvider();

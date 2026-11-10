@@ -71,17 +71,17 @@ docker manifest inspect ghcr.io/lizer2009/matebot/app:edge | head -20
 3. **私有包拉取**：在 VPS 上对私有 GHCR 包执行 `docker login ghcr.io`（Classic PAT 或 fine-grained token，scope 含 `read:packages`）。公开包可匿名 pull。
 4. 首次推送后，在 **Packages** 里可将包可见性设为 private/public；Compose 默认引用本仓库命名空间下的包。
 
-仍可通过 `.env` 覆盖任意镜像，例如 `RAKAZO_IMAGE=ghcr.io/elie222/rakazo/app` 继续用上游镜像。
+仍可通过 `.env` 覆盖任意镜像，例如 `MATEBOT_IMAGE=ghcr.io/lizer2009/matebot/app` 继续用上游镜像。
 
 ### 环境模板默认值
 
-- 上游默认：[`infra/compose/.env.images.example`](../infra/compose/.env.images.example) → `ghcr.io/elie222/rakazo/…`
+- 上游默认：[`infra/compose/.env.images.example`](../infra/compose/.env.images.example) → `ghcr.io/lizer2009/matebot/…`
 - Matebot 默认：[`infra/compose/.env.images.matebot.example`](../infra/compose/.env.images.matebot.example) → `ghcr.io/lizer2009/matebot/…`
 
 ## VPS / Compose 要点（P1-2）
 
-1. 推荐使用 fork 安装入口（下载基址与 env 模板均指向本仓库）；仍可用 upstream GHCR 镜像时在 `.env` 覆盖 `RAKAZO_IMAGE`。
-2. 公网或 LAN 访问：配置 `BETTER_AUTH_URL`、`WEB_ORIGIN`、`API_URL`、`RAKAZO_HOST`（生产见 [self-host-production.md](./self-host-production.md)）。
+1. 推荐使用 fork 安装入口（下载基址与 env 模板均指向本仓库）；仍可用 upstream GHCR 镜像时在 `.env` 覆盖 `MATEBOT_IMAGE`。
+2. 公网或 LAN 访问：配置 `BETTER_AUTH_URL`、`WEB_ORIGIN`、`API_URL`、`MATEBOT_HOST`（生产见 [self-host-production.md](./self-host-production.md)）。
 3. **模型**：实例已接 OpenAI 兼容端点（示例：`https://api.deepseek.com/v1`，模型 `deepseek-chat`）；密钥仅存在于服务器 `.env`，勿提交仓库。
 4. **Bot 计算机**：有 Docker socket 时可用 `SANDBOX_PROVIDER=docker`；纯 PaaS 或无 socket 时改用 `e2b`、`boat` 等（[self-host-sandbox-providers.md](./self-host-sandbox-providers.md)）。
 
@@ -98,12 +98,12 @@ bash install-images-matebot.sh
 等价手动设置：
 
 ```bash
-export RAKAZO_DOWNLOAD_BASE=https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose
-export RAKAZO_ENV_IMAGES_EXAMPLE=.env.images.matebot.example
+export MATEBOT_DOWNLOAD_BASE=https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose
+export MATEBOT_ENV_IMAGES_EXAMPLE=.env.images.matebot.example
 bash install-images.sh --prepare-only
 ```
 
-上游官方安装命令仍使用 [`install-images.sh`](../infra/compose/install-images.sh) 与 `elie222/rakazo` raw URL，便于与 upstream 合并。
+上游官方安装命令仍使用 [`install-images.sh`](../infra/compose/install-images.sh) 与其 raw URL。
 
 ## Secrets 与配置清单（占位符）
 
@@ -114,7 +114,7 @@ bash install-images.sh --prepare-only
 | `ENCRYPTION_KEY` | 应用级加密（至少 32 字符） |
 | `BETTER_AUTH_SECRET` | 会话 / Cookie 签名 |
 | `BETTER_AUTH_URL` | 浏览器可见的认证 origin（HTTPS 生产 URL） |
-| `WEB_ORIGIN` / `API_URL` / `RAKAZO_HOST` | 与公网 URL 一致 |
+| `WEB_ORIGIN` / `API_URL` / `MATEBOT_HOST` | 与公网 URL 一致 |
 | `POSTGRES_PASSWORD` / `POSTGRES_APP_PASSWORD` | 数据库（与 upstream 实例 **独立**） |
 | `PI_DEFAULT_PROVIDER` / `PI_DEFAULT_MODEL` 或 BYOK | 默认模型；OpenAI 兼容 `baseUrl` + API key |
 | `SANDBOX_PROVIDER` | 计算机后端（`docker` / `e2b` / `boat` / `none` 等） |
@@ -125,7 +125,7 @@ bash install-images.sh --prepare-only
 | `CURSOR_API_KEY` | 仅服务器 env；启用 `cursor` 时必填 |
 | `CLOUD_AGENT_MODEL` | 可选。Cursor 云端 Agent 的模型 id（如 `deepseek-v41-flash-1017`）；不设则保持提供方默认 |
 | `MCP_ALLOW_PRIVATE_ENDPOINT` | 允许 MCP 连接内网地址（仅在你信任该网络时设为 `true`） |
-| `RAKAZO_OPENAI_COMPAT_PRIVATE_HOSTS` | 以逗号分隔的私有/自定义模型 host 允许列表（如 `api.deepseek.com`） |
+| `MATEBOT_OPENAI_COMPAT_PRIVATE_HOSTS` | 以逗号分隔的私有/自定义模型 host 允许列表（如 `api.deepseek.com`） |
 
 `PRODUCT_DISPLAY_NAME` 不是环境变量：它是 `packages/core/src/product-brand.ts` 里的构建期常量，所以改品牌要改代码并重新出镜像，而不是改 `.env`。
 
@@ -135,23 +135,23 @@ bash install-images.sh --prepare-only
 
 | 变量 | 默认值 | 作用 |
 | --- | --- | --- |
-| `RAKAZO_MARKETING_URL` | `https://test.matebot.dev` | canonical、hreflang、sitemap、结构化数据、站内绝对链接；产品帮助技能生成文档链接时也读它 (`packages/core/src/document-origin.ts`) |
-| `RAKAZO_APP_URL` | `https://app.test.matebot.dev` | 所有「开始使用 / 在浏览器里打开 / 登录」链接、插件 API 与集成认领地址 |
+| `MATEBOT_MARKETING_URL` | `https://test.matebot.dev` | canonical、hreflang、sitemap、结构化数据、站内绝对链接；产品帮助技能生成文档链接时也读它 (`packages/core/src/document-origin.ts`) |
+| `MATEBOT_APP_URL` | `https://app.test.matebot.dev` | 所有「开始使用 / 在浏览器里打开 / 登录」链接、插件 API 与集成认领地址 |
 
-两者都接受 absolute origin（含协议与端口）；无效值会回退到默认值。迁移到主域 `matebot.dev` 时，把这两个变量改成 `https://matebot.dev` 与 `https://app.matebot.dev` 后重新构建即可；Cloudflare Tunnel、`BETTER_AUTH_URL`、`WEB_ORIGIN`、`API_URL`、`RAKAZO_HOST` 需在同一次切换中一并更新。
+两者都接受 absolute origin（含协议与端口）；无效值会回退到默认值。迁移到主域 `matebot.dev` 时，把这两个变量改成 `https://matebot.dev` 与 `https://app.matebot.dev` 后重新构建即可；Cloudflare Tunnel、`BETTER_AUTH_URL`、`WEB_ORIGIN`、`API_URL`、`MATEBOT_HOST` 需在同一次切换中一并更新。
 
 Windows 安装包下载由 `/api/download?platform=windows` 解析，顺序是：
 
 1. 最新 GitHub Release 里名为 `*.exe` 的资产（`Matebot-Setup-<version>.exe`）；
-2. 若都没有，读 `RAKAZO_WINDOWS_INSTALLER`：可以是站内路径（如 `/downloads/Matebot-Setup-0.6.0.exe`）或 `https://` 绝对地址；
+2. 若都没有，读 `MATEBOT_WINDOWS_INSTALLER`：可以是站内路径（如 `/downloads/Matebot-Setup-0.6.0.exe`）或 `https://` 绝对地址；
 3. 仍未配置则跳到 Releases 页面，而不是给出死链。
 
 因此上线前需要**二选一**：
 
 - **推荐**：用 `release-desktop` 走一次带签名的正式发布（`v*` tag），资产上传后站点自动指向它；
-- 或把 `desktop-windows-installer` 工作流产出的 artifact 解压，把 `Matebot-Setup-0.6.0.exe` 放到营销站的 `apps/www/public/downloads/`，并在营销站环境里设 `RAKAZO_WINDOWS_INSTALLER=/downloads/Matebot-Setup-0.6.0.exe`。
+- 或把 `desktop-windows-installer` 工作流产出的 artifact 解压，把 `Matebot-Setup-0.6.0.exe` 放到营销站的 `apps/www/public/downloads/`，并在营销站环境里设 `MATEBOT_WINDOWS_INSTALLER=/downloads/Matebot-Setup-0.6.0.exe`。
 
-二进制不进 git：`apps/www/public/downloads/` 由运维在部署机上放置，路径必须与 `RAKAZO_WINDOWS_INSTALLER` 一致。
+二进制不进 git：`apps/www/public/downloads/` 由运维在部署机上放置，路径必须与 `MATEBOT_WINDOWS_INSTALLER` 一致。
 
 Android APK 由 `/api/download?platform=android` 解析，读的是滚动 Release **`android` 标签**（不是 `releases/latest`，那个标签属于桌面更新器），资产名固定为 `matebot.apk`。首次 APK 由 `release-android-apk` 工作流发布：
 
@@ -163,27 +163,27 @@ gh workflow run release-android-apk.yml --repo Lizer2009/matebot --ref main
 
 ### 环境变量命名
 
-P2 重命名（`@rakazo/*` → `@matebot/*`）**只改 npm 包名与导入路径**，环境变量保持原样，避免已在运行的部署在拉取新镜像后读不到密钥：
+P2 重命名（`@matebot/*` → `@matebot/*`）**只改 npm 包名与导入路径**，环境变量保持原样，避免已在运行的部署在拉取新镜像后读不到密钥：
 
 | 保持不变的名称 | 原因 |
 | --- | --- |
-| `RAKAZO_*`（`RAKAZO_HOST`、`RAKAZO_IMAGE`、`RAKAZO_DOCKER_BINARY`、`RAKAZO_PASSKEY_RP_ID` 等） | 已存在于各实例 `.env`；改名会让旧配置静默失效 |
-| Postgres 角色 `rakazo_app`、`POSTGRES_USER=rakazo` | 角色与已有卷一起创建，改名需要 `ALTER ROLE` 与停机 |
-| Compose 项目名 `rakazo-desktop`、卷名 `pgdata` | 改名会让已有的桌面栈与数据库变成“新栈”，看起来像数据丢失 |
+| `RAKAZO_*`（`MATEBOT_HOST`、`MATEBOT_IMAGE`、`MATEBOT_DOCKER_BINARY`、`MATEBOT_PASSKEY_RP_ID` 等） | 已存在于各实例 `.env`；改名会让旧配置静默失效 |
+| Postgres 角色 `matebot_app`、`POSTGRES_USER=matebot` | 角色与已有卷一起创建，改名需要 `ALTER ROLE` 与停机 |
+| Compose 项目名 `matebot-desktop`、卷名 `pgdata` | 改名会让已有的桌面栈与数据库变成“新栈”，看起来像数据丢失 |
 | 移动端 URL scheme `matebot://`、bundle id `com.matebot.app` | 已随 Expo 项目重链改为 Matebot 自有身份；自托管实例的 `PASSKEY_*_APP_IDS` 需按新 bundle id 配置 |
 | OpenRouter 归因 `HTTP-Referer: https://rakazo.com` | 上游归因值；改动属于归因策略变更，不是品牌改名 |
 
 **已改的品牌面**：npm 包名 `@matebot/*`、根包名 `matebot`、桌面 `productName` / `appId` / 安装包与可执行文件名、AppData 目录名、窗口与设置页文案、www 站点与 README。
 
-**桌面配置目录迁移**：旧构建把配置写在以显示名命名的目录（Windows 为 `%APPDATA%\Rakazo`，macOS 为 `~/Library/Application Support/Rakazo`）。新构建启动时若新目录不存在而旧目录存在，会整体迁移过去（同盘为 rename，跨盘为复制后删除）。若两个目录都存在，则以新目录为准，旧目录保留不动。
+**桌面配置目录迁移**：旧构建把配置写在以显示名命名的目录（Windows 为 `%APPDATA%\Matebot`，macOS 为 `~/Library/Application Support/Matebot`）。新构建启动时若新目录不存在而旧目录存在，会整体迁移过去（同盘为 rename，跨盘为复制后删除）。若两个目录都存在，则以新目录为准，旧目录保留不动。
 
-**仍需人工确认**：Passkey 的 RP ID 默认值随部署域名变为 `test.matebot.dev`；已在旧域名注册的 passkey 在桌面应用中不再可用，需要重新注册。服务器侧 `RAKAZO_PASSKEY_RP_ID` 与 `WEB_ORIGIN` 需与前端域名一致。
+**仍需人工确认**：Passkey 的 RP ID 默认值随部署域名变为 `test.matebot.dev`；已在旧域名注册的 passkey 在桌面应用中不再可用，需要重新注册。服务器侧 `MATEBOT_PASSKEY_RP_ID` 与 `WEB_ORIGIN` 需与前端域名一致。
 
 Cursor 集成说明：[self-host-integrations.md](./self-host-integrations.md#enable-cursor)。本 fork 的 Cloud Agent **改代码**流程见 [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md)（与服务器上 `CLOUD_AGENT_*` 互补）。
 
 ## 与 upstream 同步（Git）
 
-Matebot 定期合并 [elie222/rakazo](https://github.com/elie222/rakazo) 的 `main`：
+本仓库自 0.6.0 起为独立开发基线，不再合并上游分支。以下记录为历史同步点，仅作来历参考：
 
 ```bash
 git remote add upstream https://github.com/elie222/rakazo.git   # 仅首次
@@ -198,13 +198,13 @@ git push origin main
 | Ref | SHA | 说明 |
 | --- | --- | --- |
 | `origin/main`（Lizer2009/matebot） | `b722f80f2e51181056c539396293b6051898abad` | fork 默认分支 |
-| `upstream/main`（elie222/rakazo） | `d97c5fd70d90ef37ef86758d20b67d3077f9f5b2` | `git fetch https://github.com/elie222/rakazo.git main` |
+| `upstream/main` | `d97c5fd70d90ef37ef86758d20b67d3077f9f5b2` | `git fetch https://github.com/elie222/rakazo.git main` |
 
 合并前请重新 `git fetch upstream` 并更新上表。冲突热点见 [MATEBOT_PLAN §4.2](./MATEBOT_PLAN.md#42-推荐-git-工作流)。
 
 ## Fork CI 说明
 
-GitHub Actions 在 **elie222/rakazo** 上使用组织 Incredibuild runner（`incredibuild-ubuntu-latest`）。**Lizer2009/matebot** 无该标签时，`ci.yml` / `playwright.yml` 回退到 `ubuntu-latest`，必需检查（Lint and typecheck、Unit tests、Checks 等）应能在 fork PR 上完成。
+GitHub Actions 在上游组织使用 Incredibuild runner（`incredibuild-ubuntu-latest`）。**Lizer2009/matebot** 无该标签时，`ci.yml` / `playwright.yml` 回退到 `ubuntu-latest`，必需检查（Lint and typecheck、Unit tests、Checks 等）应能在 fork PR 上完成。
 
 - **Vercel**：fork PR 上若出现「Authorization required to deploy」，为预期行为，可忽略（非 merge 阻塞项，除非 fork 单独配置了 Vercel 必需检查）。
 - **生产 deploy / Tailscale / Expo OTA**：仅 upstream `main` push 且配置了 secrets 时运行；fork 不依赖这些 job。

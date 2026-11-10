@@ -19,19 +19,19 @@ jobs:
       postgres:
         image: postgres:18-alpine
         env:
-          POSTGRES_USER: rakazo
-          POSTGRES_PASSWORD: rakazo
-          POSTGRES_DB: rakazo
+          POSTGRES_USER: matebot
+          POSTGRES_PASSWORD: matebot
+          POSTGRES_DB: matebot
         ports:
           - 5433:5432
         options: >-
-          --health-cmd "pg_isready -U rakazo"
+          --health-cmd "pg_isready -U matebot"
           --health-interval 3s
           --health-timeout 5s
           --health-retries 20
     env:
       CI: "1"
-      DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
+      DATABASE_URL: postgres://matebot:matebot@127.0.0.1:5433/matebot
       EXPO_PUBLIC_API_URL: http://10.0.2.2:3110
 
     steps:
@@ -106,7 +106,7 @@ jobs:
       - name: Run notification native unit tests
         if: steps.screenshot-apk.outputs.cache-hit != 'true'
         working-directory: apps/mobile/android
-        run: ./gradlew :rakazo-notifications:testDebugUnitTest --no-daemon
+        run: ./gradlew :matebot-notifications:testDebugUnitTest --no-daemon
 
       - name: Build screenshot APK
         if: steps.screenshot-apk.outputs.cache-hit != 'true'

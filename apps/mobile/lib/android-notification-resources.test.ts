@@ -7,22 +7,22 @@ import { UI_LOCALES } from "./ui-locale";
 const resources = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "..",
-  "modules/rakazo-notifications/android/src/main/res",
+  "modules/matebot-notifications/android/src/main/res",
 );
 const keys = [
-  "rakazo_channel_live",
-  "rakazo_channel_messages",
-  "rakazo_channel_scheduled",
-  "rakazo_channel_attention",
-  "rakazo_live_one",
-  "rakazo_live_many",
-  "rakazo_live_working",
-  "rakazo_scheduled_title",
-  "rakazo_replied_group",
-  "rakazo_replied",
-  "rakazo_attention_failed",
-  "rakazo_attention_takeover",
-  "rakazo_attention_input",
+  "matebot_channel_live",
+  "matebot_channel_messages",
+  "matebot_channel_scheduled",
+  "matebot_channel_attention",
+  "matebot_live_one",
+  "matebot_live_many",
+  "matebot_live_working",
+  "matebot_scheduled_title",
+  "matebot_replied_group",
+  "matebot_replied",
+  "matebot_attention_failed",
+  "matebot_attention_takeover",
+  "matebot_attention_input",
 ];
 
 const resourceDirectories = {

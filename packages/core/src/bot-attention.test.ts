@@ -8,7 +8,7 @@ import {
 } from "./logo-avatar-activity.js";
 import { createLogoAvatarActivityStore } from "./logo-avatar-activity-store.js";
 
-const bot = { avatarSet: "rakazo", color: "orange" };
+const bot = { avatarSet: "matebot", color: "orange" };
 const needsAttention = (activity: ReturnType<typeof logoAvatarActivity>) =>
   logoAvatarNeedsAttention(botAvatarActivity(bot, activity));
 

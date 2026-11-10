@@ -68,6 +68,6 @@ BEGIN
  RETURN OLD;
 END $$;
 CREATE TRIGGER credit_audit_account_closed BEFORE DELETE ON model_credit_accounts FOR EACH ROW EXECUTE FUNCTION billing_audit_account_closed();
-GRANT SELECT,INSERT ON billing_audit_events TO rakazo_app;
-REVOKE UPDATE,DELETE,TRUNCATE ON billing_audit_events FROM rakazo_app;
-REVOKE DELETE,TRUNCATE ON usage_records FROM rakazo_app;
+GRANT SELECT,INSERT ON billing_audit_events TO matebot_app;
+REVOKE UPDATE,DELETE,TRUNCATE ON billing_audit_events FROM matebot_app;
+REVOKE DELETE,TRUNCATE ON usage_records FROM matebot_app;

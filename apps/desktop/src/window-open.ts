@@ -1,9 +1,9 @@
 const OAUTH_POPUP_NAMES = new Set([
-  "rakazo-app-connect",
-  "rakazo-mcp-oauth",
-  "rakazo-sso-oauth",
-  "rakazo-model-oauth",
-  "rakazo-plugin-connect",
+  "matebot-app-connect",
+  "matebot-mcp-oauth",
+  "matebot-sso-oauth",
+  "matebot-model-oauth",
+  "matebot-plugin-connect",
 ]);
 
 export function shouldOpenInAppPopup(
@@ -18,7 +18,7 @@ export function shouldOpenInAppPopup(
     return false;
   }
 
-  if (childUrl === "about:blank" && frameName === "rakazo-sso-oauth") return true;
+  if (childUrl === "about:blank" && frameName === "matebot-sso-oauth") return true;
 
   const isHttp = target.protocol === "http:" || target.protocol === "https:";
   if (appOrigin !== null && target.origin === appOrigin) return isHttp;

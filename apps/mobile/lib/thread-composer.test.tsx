@@ -316,7 +316,7 @@ describe("thread composer isolation", () => {
     mentionApi.capture.mockReset().mockImplementation(async () => ({
       apiBase: "https://api.test",
       sessionGeneration: mentionApi.generation,
-      headers: { authorization: "Bearer account-a", "x-rakazo-space-id": "space-a" },
+      headers: { authorization: "Bearer account-a", "x-matebot-space-id": "space-a" },
     }));
     container = document.createElement("div");
     document.body.append(container);

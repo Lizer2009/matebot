@@ -86,7 +86,7 @@ const structuredData = faqPageStructuredData(SELF_HOST_FAQS);
         <li><strong>Purchases with Stripe Link.</strong> <code>PAYMENT_WALLET_PROVIDER=link</code>. Each purchase waits for your approval in Link.</li>
         <li><strong>Cursor cloud agents.</strong> <code>CLOUD_AGENT_PROVIDER=cursor</code>, <code>CURSOR_API_KEY</code>, and <code>CLOUD_AGENT_SPACE_ID</code>.</li>
         <li><strong>Ticket board.</strong> <code>TICKET_BOARD_ENABLED=true</code>.</li>
-        <li><strong>Local models and local MCP servers.</strong> <code>RAKAZO_LOCAL_MODELS</code>, and <code>MCP_STDIO_ENABLED</code> with <code>MCP_STDIO_ALLOWED_COMMANDS</code>.</li>
+        <li><strong>Local models and local MCP servers.</strong> <code>MATEBOT_LOCAL_MODELS</code>, and <code>MCP_STDIO_ENABLED</code> with <code>MCP_STDIO_ALLOWED_COMMANDS</code>.</li>
       </ul>
       <p>The <a href={DOCS_URL}>full guide</a> lists every setting for each one.</p>
 
@@ -153,7 +153,7 @@ const structuredData = faqPageStructuredData(SELF_HOST_FAQS);
       </p>
       <pre><code>{PUBLISHED_IMAGES_SERVER}</code></pre>
       <p>
-        Before the second command, set <code>RAKAZO_HOST</code> to the hostname and set <code>BETTER_AUTH_URL</code>, <code>WEB_ORIGIN</code>, and <code>API_URL</code> to that same <code>https://</code> origin. For a remote computer instead of local Docker, set <code>SANDBOX_PROVIDER</code> to <code>e2b</code>, <code>daytona</code>, <code>createos</code>,
+        Before the second command, set <code>MATEBOT_HOST</code> to the hostname and set <code>BETTER_AUTH_URL</code>, <code>WEB_ORIGIN</code>, and <code>API_URL</code> to that same <code>https://</code> origin. For a remote computer instead of local Docker, set <code>SANDBOX_PROVIDER</code> to <code>e2b</code>, <code>daytona</code>, <code>createos</code>,
         or <code>boat</code> and add that provider's API key.
       </p>
       <pre><code>{CADDY_SNIPPET}</code></pre>

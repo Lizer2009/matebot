@@ -7,7 +7,7 @@ import { clearSetup, readSetup, setupFilePath, writeSetup } from "./setup-store.
 let userData: string;
 
 beforeEach(async () => {
-  userData = await mkdtemp(path.join(tmpdir(), "rakazo-setup-"));
+  userData = await mkdtemp(path.join(tmpdir(), "matebot-setup-"));
 });
 
 afterEach(async () => {

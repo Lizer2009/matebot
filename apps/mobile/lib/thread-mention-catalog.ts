@@ -90,7 +90,7 @@ export function useThreadMentionCatalog(owner: string, bots: readonly MentionBot
       if (
         requestContext.apiBase !== apiBase ||
         requestContext.sessionGeneration !== generation ||
-        (requestContext.headers["x-rakazo-space-id"] ?? null) !== spaceId
+        (requestContext.headers["x-matebot-space-id"] ?? null) !== spaceId
       ) {
         invalidateActivation();
         return;

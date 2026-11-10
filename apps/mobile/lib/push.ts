@@ -26,7 +26,7 @@ export async function registerPushToken() {
     await rpc("notifications/registerPush", {
       token,
       ...(Platform.OS === "android" &&
-      requireOptionalNativeModule<{ supportsSenderAvatars?: boolean }>("RakazoNotifications")
+      requireOptionalNativeModule<{ supportsSenderAvatars?: boolean }>("MatebotNotifications")
         ?.supportsSenderAvatars
         ? { presentation: "android_sender" as const }
         : {}),
@@ -48,10 +48,10 @@ let registeredKey: string | undefined;
 let deviceIdPromise: Promise<string> | undefined;
 async function installationId() {
   deviceIdPromise ??= (async () => {
-    const stored = await SecureStore.getItemAsync("rakazo.call-device");
+    const stored = await SecureStore.getItemAsync("matebot.call-device");
     if (stored) return stored;
     const id = newClientId();
-    await SecureStore.setItemAsync("rakazo.call-device", id);
+    await SecureStore.setItemAsync("matebot.call-device", id);
     return id;
   })();
   const pending = deviceIdPromise;
@@ -64,7 +64,7 @@ async function installationId() {
 }
 /** Builds without native call handling keep the account's ordinary push for incoming calls. */
 const nativeCalls = Boolean(
-  requireOptionalNativeModule<{ incomingState?: unknown }>("RakazoNotifications")?.incomingState,
+  requireOptionalNativeModule<{ incomingState?: unknown }>("MatebotNotifications")?.incomingState,
 );
 
 export async function registerCallPushToken(tokens: { expoToken?: string; voipToken?: string }) {

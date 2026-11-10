@@ -39,7 +39,7 @@ export function mountAuditExportRoute(
       headers: {
         ...headers,
         "content-type": "application/x-ndjson",
-        "content-disposition": `attachment; filename="rakazo-audit-log-${new Date().toISOString().slice(0, 10)}.jsonl"`,
+        "content-disposition": `attachment; filename="matebot-audit-log-${new Date().toISOString().slice(0, 10)}.jsonl"`,
       },
     });
   });

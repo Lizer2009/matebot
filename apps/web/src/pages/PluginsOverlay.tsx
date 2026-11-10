@@ -467,7 +467,7 @@ export function PluginsOverlay({
       const result = await connectCatalogItem(item, connections, {
         begin: (input) => rpc.connections.begin(input),
         complete: (input) => rpc.connections.complete(input),
-        openUrl: (url) => window.open(url, "rakazo-plugin-connect", "noopener,noreferrer"),
+        openUrl: (url) => window.open(url, "matebot-plugin-connect", "noopener,noreferrer"),
         signal: controller.signal,
       });
       if (result.status === "aborted") return;

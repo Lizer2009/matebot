@@ -952,7 +952,7 @@ export const INTEGRATION_CLAIM_CONFIRM_PATH = "/api/v1/integration-claims/confir
  *
  * These are paths, not origins. The host moves between environments (and between forks), and the
  * single place that knows the deployed origin is `documentOriginFromEnv` in `@matebot/core`, which
- * reads the same `RAKAZO_MARKETING_URL` the site itself builds from. Hardcoding a host here meant
+ * reads the same `MATEBOT_MARKETING_URL` the site itself builds from. Hardcoding a host here meant
  * a shipped app pointed at a domain the deployment had never heard of.
  */
 export const SUBMIT_PLUGIN_PATH = "/plugins/submit/";
@@ -1948,7 +1948,7 @@ export const MeSchema = z.object({
   spaceId: Id,
   /** Deprecated: app accounts never have server administrator privileges. Always false. */
   isDeploymentOwner: z.boolean(),
-  /** Listed in RAKAZO_ADMIN_EMAILS with a verified email: reviews plugins, adds stdio MCP servers, grants access. */
+  /** Listed in MATEBOT_ADMIN_EMAILS with a verified email: reviews plugins, adds stdio MCP servers, grants access. */
   isAdmin: z.boolean().default(false),
   needsModel: z.boolean(),
   defaultProvider: z.string().nullable(),

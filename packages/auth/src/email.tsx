@@ -128,7 +128,7 @@ export async function message(
                 letterSpacing: "-0.5px",
               }}
             >
-              rakazo
+              matebot
             </Text>
             {content}
             {unsubscribeUrl ? (

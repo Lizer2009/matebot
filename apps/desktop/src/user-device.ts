@@ -5,7 +5,7 @@ import { hostname } from "node:os";
 import path from "node:path";
 import type { UserDeviceClientOptions } from "@matebot/adapters/user-device-client";
 import type {
-  RakazoDesktopDevice,
+  MatebotDesktopDevice,
   UserDevicePairRequest,
   UserDevicePairResponse,
 } from "@matebot/contracts";
@@ -413,7 +413,7 @@ export function createUserDeviceAccess(deps: {
     },
     /** Pairs the current server when it is not paired yet, e.g. once the person signs in. */
     pair,
-    state(origin: string): Omit<RakazoDesktopDevice, "name"> | null {
+    state(origin: string): Omit<MatebotDesktopDevice, "name"> | null {
       if (origin !== current) return null;
       return { deviceId: paired.get(origin)?.deviceId ?? null, allowed: isAllowed(origin) };
     },

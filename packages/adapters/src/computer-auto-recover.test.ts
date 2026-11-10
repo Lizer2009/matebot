@@ -46,7 +46,7 @@ afterEach(async () => {
  * `snapshot.txt` from a minute later. Then Boat's storage breaks under it.
  */
 async function damagedComputer(damage: "resume_heals" | "persists" = "resume_heals") {
-  const root = await mkdtemp(path.join(tmpdir(), "rakazo-auto-recover-"));
+  const root = await mkdtemp(path.join(tmpdir(), "matebot-auto-recover-"));
   roots.push(root);
   // The adapter binds the API's methods when it is built, so spy first.
   const stop = vi.spyOn(FakeBoatApi.prototype, "stop");

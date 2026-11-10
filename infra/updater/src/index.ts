@@ -109,7 +109,7 @@ export function commandEnvironment(
   // Root against a checkout the deploy user owns makes git exit 128 with "detected dubious
   // ownership". It is declared here, not in Compose, because this allowlist drops the service
   // environment; it is applied after `overrides` so a caller cannot widen it.
-  const deployDir = source.RAKAZO_DEPLOY_DIR?.trim();
+  const deployDir = source.MATEBOT_DEPLOY_DIR?.trim();
   const gitOwnership =
     deployDir === undefined || deployDir === ""
       ? {}
@@ -344,7 +344,7 @@ export function createUpdaterApp(
       throw new UpdateRefused("The deployment environment must be a regular, non-symlink file.");
     }
     const contents = upsertEnvAssignments(current, assignments);
-    const temporary = `${config.envFile}.rakazo-update-${randomUUID()}`;
+    const temporary = `${config.envFile}.matebot-update-${randomUUID()}`;
     let temporaryFile: Awaited<ReturnType<typeof open>> | null = null;
     try {
       temporaryFile = await open(temporary, "wx", 0o600);
@@ -489,7 +489,7 @@ export function createUpdaterApp(
     if (decision.strategy === "build") {
       if (!checkout.present) {
         throw new UpdateRefused(
-          "Building a fork needs the deployment's git checkout, and RAKAZO_DEPLOY_DIR has no .git directory. Clone the fork to the deployment directory, or switch back to the official repository to use published images.",
+          "Building a fork needs the deployment's git checkout, and MATEBOT_DEPLOY_DIR has no .git directory. Clone the fork to the deployment directory, or switch back to the official repository to use published images.",
         );
       }
       if (checkout.remoteUrl === null) {

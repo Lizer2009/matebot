@@ -115,7 +115,7 @@ Matebot is an open source Grok Bot alternative for persistent AI teammates: bots
 
 The project started from a simple premise: useful agents should be understandable and controllable by the people who run them. Matebot keeps routines in readable Markdown, supports multiple model providers, records actions in an audit log, and lets operators keep model keys, browser sessions, and deployment infrastructure under their own control.
 
-Matebot targets the web, macOS, Windows, and Linux. The source is available under the Apache-2.0 license and accepts public issues and contributions on GitHub. This fork is our own deployment of the upstream Rakazo project by Inbox Zero Inc., whose attribution it keeps.
+Matebot targets the web, macOS, Windows, and Linux. The source is available under the Apache-2.0 license and accepts public issues and contributions on GitHub. This fork is our own deployment of the upstream Matebot project by Inbox Zero Inc., whose attribution it keeps.
 
 - [Source code](https://github.com/elie222/rakazo)
 - [Self-hosting guide](${SITE_URL}/self-hosted-ai-agent/)
@@ -138,7 +138,7 @@ export const SUPPORT_MARKDOWN = `# Matebot support
 
 For help with this Matebot deployment, open an issue in the [Matebot repository](https://github.com/Lizer2009/matebot/issues). Include what you expected to happen and any error message you saw. Never send passwords, API keys, access tokens, or other secrets.
 
-For self-hosted Matebot, start with the [self-hosting guide](${SITE_URL}/self-hosted-ai-agent/). The [full reference](https://github.com/Lizer2009/matebot/blob/main/docs/self-host.md) is on GitHub. Open reproducible bugs and feature requests in the [public GitHub repository](https://github.com/Lizer2009/matebot/issues). For the upstream project this fork follows, see [Rakazo](https://github.com/elie222/rakazo).
+For self-hosted Matebot, start with the [self-hosting guide](${SITE_URL}/self-hosted-ai-agent/). The [full reference](https://github.com/Lizer2009/matebot/blob/main/docs/self-host.md) is on GitHub. Open reproducible bugs and feature requests in the [public GitHub repository](https://github.com/Lizer2009/matebot/issues). For the upstream project this fork follows, see [Matebot](https://github.com/elie222/rakazo).
 
 Account holders can permanently delete their account and associated personal Space data from the Account screen in the Matebot web or desktop app under Settings → Account. The server operator controls the deployment, so direct any request you cannot complete in the app to them. Sign-in security records are kept for up to 90 days.
 `;
@@ -168,7 +168,7 @@ Last updated: November 5, 2026
 
 Matebot is self-hosted open source software, not a hosted product. The [Apache License 2.0](https://github.com/Lizer2009/matebot/blob/main/LICENSE) governs your use of the code, and the person or organization operating the server you connect to is responsible for that deployment and its own terms.
 
-Matebot is a fork of the Apache-2.0 [Rakazo](https://github.com/elie222/rakazo) project by Inbox Zero Inc., and the upstream license and notices carry over unchanged.
+Matebot is a fork of the Apache-2.0 [Matebot](https://github.com/elie222/rakazo) project by Inbox Zero Inc., and the upstream license and notices carry over unchanged.
 
 You are responsible for your account and for actions your bots take on your behalf, including in scheduled routines; give bots only the access they need and require approval for actions that are hard to undo. AI output can be wrong, so review it before relying on it, and do not use Matebot where an error could cause serious harm. Do not use it to break the law, send spam or malware, access systems without authorization, abuse its computers, or violate the terms of connected providers. You keep ownership of your content and bot output, and you pay any fees charged by third-party services, including usage on your own API keys.
 
@@ -194,7 +194,7 @@ Matebot runs at ${APP_URL}, self-hosted. Do not send model keys, passwords, toke
 1. Read the [setup prompt](https://github.com/elie222/rakazo/blob/main/SETUP_PROMPT.md) before changing the user's machine.
 2. Use the [self-hosting guide](${SITE_URL}/self-hosted-ai-agent/) for setup. The [GitHub guide](https://github.com/elie222/rakazo/blob/main/docs/self-host.md) is the full reference for backups, upgrades, and production layout.
 3. Confirm deployment choices and any host-level commands with the user, and keep secrets in local environment configuration rather than tracked files.
-4. Use the [public issue tracker](https://github.com/Lizer2009/matebot/issues) for reproducible bugs about this fork, and the [upstream tracker](https://github.com/elie222/rakazo/issues) for behavior shared with Rakazo.
+4. Use the [public issue tracker](https://github.com/Lizer2009/matebot/issues) for reproducible bugs about this fork, and the [upstream tracker](https://github.com/elie222/rakazo/issues) for behavior shared with Matebot.
 
 ## Canonical resources
 
@@ -242,7 +242,7 @@ ${BRAND_COLORS.map((color) => `- ${color.name}: \`${color.hex}\``).join("\n")}
 
 Write Matebot with a capital M in text. Do not alter the mark or imply an endorsement.
 
-Logos are free to use under the terms in [the repository](https://github.com/Lizer2009/matebot). This site is a fork of Rakazo; its own brand assets are separate.
+Logos are free to use under the terms in [the repository](https://github.com/Lizer2009/matebot). This site is a fork of Matebot; its own brand assets are separate.
 `;
 
 export const PLUGIN_SUBMIT_MARKDOWN = `# Submit a plugin to Matebot
@@ -271,7 +271,7 @@ The plugin must be a public GitHub repository with a plugin manifest (\`plugin.j
 \`\`\`sh
 curl -X POST ${PLUGIN_SUBMISSIONS_URL} \\
   -H 'content-type: application/json' \\
-  -d '{"email":"you@example.com","name":"Acme","logo":"https://example.com/logo.svg","source":"https://github.com/acme/rakazo-plugin","description":"Search Acme tickets.","testing":"Install it and ask a bot to find ticket 42.","tested":true}'
+  -d '{"email":"you@example.com","name":"Acme","logo":"https://example.com/logo.svg","source":"https://github.com/acme/matebot-plugin","description":"Search Acme tickets.","testing":"Install it and ask a bot to find ticket 42.","tested":true}'
 \`\`\`
 
 A new submission returns \`201\` with \`{"id","status":"pending"}\`. Resubmitting the same source URL with the same email while it waits updates it and returns \`200\`. Invalid input returns \`400\` with an \`issues\` list naming each field.

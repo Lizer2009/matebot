@@ -16,7 +16,7 @@ afterEach(async () => {
 
 describe("LocalArtifactStore", () => {
   it("creates artifact files with owner-only permissions", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "rakazo-artifacts-"));
+    const root = await mkdtemp(path.join(tmpdir(), "matebot-artifacts-"));
     dirs.push(root);
     const store = new LocalArtifactStore(root);
 
@@ -30,7 +30,7 @@ describe("LocalArtifactStore", () => {
   });
 
   it("does not follow a replacement symlink when reading an artifact", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "rakazo-artifacts-"));
+    const root = await mkdtemp(path.join(tmpdir(), "matebot-artifacts-"));
     dirs.push(root);
     const store = new LocalArtifactStore(root);
     const stored = await store.put(
@@ -68,7 +68,7 @@ function memoryKeys() {
 
 describe("LocalArtifactStore with encryption off", () => {
   it("writes plaintext and still reads files sealed while encryption was on", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "rakazo-artifacts-"));
+    const root = await mkdtemp(path.join(tmpdir(), "matebot-artifacts-"));
     dirs.push(root);
     const on = memoryKeys();
     const off = on.withWrites(false);
@@ -102,7 +102,7 @@ describe("LocalArtifactStore with encryption off", () => {
 
 describe("LocalArtifactStore with content keys", () => {
   async function setup() {
-    const root = await mkdtemp(path.join(tmpdir(), "rakazo-artifacts-"));
+    const root = await mkdtemp(path.join(tmpdir(), "matebot-artifacts-"));
     dirs.push(root);
     const keys = memoryKeys();
     return { root, keys, store: new LocalArtifactStore(root, keys) };

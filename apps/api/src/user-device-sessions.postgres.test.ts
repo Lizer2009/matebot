@@ -20,7 +20,7 @@ describe.skipIf(!databaseUrl)("paired computers end with the sign-in that paired
   let account = 0;
 
   beforeAll(async () => {
-    dataDir = await mkdtemp(join(tmpdir(), "rakazo-device-sessions-"));
+    dataDir = await mkdtemp(join(tmpdir(), "matebot-device-sessions-"));
     handles = await createApp({
       databaseUrl: databaseUrl!,
       dataDir,

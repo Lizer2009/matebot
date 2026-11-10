@@ -37,7 +37,7 @@ describePages("pages", () => {
     const { createApp } = await import("@matebot/api/app");
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
-      dataDir: mkdtempSync(path.join(tmpdir(), "rakazo-pages-")),
+      dataDir: mkdtempSync(path.join(tmpdir(), "matebot-pages-")),
       sandboxProvider: "fake",
       agentRuntime: "scripted",
     });
@@ -1117,7 +1117,7 @@ async function raw(app: App, cookie: string, proc: string, body: unknown, spaceI
       "content-type": "application/json",
       cookie,
       origin: "http://127.0.0.1:5173",
-      ...(spaceId ? { "x-rakazo-space-id": spaceId } : {}),
+      ...(spaceId ? { "x-matebot-space-id": spaceId } : {}),
     },
     body: JSON.stringify({ json: body }),
   });

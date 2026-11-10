@@ -137,7 +137,7 @@ export async function runApprovalSuite(
       );
     connection = { ...parsed.data, modelId: parsed.data.modelId, headers: parsed.data.headers };
   } else {
-    // The same selection the product makes from RAKAZO_AUTO_REVIEW_* and the deployment model.
+    // The same selection the product makes from MATEBOT_AUTO_REVIEW_* and the deployment model.
     const checker = autoReview.resolveAutoReviewChecker(process.env);
     const envKeys: Record<string, string | undefined> = {
       [autoReview.JEV_AUTO_REVIEW_PROVIDER]: autoReview.typesafeApiKey(process.env),

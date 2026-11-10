@@ -24,7 +24,7 @@ sources:
   - label: "Dify license"
     href: "https://github.com/langgenius/dify/blob/main/LICENSE"
 related:
-  - href: "/blog/openclaw-vs-hermes-vs-rakazo/"
+  - href: "/blog/openclaw-vs-hermes-vs-matebot/"
     title: "OpenClaw vs Hermes Agent vs Matebot"
     description: "Which of those three is simplest to run."
   - href: "/alternatives/"
@@ -127,7 +127,7 @@ You install it with the project's script, go through onboarding, and run a Gatew
 
 The install docs read for this page say Node 26 is recommended, and that Node 24.16+ or Node 26.1+ are supported. The installer can provision Node. Sandboxing of tool execution is off by default. When enabled, documented backends include Docker, Podman, SSH, OpenShell, and Crabbox. The Gateway process stays on the host.
 
-OpenClaw fits when the assistant should show up in chat apps you already use, and you want one gateway on hardware you run. It is a different product from a teammate UI. The [three-way note](/blog/openclaw-vs-hermes-vs-rakazo/) compares that setup with Matebot and Hermes without turning it into a race.
+OpenClaw fits when the assistant should show up in chat apps you already use, and you want one gateway on hardware you run. It is a different product from a teammate UI. The [three-way note](/blog/openclaw-vs-hermes-vs-matebot/) compares that setup with Matebot and Hermes without turning it into a race.
 
 ## Hermes Agent
 

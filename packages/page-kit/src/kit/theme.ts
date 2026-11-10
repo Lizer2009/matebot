@@ -166,8 +166,8 @@ type SourceRecord = {
  * labelled as not fresh, so pages written for them still render.
  */
 export function useSource(id: string): SourceRecord {
-  const declared = (globalThis as { __rakazoPageSources?: Record<string, unknown> })
-    .__rakazoPageSources;
+  const declared = (globalThis as { __matebotPageSources?: Record<string, unknown> })
+    .__matebotPageSources;
   if (!declared || !Object.hasOwn(declared, id)) {
     throw new Error(`useSource("${id}"): this page declares no source with that id.`);
   }

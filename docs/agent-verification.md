@@ -86,7 +86,7 @@ covered by the separate real-model acceptance test.
 pnpm sandbox:build
 pnpm test:computer-replay
 # Or use an already built image:
-pnpm test:computer-replay --image=rakazo/computer:local
+pnpm test:computer-replay --image=matebot/computer:local
 # If Docker has exhausted its automatic address pools, choose an unused subnet:
 pnpm test:computer-replay --subnet=<unused-private-cidr>
 ```
@@ -108,7 +108,7 @@ To capture another successful run manually:
 
 ```bash
 # Requires OPENROUTER_API_KEY; incurs inference usage, with a local Docker sandbox.
-pnpm test:computer-replay --image=rakazo/computer:local \
+pnpm test:computer-replay --image=matebot/computer:local \
   --live --record=new-fixture.json
 ```
 

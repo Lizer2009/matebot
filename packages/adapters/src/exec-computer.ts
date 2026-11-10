@@ -19,7 +19,7 @@ import {
 } from "./workspace-save-policy.js";
 
 /** The published computer image's user home, which is also the portable workspace. */
-export const COMPUTER_IMAGE_WORKSPACE = "/home/rakazo";
+export const COMPUTER_IMAGE_WORKSPACE = "/home/matebot";
 const WORKSPACE = COMPUTER_IMAGE_WORKSPACE;
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
 /** How long the `timeout` wrapper waits after SIGTERM before it kills the command's process group. */
@@ -186,14 +186,14 @@ export class ExecComputer {
         'mode="$2"',
         'directory=$(dirname -- "$target")',
         'mkdir -p -- "$directory"',
-        'temporary=$(mktemp "$directory/.rakazo-write.XXXXXX")',
+        'temporary=$(mktemp "$directory/.matebot-write.XXXXXX")',
         "trap 'rm -f -- \"$temporary\"' EXIT",
         'cat >"$temporary"',
         'chmod "$mode" -- "$temporary"',
         'mv -f -- "$temporary" "$target"',
         "trap - EXIT",
       ].join("\n"),
-      "rakazo-write",
+      "matebot-write",
       target,
       file.executable ? "700" : "600",
     ];
@@ -238,11 +238,11 @@ export class ExecComputer {
     let stderr = "";
     // Kata can stall large stdout while exec also has stdin attached. Stage the
     // NUL-delimited file list separately so the archive exec only reads stdout.
-    const listPath = `/tmp/rakazo-workspace-${randomUUID()}`;
+    const listPath = `/tmp/matebot-workspace-${randomUUID()}`;
     try {
       const staged = await this.collect(
         computer,
-        ["bash", "-c", 'umask 077; cat > "$1"', "rakazo-export-list", listPath],
+        ["bash", "-c", 'umask 077; cat > "$1"', "matebot-export-list", listPath],
         context,
         1024 * 1024,
         Readable.from([list]),
@@ -392,7 +392,7 @@ function commandRequestArgv(request: CommandRequest, timeoutMs: number): string[
     "bash",
     "-c",
     'cd -- "$1" && shift && exec env "$@"',
-    "rakazo-exec",
+    "matebot-exec",
     cwd,
     ...environment,
     ...withTimeout(sandboxCommandArgv(request), timeoutMs),

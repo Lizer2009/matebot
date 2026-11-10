@@ -32,7 +32,7 @@ function desktopWindow() {
   };
   const open = vi.fn(() => popup);
   const close = vi.fn();
-  vi.stubGlobal("window", { rakazoDesktop: {}, location, open, close });
+  vi.stubGlobal("window", { matebotDesktop: {}, location, open, close });
   const begin = vi.fn(async (_disableRedirect: boolean, callbackURL: (url: string) => string) => {
     returnTo = callbackURL("/app");
     return result;
@@ -73,7 +73,7 @@ it.each(["/app", "/onboarding", "/app?settings=account", "/sign-in?error=SSO_UNA
       ["/app", "/onboarding", "/sign-in"],
     );
     await vi.advanceTimersByTimeAsync(30_000);
-    expect(open).toHaveBeenCalledWith("about:blank", "rakazo-sso-oauth", expect.any(String));
+    expect(open).toHaveBeenCalledWith("about:blank", "matebot-sso-oauth", expect.any(String));
     expect(popup.location.href).toBe(result.data.url);
     expect(location.assign).not.toHaveBeenCalled();
     if (callback.includes("?error=")) landing += "&error=SSO_UNAVAILABLE";
@@ -201,7 +201,7 @@ it("opens synchronously before beginning authorization", async () => {
   const { open, popup } = desktopWindow();
   await expect(
     runSsoFlow(async () => {
-      expect(open).toHaveBeenCalledWith("about:blank", "rakazo-sso-oauth", expect.any(String));
+      expect(open).toHaveBeenCalledWith("about:blank", "matebot-sso-oauth", expect.any(String));
       expect(popup.location.href).toBe("about:blank");
       return { data: null, error: { code: "SSO_UNAVAILABLE" } };
     }, ["/app"]),

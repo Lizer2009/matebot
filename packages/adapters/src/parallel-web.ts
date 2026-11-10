@@ -124,7 +124,7 @@ export class ParallelWebProvider implements WebProvider {
     signal.throwIfAborted();
     // Scope conversation accounting to this deployment without disclosing raw IDs.
     const sessionId = createHmac("sha256", this.sessionKey)
-      .update("rakazo:parallel:web-session:v1\0")
+      .update("matebot:parallel:web-session:v1\0")
       .update(
         JSON.stringify([
           context.spaceId,

@@ -22,7 +22,7 @@ describeAttachments("chat attachments", () => {
   let app: App;
   let stop: () => Promise<void>;
   const stamp = Date.now();
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-attachments-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-attachments-"));
   const tinyPng = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
     "base64",

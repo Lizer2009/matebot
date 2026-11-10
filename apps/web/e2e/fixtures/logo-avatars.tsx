@@ -17,7 +17,7 @@ import "../../src/styles.css";
 const params = new URLSearchParams(location.search);
 const theme = params.get("theme") === "light" ? "light" : "dark";
 document.documentElement.dataset.theme = theme;
-const officialMark = new URL("../../../www/public/brand/rakazo-mark.png", import.meta.url).href;
+const officialMark = new URL("../../../www/public/brand/matebot-mark.png", import.meta.url).href;
 const team = [
   { id: "inbox-01", name: "Inbox", color: "orange" },
   { id: "scout-02", name: "Scout", color: "green" },
@@ -122,7 +122,7 @@ function Study() {
         <div className="flex items-center gap-4">
           <img src={officialMark} alt="Official Matebot logo" className="size-14 rounded-xl" />
           <div>
-            <p className="mb-1 text-label text-muted-foreground">RAKAZO · LOGO AVATAR STUDY</p>
+            <p className="mb-1 text-label text-muted-foreground">MATEBOT · LOGO AVATAR STUDY</p>
             <h1 className="text-heading2 font-semibold">Different colours. Their own rhythm.</h1>
           </div>
         </div>
@@ -358,8 +358,8 @@ function Study() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <BotAvatar color={portrait} avatarSet="rakazo" size={38} />
-          <BotAvatar color="#8B5CF6::shape_3" avatarSet="rakazo" size={38} />
+          <BotAvatar color={portrait} avatarSet="matebot" size={38} />
+          <BotAvatar color="#8B5CF6::shape_3" avatarSet="matebot" size={38} />
           <span className="text-caption text-muted-foreground">
             Custom avatars
             <br />
@@ -558,7 +558,7 @@ function SeededFleet() {
                 <BotAvatar
                   color={bot.color}
                   identity={bot.id}
-                  avatarSet="rakazo"
+                  avatarSet="matebot"
                   status="running"
                   size={32}
                 />
@@ -573,7 +573,7 @@ function SeededFleet() {
                 <BotAvatar
                   color={bot.color}
                   identity={bot.id}
-                  avatarSet="rakazo"
+                  avatarSet="matebot"
                   activity={activity}
                   size={88}
                   className="mx-auto"
@@ -586,7 +586,7 @@ function SeededFleet() {
                       <BotAvatar
                         color={bot.color}
                         identity={bot.id}
-                        avatarSet="rakazo"
+                        avatarSet="matebot"
                         activity={activity}
                         size={size}
                       />

@@ -32,7 +32,7 @@ let primedBootstrap: {
 
 const initialTarget = initialBootstrapTarget(
   window.location.pathname,
-  Boolean(window.rakazoDesktop),
+  Boolean(window.matebotDesktop),
 );
 if (initialTarget) {
   const { botId } = initialTarget;

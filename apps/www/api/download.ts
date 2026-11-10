@@ -12,7 +12,7 @@ export const config = { runtime: "edge" };
  * `docs/MATEBOT_DEPLOY.md`. Unset, the redirect falls back to the releases page,
  * which explains where the builds come from instead of handing out a dead link.
  */
-export const WINDOWS_INSTALLER_ENV = "RAKAZO_WINDOWS_INSTALLER";
+export const WINDOWS_INSTALLER_ENV = "MATEBOT_WINDOWS_INSTALLER";
 
 /**
  * A published release asset wins, so cutting a release needs no site change. The

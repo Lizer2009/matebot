@@ -645,7 +645,7 @@ describe("Lark messaging conformance", () => {
     const restored = Message.fromJSON(JSON.parse(JSON.stringify(parsed)));
     expect(restored.text).toBe("Before\n  code\n");
     expect(restored.formatted.data).toMatchObject({
-      rakazoLarkParts: [
+      matebotLarkParts: [
         { text: "Before\n", literal: false },
         { text: "  code\n", literal: true },
       ],

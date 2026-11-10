@@ -30,7 +30,7 @@ describeMessaging("messaging surface journeys", () => {
   let prisma: any;
   const emulator = new SendBlueEmulator();
   const platform = createEmulatedSendbluePlatform(emulator);
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-messaging-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-messaging-"));
   // Unique per run: identities, threads, and outbox rows persist in the dev
   // database. Random E.164 fixtures — a timestamp suffix repeats within
   // hours and collides with earlier runs.

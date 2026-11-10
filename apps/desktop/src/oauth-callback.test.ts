@@ -62,13 +62,13 @@ it("lets SSO reach its API callback instead of capturing a separate loopback ori
   const url = "http://127.0.0.1:3100/api/auth/callback/oidc?code=sso-code&state=sso-state";
   expect(
     oauthCallbackFrom(url, {
-      frameName: "rakazo-sso-oauth",
+      frameName: "matebot-sso-oauth",
       excludeOrigins: ["http://127.0.0.1:5173"],
     }),
   ).toBeUndefined();
   expect(
     oauthCallbackFrom("http://localhost:53692/callback?code=model-code", {
-      frameName: "rakazo-model-oauth",
+      frameName: "matebot-model-oauth",
     }),
   ).toEqual({ code: "model-code" });
 });

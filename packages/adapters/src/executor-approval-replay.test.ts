@@ -37,7 +37,7 @@ describe("executor approval replay", () => {
     const request = catalogApprovalRequest(
       "installed_execute_tool",
       { id: `${resourceId}:${toolName}`, arguments: {} },
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
     );
     const queue = createApprovedEffectReplayQueue([{ kind: toolName, request }]);
 
@@ -80,7 +80,7 @@ describe("executor approval replay", () => {
           request: catalogApprovalRequest(
             "connectors_execute_tool",
             { id: "server-1:send_message", arguments: { text: "approved exactly" } },
-            "__rakazoCatalogTool",
+            "__matebotCatalogTool",
           ),
         },
       ],
@@ -90,14 +90,14 @@ describe("executor approval replay", () => {
     expect(continuation).toContain(
       'connectors_execute_tool: {"id":"server-1:send_message","arguments":{"text":"approved exactly"}}',
     );
-    expect(continuation).not.toContain("__rakazoCatalogTool");
+    expect(continuation).not.toContain("__matebotCatalogTool");
   });
 
   it("renders a direct tool continuation when a catalog approval's wrapper is no longer exposed", () => {
     const request = catalogApprovalRequest(
       "installed_execute_tool",
       { id: "install-A:notes.write", arguments: { text: "approved exactly" } },
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
     );
     const stillCatalog = buildApprovalContinuation(
       [{ kind: "notes.write", request }],
@@ -145,7 +145,7 @@ describe("executor approval replay", () => {
             id: "row-1",
             arguments: { mode: "strict" },
             text: "approved exactly",
-            __rakazoCatalogTool: "installed_execute_tool",
+            __matebotCatalogTool: "installed_execute_tool",
           },
         },
       ],
@@ -153,7 +153,7 @@ describe("executor approval replay", () => {
     );
 
     expect(continuation).toContain(
-      'notes.write: {"id":"row-1","arguments":{"mode":"strict"},"text":"approved exactly","__rakazoCatalogTool":"installed_execute_tool"}',
+      'notes.write: {"id":"row-1","arguments":{"mode":"strict"},"text":"approved exactly","__matebotCatalogTool":"installed_execute_tool"}',
     );
   });
 
@@ -161,7 +161,7 @@ describe("executor approval replay", () => {
     const request = boundDirectApprovalRequest(
       { connectorId: "installed", resourceId: "install-A", toolName: "notes.write" },
       { text: "approved exactly" },
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
     );
     const stillDirect = buildApprovalContinuation(
       [{ kind: "notes.write", request }],
@@ -185,7 +185,7 @@ describe("executor approval replay", () => {
     const request = boundDirectApprovalRequest(
       { connectorId: "example", resourceId: "mail", toolName: "send", connectionId: "work" },
       { text: "approved exactly" },
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
     );
     const continuation = buildApprovalContinuation(
       [{ kind: "send_scoped", request }],
@@ -199,7 +199,7 @@ describe("executor approval replay", () => {
     const request = boundDirectApprovalRequest(
       { connectorId: "mcp", resourceId: "server-1", toolName: "send_message" },
       { text: "approved exactly" },
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
     );
     const afterGrowth = buildApprovalContinuation(
       [{ kind: "mcp__demo__send_message", request }],
@@ -224,7 +224,7 @@ describe("executor approval replay", () => {
     const request = catalogApprovalRequest(
       "mcp_execute_tool",
       { id: "server-1:send_message", arguments: { text: "approved exactly" } },
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
       route,
     );
     const continuation = buildApprovalContinuation(
@@ -241,7 +241,7 @@ describe("executor approval replay", () => {
     const replay = approvedCatalogReplay(
       queue,
       "connectors_execute_tool",
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
       true,
     );
     expect(replay.error).toBeUndefined();
@@ -272,7 +272,7 @@ describe("executor approval replay", () => {
     expect(resolved.call.args).toEqual({ text: "approved exactly" });
     expect(resolved.tool.route).toEqual(route);
     expect(
-      approvalReplayResourceError(resolved.tool.name, true, request, route, "__rakazoCatalogTool"),
+      approvalReplayResourceError(resolved.tool.name, true, request, route, "__matebotCatalogTool"),
     ).toBeUndefined();
     expect(
       approvalReplayResourceError(
@@ -280,7 +280,7 @@ describe("executor approval replay", () => {
         true,
         request,
         { ...route, resourceRevision: 3 },
-        "__rakazoCatalogTool",
+        "__matebotCatalogTool",
       ),
     ).toContain("different connector resource");
     expect(
@@ -289,11 +289,15 @@ describe("executor approval replay", () => {
         true,
         request,
         { ...route, resourceId: "server-2" },
-        "__rakazoCatalogTool",
+        "__matebotCatalogTool",
       ),
     ).toContain("different connector resource");
     expect(
-      approvedReplayArgs(queue.take(resolved.tool.name), resolved.call.args, "__rakazoCatalogTool"),
+      approvedReplayArgs(
+        queue.take(resolved.tool.name),
+        resolved.call.args,
+        "__matebotCatalogTool",
+      ),
     ).toEqual({ text: "approved exactly" });
     expect(queue.assertDrained).not.toThrow();
   });
@@ -306,15 +310,15 @@ describe("executor approval replay", () => {
     const request = catalogApprovalRequest(
       stored,
       { id: "server-1:send_message", arguments: {} },
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
     );
     const queue = createApprovedEffectReplayQueue([{ kind: "mcp__demo__send_message", request }]);
-    expect(approvedCatalogReplay(queue, called, "__rakazoCatalogTool", true).error).toContain(
+    expect(approvedCatalogReplay(queue, called, "__matebotCatalogTool", true).error).toContain(
       "must be replayed before",
     );
     expect(queue.nextRequest()).toBe(request);
     expect(
-      approvedCatalogReplay(queue, "connectors_execute_tool", "__rakazoCatalogTool", false),
+      approvedCatalogReplay(queue, "connectors_execute_tool", "__matebotCatalogTool", false),
     ).toEqual({});
   });
 
@@ -322,7 +326,7 @@ describe("executor approval replay", () => {
     const request = boundDirectApprovalRequest(
       { connectorId: "installed", resourceId: "install-A", toolName: "delete_item" },
       { target: "approved" },
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
     );
     const continuation = buildApprovalContinuation(
       [{ kind: "delete_item", request }],
@@ -360,7 +364,7 @@ describe("executor approval replay", () => {
         request: catalogApprovalRequest(
           "installed_execute_tool",
           { id: "install-A:delete_item", arguments: { target: "approved" } },
-          "__rakazoCatalogTool",
+          "__matebotCatalogTool",
         ),
       },
     ];
@@ -368,7 +372,7 @@ describe("executor approval replay", () => {
     const replay = approvedCatalogReplay(
       queue,
       "installed_execute_tool",
-      "__rakazoCatalogTool",
+      "__matebotCatalogTool",
       true,
     );
     const modelRuntimeArgs = {
@@ -401,7 +405,7 @@ describe("executor approval replay", () => {
   });
 
   it("keeps resolveCall parsed args when draining an approved catalog replay", () => {
-    const marker = "__rakazoCatalogTool";
+    const marker = "__matebotCatalogTool";
     const approvedRequest = catalogApprovalRequest(
       "installed_execute_tool",
       { id: "install-A:create_item", arguments: {} },
@@ -443,15 +447,15 @@ describe("executor approval replay", () => {
 
   it("preserves direct approved args that use the catalog marker as data", () => {
     const approvedRequest = {
-      __rakazoCatalogTool: "user-provided-value",
+      __matebotCatalogTool: "user-provided-value",
       target: "approved",
     };
 
     expect(
       approvedReplayArgs(
         approvedRequest,
-        { __rakazoCatalogTool: "user-provided-value", target: "reconstructed" },
-        "__rakazoCatalogTool",
+        { __matebotCatalogTool: "user-provided-value", target: "reconstructed" },
+        "__matebotCatalogTool",
       ),
     ).toEqual(approvedRequest);
   });

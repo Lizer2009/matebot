@@ -18,7 +18,7 @@ describe.skipIf(!databaseAvailable)("offline Pi computer approval", () => {
   beforeAll(() => {
     // Use the existing compatible-endpoint capability declaration so the real
     // executor exposes computer tools without mocking its model vision gate.
-    vi.stubEnv("RAKAZO_OPENAI_COMPATIBLE_VISION_MODELS", "offline-fixture");
+    vi.stubEnv("MATEBOT_OPENAI_COMPATIBLE_VISION_MODELS", "offline-fixture");
   });
   afterAll(() => vi.unstubAllEnvs());
 
@@ -72,7 +72,7 @@ describe.skipIf(!databaseAvailable)("offline Pi computer approval", () => {
           },
         ],
       });
-      const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-computer-approval-"));
+      const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-computer-approval-"));
       let stop: (() => Promise<void>) | undefined;
       try {
         const { createApp } = await import("@matebot/api/app");

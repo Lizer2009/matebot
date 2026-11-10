@@ -82,7 +82,7 @@ describe("Pi computer tool dispatch", () => {
   it("introduces the bot as this product, not the upstream one", () => {
     for (const prompt of [defaultSystemPrompt(true), defaultSystemPrompt(false)]) {
       expect(prompt).toContain(`You are a ${PRODUCT_DISPLAY_NAME} bot with`);
-      // The fork's own name must never leak into the upstream prompt build.
+      // It introduces this product, and never the project it was forked from.
       expect(prompt).not.toContain("Rakazo");
     }
     expect(defaultSystemPrompt(true)).toContain("a real computer");

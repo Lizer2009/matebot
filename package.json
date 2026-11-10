@@ -17,7 +17,7 @@
     "format": "biome check --write .",
     "db:generate": "pnpm --filter @matebot/db generate",
     "db:migrate": "pnpm --filter @matebot/api db:migrate",
-    "sandbox:build": "docker build -t rakazo/computer:local infra/sandboxes/computer",
+    "sandbox:build": "docker build -t matebot/computer:local infra/sandboxes/computer",
     "sandbox:boat-snapshot": "tsx packages/adapters/src/cli/build-boat-snapshot.ts",
     "sandbox:boxd-snapshot": "tsx packages/adapters/src/cli/build-boxd-snapshot.ts",
     "sandbox:novita-template": "tsx packages/adapters/src/cli/build-novita-template.ts",

@@ -1,4 +1,4 @@
-export const COMPOSER_ENTER_TO_SEND_STORAGE_KEY = "rakazo.composerEnterToSend";
+export const COMPOSER_ENTER_TO_SEND_STORAGE_KEY = "matebot.composerEnterToSend";
 
 type EnterToSendStorage = Pick<Storage, "getItem" | "setItem">;
 

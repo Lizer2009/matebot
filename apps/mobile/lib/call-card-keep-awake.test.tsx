@@ -169,7 +169,7 @@ describe("CallCard background lifetime", () => {
     });
 
     expect(startBackground).toHaveBeenCalledWith("Ada");
-    expect(activeTags.has("rakazo-call")).toBe(true);
+    expect(activeTags.has("matebot-call")).toBe(true);
   });
 
   it("releases the screen awake hold once the native service starts", async () => {
@@ -182,7 +182,7 @@ describe("CallCard background lifetime", () => {
     });
 
     expect(startBackground).toHaveBeenCalledWith("Ada");
-    expect(activeTags.has("rakazo-call")).toBe(false);
+    expect(activeTags.has("matebot-call")).toBe(false);
 
     await act(async () => endCall());
     expect(stopBackground).toHaveBeenCalled();
@@ -198,7 +198,7 @@ describe("CallCard background lifetime", () => {
     });
 
     expect(startBackground).not.toHaveBeenCalled();
-    expect(activeTags.has("rakazo-call")).toBe(true);
+    expect(activeTags.has("matebot-call")).toBe(true);
   });
 
   it("shows the signed-in account's initial after a session change", async () => {

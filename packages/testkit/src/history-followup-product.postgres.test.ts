@@ -92,7 +92,7 @@ describe.skipIf(!enabled)("persisted source-verified history followups", () => {
           },
         ],
       });
-      const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-history-followup-"));
+      const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-history-followup-"));
       try {
         const { createApp } = await import("@matebot/api/app");
         const result = await runTrial(

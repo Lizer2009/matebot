@@ -2,7 +2,7 @@ import { notificationAvatarSource } from "@matebot/core";
 import { expect, it, vi } from "vitest";
 import { notificationIdentity } from "./notification-identity.js";
 
-it.each(["organic", "rakazo"])("creates a bounded JPEG for the %s avatar", async (avatarSet) => {
+it.each(["organic", "matebot"])("creates a bounded JPEG for the %s avatar", async (avatarSet) => {
   const identity = await notificationIdentity({
     id: "agent-1",
     name: "Head of Marketing",

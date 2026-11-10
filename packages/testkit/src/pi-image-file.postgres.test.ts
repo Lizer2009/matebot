@@ -36,7 +36,7 @@ describe.skipIf(!databaseAvailable)("offline Pi product journey", () => {
         { expect() {}, response: { type: "text", text: "File workflow completed." } },
       ],
     });
-    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-offline-product-"));
+    const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-offline-product-"));
     let stop: (() => Promise<void>) | undefined;
     try {
       const { createApp } = await import("../../../apps/api/src/app.ts");

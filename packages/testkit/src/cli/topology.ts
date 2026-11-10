@@ -8,7 +8,7 @@ import { computerNetworkNameFor } from "@matebot/sandbox-supervisor/computer-spe
 const composeFile = path.resolve("infra/compose/docker-compose.topology.yml");
 const keep = process.argv.includes("--keep");
 const skipBuild = process.argv.includes("--skip-build");
-const project = `rakazo-topology-${process.pid}-${Date.now().toString(36)}`;
+const project = `matebot-topology-${process.pid}-${Date.now().toString(36)}`;
 
 async function main() {
   docker(["info", "--format", "{{.ServerVersion}}"]);
@@ -17,8 +17,8 @@ async function main() {
   const env = {
     ...process.env,
     TOPOLOGY_API_PORT: String(port),
-    TOPOLOGY_APP_IMAGE: process.env.TOPOLOGY_APP_IMAGE ?? "rakazo/app:topology",
-    TOPOLOGY_COMPUTER_IMAGE: process.env.TOPOLOGY_COMPUTER_IMAGE ?? "rakazo/computer:topology",
+    TOPOLOGY_APP_IMAGE: process.env.TOPOLOGY_APP_IMAGE ?? "matebot/app:topology",
+    TOPOLOGY_COMPUTER_IMAGE: process.env.TOPOLOGY_COMPUTER_IMAGE ?? "matebot/computer:topology",
   };
   const compose = (args: string[], capture = false) =>
     command(
@@ -283,7 +283,7 @@ function assertComputerNetworkIsolation(
     "inspect",
     computerId,
     "--format",
-    '{{index .Config.Labels "rakazo.managed"}}',
+    '{{index .Config.Labels "matebot.managed"}}',
   ]).trim();
   if (managed !== "true") throw new Error("isolated peer is not a managed computer");
   const [spec] = JSON.parse(docker(["inspect", computerId])) as Array<{
@@ -332,9 +332,9 @@ function removeManagedComputers(
           "postgres",
           "psql",
           "-U",
-          "rakazo",
+          "matebot",
           "-d",
-          "rakazo",
+          "matebot",
           "-Atc",
           'SELECT "homeKey" FROM computers',
         ],
@@ -354,7 +354,7 @@ function removeManagedComputers(
         "--filter",
         `network=${networkName}`,
         "--filter",
-        "label=rakazo.managed=true",
+        "label=matebot.managed=true",
       ])
         .split("\n")
         .map((id) => id.trim())

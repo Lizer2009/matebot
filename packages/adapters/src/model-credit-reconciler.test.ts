@@ -29,12 +29,12 @@ const baseCall = {
 
 describe("model credit reconciler", () => {
   afterEach(() => {
-    installLogger(createLogger({ service: "rakazo-worker", level: "off", sinks: [] }));
+    installLogger(createLogger({ service: "matebot-worker", level: "off", sinks: [] }));
   });
 
   it("flags an unsettled hold for review with the reason it could not settle", async () => {
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-worker", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-worker", sinks: [sink] }));
     const { prisma, updateMany } = harness({ ...baseCall, reconciliationAttempts: 5 });
 
     await createModelCreditReconciler({ prisma, now: () => new Date(0) })();
@@ -60,7 +60,7 @@ describe("model credit reconciler", () => {
 
   it("keeps the failure reason on each attempt that could not verify a call", async () => {
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-worker", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-worker", sinks: [sink] }));
     const { prisma } = harness({ ...baseCall, model: null, reconciliationAttempts: 0 });
 
     await createModelCreditReconciler({ prisma, now: () => new Date(0) })();

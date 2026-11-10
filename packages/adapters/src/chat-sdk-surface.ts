@@ -161,7 +161,7 @@ export class ChatSdkMessagingSurface implements MessagingSurface {
       }
       const adapterName = platform.adapterName ?? platform.provider;
       const chat = new Chat({
-        userName: options.userName ?? "rakazo",
+        userName: options.userName ?? "matebot",
         adapters: { [adapterName]: platform.adapter },
         state: createMemoryState(),
         // The SDK default ("drop") takes a per-conversation lock and discards

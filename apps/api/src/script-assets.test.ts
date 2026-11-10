@@ -29,7 +29,7 @@ describe("script asset routes", () => {
       /^"mermaid-\d+\.\d+\.\d+"$/,
       'globalThis["mermaid"]',
     ],
-    [PAGE_RUNTIME_PATH, "public, no-cache", /^"page-runtime-[\w-]{22}"$/, "RakazoPage"],
+    [PAGE_RUNTIME_PATH, "public, no-cache", /^"page-runtime-[\w-]{22}"$/, "MatebotPage"],
   ])("serves %s as a cacheable public script", async (path, cacheControl, etag, global) => {
     const response = await app.request(path);
     expect(response.status).toBe(200);

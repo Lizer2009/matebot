@@ -47,7 +47,7 @@ jobs:
       - name: Build renderer and Electron main process
         run: pnpm --filter @matebot/web build && pnpm --filter @matebot/desktop build
         env:
-          RAKAZO_ALLOW_DEV_SECRETS: "1"
+          MATEBOT_ALLOW_DEV_SECRETS: "1"
       # Unpackaged, unsigned build: no certificate is configured on a fork, and
       # `release-desktop` is the path that signs and publishes.
       - name: Package the unsigned installer

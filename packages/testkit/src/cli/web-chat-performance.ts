@@ -110,7 +110,7 @@ async function benchmark() {
   const reportPath =
     argument("--out") ??
     path.join(root, ".context/performance", `web-chat-${safeName(label)}.json`);
-  const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "rakazo-web-chat-performance-"));
+  const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "matebot-web-chat-performance-"));
   const database = await startBenchmarkDatabase(
     argument("--database-url") ?? process.env.PERF_DATABASE_URL,
   );

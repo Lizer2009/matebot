@@ -41,7 +41,7 @@ describe.each([
   [
     "native host bridge",
     async () => {
-      const root = await mkdtemp(path.join(tmpdir(), "rakazo-host-contract-"));
+      const root = await mkdtemp(path.join(tmpdir(), "matebot-host-contract-"));
       temporaryRoots.push(root);
       const token = "ab".repeat(32);
       const server = await startHostComputerServer({
@@ -59,7 +59,7 @@ describe.each([
   [
     "desktop",
     async () => {
-      const root = await mkdtemp(path.join(tmpdir(), "rakazo-sandbox-faults-"));
+      const root = await mkdtemp(path.join(tmpdir(), "matebot-sandbox-faults-"));
       temporaryRoots.push(root);
       return new DesktopSandboxProvider({ root: await realpath(root) });
     },
@@ -306,7 +306,7 @@ function faultOnce(provider: SandboxProvider, methods: FaultableMethod[]): Sandb
 }
 
 async function providerSet(label: string): Promise<Array<[string, SandboxProvider]>> {
-  const root = await mkdtemp(path.join(tmpdir(), `rakazo-sandbox-transfer-${label}-`));
+  const root = await mkdtemp(path.join(tmpdir(), `matebot-sandbox-transfer-${label}-`));
   temporaryRoots.push(root);
   return [
     ["fake", new FakeSandboxProvider()],

@@ -41,7 +41,7 @@ describe("createBackgroundJobHandlers", () => {
       }),
     } as unknown as JobPublisher;
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-worker", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-worker", sinks: [sink] }));
     const handlers = createBackgroundJobHandlers({
       executor: {
         continueRun: vi.fn(async () => undefined),
@@ -73,7 +73,7 @@ describe("createBackgroundJobHandlers", () => {
     expect(sink.events.some((event) => event.message === "messaging.deliver enqueue error")).toBe(
       true,
     );
-    installLogger(createLogger({ service: "rakazo-worker", level: "off", sinks: [] }));
+    installLogger(createLogger({ service: "matebot-worker", level: "off", sinks: [] }));
   });
 
   it("compacts the requested thread with the runtime, job publisher, and model key it was given", async () => {
@@ -186,7 +186,7 @@ describe("createBackgroundJobHandlers", () => {
 
   it("tries a control release again later when the computer provider is unreachable", async () => {
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-worker", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-worker", sinks: [sink] }));
     vi.mocked(expireComputerControl).mockRejectedValueOnce(
       new SandboxUnresponsiveError("Boat could not be reached"),
     );

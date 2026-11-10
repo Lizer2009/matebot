@@ -24,7 +24,7 @@ describeVoice("voice credentials and speech HTTP", () => {
   let prisma: PrismaClient;
   let stop: () => Promise<void>;
   const stamp = Date.now();
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-voice-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-voice-"));
 
   beforeAll(async () => {
     const { createApp } = await import("@matebot/api/app");

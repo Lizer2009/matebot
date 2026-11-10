@@ -133,7 +133,7 @@ export class KeenableWebProvider implements WebProvider {
     signal.throwIfAborted();
     const headers: Record<string, string> = {
       "User-Agent": USER_AGENT,
-      "X-Keenable-Title": "rakazo",
+      "X-Keenable-Title": "matebot",
     };
     if (this.apiKey) headers["X-API-Key"] = this.apiKey;
     const raw = await withAbort(

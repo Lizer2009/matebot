@@ -8,17 +8,17 @@ import type {
   DesktopReachability,
   DesktopSetup,
   DesktopSetupState,
-  RakazoSetup,
+  MatebotSetup,
 } from "@matebot/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { ES_MESSAGES } from "./locales/es.js";
 import { HE_MESSAGES } from "./locales/he.js";
 
-type DesktopSetupResult = Awaited<ReturnType<RakazoSetup["save"]>>;
+type DesktopSetupResult = Awaited<ReturnType<MatebotSetup["save"]>>;
 
 const DEFAULT_LOCAL_URL = "http://127.0.0.1:6130";
-const CLOUD_URL = "https://cloud.rakazo.example";
-const ENGLISH: RakazoSetup["locale"] = { lang: "en", dir: "ltr", messages: {} };
+const CLOUD_URL = "https://cloud.matebot.example";
+const ENGLISH: MatebotSetup["locale"] = { lang: "en", dir: "ltr", messages: {} };
 
 // The jsdom environment replaces the global URL, so resolve the sibling files via Node's.
 const srcDir = path.dirname(fileURLToPath(import.meta.url));
@@ -100,7 +100,7 @@ function mount(saved: DesktopSetup | null, locale = ENGLISH): Harness {
   const saves: DesktopSetup[] = [];
   const saveCalls: Array<Deferred<DesktopSetupResult>> = [];
 
-  const bridge: RakazoSetup = {
+  const bridge: MatebotSetup = {
     platform: "linux",
     locale,
     state: () => {
@@ -133,7 +133,7 @@ function mount(saved: DesktopSetup | null, locale = ENGLISH): Harness {
       },
     },
   };
-  (window as { rakazoSetup?: RakazoSetup }).rakazoSetup = bridge;
+  (window as { matebotSetup?: MatebotSetup }).matebotSetup = bridge;
   // Run the plain script the same way setup.html's script tag does.
   new Function(setupScript)();
 
@@ -173,7 +173,7 @@ async function boot(saved: DesktopSetup | null, locale = ENGLISH): Promise<Harne
 describe("setup", () => {
   afterEach(() => {
     document.body.innerHTML = "";
-    delete (window as { rakazoSetup?: RakazoSetup }).rakazoSetup;
+    delete (window as { matebotSetup?: MatebotSetup }).matebotSetup;
   });
 
   it("keeps an address edited while the connection check is pending", async () => {

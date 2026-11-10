@@ -132,12 +132,12 @@ export class DockerSandboxProvider implements SandboxProvider {
   private headers(context: AdapterContext, botId?: string) {
     return {
       authorization: `Bearer ${this.supervisorToken}`,
-      "x-rakazo-space-id": context.spaceId,
+      "x-matebot-space-id": context.spaceId,
       ...outgoingCorrelationHeaders(),
-      ...(botId ? { "x-rakazo-bot-id": botId } : {}),
-      ...(context.botId ? { "x-rakazo-screen-id": context.botId } : {}),
-      ...(context.screenLeaseId ? { "x-rakazo-screen-lease-id": context.screenLeaseId } : {}),
-      ...(context.cancelRunWork ? { "x-rakazo-cancel-run-work": "1" } : {}),
+      ...(botId ? { "x-matebot-bot-id": botId } : {}),
+      ...(context.botId ? { "x-matebot-screen-id": context.botId } : {}),
+      ...(context.screenLeaseId ? { "x-matebot-screen-lease-id": context.screenLeaseId } : {}),
+      ...(context.cancelRunWork ? { "x-matebot-cancel-run-work": "1" } : {}),
     };
   }
 
@@ -544,7 +544,7 @@ export class DockerSandboxProvider implements SandboxProvider {
           headers: {
             ...this.headers(context, computer.botId),
             ...(context.keepScreenWarm && !context.cancelRunWork && !context.signal.aborted
-              ? { "x-rakazo-preserve-screen": "1" }
+              ? { "x-matebot-preserve-screen": "1" }
               : {}),
           },
           signal: deadline.signal,
@@ -704,9 +704,9 @@ function parseProcessLine(line: string): ProcessEvent | undefined {
 }
 
 function dockerCwd(cwd: string | undefined) {
-  if (!cwd || cwd === "." || cwd === "/" || cwd === "/home/rakazo") return "/home/rakazo";
-  const relative = cwd.startsWith("/home/rakazo/")
-    ? cwd.slice("/home/rakazo/".length)
+  if (!cwd || cwd === "." || cwd === "/" || cwd === "/home/matebot") return "/home/matebot";
+  const relative = cwd.startsWith("/home/matebot/")
+    ? cwd.slice("/home/matebot/".length)
     : normalizeWorkspacePath(cwd);
-  return path.posix.join("/home/rakazo", relative);
+  return path.posix.join("/home/matebot", relative);
 }

@@ -102,17 +102,17 @@ describe("Pi OpenTelemetry", () => {
     expect(spans).toHaveLength(6);
     for (const runId of ["first", "second"]) {
       const run = spans.find(
-        (s) => s.name === "rakazo.agent.run" && s.attributes["rakazo.run.id"] === runId,
+        (s) => s.name === "matebot.agent.run" && s.attributes["matebot.run.id"] === runId,
       )!;
       const children = spans.filter(
-        (s) => s.name !== run.name && s.attributes["rakazo.run.id"] === runId,
+        (s) => s.name !== run.name && s.attributes["matebot.run.id"] === runId,
       );
       expect(children).toHaveLength(2);
       for (const span of children) {
         expect(span.spanContext().traceId).toBe(run.spanContext().traceId);
         expect(span.attributes).toMatchObject({
-          "rakazo.bot.id": ids.botId,
-          "rakazo.routine.id": ids.routineId,
+          "matebot.bot.id": ids.botId,
+          "matebot.routine.id": ids.routineId,
         });
       }
       const tool = children.find((s) => s.name === "pi.agent.tool")!;
@@ -318,7 +318,7 @@ describe("Pi OpenTelemetry", () => {
         failure === "provider" ? "private provider failure" : MISSING_TOOL_FINAL_RESPONSE_ERROR,
       );
       await provider.forceFlush();
-      const run = output.getFinishedSpans().find((span) => span.name === "rakazo.agent.run")!;
+      const run = output.getFinishedSpans().find((span) => span.name === "matebot.agent.run")!;
       expect(run.status.code).toBe(SpanStatusCode.ERROR);
       expect(run.events).toEqual([]);
       expect(JSON.stringify(run.attributes)).not.toContain("private");
@@ -427,9 +427,9 @@ describe("Pi OpenTelemetry", () => {
       expect(spans.filter((span) => span.name === "pi.ai.request")).toHaveLength(2);
       const tool = spans.find((span) => span.name === "pi.agent.tool")!;
       expect(tool.attributes).toMatchObject({
-        "rakazo.bot.id": ids.botId,
-        "rakazo.run.id": ids.runId,
-        "rakazo.routine.id": ids.routineId,
+        "matebot.bot.id": ids.botId,
+        "matebot.run.id": ids.runId,
+        "matebot.routine.id": ids.routineId,
         "pi.agent.tool.name": "fixture_tool",
         "pi.agent.tool.success": !failed,
       });

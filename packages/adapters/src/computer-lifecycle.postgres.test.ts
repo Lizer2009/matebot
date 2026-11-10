@@ -71,7 +71,7 @@ describePostgres("Team Computer takeover recovery (PostgreSQL)", () => {
   ] as const)(
     "does not save a half-restored replacement over the last good save (next %s)",
     async (next) => {
-      const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-unrestored-"));
+      const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-unrestored-"));
       const sandbox = new FakeSandboxProvider();
       const home = new LocalAgentHomeStore(dataDir);
       const deps = {
@@ -273,7 +273,7 @@ describePostgres("Team Computer takeover recovery (PostgreSQL)", () => {
   it.each(["before", "during"] as const)(
     "does not save a run's export when a start that replaces and restores the machine began %s it",
     async (when) => {
-      const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-run-save-aba-"));
+      const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-run-save-aba-"));
       const sandbox = new FakeSandboxProvider();
       const home = new LocalAgentHomeStore(dataDir);
       const deps = {
@@ -374,7 +374,7 @@ describePostgres("Team Computer takeover recovery (PostgreSQL)", () => {
   );
 
   it("does not let a stale-start reclaim activate a machine the start marked meanwhile", async () => {
-    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-reclaim-marked-"));
+    const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-reclaim-marked-"));
     const sandbox = new FakeSandboxProvider();
     const home = new LocalAgentHomeStore(dataDir);
     const deps = {
@@ -446,7 +446,7 @@ describePostgres("Team Computer takeover recovery (PostgreSQL)", () => {
 
   it("updates under its maintenance while a later run waits, but not while a run holds a lease", async () => {
     const { spaceId, botId, threadId, userId } = identity;
-    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-maintenance-"));
+    const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-maintenance-"));
     const deps = {
       prisma,
       sandbox: new FakeSandboxProvider(),

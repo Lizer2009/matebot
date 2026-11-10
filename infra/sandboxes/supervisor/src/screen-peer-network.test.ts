@@ -56,7 +56,7 @@ function fixture() {
     inspect: vi.fn().mockResolvedValue({
       Id: "computer",
       Config: {
-        Labels: { "rakazo.managed": "true", "rakazo.botId": "bot", "rakazo.spaceId": "space" },
+        Labels: { "matebot.managed": "true", "matebot.botId": "bot", "matebot.spaceId": "space" },
       },
       HostConfig: { NetworkMode: "bot-network" },
       State: { Running: true },
@@ -92,9 +92,9 @@ async function observe() {
     method: "POST",
     headers: {
       authorization: `Bearer ${resolveSupervisorToken(process.env)}`,
-      "x-rakazo-bot-id": "bot",
-      "x-rakazo-space-id": "space",
-      "x-rakazo-screen-id": "writer",
+      "x-matebot-bot-id": "bot",
+      "x-matebot-space-id": "space",
+      "x-matebot-screen-id": "writer",
     },
   });
 }
@@ -106,9 +106,9 @@ async function openScreen() {
     headers: {
       authorization: `Bearer ${resolveSupervisorToken(process.env)}`,
       "content-type": "application/json",
-      "x-rakazo-bot-id": "bot",
-      "x-rakazo-space-id": "space",
-      "x-rakazo-screen-id": "writer",
+      "x-matebot-bot-id": "bot",
+      "x-matebot-space-id": "space",
+      "x-matebot-screen-id": "writer",
     },
     body: JSON.stringify({ interactive: false }),
   });

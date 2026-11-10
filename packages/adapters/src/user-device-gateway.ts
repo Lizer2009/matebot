@@ -61,7 +61,7 @@ export function userDeviceBearer(header: string | null | undefined): string | nu
 
 /** API and worker share ENCRYPTION_KEY; forwarding uses a key derived from it for this purpose only. */
 export function userDeviceForwardSecret(encryptionKey: string): string {
-  return createHmac("sha256", encryptionKey).update("rakazo:user-device-forward:v1").digest("hex");
+  return createHmac("sha256", encryptionKey).update("matebot:user-device-forward:v1").digest("hex");
 }
 
 export function validUserDeviceForwardSecret(expected: string, header: string | null | undefined) {

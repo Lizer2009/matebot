@@ -5,7 +5,7 @@ import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { RakazoDesktop } from "@matebot/contracts";
+import type { MatebotDesktop } from "@matebot/contracts";
 import type { ElectronApplication, Page } from "@playwright/test";
 import { _electron as electron, expect, test } from "@playwright/test";
 
@@ -72,7 +72,7 @@ test.afterAll(async () => {
 });
 
 test.beforeEach(async () => {
-  userData = await mkdtemp(path.join(tmpdir(), "rakazo-desktop-e2e-"));
+  userData = await mkdtemp(path.join(tmpdir(), "matebot-desktop-e2e-"));
   // Setup otherwise follows the machine's language; these specs read its English text.
   await writeFile(path.join(userData, "ui-locale.txt"), "en\n");
 });
@@ -84,10 +84,10 @@ test.afterEach(async () => {
 });
 
 function launch(extraEnv: Record<string, string> = {}) {
-  const env = { ...process.env, RAKAZO_PERFORMANCE_USER_DATA: userData };
-  // A stale RAKAZO_WEB_URL from the developer's shell would bypass setup entirely.
-  delete env.RAKAZO_WEB_URL;
-  const executablePath = process.env.RAKAZO_E2E_EXECUTABLE;
+  const env = { ...process.env, MATEBOT_PERFORMANCE_USER_DATA: userData };
+  // A stale MATEBOT_WEB_URL from the developer's shell would bypass setup entirely.
+  delete env.MATEBOT_WEB_URL;
+  const executablePath = process.env.MATEBOT_E2E_EXECUTABLE;
   return electron.launch({
     ...(executablePath ? { executablePath: path.resolve(executablePath) } : {}),
     args: executablePath ? [] : ["."],
@@ -98,7 +98,7 @@ function launch(extraEnv: Record<string, string> = {}) {
 
 test("first run offers Matebot Cloud first, with local and existing instances", async () => {
   app = await launch();
-  if (process.env.RAKAZO_E2E_EXECUTABLE) {
+  if (process.env.MATEBOT_E2E_EXECUTABLE) {
     expect(await app.evaluate(({ app }) => app.isPackaged)).toBe(true);
   }
   const setup = await app.firstWindow();
@@ -198,8 +198,8 @@ test("Matebot Cloud saves the hosted address and is reselected when saved", asyn
   // Capture the request instead of reaching the hosted server, so CI stays offline.
   const { cloudUrl } = await setup.evaluate(() =>
     (
-      window as typeof window & { rakazoSetup: { state: () => Promise<{ cloudUrl: string }> } }
-    ).rakazoSetup.state(),
+      window as typeof window & { matebotSetup: { state: () => Promise<{ cloudUrl: string }> } }
+    ).matebotSetup.state(),
   );
   expect(cloudUrl).toMatch(/^https:\/\//);
   await app.evaluate(({ ipcMain }) => {
@@ -355,7 +355,7 @@ test("an HTTP error document is not accepted after a healthy probe", async () =>
 test("a session-pending shell skeleton is not accepted as a ready app", async () => {
   test.setTimeout(2 * NOT_READY_TIMEOUT_MS);
   const skeletonHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Matebot</title></head>
-<body><div id="root"><div data-rakazo-app-state="session-pending"><aside></aside><main><div>Opening your Space…</div></main></div></div></body></html>`;
+<body><div id="root"><div data-matebot-app-state="session-pending"><aside></aside><main><div>Opening your Space…</div></main></div></div></body></html>`;
   const skeleton = createServer((request, response) => {
     if (request.url === "/rpc/health" && request.method === "POST") {
       response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
@@ -397,17 +397,17 @@ for (const { name, surface } of [
   },
   {
     name: "logged-out welcome",
-    surface: '<div data-rakazo-surface="welcome"><button>Sign up</button></div>',
+    surface: '<div data-matebot-surface="welcome"><button>Sign up</button></div>',
   },
   {
     name: "translated logged-out welcome",
-    surface: '<div data-rakazo-surface="welcome"><button>Créer un compte</button></div>',
+    surface: '<div data-matebot-surface="welcome"><button>Créer un compte</button></div>',
   },
 ]) {
   test(`a post-session ${name} mount is accepted`, async () => {
     const readyHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Matebot</title>
 </head>
-<body><div id="root"><div data-rakazo-app-state="ready">${surface}</div></div></body></html>`;
+<body><div id="root"><div data-matebot-app-state="ready">${surface}</div></div></body></html>`;
     const ready = createServer((request, response) => {
       if (request.url === "/rpc/health" && request.method === "POST") {
         response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
@@ -432,7 +432,7 @@ for (const { name, surface } of [
         setup.getByRole("button", { name: "Continue" }).click(),
       ]).then(([window]) => window);
 
-      await expect(appWindow.locator('[data-rakazo-app-state="ready"]')).toBeVisible();
+      await expect(appWindow.locator('[data-matebot-app-state="ready"]')).toBeVisible();
       await expect
         .poll(async () => {
           try {
@@ -456,7 +456,7 @@ for (const { name, surface } of [
 test("a shell mount before workspace bootstrap is not accepted", async () => {
   test.setTimeout(2 * NOT_READY_TIMEOUT_MS);
   const preBootstrapHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Matebot</title></head>
-<body><div id="root"><div data-rakazo-app-state="ready"><div data-testid="shell-root" data-ready="false">Workspace</div></div></div></body></html>`;
+<body><div id="root"><div data-matebot-app-state="ready"><div data-testid="shell-root" data-ready="false">Workspace</div></div></div></body></html>`;
   const preBootstrap = createServer((request, response) => {
     if (request.url === "/rpc/health" && request.method === "POST") {
       response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
@@ -494,7 +494,7 @@ test("a shell mount before workspace bootstrap is not accepted", async () => {
 test("a session-ready marker without a route surface is not accepted", async () => {
   test.setTimeout(2 * NOT_READY_TIMEOUT_MS);
   const emptyReadyHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Matebot</title></head>
-<body><div id="root"><div data-rakazo-app-state="ready" class="h-full"></div></div></body></html>`;
+<body><div id="root"><div data-matebot-app-state="ready" class="h-full"></div></div></body></html>`;
   const emptyReady = createServer((request, response) => {
     if (request.url === "/rpc/health" && request.method === "POST") {
       response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
@@ -623,13 +623,13 @@ test("an unreachable saved server falls back to setup with a recovery message", 
 });
 
 test("the native application menu can reopen setup without exposing setup IPC to the server", async () => {
-  app = await launch({ RAKAZO_WEB_URL: serverUrl });
+  app = await launch({ MATEBOT_WEB_URL: serverUrl });
   const appWindow = await app.firstWindow();
   await expect(appWindow.getByText(APP_MARKER)).toBeVisible();
 
   const setupPromise = app.waitForEvent("window");
   await app.evaluate(({ Menu }) => {
-    const item = Menu.getApplicationMenu()?.getMenuItemById("change-rakazo-server");
+    const item = Menu.getApplicationMenu()?.getMenuItemById("change-matebot-server");
     if (!item) throw new Error("Change server menu item is missing");
     item.click();
   });
@@ -654,7 +654,7 @@ test("servers on the same host but different ports do not share login cookies", 
     if (monitoringDisabled(request.url, response)) return;
     response.writeHead(200, {
       "content-type": "text/html; charset=utf-8",
-      "set-cookie": "rakazo_session=fake-one; Path=/; SameSite=Lax",
+      "set-cookie": "matebot_session=fake-one; Path=/; SameSite=Lax",
     });
     response.end("<!doctype html><main>Cookie stored</main>");
   });
@@ -679,13 +679,13 @@ test("servers on the same host but different ports do not share login cookies", 
   }
 
   try {
-    app = await launch({ RAKAZO_WEB_URL: `http://127.0.0.1:${firstAddress.port}` });
+    app = await launch({ MATEBOT_WEB_URL: `http://127.0.0.1:${firstAddress.port}` });
     const firstWindow = await app.firstWindow();
     await expect(firstWindow.getByText("Cookie stored")).toBeVisible();
     await expect.poll(() => firstWindow.evaluate(() => document.cookie)).toContain("fake-one");
     await app.close();
 
-    app = await launch({ RAKAZO_WEB_URL: `http://127.0.0.1:${secondAddress.port}` });
+    app = await launch({ MATEBOT_WEB_URL: `http://127.0.0.1:${secondAddress.port}` });
     const secondWindow = await app.firstWindow();
     await expect(secondWindow.getByText("Cookies: none")).toBeVisible();
   } finally {
@@ -703,12 +703,12 @@ test("servers on the same host but different ports do not share login cookies", 
 });
 
 test("setup IPC is not reachable from the connected app window", async () => {
-  app = await launch({ RAKAZO_WEB_URL: serverUrl });
+  app = await launch({ MATEBOT_WEB_URL: serverUrl });
   const appWindow = await app.firstWindow();
   await expect(appWindow.getByText(APP_MARKER)).toBeVisible();
 
   const exposed = await appWindow.evaluate(() =>
-    Object.keys((window as typeof window & { rakazoSetup?: unknown }).rakazoSetup ?? {}),
+    Object.keys((window as typeof window & { matebotSetup?: unknown }).matebotSetup ?? {}),
   );
   expect(exposed).toEqual([]);
 });
@@ -726,7 +726,7 @@ test("the app window stays on its server when a link redirects to another site",
   const openSignIn = (page: Page) =>
     page.evaluate(
       (url) =>
-        (window as typeof window & { rakazoDesktop: RakazoDesktop }).rakazoDesktop.oauth
+        (window as typeof window & { matebotDesktop: MatebotDesktop }).matebotDesktop.oauth
           .open(url)
           .then(
             () => "opened",
@@ -736,7 +736,7 @@ test("the app window stays on its server when a link redirects to another site",
     );
 
   try {
-    const launched = await launch({ RAKAZO_WEB_URL: serverUrl });
+    const launched = await launch({ MATEBOT_WEB_URL: serverUrl });
     app = launched;
     const appWindow = await launched.firstWindow();
     await expect(appWindow.getByText(APP_MARKER)).toBeVisible();
@@ -827,7 +827,7 @@ for (const failure of ["load", "save"] as const) {
     try {
       const setupPromise = app.waitForEvent("window");
       await app.evaluate(({ Menu }) => {
-        const item = Menu.getApplicationMenu()?.getMenuItemById("change-rakazo-server");
+        const item = Menu.getApplicationMenu()?.getMenuItemById("change-matebot-server");
         if (!item) throw new Error("Change server menu item is missing");
         item.click();
       });

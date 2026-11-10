@@ -25,9 +25,9 @@ Pass all fixture values at invocation time so credentials never land in source c
 
 ```sh
 pnpm --filter @matebot/mobile test:e2e -- \
-  -e RAKAZO_E2E_EMAIL=mobile-smoke@example.test \
-  -e RAKAZO_E2E_PASSWORD='replace-with-the-disposable-password' \
-  -e RAKAZO_E2E_MESSAGE=mobile-smoke-message
+  -e MATEBOT_E2E_EMAIL=mobile-smoke@example.test \
+  -e MATEBOT_E2E_PASSWORD='replace-with-the-disposable-password' \
+  -e MATEBOT_E2E_MESSAGE=mobile-smoke-message
 ```
 
 `clearState` resets the app's local session and endpoint data; it does not delete server-side bots.

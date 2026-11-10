@@ -27,7 +27,7 @@ vi.mock("expo-localization", () => ({ getLocales: () => [{ languageTag: "en-US" 
 vi.mock("./ai-consent", () => ({ promptAiConsent: vi.fn() }));
 vi.mock("expo-file-system", () => ({
   File: class {
-    uri = "file:///cache/rakazo-voice.mp3";
+    uri = "file:///cache/matebot-voice.mp3";
     create() {}
     write() {}
     delete() {}
@@ -93,7 +93,7 @@ describe("mobile speech", () => {
       apiBase: "https://support.example",
       headers: {
         authorization: "Bearer support-token",
-        "x-rakazo-space-id": "space-support",
+        "x-matebot-space-id": "space-support",
       },
     });
     vi.mocked(rpc).mockImplementation(async (proc) => {
@@ -121,7 +121,7 @@ describe("mobile speech", () => {
       apiBase: "https://support.example",
       headers: {
         authorization: "Bearer support-token",
-        "x-rakazo-space-id": "space-support",
+        "x-matebot-space-id": "space-support",
       },
     };
     expect(rpc).toHaveBeenCalledWith(
@@ -231,7 +231,7 @@ describe("hosted voice playback controls", () => {
     );
     vi.mocked(captureApiRequestContext).mockResolvedValue({
       apiBase: "https://support.example",
-      headers: { authorization: "Bearer support-token", "x-rakazo-space-id": "space-support" },
+      headers: { authorization: "Bearer support-token", "x-matebot-space-id": "space-support" },
     });
     vi.mocked(rpc).mockImplementation(async (proc) => {
       if (proc === "aiConsent/status") return { version: "2026-09-14", recipients: [] } as never;

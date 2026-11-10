@@ -82,7 +82,7 @@ export function cuaDriverConnector(options: {
       },
       stderr: "ignore",
     });
-    const client = new Client({ name: "rakazo", version: "1" });
+    const client = new Client({ name: "matebot", version: "1" });
     await client.connect(transport);
     return {
       async call(name, args, signal) {

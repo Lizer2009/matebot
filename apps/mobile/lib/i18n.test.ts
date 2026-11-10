@@ -257,7 +257,7 @@ describe("mobile i18n", () => {
     await setUiLocale("en");
     expect(getActiveUiLocale()).toBe("en");
     expect(t("Language")).toBe("Language");
-    expect(setItemAsync).toHaveBeenCalledWith("rakazo.uiLocale", "en");
+    expect(setItemAsync).toHaveBeenCalledWith("matebot.uiLocale", "en");
     expect(applyMobileUiDirection).toHaveBeenCalledWith("en");
   });
 
@@ -309,7 +309,7 @@ describe("mobile i18n", () => {
     await Promise.all([first, second]);
 
     expect(getActiveUiLocale()).toBe("zh-CN");
-    expect(setItemAsync).toHaveBeenLastCalledWith("rakazo.uiLocale", "zh-CN");
+    expect(setItemAsync).toHaveBeenLastCalledWith("matebot.uiLocale", "zh-CN");
     expect(applyMobileUiDirection).toHaveBeenLastCalledWith("zh-CN");
   });
 });
@@ -322,7 +322,7 @@ it("restores Traditional Chinese after saving the language choice", async () => 
   );
   const { ZH_TW_MESSAGES } = await import("./locales/zh-TW");
   await setUiLocale("zh-TW");
-  expect(setItemAsync).toHaveBeenLastCalledWith("rakazo.uiLocale", "zh-TW");
+  expect(setItemAsync).toHaveBeenLastCalledWith("matebot.uiLocale", "zh-TW");
   resetI18nForTests();
   vi.mocked(getItemAsync).mockResolvedValue("zh-TW");
   await expect(bootstrapI18n()).resolves.toBe("zh-TW");

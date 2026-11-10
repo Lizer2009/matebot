@@ -108,8 +108,8 @@ export function hasComputerIdentity(
   botId: string,
   spaceId: string,
 ) {
-  const labeledSpaceId = labels?.["rakazo.spaceId"] ?? labels?.["rakazo.workspaceId"];
-  return labels?.["rakazo.botId"] === botId && labeledSpaceId === spaceId;
+  const labeledSpaceId = labels?.["matebot.spaceId"] ?? labels?.["matebot.workspaceId"];
+  return labels?.["matebot.botId"] === botId && labeledSpaceId === spaceId;
 }
 
 export function hasValidBearerToken(authorization: string | undefined, expectedToken: string) {
@@ -530,8 +530,8 @@ export function containerActionStep(
     argv = [
       "env",
       `DISPLAY=${display}`,
-      ...(browserProfile ? [`RAKAZO_BROWSER_PROFILE=${browserProfile}`] : []),
-      isHttpUrl ? "xdg-open" : "rakazo-browser",
+      ...(browserProfile ? [`MATEBOT_BROWSER_PROFILE=${browserProfile}`] : []),
+      isHttpUrl ? "xdg-open" : "matebot-browser",
       target,
     ];
   } else {
@@ -539,11 +539,11 @@ export function containerActionStep(
     argv = [
       "env",
       `DISPLAY=${display}`,
-      ...(browser && browserProfile ? [`RAKAZO_BROWSER_PROFILE=${browserProfile}`] : []),
+      ...(browser && browserProfile ? [`MATEBOT_BROWSER_PROFILE=${browserProfile}`] : []),
       // focus routes through the image wrapper, which raises a matching window
       // by WM_CLASS or execs the allowlisted launcher to spawn one.
-      ...(action.kind === "focus" ? ["rakazo-focus-or-launch"] : []),
-      browser ? "rakazo-browser" : action.application,
+      ...(action.kind === "focus" ? ["matebot-focus-or-launch"] : []),
+      browser ? "matebot-browser" : action.application,
       ...(action.uri ? [action.uri] : []),
     ];
   }
@@ -551,7 +551,7 @@ export function containerActionStep(
 }
 
 /** Image label of computers whose control service takes aimed and sideways scrolls. */
-export const AIMED_SCROLL_CONTROL_LABEL = "rakazo.control.aimedScroll";
+export const AIMED_SCROLL_CONTROL_LABEL = "matebot.control.aimedScroll";
 
 /**
  * Whether a computer's control service can run these actions. One built before aimed and
@@ -590,7 +590,7 @@ export function normalizeWorkspaceRelative(value: string) {
 }
 
 export function workspaceTarget(relative: string) {
-  return relative ? path.posix.join("/home/rakazo", relative) : "/home/rakazo";
+  return relative ? path.posix.join("/home/matebot", relative) : "/home/matebot";
 }
 
 export function sandboxTimeoutCommand(argv: string[], timeoutMs: number, completionMarker: string) {
@@ -766,9 +766,9 @@ export function demuxDockerStream(buffer: Buffer): { stdout: string; stderr: str
 export function computerCommandEnv(layout: { display: string }) {
   return [
     `DISPLAY=${layout.display}`,
-    "HOME=/home/rakazo",
-    "PATH=/home/rakazo/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-    "NPM_CONFIG_PREFIX=/home/rakazo/.local",
+    "HOME=/home/matebot",
+    "PATH=/home/matebot/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "NPM_CONFIG_PREFIX=/home/matebot/.local",
     "PIP_USER=1",
   ];
 }
@@ -813,6 +813,6 @@ export function isManagedComputer(
   image: string,
 ) {
   const labels = info.Config.Labels ?? {};
-  const managed = labels["rakazo.managed"] === "true" || info.Config.Image === image;
+  const managed = labels["matebot.managed"] === "true" || info.Config.Image === image;
   return managed && hasComputerIdentity(labels, botId, spaceId);
 }

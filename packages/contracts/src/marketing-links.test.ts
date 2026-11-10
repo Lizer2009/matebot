@@ -8,7 +8,7 @@ import { integrationPagePath, onMarketingSite, SUBMIT_PLUGIN_PATH } from "./doma
  * A shipped APK carried `https://rakazo.com/privacy/` on its paywall and opened
  * `https://rakazo.com/plugins/submit/` in the phone's browser, because the host was a constant
  * in this package. The host belongs to the deployment, so these are paths and the caller
- * supplies the origin — the same `RAKAZO_MARKETING_URL` the marketing site itself builds from.
+ * supplies the origin — the same `MATEBOT_MARKETING_URL` the marketing site itself builds from.
  */
 describe("product links are paths, not hosts", () => {
   it("exposes a path for each page that lives on the marketing site", () => {
@@ -37,7 +37,7 @@ describe("product links are paths, not hosts", () => {
       onMarketingSite("https://test.matebot.dev", integrationPagePath("acme")),
     ];
     for (const url of built) {
-      expect(url).not.toContain("rakazo.com");
+      expect(url).not.toContain("matebot.com");
       expect(url.startsWith("https://")).toBe(true);
     }
   });

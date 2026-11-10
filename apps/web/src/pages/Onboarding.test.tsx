@@ -96,7 +96,7 @@ it("marks onboarding as usable for the desktop only once a step shows", async ()
       </MemoryRouter>,
     ),
   );
-  const marked = () => host.querySelector('[data-rakazo-surface="onboarding"]');
+  const marked = () => host.querySelector('[data-matebot-surface="onboarding"]');
   expect(marked()).toBeNull();
 
   await act(async () =>

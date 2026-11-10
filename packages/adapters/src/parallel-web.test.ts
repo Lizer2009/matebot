@@ -277,7 +277,7 @@ describe("optional Parallel web provider", () => {
     try {
       vi.stubEnv("NODE_ENV", "production");
       vi.stubEnv("VITEST", "");
-      vi.stubEnv("RAKAZO_ALLOW_DEV_SECRETS", "");
+      vi.stubEnv("MATEBOT_ALLOW_DEV_SECRETS", "");
       vi.stubEnv("BETTER_AUTH_SECRET", "");
       vi.stubEnv("ENCRYPTION_KEY", "a".repeat(64));
       await createWebProvider("parallel", peer.network).search({ query: "question" }, context);

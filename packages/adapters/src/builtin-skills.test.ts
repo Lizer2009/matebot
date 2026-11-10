@@ -20,6 +20,7 @@ describe("product help skill", () => {
     expect(skill.description.startsWith(`How to use or set up ${PRODUCT_DISPLAY_NAME}:`)).toBe(
       true,
     );
+    // It names this product, and never the product it was forked from.
     expect(skill.description).not.toContain("Rakazo");
   });
 

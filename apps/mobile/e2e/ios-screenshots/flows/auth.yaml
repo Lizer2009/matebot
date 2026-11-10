@@ -21,7 +21,7 @@ name: Auth
     timeout: 3000
 - takeScreenshot: 02-sign-in
 - tapOn: "Email"
-- inputText: ${RAKAZO_SCREENSHOT_EMAIL}
+- inputText: ${MATEBOT_SCREENSHOT_EMAIL}
 - tapOn: "Password"
 - inputText: "wrong-password"
 - hideKeyboard

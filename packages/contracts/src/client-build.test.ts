@@ -44,7 +44,7 @@ describe("client builds", () => {
       web: "20261022093015",
       mobile: "20261001000000",
     });
-    expect(() => parseMinimumClientBuilds("20261022093015")).toThrow(/RAKAZO_MIN_CLIENT_BUILD/);
+    expect(() => parseMinimumClientBuilds("20261022093015")).toThrow(/MATEBOT_MIN_CLIENT_BUILD/);
     expect(() => parseMinimumClientBuilds("desktop=20261022093015")).toThrow();
     expect(() => parseMinimumClientBuilds("web=2026-10-22")).toThrow();
   });

@@ -127,7 +127,7 @@ describe("screen driver download", () => {
   let archive: Buffer;
   let release: ScreenDriverRelease;
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), "rakazo-screen-driver-"));
+    dir = await mkdtemp(path.join(tmpdir(), "matebot-screen-driver-"));
     const source = path.join(dir, "source");
     await mkdir(source);
     await writeFile(path.join(source, "cua-driver"), "#!/bin/sh\n", { mode: 0o755 });

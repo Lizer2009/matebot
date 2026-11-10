@@ -1,5 +1,5 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
-import type { RakazoDesktopSpeechEvent } from "@matebot/contracts";
+import type { MatebotDesktopSpeechEvent } from "@matebot/contracts";
 import { secureHttpOrigin } from "@matebot/contracts/network-host";
 import type { IpcMainInvokeEvent, WebContents } from "electron";
 import type { AppTarget } from "./app-frame.js";
@@ -70,7 +70,7 @@ export function createSystemSpeech(
         return false;
       if (active) close(active);
       const sender = event.sender;
-      const send = (message: RakazoDesktopSpeechEvent) => {
+      const send = (message: MatebotDesktopSpeechEvent) => {
         if (!ended && !sender.isDestroyed()) sender.send(SPEECH_EVENT_CHANNEL, message);
       };
       let ended = false;

@@ -14,7 +14,7 @@ and use the mouse and keyboard there, and you can watch or take over the screen 
 | The desktop's MCP gateway | Runs commands, reads and writes files, takes screenshots, sends mouse and keyboard input |
 | Wuying Web SDK | Draws the live screen in the computer panel, served by Matebot at `/computer-screen/screen.html` |
 
-Each bot computer's home is a folder on the desktop, `%USERPROFILE%\rakazo\<home>`. The desktop's
+Each bot computer's home is a folder on the desktop, `%USERPROFILE%\matebot\<home>`. The desktop's
 own disk keeps it. Computers share the desktop, so Matebot powers it off only when the last
 computer using it stops, and starts it again when one needs it.
 Deleting a computer removes only its home folder, never the desktop.
@@ -40,7 +40,7 @@ You need:
 
 Admins can switch new computers to Wuying without editing the environment.
 
-1. Make yourself an admin: add your account's email to `RAKAZO_ADMIN_EMAILS` in `.env` and
+1. Make yourself an admin: add your account's email to `MATEBOT_ADMIN_EMAILS` in `.env` and
    restart the API. The email must be verified.
 2. Open **Settings → Computer**.
 3. Under **New computers run on**, choose **Wuying**.
@@ -114,7 +114,7 @@ For an existing Caddy installation, replace the old `/wuying/sdk/ASP/container.h
 `/computer-screen/sdk/ASP/container.html` in its active Caddyfile and reload Caddy as part of the
 upgrade. Use the supplied configs as the reference, including for a custom Cloudflare config.
 The updater recreates API, worker and web by default, so it does not reload Caddy automatically;
-include `caddy` in `RAKAZO_UPDATE_SERVICES` or recreate it explicitly with the updated configuration.
+include `caddy` in `MATEBOT_UPDATE_SERVICES` or recreate it explicitly with the updated configuration.
 An unchanged Caddy matcher would add X-Frame-Options to the new runtime and block its opaque frame.
 
 ## Limits
@@ -133,7 +133,7 @@ An unchanged Caddy matcher would add X-Frame-Options to the new runtime and bloc
   **Retry screen**.
 - **Gateway call limits.** Each call is capped at one minute, 16 KiB of command output and 1,000
   folder entries. Commands allowed longer than 50 seconds run detached, with output in
-  `%USERPROFILE%\rakazo\.runs` read back every second, so they still stream.
+  `%USERPROFILE%\matebot\.runs` read back every second, so they still stream.
 - **Keys.** Single keys go through the gateway. Chords such as Ctrl+A go through Windows
   SendKeys from a windowless script, about a second each. Windows-key chords are not available.
 - **No snapshots** and no horizontal scrolling.
@@ -146,4 +146,4 @@ An unchanged Caddy matcher would add X-Frame-Options to the new runtime and bloc
 | Screen connects, then drops | Another viewer took the session; close the other panel or the Wuying client |
 | `Could not reach the Wuying desktop` on Save | Check the AccessKey's permissions, the region and the desktop ID; a running desktop's gateway must answer |
 | Chinese output is garbled | The command did not run through PowerShell; Matebot switches PowerShell output to UTF-8, other shells keep the system code page |
-| Settings has no Computer provider choice | Your account is not an admin; check `RAKAZO_ADMIN_EMAILS` and that the email is verified |
+| Settings has no Computer provider choice | Your account is not an admin; check `MATEBOT_ADMIN_EMAILS` and that the email is verified |

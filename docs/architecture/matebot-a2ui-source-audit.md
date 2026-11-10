@@ -272,7 +272,7 @@ A2UI 字段变更/确认应新增 **同类 oRPC 过程**（或扩展 `threads.an
 | 包 | `packages/page-kit`（`@matebot/page-kit`） |
 | 组件白名单 | `packages/page-kit/src/components.ts` → `PAGE_KIT_COMPONENTS` |
 | 校验/编译 | `validate.ts` / `compile.ts`（Sucrase JSX → CJS） |
-| 运行时 | `runtime.tsx`（沙箱 mount；`RakazoPage.mount`；CSP 内联脚本工厂） |
+| 运行时 | `runtime.tsx`（沙箱 mount；`MatebotPage.mount`；CSP 内联脚本工厂） |
 | 持久化 | Prisma `Page` / `PageVersion`（`source` + 预编译 `code`） |
 | 消息嵌入 | `MessageBlock` `kind: "page"`；Web `PageBlockCard` |
 

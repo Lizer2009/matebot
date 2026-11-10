@@ -4,43 +4,43 @@ name: Files
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
-      RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_EMAIL}
-- openLink: "matebot:///artifact?artifactId=${RAKAZO_SCREENSHOT_ARTIFACT_ID}"
+      MATEBOT_ACTIVE_EMAIL: ${MATEBOT_SCREENSHOT_EMAIL}
+- openLink: "matebot:///artifact?artifactId=${MATEBOT_SCREENSHOT_ARTIFACT_ID}"
 - extendedWaitUntil:
     visible: ".*Collect three customer quotes.*"
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 01-text
-- openLink: "matebot:///artifact?artifactId=${RAKAZO_SCREENSHOT_MARKDOWN_ID}"
+- openLink: "matebot:///artifact?artifactId=${MATEBOT_SCREENSHOT_MARKDOWN_ID}"
 - extendedWaitUntil:
     visible: ".*Collect customer quotes.*"
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 02-markdown
-- openLink: "matebot:///artifact?artifactId=${RAKAZO_SCREENSHOT_PDF_ID}"
+- openLink: "matebot:///artifact?artifactId=${MATEBOT_SCREENSHOT_PDF_ID}"
 - extendedWaitUntil:
     visible: ".*launch-brief.pdf.*"
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 03-pdf
-- openLink: "matebot:///artifact?artifactId=${RAKAZO_SCREENSHOT_ARCHIVE_ID}"
+- openLink: "matebot:///artifact?artifactId=${MATEBOT_SCREENSHOT_ARCHIVE_ID}"
 - extendedWaitUntil:
     visible: ".*No preview.*"
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 04-no-preview
-- openLink: "matebot:///image?artifactId=${RAKAZO_SCREENSHOT_IMAGE_ID}&name=launch-chart.png&mimeType=image%2Fpng&botId=${RAKAZO_SCREENSHOT_BOT_ID}"
+- openLink: "matebot:///image?artifactId=${MATEBOT_SCREENSHOT_IMAGE_ID}&name=launch-chart.png&mimeType=image%2Fpng&botId=${MATEBOT_SCREENSHOT_BOT_ID}"
 - extendedWaitUntil:
     visible: ".*launch-chart.*"
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 05-image
-- openLink: "matebot:///artifact?artifactId=${RAKAZO_SCREENSHOT_VIDEO_ID}"
+- openLink: "matebot:///artifact?artifactId=${MATEBOT_SCREENSHOT_VIDEO_ID}"
 - extendedWaitUntil:
     visible: ".*launch-demo.mp4.*"
     timeout: 20000

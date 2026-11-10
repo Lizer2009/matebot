@@ -563,7 +563,7 @@ export const MessageView = memo(function MessageView({
                             complete: (input) =>
                               rpc.connections.complete(input, { signal: controller.signal }),
                             openUrl: (url) => {
-                              window.open(url, "rakazo-app-connect", "popup,width=560,height=720");
+                              window.open(url, "matebot-app-connect", "popup,width=560,height=720");
                             },
                             signal: controller.signal,
                           });

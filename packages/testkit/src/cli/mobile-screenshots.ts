@@ -31,7 +31,7 @@ const HOST_API_URL = `http://127.0.0.1:${API_PORT}`;
 const DEVICE_CONTROL_URL = `http://127.0.0.1:${DEVICE_CONTROL_PORT}`;
 const EXPAND_NOTIFICATIONS_URL = `${DEVICE_CONTROL_URL}/expand-notifications`;
 /** Files the native-features flow picks through the system photo and document pickers. */
-const PICKER_FILES = { image: "rakazo-fixture.png", pdf: "rakazo-fixture.pdf" };
+const PICKER_FILES = { image: "matebot-fixture.png", pdf: "matebot-fixture.pdf" };
 const WEB_ORIGIN = "http://127.0.0.1:5180";
 /** Flows to run, in order. A flow with a window runs on the emulator resized to it. */
 const FLOWS: { name: string; window?: { size: string; density: string } }[] = [
@@ -173,23 +173,23 @@ async function runFlow(flow: string, fixture: Awaited<ReturnType<typeof seedFixt
       "--output",
       path.join(REPORT_DIR, `${flow}.html`),
       "-e",
-      `RAKAZO_MOBILE_API_URL=http://10.0.2.2:${API_PORT}`,
+      `MATEBOT_MOBILE_API_URL=http://10.0.2.2:${API_PORT}`,
       "-e",
-      `RAKAZO_SCREENSHOT_EMAIL=${EMAIL}`,
+      `MATEBOT_SCREENSHOT_EMAIL=${EMAIL}`,
       "-e",
-      `RAKAZO_SCREENSHOT_PASSWORD=${PASSWORD}`,
+      `MATEBOT_SCREENSHOT_PASSWORD=${PASSWORD}`,
       "-e",
-      `RAKAZO_SCREENSHOT_BOT_ID=${fixture.botId}`,
+      `MATEBOT_SCREENSHOT_BOT_ID=${fixture.botId}`,
       "-e",
-      `RAKAZO_SCREENSHOT_GROUP_ID=${fixture.groupId}`,
+      `MATEBOT_SCREENSHOT_GROUP_ID=${fixture.groupId}`,
       "-e",
-      `RAKAZO_SCREENSHOT_ROUTINE_ID=${fixture.routineId}`,
+      `MATEBOT_SCREENSHOT_ROUTINE_ID=${fixture.routineId}`,
       "-e",
-      "RAKAZO_NOTIFICATION_VIDEO=notification-demo",
+      "MATEBOT_NOTIFICATION_VIDEO=notification-demo",
       "-e",
-      `RAKAZO_EXPAND_NOTIFICATIONS_URL=${EXPAND_NOTIFICATIONS_URL}`,
+      `MATEBOT_EXPAND_NOTIFICATIONS_URL=${EXPAND_NOTIFICATIONS_URL}`,
       "-e",
-      `RAKAZO_DEVICE_CONTROL_URL=${DEVICE_CONTROL_URL}`,
+      `MATEBOT_DEVICE_CONTROL_URL=${DEVICE_CONTROL_URL}`,
       path.join(FLOW_DIR, `${flow}.yaml`),
     ],
     process.env,

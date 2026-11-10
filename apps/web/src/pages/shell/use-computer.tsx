@@ -153,19 +153,19 @@ export function useComputerState({
       if (!message) return;
       if (screenFrameStarted(message)) screenFrameReported.current = true;
       const wuying = Boolean(screenUrl?.startsWith("wuying:"));
-      if (wuying && message.rakazoScreen === "connected") {
+      if (wuying && message.matebotScreen === "connected") {
         // The SDK can rejoin by itself, and a fresh read would sign that session out again.
         clearTimeout(reconnect);
         liveWuyingUrl.current = screenUrl;
       }
       if (
-        message.rakazoScreen === "connected" &&
+        message.matebotScreen === "connected" &&
         screenRefocus.current.connected(document.activeElement, screenFrame, document.body)
       ) {
         screenFrame.focus();
-        screenFrame.contentWindow?.postMessage({ rakazoScreenFocus: true }, "*");
+        screenFrame.contentWindow?.postMessage({ matebotScreenFocus: true }, "*");
       }
-      const ended = message.rakazoScreen === "failed" || message.rakazoScreen === "disconnected";
+      const ended = message.matebotScreen === "failed" || message.matebotScreen === "disconnected";
       if (wuying && ended) {
         // A Wuying login code works once, so a dropped session, such as one another viewer took
         // over, comes back only through a fresh read; remounting would replay the spent code.
@@ -173,7 +173,7 @@ export function useComputerState({
         liveWuyingUrl.current = null;
         if (
           document.visibilityState === "visible" &&
-          screenReconnect().report(message.rakazoScreen) === "reconnect"
+          screenReconnect().report(message.matebotScreen) === "reconnect"
         ) {
           screenRefocus.current.dropped(document.activeElement === screenFrame);
           const botId = computerBotIdRef.current;
@@ -187,7 +187,7 @@ export function useComputerState({
         setScreenLoadError(screenFrameError(message, fallback));
         return;
       }
-      if (screenReconnect().report(message.rakazoScreen) === "reconnect") {
+      if (screenReconnect().report(message.matebotScreen) === "reconnect") {
         screenRefocus.current.dropped(document.activeElement === screenFrame);
         clearTimeout(reconnect);
         const url = embeddableScreenUrl(screenUrl);

@@ -607,7 +607,7 @@ export default function Account() {
               }}
               options={[
                 { value: "organic", label: t("Original") },
-                { value: "rakazo", label: t("Matebot") },
+                { value: "matebot", label: t("Matebot") },
               ]}
               value={me.botAvatarSet}
             />

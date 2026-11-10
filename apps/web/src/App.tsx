@@ -176,14 +176,14 @@ function SessionApp() {
     return <SessionUnavailable refetch={session.refetch} />;
   }
   if (gate === "loading" && !nextHoldingAnonymous) {
-    return <PageLoading data-rakazo-app-state="session-pending" />;
+    return <PageLoading data-matebot-app-state="session-pending" />;
   }
 
   const user = session.data?.user;
   return (
     <QueryUserProvider value={user?.id ?? null}>
       <MarkdownLinkPrompt>
-        <div className="h-full" data-rakazo-app-state="ready">
+        <div className="h-full" data-matebot-app-state="ready">
           <Suspense fallback={<PageLoading />}>
             <Routes>
               <Route
@@ -359,7 +359,7 @@ function AppFailed() {
   return (
     <div
       className="grid h-full place-items-center bg-background px-6 text-center"
-      data-rakazo-app-state="failed"
+      data-matebot-app-state="failed"
     >
       <div className="flex flex-col items-center">
         <p className="text-[13.5px] text-muted-foreground/80">

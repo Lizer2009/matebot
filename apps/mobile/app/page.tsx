@@ -80,7 +80,7 @@ export default function PageScreen() {
     (data: string, answer: (message: object) => void) => {
       if (!pageActionAllowed(tappedAt.current, Date.now())) return;
       const message = pageMessage(data) as { type?: unknown; text?: unknown } | null;
-      const reply = message?.type === "rakazo-page:reply" ? pageReplyText(message.text) : null;
+      const reply = message?.type === "matebot-page:reply" ? pageReplyText(message.text) : null;
       const page = loaded.status === "ready" ? loaded.page : null;
       const chat = reply && page ? pageChat(page) : null;
       const url = pageLinkRequest(message);

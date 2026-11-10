@@ -582,7 +582,7 @@ function renderGalleryPage(input: GalleryInput): string {
   <script>
     const gallery = document.querySelector(".gallery");
     const viewOptions = Array.from(document.querySelectorAll(".view-option"));
-    const storageKey = "rakazo-playwright-gallery-columns";
+    const storageKey = "matebot-playwright-gallery-columns";
 
     function setGalleryColumns(value, persist = false) {
       if (!gallery || !["1", "2", "3", "4"].includes(value)) return;

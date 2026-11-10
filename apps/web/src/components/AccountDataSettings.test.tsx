@@ -136,7 +136,7 @@ it("uploads the chosen archive and refreshes spaces", async () => {
   );
   const onImported = vi.fn(async () => undefined);
   await render(onImported);
-  const file = new File(["zip"], "rakazo-export.zip", { type: "application/zip" });
+  const file = new File(["zip"], "matebot-export.zip", { type: "application/zip" });
 
   await chooseFile(file);
 
@@ -161,7 +161,7 @@ it("shows the server's message when the import is rejected", async () => {
   const onImported = vi.fn(async () => undefined);
   await render(onImported);
 
-  await chooseFile(new File(["zip"], "rakazo-export.zip"));
+  await chooseFile(new File(["zip"], "matebot-export.zip"));
 
   expect(container.querySelector('[role="alert"]')?.textContent).toBe(
     "This archive is from a newer version.",

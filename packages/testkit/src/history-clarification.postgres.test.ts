@@ -45,7 +45,7 @@ describe.skipIf(!enabled)("product history clarification eval boundary", () => {
           },
         ],
       });
-      const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-clarification-"));
+      const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-clarification-"));
       try {
         const { createApp } = await import("@matebot/api/app");
         const result = await runTrial(scenario, 1, {

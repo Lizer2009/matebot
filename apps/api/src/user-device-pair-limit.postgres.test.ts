@@ -20,7 +20,7 @@ describe.skipIf(!databaseUrl)("pairing holds the per-user device limit under rac
   let account = 0;
 
   beforeAll(async () => {
-    dataDir = await mkdtemp(join(tmpdir(), "rakazo-device-pair-limit-"));
+    dataDir = await mkdtemp(join(tmpdir(), "matebot-device-pair-limit-"));
     handles = await createApp({
       databaseUrl: databaseUrl!,
       dataDir,

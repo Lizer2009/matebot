@@ -41,12 +41,12 @@ Setup:
 1. Create the directory if needed and enter it.
 2. Download and inspect this installer (do not clone the repository):
    https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose/install-images.sh
-   If that host is unreachable, use a mirror URL (e.g. set `RAKAZO_INSTALLER_URL` to
-   `https://example.com/mirror/rakazo/infra/compose/install-images.sh` and curl that instead).
+   If that host is unreachable, use a mirror URL (e.g. set `MATEBOT_INSTALLER_URL` to
+   `https://example.com/mirror/matebot/infra/compose/install-images.sh` and curl that instead).
 3. Run `bash install-images.sh --prepare-only`. It downloads the Compose and environment example
    files, then creates `.env` with all required random secrets when one does not already exist.
-   Optional: set `RAKAZO_DOWNLOAD_BASE` to a generic mirror of `infra/compose`, and/or use
-   `--local` / `RAKAZO_DOWNLOAD_SKIP_EXISTING=1` when Compose files are already present locally.
+   Optional: set `MATEBOT_DOWNLOAD_BASE` to a generic mirror of `infra/compose`, and/or use
+   `--local` / `MATEBOT_DOWNLOAD_SKIP_EXISTING=1` when Compose files are already present locally.
    See docs/self-host.md (Restricted networks / mirror downloads).
 4. Preserve existing values. Keep `SANDBOX_PROVIDER=docker` unless I chose a remote computer
    provider, and add only the provider or model keys I selected.
@@ -86,7 +86,7 @@ Safety rules:
 
 Before making changes, ask me these concise questions:
 
-1. Should you clone into the current directory, or what parent directory should contain `rakazo`? If you are already inside a Matebot checkout, offer to use it without recloning.
+1. Should you clone into the current directory, or what parent directory should contain `matebot`? If you are already inside a Matebot checkout, offer to use it without recloning.
 2. How should models be connected?
    - Add a deployment-wide `OPENROUTER_API_KEY` to `.env`.
    - Connect during Matebot onboarding with a provider API key or with ChatGPT Plus/Pro, GitHub Copilot, or SuperGrok / X Premium.
@@ -103,13 +103,13 @@ Preflight:
 - Use a Node.js version supported by `engines.node` and the pnpm version declared in `packageManager` in the root `package.json`. Prefer Corepack; if unavailable, use `npx --yes pnpm@<declared-version>` instead of globally installing a different version. Use that same executable for every later `pnpm` command, including verification and restart commands. Show the effective versions.
 - Verify the Docker daemon is running.
 - Check whether `127.0.0.1` ports 5433 (only if using the optional postgres-host overlay), 3100, 5173, and 7091 are available. Resolve conflicts without touching unrelated workloads.
-- Ensure `.env` sets non-empty `POSTGRES_PASSWORD` (owner, migrations) and `POSTGRES_APP_PASSWORD` (the app's `rakazo_app` login). When using the optional postgres-host overlay (or any host-side database URL), `DATABASE_MIGRATION_URL` must use `POSTGRES_PASSWORD` and `DATABASE_URL` must use `rakazo_app` with `POSTGRES_APP_PASSWORD`.
+- Ensure `.env` sets non-empty `POSTGRES_PASSWORD` (owner, migrations) and `POSTGRES_APP_PASSWORD` (the app's `matebot_app` login). When using the optional postgres-host overlay (or any host-side database URL), `DATABASE_MIGRATION_URL` must use `POSTGRES_PASSWORD` and `DATABASE_URL` must use `matebot_app` with `POSTGRES_APP_PASSWORD`.
 
 Setup:
 
 1. Clone the repository if needed and enter its root.
 2. Read `AGENTS.md`, `README.md`, `.env.example`, and the root `package.json` before acting. Follow repository instructions if they have changed since this prompt was written.
-3. If `.env` does not exist, copy `.env.example` to `.env`. In a new file, generate `POSTGRES_PASSWORD` and `POSTGRES_APP_PASSWORD` independently with `openssl rand -hex 16`, and put them into host-side `DATABASE_MIGRATION_URL` and `DATABASE_URL` respectively (replace the placeholder passwords). For an existing file without `POSTGRES_APP_PASSWORD`, generate it and point host-side `DATABASE_URL` at `rakazo_app` with it, and `DATABASE_MIGRATION_URL` at the owner; `pnpm db:migrate` creates that login. Also generate `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `SCREEN_PROXY_SECRET`, and `SANDBOX_SUPERVISOR_TOKEN` independently with `openssl rand -hex 32` (64 hex characters each). For an existing file, check those keys without printing values and generate only absent non-Postgres secrets. For `POSTGRES_PASSWORD` and host-side `DATABASE_MIGRATION_URL` (when present / when the postgres-host overlay will be used), compare the password parts without printing them and require one confirmed shared password written to both settings. First check whether the Compose `pgdata` volume already exists (for example `docker volume ls` for the project postgres volume). If `pgdata` is absent, generate one URI-safe password with `openssl rand -hex 16` and write it to both `POSTGRES_PASSWORD` and host-side `DATABASE_MIGRATION_URL`. If `pgdata` exists and either credential is missing or they disagree, ask which password that volume already uses and set both to that first-init value. Do not generate a new `POSTGRES_PASSWORD` when `pgdata` already exists unless I explicitly confirm in-place `ALTER ROLE` or a disposable `pgdata` recreate (backup first; `docker compose down -v` deletes all Postgres state); otherwise preserve the working credentials so `pnpm db:migrate` keeps authenticating. Preserve other existing values; if a required non-Postgres value is empty, ask before replacing it. Keep local defaults for Postgres user/db, origins, Pi, Docker, and Graphile unless the preflight found a conflict. Add only the model and managed-connector credentials I selected. Leave optional credentials blank.
+3. If `.env` does not exist, copy `.env.example` to `.env`. In a new file, generate `POSTGRES_PASSWORD` and `POSTGRES_APP_PASSWORD` independently with `openssl rand -hex 16`, and put them into host-side `DATABASE_MIGRATION_URL` and `DATABASE_URL` respectively (replace the placeholder passwords). For an existing file without `POSTGRES_APP_PASSWORD`, generate it and point host-side `DATABASE_URL` at `matebot_app` with it, and `DATABASE_MIGRATION_URL` at the owner; `pnpm db:migrate` creates that login. Also generate `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `SCREEN_PROXY_SECRET`, and `SANDBOX_SUPERVISOR_TOKEN` independently with `openssl rand -hex 32` (64 hex characters each). For an existing file, check those keys without printing values and generate only absent non-Postgres secrets. For `POSTGRES_PASSWORD` and host-side `DATABASE_MIGRATION_URL` (when present / when the postgres-host overlay will be used), compare the password parts without printing them and require one confirmed shared password written to both settings. First check whether the Compose `pgdata` volume already exists (for example `docker volume ls` for the project postgres volume). If `pgdata` is absent, generate one URI-safe password with `openssl rand -hex 16` and write it to both `POSTGRES_PASSWORD` and host-side `DATABASE_MIGRATION_URL`. If `pgdata` exists and either credential is missing or they disagree, ask which password that volume already uses and set both to that first-init value. Do not generate a new `POSTGRES_PASSWORD` when `pgdata` already exists unless I explicitly confirm in-place `ALTER ROLE` or a disposable `pgdata` recreate (backup first; `docker compose down -v` deletes all Postgres state); otherwise preserve the working credentials so `pnpm db:migrate` keeps authenticating. Preserve other existing values; if a required non-Postgres value is empty, ask before replacing it. Keep local defaults for Postgres user/db, origins, Pi, Docker, and Graphile unless the preflight found a conflict. Add only the model and managed-connector credentials I selected. Leave optional credentials blank.
 4. Confirm `.env` is ignored and that no secret-bearing file is staged.
 5. Start only local Postgres with the base Compose file (Postgres stays network-internal; no host publish):
 

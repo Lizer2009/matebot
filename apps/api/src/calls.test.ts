@@ -55,7 +55,7 @@ describe("voice catalog", () => {
   it.each([false, true])(
     "advertises self-hosted speech only with custom endpoint access (%s)",
     async (mcpAllowPrivateEndpoint) => {
-      vi.stubEnv("RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC", "0");
+      vi.stubEnv("MATEBOT_OPENAI_COMPAT_ALLOW_PUBLIC", "0");
       try {
         const client = createRouterClient(
           createRouter({ env: { mcpAllowPrivateEndpoint } } as unknown as RouterDeps),

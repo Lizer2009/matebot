@@ -40,7 +40,7 @@ Object.assign(process.env, {
   WAKEUP_DRIVER: "memory",
   SANDBOX_PROVIDER: "fake",
   AGENT_RUNTIME: "scripted",
-  RAKAZO_LIVE_MODEL_CATALOG: "off",
+  MATEBOT_LIVE_MODEL_CATALOG: "off",
   TICKET_BOARD_ENABLED: "true",
   PHONE_CALLS_ENABLED: "true",
   PAYMENT_WALLET_PROVIDER: "emulator",

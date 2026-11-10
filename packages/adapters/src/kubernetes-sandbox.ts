@@ -25,15 +25,15 @@ import { ExecComputer, COMPUTER_IMAGE_WORKSPACE as WORKSPACE } from "./exec-comp
 import { LinuxDesktop, onBotScreen } from "./linux-desktop.js";
 
 const DISPLAY_START = 20;
-const DEFAULT_NAMESPACE = "rakazo-sandboxes";
+const DEFAULT_NAMESPACE = "matebot-sandboxes";
 // Same default as the Compose stack. Pin a digest with KUBERNETES_SANDBOX_COMPUTER_IMAGE in
 // production so every pod runs the image the API was tested against.
-const DEFAULT_COMPUTER_IMAGE = "ghcr.io/elie222/rakazo/computer:edge";
+const DEFAULT_COMPUTER_IMAGE = "ghcr.io/lizer2009/matebot/computer:edge";
 const DEFAULT_READY_TIMEOUT_MS = 120_000;
 const CONTAINER_NAME = "computer";
 // Names the bot that owns a computer pod. A pod carrying another bot's value is
 // never reused or replaced.
-const BOT_ID_LABEL = "rakazo-bot-id";
+const BOT_ID_LABEL = "matebot-bot-id";
 const HOME_VOLUME = "home";
 const READY_PORT = 6080;
 const DESKTOP_PORT_START = 6100;
@@ -377,7 +377,7 @@ export class KubernetesSandboxProvider implements SandboxProvider {
         annotations: this.podAnnotations,
         labels: {
           ...this.podLabels,
-          "app.kubernetes.io/name": "rakazo-computer",
+          "app.kubernetes.io/name": "matebot-computer",
           [BOT_ID_LABEL]: botId,
         },
       },
@@ -655,7 +655,7 @@ function podNameForBot(botId: string): string {
     .replaceAll(/^-+|-+$/g, "")
     .slice(0, 40);
   const hash = createHash("sha256").update(botId).digest("hex").slice(0, 12);
-  return `rakazo-${normalized || "bot"}-${hash}`;
+  return `matebot-${normalized || "bot"}-${hash}`;
 }
 
 /** The data directory holds `homes/<bot id>`; a bot id must name exactly one folder. */

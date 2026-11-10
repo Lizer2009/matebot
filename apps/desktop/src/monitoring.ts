@@ -25,7 +25,7 @@ const owners = new Map<string, ReturnType<typeof ElectronSentry.makeElectronTran
 /** A local or agent build would otherwise file its errors as the production release's. */
 export function desktopReportsErrors(
   packaged: boolean,
-  release = process.env.RAKAZO_DESKTOP_RELEASE,
+  release = process.env.MATEBOT_DESKTOP_RELEASE,
 ): boolean {
   return packaged && release === "1";
 }
@@ -121,7 +121,7 @@ export function configureDesktopMonitoring(
       if (!sdk) {
         Sentry.init({
           dsn,
-          release: `rakazo-desktop@${options.version}`,
+          release: `matebot-desktop@${options.version}`,
           ipcMode: Sentry.IPCMode.Classic,
           getSessions: () => [],
           defaultIntegrations: false,

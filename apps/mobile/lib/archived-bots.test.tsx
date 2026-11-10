@@ -298,7 +298,7 @@ describe("archived chat read failures", () => {
       "bots/restore",
       { botId: bot.id },
       expect.objectContaining({
-        requestContext: expect.objectContaining({ headers: { "x-rakazo-space-id": bot.spaceId } }),
+        requestContext: expect.objectContaining({ headers: { "x-matebot-space-id": bot.spaceId } }),
       }),
     );
     expect(container.textContent).toBe("No archived chats");
@@ -361,7 +361,7 @@ describe("archived chat read failures", () => {
       { groupId: group.id },
       expect.objectContaining({
         requestContext: expect.objectContaining({
-          headers: { "x-rakazo-space-id": group.spaceId },
+          headers: { "x-matebot-space-id": group.spaceId },
         }),
       }),
     );

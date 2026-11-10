@@ -88,7 +88,7 @@ describe("offline fallback", () => {
   });
 
   it("names no upstream product host", () => {
-    expect(PRODUCT_DOCS_FALLBACK).not.toMatch(/rakazo/i);
+    expect(PRODUCT_DOCS_FALLBACK).not.toMatch(/matebot/i);
   });
 });
 
@@ -110,7 +110,7 @@ describe("documentOriginFromEnv without a process", () => {
 
 describe("documentOriginFromEnv", () => {
   it("uses the configured marketing origin", () => {
-    expect(documentOriginFromEnv({ RAKAZO_MARKETING_URL: "https://docs.example.test" })).toBe(
+    expect(documentOriginFromEnv({ MATEBOT_MARKETING_URL: "https://docs.example.test" })).toBe(
       "https://docs.example.test",
     );
   });
@@ -118,11 +118,12 @@ describe("documentOriginFromEnv", () => {
   it("falls back to the product's own origin when unset", () => {
     const origin = documentOriginFromEnv({});
     expect(origin).toMatch(/^https:\/\//);
-    expect(origin).not.toMatch(/rakazo/i);
+    // Unconfigured, the product's own site is the default.
+    expect(origin).toBe(DEFAULT_DOCUMENT_ORIGIN);
   });
 
   it("ignores a value that is not an http(s) origin", () => {
-    expect(documentOriginFromEnv({ RAKAZO_MARKETING_URL: "javascript:alert(1)" })).not.toMatch(
+    expect(documentOriginFromEnv({ MATEBOT_MARKETING_URL: "javascript:alert(1)" })).not.toMatch(
       /javascript:/,
     );
   });
@@ -130,13 +131,13 @@ describe("documentOriginFromEnv", () => {
 
 describe("whether a deployment named its own documentation origin", () => {
   it("is configured only for a real http(s) origin", () => {
-    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "https://docs.example.test" })).toBe(
+    expect(documentOriginConfigured({ MATEBOT_MARKETING_URL: "https://docs.example.test" })).toBe(
       true,
     );
-    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "http://localhost:3000" })).toBe(true);
+    expect(documentOriginConfigured({ MATEBOT_MARKETING_URL: "http://localhost:3000" })).toBe(true);
     expect(documentOriginConfigured({})).toBe(false);
-    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "" })).toBe(false);
-    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "javascript:alert(1)" })).toBe(false);
-    expect(documentOriginConfigured({ RAKAZO_MARKETING_URL: "not a url" })).toBe(false);
+    expect(documentOriginConfigured({ MATEBOT_MARKETING_URL: "" })).toBe(false);
+    expect(documentOriginConfigured({ MATEBOT_MARKETING_URL: "javascript:alert(1)" })).toBe(false);
+    expect(documentOriginConfigured({ MATEBOT_MARKETING_URL: "not a url" })).toBe(false);
   });
 });

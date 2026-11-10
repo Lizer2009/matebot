@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { OpenRouterUsageLookup, openRouterInferenceFetch } from "./openrouter-usage.js";
 
 describe("OpenRouter attribution and usage recovery", () => {
-  it("sends the normal user id and Rakazo attribution while preserving request controls", async () => {
+  it("sends the normal user id and Matebot attribution while preserving request controls", async () => {
     const fetcher = vi.fn<typeof fetch>(async () => new Response("ok"));
     const controller = new AbortController();
     await openRouterInferenceFetch(fetcher, "user_fixture")(

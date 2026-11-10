@@ -329,7 +329,7 @@ export function GeneralSettingsPanels({
                     <Trans>Original</Trans>
                   </ToggleGroupItem>
                   <ToggleGroupItem
-                    value="rakazo"
+                    value="matebot"
                     className="text-[13px] aria-pressed:bg-background aria-pressed:shadow-sm"
                   >
                     <Trans>Matebot</Trans>

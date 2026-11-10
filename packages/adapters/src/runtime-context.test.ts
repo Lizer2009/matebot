@@ -34,8 +34,8 @@ function fixture(count = 30) {
     role: "user",
     content: item.content,
     timestamp: 0,
-    rakazoHistory: true,
-    rakazoMessageId: item.id,
+    matebotHistory: true,
+    matebotMessageId: item.id,
   }));
   messages.push({ role: "user", content: request.prompt, timestamp: 100 });
   const context: Context = { systemPrompt: request.instructions, tools: [], messages };
@@ -622,8 +622,8 @@ describe("runtime context policy", () => {
     context.messages[11] = {
       role: "assistant",
       content: [{ type: "text", text: request.history[11]!.content }],
-      rakazoHistory: true,
-      rakazoMessageId: "message-11",
+      matebotHistory: true,
+      matebotMessageId: "message-11",
     } as unknown as Message;
     const prepared = createRuntimeContextPolicy({
       ...request,
@@ -641,7 +641,7 @@ describe("runtime context policy", () => {
       role: "user",
       content: `Assistant: ${request.history[3]!.content}`,
       timestamp: 0,
-      rakazoHistory: true,
+      matebotHistory: true,
     } as Message;
     const prepared = createRuntimeContextPolicy({
       ...request,
@@ -743,7 +743,7 @@ describe("runtime context policy", () => {
       role: "user",
       content: summary,
       timestamp: 0,
-      rakazoHistory: true,
+      matebotHistory: true,
     } as Message);
     const prepared = createRuntimeContextPolicy({
       ...request,
@@ -761,7 +761,7 @@ describe("runtime context policy", () => {
       role: "user",
       content: summary,
       timestamp: 0,
-      rakazoHistory: true,
+      matebotHistory: true,
     } as Message);
     context.messages.unshift(system);
     context.systemPrompt = undefined;

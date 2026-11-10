@@ -22,7 +22,7 @@ const key = "fake-reusable-api-key";
 describeIntegration("reusable credential lifecycle", () => {
   let handles: Awaited<ReturnType<typeof createApp>>;
   let db: Awaited<ReturnType<typeof createApp>>["prisma"];
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-secret-lifecycle-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-secret-lifecycle-"));
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const fetch = vi.fn<typeof globalThis.fetch>(async (_url, init) => {
     const auth = new Headers(init?.headers).get("Authorization");

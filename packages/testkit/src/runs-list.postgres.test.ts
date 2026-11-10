@@ -22,7 +22,7 @@ describeRunsList("runs.list activity tracker", () => {
   let prisma: PrismaClient;
   let stop: () => Promise<void>;
   const stamp = Date.now();
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-runs-list-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-runs-list-"));
 
   beforeAll(async () => {
     const { createApp } = await import("@matebot/api/app");

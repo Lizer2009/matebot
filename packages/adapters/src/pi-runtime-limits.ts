@@ -122,13 +122,13 @@ export function effectiveOutputReserve(contextWindow: number, maxTokens: number)
 
 /**
  * The output cap the operator chose for a model that has no per-connection field: the local
- * model server's own limit, when RAKAZO_LOCAL_MAX_TOKENS is set. Unset, and for other providers,
+ * model server's own limit, when MATEBOT_LOCAL_MAX_TOKENS is set. Unset, and for other providers,
  * the defaults apply.
  */
 export function operatorMaxTokens(
   model: Pick<Model<Api>, "provider" | "maxTokens">,
 ): number | undefined {
-  return model.provider === LOCAL_PROVIDER_ID && process.env.RAKAZO_LOCAL_MAX_TOKENS?.trim()
+  return model.provider === LOCAL_PROVIDER_ID && process.env.MATEBOT_LOCAL_MAX_TOKENS?.trim()
     ? model.maxTokens
     : undefined;
 }

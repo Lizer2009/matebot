@@ -500,22 +500,22 @@ describe("refusing a screen that wasn't let through", () => {
 describe("the status-only probe", () => {
   it("is recognised only by its exact mark, and checks the same screen URL without it", () => {
     expect(
-      screenProbePath("/novnc/session/view/1.t/vnc.html?autoconnect=true&rakazo_probe=1"),
+      screenProbePath("/novnc/session/view/1.t/vnc.html?autoconnect=true&matebot_probe=1"),
     ).toBe("/novnc/session/view/1.t/vnc.html?autoconnect=true");
-    expect(screenProbePath("/novnc/session/view/1.t/vnc.html?rakazo_probe=1")).toBe(
+    expect(screenProbePath("/novnc/session/view/1.t/vnc.html?matebot_probe=1")).toBe(
       "/novnc/session/view/1.t/vnc.html",
     );
     expect(screenProbePath("/novnc/session/view/1.t/vnc.html?autoconnect=true")).toBeNull();
-    expect(screenProbePath("/novnc/session/view/1.t/vnc.html?rakazo_probe=yes")).toBeNull();
+    expect(screenProbePath("/novnc/session/view/1.t/vnc.html?matebot_probe=yes")).toBeNull();
     expect(screenProbePath("/novnc/session/view/1.t/vnc.html?xrakazo_probe=1")).toBeNull();
     expect(screenProbePath(undefined)).toBeNull();
   });
 
   it("removes only the mark, leaving the rest of the URL exactly as sent", () => {
     expect(
-      screenProbePath("/novnc/session/view/1.t/vnc.html?path=a%2Fb&rakazo_probe=1&x=%20y"),
+      screenProbePath("/novnc/session/view/1.t/vnc.html?path=a%2Fb&matebot_probe=1&x=%20y"),
     ).toBe("/novnc/session/view/1.t/vnc.html?path=a%2Fb&x=%20y");
-    expect(screenProbePath("/novnc/session/view/1.t/vnc.html?rakazo_probe=1&a=b+c")).toBe(
+    expect(screenProbePath("/novnc/session/view/1.t/vnc.html?matebot_probe=1&a=b+c")).toBe(
       "/novnc/session/view/1.t/vnc.html?a=b+c",
     );
   });

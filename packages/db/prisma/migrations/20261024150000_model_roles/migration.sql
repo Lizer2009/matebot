@@ -18,7 +18,7 @@ CREATE POLICY space_model_role_choices_tenant ON "space_model_role_choices"
      AND "userId" = NULLIF(current_setting('app.user_id', true), ''));
 CREATE POLICY space_model_role_choices_system ON "space_model_role_choices"
   USING (current_setting('app.rls_bypass', true) = 'on');
-GRANT SELECT, INSERT, UPDATE, DELETE ON "space_model_role_choices" TO rakazo_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON "space_model_role_choices" TO matebot_app;
 
 -- The main model moves here from the default preference and space_backup_models, which
 -- this release keeps writing for the previous one. A default without a usable model id

@@ -35,7 +35,7 @@ describeWithDatabase("Composio catalog reconciliation", () => {
   let thirdParties: ThirdPartyConnectorEmulator;
   let connectionOrdinal = 0;
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-connections-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-connections-"));
 
   beforeAll(async () => {
     const { createApp } = await import("@matebot/api/app");

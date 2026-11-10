@@ -344,7 +344,7 @@ export class PiAgentRuntime implements AgentRuntime {
           restored
             ? (restored.historyMessageIds ??
                 history.flatMap((message) => {
-                  const id = (message as Message & { rakazoMessageId?: string }).rakazoMessageId;
+                  const id = (message as Message & { matebotMessageId?: string }).matebotMessageId;
                   return id ? [id] : [];
                 }))
             : [
@@ -1282,7 +1282,7 @@ function toPiImages(images: AgentRunRequest["currentTurnImages"]) {
  * Provider, api and model stamped on replayed own replies. None matches a real model, so Pi
  * replays them as plain text from another model: no signatures or reasoning, same on every provider.
  */
-const HISTORY_ASSISTANT = { api: "rakazo-history", provider: "rakazo-history", model: "history" };
+const HISTORY_ASSISTANT = { api: "matebot-history", provider: "matebot-history", model: "history" };
 const NO_USAGE = {
   input: 0,
   output: 0,
@@ -1295,9 +1295,9 @@ const NO_USAGE = {
 const CONVERSATION_START = "[Conversation start]";
 
 type HistoryMessage = Message & {
-  rakazoHistory: true;
-  rakazoMessageId?: string;
-  rakazoCreatedAt?: string;
+  matebotHistory: true;
+  matebotMessageId?: string;
+  matebotCreatedAt?: string;
 };
 
 /** What the model reads for a message by someone other than this bot or the human of a direct chat. */
@@ -1337,9 +1337,9 @@ function toHistory(
       const created = m.createdAt ? Date.parse(m.createdAt) : Number.NaN;
       const common = {
         timestamp: Number.isNaN(created) ? 0 : created,
-        rakazoHistory: true as const,
-        rakazoMessageId: m.id,
-        rakazoCreatedAt: m.createdAt,
+        matebotHistory: true as const,
+        matebotMessageId: m.id,
+        matebotCreatedAt: m.createdAt,
       };
       if (m.role === "assistant" && !m.speaker) {
         // A reply that holds only tool work has no text to replay.
@@ -1371,7 +1371,7 @@ function toHistory(
 function isHistoryReply(message: Message | undefined): boolean {
   return (
     message?.role === "assistant" &&
-    Boolean((message as Message & { rakazoHistory?: true }).rakazoHistory)
+    Boolean((message as Message & { matebotHistory?: true }).matebotHistory)
   );
 }
 

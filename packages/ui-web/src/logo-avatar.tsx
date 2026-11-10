@@ -64,7 +64,7 @@ export const LogoAvatar = memo(function LogoAvatar({
       viewBox={LOGO_AVATAR_VIEWBOX}
       width={size}
       height={size}
-      className={cn("rakazo-logo-avatar shrink-0", className)}
+      className={cn("matebot-logo-avatar shrink-0", className)}
       data-activity={activity}
       data-working={activity !== "idle" && activity !== "error"}
       data-vector-body="true"

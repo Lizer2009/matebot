@@ -278,7 +278,7 @@ describePostgres("account export (PostgreSQL)", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("application/zip");
     expect(response.headers.get("content-disposition")).toMatch(
-      /^attachment; filename="rakazo-export-\d{4}-\d{2}-\d{2}\.zip"$/,
+      /^attachment; filename="matebot-export-\d{4}-\d{2}-\d{2}\.zip"$/,
     );
     const entries = unzipSync(new Uint8Array(await response.arrayBuffer()));
     const decode = (path: string) => new TextDecoder().decode(entries[path]);
@@ -422,7 +422,7 @@ describePostgres("account export (PostgreSQL)", () => {
       );
     const archive = await download(exporter);
 
-    const root = await mkdtemp(path.join(tmpdir(), "rakazo-account-roundtrip-"));
+    const root = await mkdtemp(path.join(tmpdir(), "matebot-account-roundtrip-"));
     const noop = new Proxy({}, { get: () => async () => undefined });
     const actor: Actor = {
       userId: importer,

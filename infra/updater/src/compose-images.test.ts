@@ -67,10 +67,10 @@ describe("the images compose file", () => {
     // namespace, so someone installing from this repository fetched a different product.
     for (const service of appServices) {
       expect(compose.services[service]?.image).toContain("ghcr.io/lizer2009/matebot/app");
-      expect(compose.services[service]?.image).toContain("RAKAZO_IMAGE_TAG");
+      expect(compose.services[service]?.image).toContain("MATEBOT_IMAGE_TAG");
     }
     expect(compose.services.computer?.image).toContain("ghcr.io/lizer2009/matebot/computer");
-    expect(compose.services.computer?.image).toContain("RAKAZO_COMPUTER_IMAGE_TAG");
+    expect(compose.services.computer?.image).toContain("MATEBOT_COMPUTER_IMAGE_TAG");
     expect(compose.services.postgres?.image).toMatch(
       /^\$\{POSTGRES_IMAGE:-postgres:16@sha256:[0-9a-f]{64}\}$/,
     );
@@ -85,7 +85,7 @@ describe("the images compose file", () => {
   });
 
   it("keeps the documented override working over the Matebot default", () => {
-    // The default points at this product, and an operator who pinned RAKAZO_IMAGE keeps that
+    // The default points at this product, and an operator who pinned MATEBOT_IMAGE keeps that
     // pin: repointing the default must not take away an explicit choice.
     const resolve = (value: string, env: Record<string, string>) =>
       value.replace(
@@ -97,15 +97,18 @@ describe("the images compose file", () => {
       const image = compose.services[service]?.image as string;
       expect(resolve(image, {})).toBe("ghcr.io/lizer2009/matebot/app:edge");
       expect(
-        resolve(image, { RAKAZO_IMAGE: "registry.example.test/mine/app", RAKAZO_IMAGE_TAG: "v9" }),
+        resolve(image, {
+          MATEBOT_IMAGE: "registry.example.test/mine/app",
+          MATEBOT_IMAGE_TAG: "v9",
+        }),
       ).toBe("registry.example.test/mine/app:v9");
     }
     const computer = compose.services.computer?.image as string;
     expect(resolve(computer, {})).toBe("ghcr.io/lizer2009/matebot/computer:edge");
     expect(
       resolve(computer, {
-        RAKAZO_COMPUTER_IMAGE: "registry.example.test/mine/computer",
-        RAKAZO_COMPUTER_IMAGE_TAG: "v9",
+        MATEBOT_COMPUTER_IMAGE: "registry.example.test/mine/computer",
+        MATEBOT_COMPUTER_IMAGE_TAG: "v9",
       }),
     ).toBe("registry.example.test/mine/computer:v9");
   });
@@ -203,9 +206,9 @@ describe("the images compose file", () => {
 
   it("defaults the configurable web bind to loopback and keeps the API private", () => {
     expect(compose.services.web?.ports).toEqual([
-      "${RAKAZO_WEB_BIND:-127.0.0.1}:${RAKAZO_WEB_PORT:-5173}:5173",
+      "${MATEBOT_WEB_BIND:-127.0.0.1}:${MATEBOT_WEB_PORT:-5173}:5173",
     ]);
-    expect(compose.services.api?.ports).toEqual(["127.0.0.1:${RAKAZO_API_PORT:-3100}:3100"]);
+    expect(compose.services.api?.ports).toEqual(["127.0.0.1:${MATEBOT_API_PORT:-3100}:3100"]);
     for (const key of ["BETTER_AUTH_URL", "WEB_ORIGIN", "API_URL"]) {
       expect(compose.services.api?.environment?.[key]).toBe(`\${${key}:-http://127.0.0.1:5173}`);
     }

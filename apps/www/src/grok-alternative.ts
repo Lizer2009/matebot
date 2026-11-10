@@ -19,7 +19,7 @@ export const GROK_INTRO = [
 export const GROK_HOWTO = [
   "Choose an agent you run yourself when the computer and the model key should stay with you. Matebot is Apache-2.0: you host it, you bring the model key, and you manage the bot from chat. OpenClaw is an MIT-licensed agent you run yourself, and its docs add a Gateway and a config file. Hermes Agent is MIT-licensed, with a desktop app that can reach a first message without the command line, and a separate gateway for messaging apps.",
   "Choose a hosted assistant when you do not want to install the service. Grok Bot comes with paid Cursor plans and SuperGrok. Meta Muse runs on a virtual machine Meta operates. OpenAI Dots sit on eligible ChatGPT plans. Instinct is the assistant you text or call. Claude Duet comes with Claude Pro and Max in the US, on a computer Anthropic operates. Hark Pro has a free tier. $20 a month is twice the usage, and $100 a month is ten times the usage.",
-  "The [alternatives roundup](/alternatives/) lists license, price, and setup side by side. [OpenClaw vs Hermes Agent vs Matebot](/blog/openclaw-vs-hermes-vs-rakazo/) compares the three you run yourself, and [best open source AI agents in 2026](/blog/best-open-source-ai-agents-2026/) includes libraries as well as apps.",
+  "The [alternatives roundup](/alternatives/) lists license, price, and setup side by side. [OpenClaw vs Hermes Agent vs Matebot](/blog/openclaw-vs-hermes-vs-matebot/) compares the three you run yourself, and [best open source AI agents in 2026](/blog/best-open-source-ai-agents-2026/) includes libraries as well as apps.",
 ] as const;
 
 export const GROK_SOURCES = [

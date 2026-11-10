@@ -3,7 +3,7 @@ import type { BuildOptions, TemplateClass } from "@e2b/desktop";
 /** E2B's stock desktop image, which reserves 8 vCPU and 8 GB for every sandbox. */
 export const E2B_DESKTOP_TEMPLATE = "desktop";
 /** The same desktop at the size a bot computer needs; see buildE2BComputerTemplate. */
-export const E2B_COMPUTER_TEMPLATE = "rakazo-computer";
+export const E2B_COMPUTER_TEMPLATE = "matebot-computer";
 
 /**
  * A computer runs one desktop per active bot (Xvfb, fluxbox, x11vnc, Chromium) plus shell

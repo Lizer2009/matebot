@@ -32,7 +32,7 @@ test("computer rail resizes its preview and remembers width", async ({ page }, t
   }
   await expect.poll(async () => (await panel.boundingBox())!.width).toBeGreaterThan(600);
   const preferredWidth = await page.evaluate(() =>
-    Number(localStorage.getItem("rakazo:right-panel-width")),
+    Number(localStorage.getItem("matebot:right-panel-width")),
   );
   await expect
     .poll(async () => Math.round((await panel.boundingBox())!.width))
@@ -40,7 +40,7 @@ test("computer rail resizes its preview and remembers width", async ({ page }, t
   await page.setViewportSize({ width: 1000, height: 1000 });
   await expect(separator).toHaveAttribute("aria-valuemax", "364");
   await expect.poll(async () => Math.round((await panel.boundingBox())!.width)).toBe(364);
-  expect(await page.evaluate(() => localStorage.getItem("rakazo:right-panel-width"))).toBe(
+  expect(await page.evaluate(() => localStorage.getItem("matebot:right-panel-width"))).toBe(
     String(preferredWidth),
   );
   await page.setViewportSize({ width: 1500, height: 1000 });

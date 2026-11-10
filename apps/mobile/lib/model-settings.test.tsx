@@ -56,7 +56,7 @@ vi.mock("./side-insets", () => ({ useSideInsets: () => ({}) }));
 vi.mock("./api", () => ({
   currentApiBase: () => "https://app.example.test",
   captureApiRequestContext: async (spaceId = "space-fixture") => ({
-    headers: { "x-rakazo-space-id": spaceId },
+    headers: { "x-matebot-space-id": spaceId },
   }),
   selectedSpaceId: () => "space-fixture",
   rpc: async (
@@ -423,7 +423,7 @@ it("hands a connected model back to the slot that asked for it", async () => {
 });
 
 describe("a Space's model override", () => {
-  const otherSpace = { headers: { "x-rakazo-space-id": "space-other" } };
+  const otherSpace = { headers: { "x-matebot-space-id": "space-other" } };
 
   it("edits that Space's lists in that Space and leaves connections to the account", async () => {
     params.spaceId = "space-other";
@@ -552,7 +552,7 @@ it("moves bots off their own model onto the main model, keeping failed ones list
       [
         "bots/update",
         { botId: "bot-inbox", modelProvider: null, modelId: null, thinkingLevel: null },
-        { requestContext: { headers: { "x-rakazo-space-id": "space-fixture" } } },
+        { requestContext: { headers: { "x-matebot-space-id": "space-fixture" } } },
       ],
     ]);
     expect(container.textContent).toContain("1 bot now uses the space default.");

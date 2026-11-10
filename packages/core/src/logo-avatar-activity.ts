@@ -33,7 +33,7 @@ export function botAvatarActivity(
 
 export function usesLogoAvatar(bot: { avatarSet?: string; color: string }): boolean {
   const parsed = parseBotAvatarValue(bot.color);
-  return bot.avatarSet === "rakazo" && parsed.kind !== "image" && parsed.kind !== "shape";
+  return bot.avatarSet === "matebot" && parsed.kind !== "image" && parsed.kind !== "shape";
 }
 
 export function logoAvatarNeedsAttention(activity: LogoAvatarActivity): boolean {

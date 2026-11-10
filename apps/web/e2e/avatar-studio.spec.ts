@@ -32,13 +32,13 @@ test("bot settings open Avatar Studio on the Bot tab", async ({ page }, testInfo
   await wedge.click();
   await expect(wedge).toHaveAttribute("aria-pressed", "true");
   await expect(defaultLook).toHaveAttribute("aria-pressed", "false");
-  await expect(studio.locator(".rakazo-organic-avatar")).toHaveCount(0);
+  await expect(studio.locator(".matebot-organic-avatar")).toHaveCount(0);
 
   await defaultLook.click();
   await expect(defaultLook).toHaveAttribute("aria-pressed", "true");
   await expect(wedge).toHaveAttribute("aria-pressed", "false");
-  await expect(studio.locator(".rakazo-organic-avatar")).toHaveCount(1);
-  await expect(studio.locator(".rakazo-organic-avatar-eyes").first()).toBeVisible();
+  await expect(studio.locator(".matebot-organic-avatar")).toHaveCount(1);
+  await expect(studio.locator(".matebot-organic-avatar-eyes").first()).toBeVisible();
 
   await studio.getByRole("button", { name: "Color #FFAF38" }).click();
   await expect(defaultLook).toHaveAttribute("aria-pressed", "true");
@@ -48,11 +48,11 @@ test("bot settings open Avatar Studio on the Bot tab", async ({ page }, testInfo
   await studio.getByRole("button", { name: "Reset", exact: true }).click();
   await expect(defaultLook).toHaveAttribute("aria-pressed", "true");
   await expect(wedge).toHaveAttribute("aria-pressed", "false");
-  await expect(studio.locator(".rakazo-organic-avatar")).toHaveCount(1);
+  await expect(studio.locator(".matebot-organic-avatar")).toHaveCount(1);
 
   await captureScreenshot(page, testInfo, "avatar-studio-bot-tab");
   await studio.getByRole("tab", { name: "Matebot", exact: true }).click();
-  await expect(studio.locator(".rakazo-logo-avatar").first()).toBeVisible();
+  await expect(studio.locator(".matebot-logo-avatar").first()).toBeVisible();
   await studio.getByRole("button", { name: "Done", exact: true }).click();
   await page.reload();
   await openBotPanelTab(page, "Computer");
@@ -60,5 +60,5 @@ test("bot settings open Avatar Studio on the Bot tab", async ({ page }, testInfo
   await expect(
     page.getByTestId("avatar-studio").getByRole("tab", { name: "Matebot", exact: true }),
   ).toHaveAttribute("aria-selected", "true");
-  await captureScreenshot(page, testInfo, "avatar-studio-rakazo-set");
+  await captureScreenshot(page, testInfo, "avatar-studio-matebot-set");
 });

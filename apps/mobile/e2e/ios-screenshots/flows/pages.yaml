@@ -4,8 +4,8 @@ name: Pages
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
-      RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_EMAIL}
-- openLink: "matebot:///thread?botId=${RAKAZO_SCREENSHOT_BOT_ID}&name=Researcher"
+      MATEBOT_ACTIVE_EMAIL: ${MATEBOT_SCREENSHOT_EMAIL}
+- openLink: "matebot:///thread?botId=${MATEBOT_SCREENSHOT_BOT_ID}&name=Researcher"
 - extendedWaitUntil:
     visible: "Open Launch dashboard"
     timeout: 20000
@@ -26,7 +26,7 @@ name: Pages
     timeout: 10000
 - takeScreenshot: 04-share-link
 - tapOn: "Only you"
-- openLink: "matebot:///pages?botId=${RAKAZO_SCREENSHOT_BOT_ID}"
+- openLink: "matebot:///pages?botId=${MATEBOT_SCREENSHOT_BOT_ID}"
 - extendedWaitUntil:
     visible: "Launch dashboard"
     timeout: 20000

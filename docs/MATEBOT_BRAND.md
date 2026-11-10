@@ -3,7 +3,7 @@
 **Product name:** Matebot (not Metabot)
 
 **Positioning:** A self-hosted AI teammate you own. This repository is a fork of
-[Rakazo](https://github.com/elie222/rakazo); upstream credit and Apache-2.0 attribution stay in
+[Matebot](https://github.com/elie222/rakazo); upstream credit and Apache-2.0 attribution stay in
 place.
 
 ## Colors
@@ -89,9 +89,9 @@ Packaging names are set where the tooling reads them, and must stay in step:
 Electron names the per-user profile folder after `productName` (`%APPDATA%\Matebot` on Windows,
 `~/.config/Matebot` on Linux, `~/Library/Application Support/Matebot` on macOS), not after
 `extraMetadata.name`. That is why the migration in `user-data-migration.ts` looks for the old
-`Rakazo` folder rather than the current one, and why the desktop app carries a pre-rename profile
+`Matebot` folder rather than the current one, and why the desktop app carries a pre-rename profile
 over on first launch instead of stranding an existing install's setup.
 
 Names that deliberately keep their upstream value are listed in
 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#环境变量命名): the `RAKAZO_*` environment variables, the
-`rakazo_app` database role, and the upstream attribution values.
+`matebot_app` database role, and the upstream attribution values.

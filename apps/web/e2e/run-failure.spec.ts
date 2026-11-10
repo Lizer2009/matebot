@@ -17,7 +17,7 @@ function seenRunErrorCount(page: Page) {
   return page.evaluate(() => {
     let count = 0;
     for (let index = 0; index < localStorage.length; index += 1) {
-      if (localStorage.key(index)?.startsWith("rakazo:seen-run-error:")) count += 1;
+      if (localStorage.key(index)?.startsWith("matebot:seen-run-error:")) count += 1;
     }
     return count;
   });

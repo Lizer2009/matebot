@@ -16,9 +16,9 @@ appId: com.matebot.app
 - tapOn: "Sign in"
 - runFlow: server.yaml
 - tapOn: "Email"
-- inputText: ${RAKAZO_SCREENSHOT_EMAIL}
+- inputText: ${MATEBOT_SCREENSHOT_EMAIL}
 - tapOn: "Password"
-- inputText: ${RAKAZO_SCREENSHOT_PASSWORD}
+- inputText: ${MATEBOT_SCREENSHOT_PASSWORD}
 - hideKeyboard
 - tapOn: "Sign in"
 - extendedWaitUntil:

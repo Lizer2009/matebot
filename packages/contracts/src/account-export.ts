@@ -20,7 +20,7 @@ import { PageSourceSchema, PageTitleSchema } from "./pages.js";
 /** A page version number, within the database's 32-bit column. */
 const PageVersionNumber = z.number().int().positive().max(2_147_483_647);
 
-export const ACCOUNT_EXPORT_FORMAT = "rakazo-account-export";
+export const ACCOUNT_EXPORT_FORMAT = "matebot-account-export";
 export const ACCOUNT_EXPORT_VERSION = 1;
 export const ACCOUNT_EXPORT_MANIFEST_PATH = "manifest.json";
 /** Larger workspace files stay behind, matching the workspace export limit elsewhere. */

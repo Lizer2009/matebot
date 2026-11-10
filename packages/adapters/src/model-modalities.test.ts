@@ -85,7 +85,7 @@ describe("operator-declared vision modalities", () => {
   });
 
   it("applies the same declaration to the local provider", () => {
-    vi.stubEnv("RAKAZO_LOCAL_MODELS", "qwen3-vl,qwen3-text");
+    vi.stubEnv("MATEBOT_LOCAL_MODELS", "qwen3-vl,qwen3-text");
     vi.stubEnv(LOCAL_VISION_MODELS_ENV, "qwen3-vl");
     const models = localProvider()?.getModels() ?? [];
     expect(models.find((m) => m.id === "qwen3-vl")?.input).toContain("image");

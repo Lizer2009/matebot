@@ -14,7 +14,7 @@ import { t } from "./i18n.js";
 import { readPrivateFile, writePrivateFile } from "./setup-store.js";
 
 export const STACK_DIR_NAME = "stack";
-export const STACK_PROJECT_NAME = "rakazo-desktop";
+export const STACK_PROJECT_NAME = "matebot-desktop";
 export const STACK_COMPOSE_FILE = "docker-compose.images.yml";
 export const STACK_ENV_TEMPLATE = ".env.images.example";
 export const STACK_ENV_FILE = ".env";
@@ -99,7 +99,7 @@ const GENERATED_SECRETS: Record<string, number> = {
   SCREEN_PROXY_SECRET: 32,
   SANDBOX_SUPERVISOR_TOKEN: 32,
 };
-const LAUNCH_SUPPLIED = ["RAKAZO_IMAGE_TAG", "RAKAZO_COMPUTER_IMAGE_TAG"];
+const LAUNCH_SUPPLIED = ["MATEBOT_IMAGE_TAG", "MATEBOT_COMPUTER_IMAGE_TAG"];
 
 /**
  * Port of install-images.sh `create_env`: fills the empty secret lines with random
@@ -648,8 +648,8 @@ export class LocalStackController {
       env: dockerSpawnEnv(this.deps.platform, this.deps.env, binary, {
         SANDBOX_HOST_URL: this.deps.hostComputer?.url ?? "",
         SANDBOX_HOST_TOKEN: this.deps.hostComputer?.token ?? "",
-        RAKAZO_IMAGE_TAG: this.deps.imageTag,
-        RAKAZO_COMPUTER_IMAGE_TAG: this.deps.imageTag,
+        MATEBOT_IMAGE_TAG: this.deps.imageTag,
+        MATEBOT_COMPUTER_IMAGE_TAG: this.deps.imageTag,
         // Restricted egress needs host iptables rules. Docker Desktop keeps its
         // bridges inside its VM where the host cannot add them, and the app cannot
         // install root firewall rules on Linux either, so the stack would refuse
@@ -660,10 +660,10 @@ export class LocalStackController {
         CONTENT_ENCRYPTION: "off",
         ...(this.currentStackToken === null
           ? {}
-          : { RAKAZO_DESKTOP_STACK_TOKEN: this.currentStackToken }),
-        RAKAZO_WEB_PORT: new URL(this.currentWebUrl).port || "80",
+          : { MATEBOT_DESKTOP_STACK_TOKEN: this.currentStackToken }),
+        MATEBOT_WEB_PORT: new URL(this.currentWebUrl).port || "80",
         // Only web needs a stable host address. Docker allocates the API host port.
-        RAKAZO_API_PORT: "0",
+        MATEBOT_API_PORT: "0",
         BETTER_AUTH_URL: this.currentWebUrl,
         WEB_ORIGIN: this.currentWebUrl,
         API_URL: this.currentWebUrl,

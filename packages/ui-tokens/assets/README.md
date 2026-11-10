@@ -5,7 +5,7 @@ Two Icon Composer catalogs live here:
 - `Matebot.icon` is this fork's product icon. It is the one macOS and iOS packaging use,
   set by `build.mac.icon` in `apps/desktop/package.json` and `expo.ios.icon` in
   `apps/mobile/app.json`.
-- `Rakazo.icon` is the upstream artwork. It is kept because a few specs still measure the
+- `Matebot.icon` is the upstream artwork. It is kept because a few specs still measure the
   animated avatar against its silhouette, and because it is part of the Apache-2.0 history.
   Nothing packages it.
 

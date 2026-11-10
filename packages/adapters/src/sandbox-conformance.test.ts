@@ -84,7 +84,7 @@ describe("sandbox conformance", () => {
   });
 
   it("explicit unsets win over inherited and request variables across providers", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-unset-env-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-unset-env-"));
     const providers: SandboxProvider[] = [
       new FakeSandboxProvider(),
       fakeBoat(),
@@ -92,7 +92,7 @@ describe("sandbox conformance", () => {
       emulatedNovita().provider(),
       new DesktopSandboxProvider({ root }),
     ];
-    vi.stubEnv("RAKAZO_COMMAND_UNSET_TEST", "fake-host-value");
+    vi.stubEnv("MATEBOT_COMMAND_UNSET_TEST", "fake-host-value");
     try {
       for (const [index, provider] of providers.entries()) {
         const computer = await provider.provision(
@@ -103,9 +103,9 @@ describe("sandbox conformance", () => {
         for await (const event of provider.execute(
           computer,
           {
-            argv: ["printenv", "RAKAZO_COMMAND_UNSET_TEST"],
-            env: { RAKAZO_COMMAND_UNSET_TEST: "fake-request-value" },
-            unsetEnv: ["RAKAZO_COMMAND_UNSET_TEST"],
+            argv: ["printenv", "MATEBOT_COMMAND_UNSET_TEST"],
+            env: { MATEBOT_COMMAND_UNSET_TEST: "fake-request-value" },
+            unsetEnv: ["MATEBOT_COMMAND_UNSET_TEST"],
           },
           ctx,
         ))
@@ -120,10 +120,10 @@ describe("sandbox conformance", () => {
   });
 
   it("desktop executor passes request env to the command", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-desktop-env-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-desktop-env-"));
     const desktop = new DesktopSandboxProvider({ root });
     const computer = await desktop.provision({ botId: "env", homePath: "/unused" }, ctx);
-    const sentinel = "rakazo-desktop-request-env-sentinel";
+    const sentinel = "matebot-desktop-request-env-sentinel";
     let stdout = "";
     let code = 1;
     for await (const event of desktop.execute(
@@ -132,9 +132,9 @@ describe("sandbox conformance", () => {
         argv: [
           process.execPath,
           "-e",
-          "process.stdout.write(process.env.RAKAZO_DESKTOP_ENV_SENTINEL ?? '')",
+          "process.stdout.write(process.env.MATEBOT_DESKTOP_ENV_SENTINEL ?? '')",
         ],
-        env: { RAKAZO_DESKTOP_ENV_SENTINEL: sentinel },
+        env: { MATEBOT_DESKTOP_ENV_SENTINEL: sentinel },
       },
       ctx,
     )) {
@@ -166,7 +166,7 @@ describe("sandbox conformance", () => {
   });
 
   it("desktop executor times out and kills descendants that inherited its pipes", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-desktop-timeout-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-desktop-timeout-"));
     const desktop = new DesktopSandboxProvider({ root });
     const computer = await desktop.provision({ botId: "timeout", homePath: "/unused" }, ctx);
     const marker = path.join(computer.providerRef, "descendant-survived");
@@ -198,7 +198,7 @@ describe("sandbox conformance", () => {
   });
 
   it("desktop executor yields stdout before a command that keeps running exits", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-desktop-stream-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-desktop-stream-"));
     const desktop = new DesktopSandboxProvider({ root });
     const computer = await desktop.provision({ botId: "stream", homePath: "/unused" }, ctx);
     const controller = new AbortController();
@@ -231,7 +231,7 @@ describe("sandbox conformance", () => {
   });
 
   it("desktop executor aborts and kills a running command", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-desktop-abort-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-desktop-abort-"));
     const desktop = new DesktopSandboxProvider({ root });
     const computer = await desktop.provision({ botId: "abort", homePath: "/unused" }, ctx);
     const controller = new AbortController();
@@ -254,7 +254,7 @@ describe("sandbox conformance", () => {
   });
 
   it("treats a repeated destroy as success so a stale deletion retry is safe", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-destroy-idempotent-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-destroy-idempotent-"));
     const providers: SandboxProvider[] = [
       new FakeSandboxProvider(),
       fakeBoat(),
@@ -275,7 +275,7 @@ describe("sandbox conformance", () => {
   });
 
   it("reuses one desktop machine per bot", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-desktop-reuse-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-desktop-reuse-"));
     const desktop = new DesktopSandboxProvider({ root });
     const first = await desktop.provision({ botId: "stable", homePath: "/unused" }, ctx);
     const second = await desktop.provision({ botId: "stable", homePath: "/unused" }, ctx);
@@ -289,7 +289,7 @@ describe("sandbox conformance", () => {
   });
 
   it("reports a desktop machine running through the reference the computer row stores", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-desktop-running-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-desktop-running-"));
     const desktop = new DesktopSandboxProvider({ root });
     // The API and the worker each build their own provider over the same data directory.
     const otherProcess = new DesktopSandboxProvider({ root });
@@ -347,7 +347,7 @@ describe("sandbox conformance", () => {
   });
 
   it("desktop file writes do not follow a final symlink outside the workspace", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-desktop-symlink-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-desktop-symlink-"));
     const desktop = new DesktopSandboxProvider({ root });
     const computer = await desktop.provision({ botId: "symlink", homePath: "/unused" }, ctx);
     const outside = path.join(root, "outside.txt");
@@ -367,7 +367,7 @@ describe("sandbox conformance", () => {
   });
 
   it("desktop file listings skip links that dangle or leave the workspace", async () => {
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-desktop-list-links-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-desktop-list-links-"));
     const desktop = new DesktopSandboxProvider({ root });
     const computer = await desktop.provision({ botId: "list-links", homePath: "/unused" }, ctx);
     const directory = path.join(computer.providerRef, "links");

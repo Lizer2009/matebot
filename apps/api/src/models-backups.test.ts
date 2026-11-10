@@ -173,7 +173,7 @@ function setup(
       screenProxySecret: "fixture-secret",
       sandboxProvider: "fake",
     },
-    dataDir: "C:/scratch/rakazo-model-backups",
+    dataDir: "C:/scratch/matebot-model-backups",
   } as unknown as RouterDeps;
   const actor = options.actor ?? owner;
   const handler = new RPCHandler(createRouter(deps));

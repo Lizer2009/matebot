@@ -880,7 +880,7 @@ export default function BotSettingsScreen() {
               label={t("Icon set")}
               choices={[
                 { key: "organic", label: t("Original") },
-                { key: "rakazo", label: t("Matebot") },
+                { key: "matebot", label: t("Matebot") },
               ]}
               value={avatarSet}
               onChange={(next) => {

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="matebot_call_channel">Llamada en curso</string>
+  <string name="matebot_call_title">Llamada de Matebot</string>
+  <string name="matebot_call_text">El micrófono está activo</string>
+  <string name="matebot_call_answer">Responder</string>
+  <string name="matebot_call_decline">Rechazar</string>
+</resources>

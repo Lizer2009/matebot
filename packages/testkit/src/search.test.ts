@@ -21,7 +21,7 @@ describeSearch("workspace search", () => {
   let app: App;
   let stop: () => Promise<void>;
   const stamp = Date.now();
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-search-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-search-"));
 
   beforeAll(async () => {
     const { createApp } = await import("@matebot/api/app");

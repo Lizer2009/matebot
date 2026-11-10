@@ -7,7 +7,7 @@ let sink: ReturnType<typeof createTestSink>;
 
 beforeEach(() => {
   sink = createTestSink();
-  installLogger(createLogger({ service: "rakazo-worker", sinks: [sink] }));
+  installLogger(createLogger({ service: "matebot-worker", sinks: [sink] }));
 });
 
 const refusals = () =>

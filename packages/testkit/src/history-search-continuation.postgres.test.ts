@@ -140,7 +140,7 @@ describe.skipIf(!enabled)("unfinished broad history search", () => {
         },
       ],
     });
-    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-history-continuation-"));
+    const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-history-continuation-"));
     try {
       const { createApp } = await import("@matebot/api/app");
       const result = await runTrial(

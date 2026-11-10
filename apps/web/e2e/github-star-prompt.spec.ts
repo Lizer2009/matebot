@@ -6,7 +6,7 @@ test("asks for a GitHub star after a few messages", async ({ page }, testInfo) =
   await signup(page, `star-prompt-${Date.now()}@rakazo.test`, "password12", "Sample");
   await completeOnboarding(page);
   await rpc(page, "onboarding/dismissFocus", { botId: activeBotId(page) });
-  await page.evaluate(() => localStorage.setItem("rakazo.githubStarPrompt.sent", "5"));
+  await page.evaluate(() => localStorage.setItem("matebot.githubStarPrompt.sent", "5"));
 
   const composer = page.getByRole("combobox", { name: /Message/ });
   await composer.fill("What should I work on today?");

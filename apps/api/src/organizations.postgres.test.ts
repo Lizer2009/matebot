@@ -112,7 +112,7 @@ describePostgres("organizations (PostgreSQL)", () => {
     prisma = db.prisma;
     system = asSystem(prisma);
     installAuditEventStore(prisma);
-    root = await mkdtemp(path.join(tmpdir(), "rakazo-organizations-"));
+    root = await mkdtemp(path.join(tmpdir(), "matebot-organizations-"));
     home = new ObjectAgentHomeStore(
       root,
       new MemoryObjectStorage(),

@@ -127,12 +127,12 @@ jobs:
       - name: Generate the database client for desktop compilation
         run: pnpm db:generate
         env:
-          DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
+          DATABASE_URL: postgres://matebot:matebot@127.0.0.1:5433/matebot
       - name: Build renderer and Electron main process
         run: pnpm --filter @matebot/web build && pnpm --filter @matebot/desktop build
         env:
-          RAKAZO_ALLOW_DEV_SECRETS: "1"
-          RAKAZO_DESKTOP_RELEASE: "1"
+          MATEBOT_ALLOW_DEV_SECRETS: "1"
+          MATEBOT_DESKTOP_RELEASE: "1"
 
       - name: Require macOS signing and notarization credentials
         if: runner.os == 'macOS'

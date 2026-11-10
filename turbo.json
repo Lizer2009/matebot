@@ -30,7 +30,7 @@
       "cache": false,
       "env": ["PUBLIC_CRISP_WEBSITE_ID", "PUBLIC_POSTHOG_HOST", "PUBLIC_POSTHOG_KEY"],
       "persistent": true,
-      "passThroughEnv": ["RAKAZO_HOST", "RAKAZO_DEV_HOST", "RAKAZO_ALLOWED_HOSTS"]
+      "passThroughEnv": ["MATEBOT_HOST", "MATEBOT_DEV_HOST", "MATEBOT_ALLOWED_HOSTS"]
     }
   }
 }

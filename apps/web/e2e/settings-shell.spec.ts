@@ -138,7 +138,7 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
   await streamReplies.click();
   await expect(streamReplies).toBeChecked();
   await expect
-    .poll(() => page.evaluate(() => window.localStorage.getItem("rakazo.responseStreaming")))
+    .poll(() => page.evaluate(() => window.localStorage.getItem("matebot.responseStreaming")))
     .toBe("on");
   const deleteAccount = settings.getByTestId("delete-account");
   await deleteAccount.scrollIntoViewIfNeeded();

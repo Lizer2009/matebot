@@ -1,0 +1,9 @@
+# Optional drop-in: /etc/systemd/system/matebot-backup.service.d/alerts.conf
+[Unit]
+OnFailure=matebot-backup-alert.service
+
+[Service]
+ExecStartPost=-/usr/local/sbin/matebot-host-alert backup-failure ""
+ReadWritePaths=/var/lib/matebot/alerts
+StateDirectory=matebot/alerts
+StateDirectoryMode=0700

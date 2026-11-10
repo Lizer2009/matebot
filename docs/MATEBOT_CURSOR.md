@@ -39,7 +39,7 @@ Monorepo 使用 **pnpm 9**、**Node 22+**（见根 [package.json](../package.jso
 
 ```bash
 pnpm install --frozen-lockfile
-DATABASE_URL=postgres://rakazo:rakazo@127.0.0.1:5433/rakazo pnpm db:generate
+DATABASE_URL=postgres://matebot:matebot@127.0.0.1:5433/matebot pnpm db:generate
 pnpm lint
 pnpm check
 pnpm test

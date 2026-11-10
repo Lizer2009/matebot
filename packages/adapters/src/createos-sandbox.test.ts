@@ -253,7 +253,7 @@ const computer: ComputerRef = {
 function createosBotProfile(botId: string) {
   return browserProfilePathForScreen(botId, {
     ...DEFAULT_DESKTOP_ENV,
-    browserProfilesDir: "/home/desktop/rakazo-home/.browser-profiles",
+    browserProfilesDir: "/home/desktop/matebot-home/.browser-profiles",
   });
 }
 
@@ -318,7 +318,7 @@ describe("CreateOSSandboxProvider", () => {
     ]);
     const exec = fixture.execs.at(-1);
     expect(exec?.command).toBe(
-      `mkdir -p '/home/desktop/rakazo-home/notes' && cd '/home/desktop/rakazo-home/notes' && eval "$(cat)" && 'env' '-u' 'FAILED' '--' 'echo' 'hello'`,
+      `mkdir -p '/home/desktop/matebot-home/notes' && cd '/home/desktop/matebot-home/notes' && eval "$(cat)" && 'env' '-u' 'FAILED' '--' 'echo' 'hello'`,
     );
     expect(exec?.stdin).toBe("export TEST_VALUE='works'\n");
   });
@@ -847,10 +847,10 @@ describe("CreateOSSandboxProvider", () => {
       if ((init?.method ?? "GET") === "POST" && url.pathname.endsWith("/exec")) {
         const command = (JSON.parse(String(init?.body)) as { args: string[] }).args[3] ?? "";
         if (command.includes("os.listdir")) {
-          const listing = command.includes("/.rakazo")
+          const listing = command.includes("/.matebot")
             ? JSON.stringify([{ name: "screens.json", kind: "file", size: 2 }])
             : JSON.stringify([
-                { name: ".rakazo", kind: "dir", size: 0 },
+                { name: ".matebot", kind: "dir", size: 0 },
                 { name: "notes.txt", kind: "file", size: 5 },
               ]);
           return jsonResponse({ result: { stdout: listing, exit_code: 0 } });

@@ -97,7 +97,7 @@ describe("server request headers", () => {
 
     await saveApiBase("https://second.example.test");
     expect(await authHeaders(null)).not.toHaveProperty("CF-Access-Client-Id");
-    expect(store.has("rakazo.server_headers")).toBe(false);
+    expect(store.has("matebot.server_headers")).toBe(false);
   });
 
   it("restores headers if saving the endpoint fails", async () => {
@@ -116,7 +116,7 @@ describe("server request headers", () => {
   it("does not claim to reset when deleting headers fails", async () => {
     await saveApiBase(SERVER, ACCESS);
     vi.mocked(SecureStore.deleteItemAsync).mockImplementation(async (key) => {
-      if (key === "rakazo.server_headers") throw new Error("Storage unavailable");
+      if (key === "matebot.server_headers") throw new Error("Storage unavailable");
       store.delete(key);
     });
     await expect(resetApiBase()).resolves.toMatchObject({ ok: false });
@@ -125,9 +125,9 @@ describe("server request headers", () => {
   });
 
   it("ignores a damaged saved value", async () => {
-    store.set("rakazo.api_base", SERVER);
+    store.set("matebot.api_base", SERVER);
     store.set(
-      "rakazo.server_headers",
+      "matebot.server_headers",
       JSON.stringify({ apiBase: SERVER, headers: { origin: "x" } }),
     );
     await loadApiBase();

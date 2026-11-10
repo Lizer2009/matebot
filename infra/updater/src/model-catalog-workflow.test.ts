@@ -38,7 +38,7 @@ describe("model catalog artifact boundary", () => {
     });
   }
   beforeEach(() => {
-    root = mkdtempSync(path.join(tmpdir(), "rakazo-catalog-artifact-"));
+    root = mkdtempSync(path.join(tmpdir(), "matebot-catalog-artifact-"));
     artifact = path.join(root, "artifact");
     mkdirSync(path.join(root, "packages/adapters"), { recursive: true });
     writeFileSync(path.join(root, manifest), '{"version":"1"}\n');
@@ -136,7 +136,7 @@ describe("model catalog bump PR lookup", () => {
     return { status: result.status, calls: calls.filter((call) => !call.startsWith("pr list")) };
   }
   beforeEach(() => {
-    root = mkdtempSync(path.join(tmpdir(), "rakazo-catalog-publish-"));
+    root = mkdtempSync(path.join(tmpdir(), "matebot-catalog-publish-"));
     mkdirSync(path.join(root, "bin"));
     // Like the real CLI, --head also matches fork PRs from a branch with the same name, and only
     // the --json fields are returned.

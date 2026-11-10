@@ -6,7 +6,7 @@
 スケジュールで作業し、Web・デスクトップ・モバイルの各クライアントでメモリと履歴を保ちます。自分のサーバーと自分のモデル認証情報で
 動作し、ローカルにデスクトップ環境を必要としません。
 
-このリポジトリは **[Rakazo](https://github.com/elie222/rakazo)** のフォークです。Matebot はその Apache-2.0 のコードの上に
+このリポジトリは **[Matebot](https://github.com/elie222/rakazo)** のフォークです。Matebot はその Apache-2.0 のコードの上に
 構築されており、ライセンス、その通知、上流への明確なクレジットを保持します。違いは製品名、パッケージング、
 そしてこのフォークが運用するデプロイです。
 
@@ -43,12 +43,12 @@ https://github.com/user-attachments/assets/dccdeddb-2134-4a56-8eed-b2e591736b1c
 
 ## 謝辞
 
-- [PromptLayer](https://promptlayer.com/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [Inbox Zero](https://getinboxzero.com/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [ConnectorMap](https://connectormap.luinbytes.dev/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [CodeRabbit](https://www.coderabbit.ai/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [Greptile](https://www.greptile.com/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
-- [Snyk](https://snyk.io/?utm_source=github&utm_medium=referral&utm_campaign=rakazo_readme)
+- [PromptLayer](https://promptlayer.com/?utm_source=github&utm_medium=referral&utm_campaign=matebot_readme)
+- [Inbox Zero](https://getinboxzero.com/?utm_source=github&utm_medium=referral&utm_campaign=matebot_readme)
+- [ConnectorMap](https://connectormap.luinbytes.dev/?utm_source=github&utm_medium=referral&utm_campaign=matebot_readme)
+- [CodeRabbit](https://www.coderabbit.ai/?utm_source=github&utm_medium=referral&utm_campaign=matebot_readme)
+- [Greptile](https://www.greptile.com/?utm_source=github&utm_medium=referral&utm_campaign=matebot_readme)
+- [Snyk](https://snyk.io/?utm_source=github&utm_medium=referral&utm_campaign=matebot_readme)
 
 ## 技術スタック
 
@@ -86,8 +86,8 @@ bash install-images-matebot.sh
 
 上流のインストーラー `install-images.sh` も利用できますが、上流のイメージを取得します。意図的に上流のビルドを動かす場合にのみ使ってください。
 
-制限のあるネットワークでは、インストーラーのダウンロード元（`RAKAZO_DOWNLOAD_BASE`）を上書きする、
-既存の Compose ファイルをスキップする（`--local` / `RAKAZO_DOWNLOAD_SKIP_EXISTING`）、またはブートストラップ
+制限のあるネットワークでは、インストーラーのダウンロード元（`MATEBOT_DOWNLOAD_BASE`）を上書きする、
+既存の Compose ファイルをスキップする（`--local` / `MATEBOT_DOWNLOAD_SKIP_EXISTING`）、またはブートストラップ
 スクリプトの URL をミラーする方法があります。詳しくは
 [制限のあるネットワーク / ミラーからのダウンロード](./docs/self-host.md#restricted-networks--mirror-downloads)を参照してください。
 
@@ -100,7 +100,7 @@ bash install-images-matebot.sh
 
 ```bash
 bash install-images-matebot.sh --prepare-only
-# .env を編集: SANDBOX_PROVIDER=boat（または e2b / daytona / createos）とその API キー、RAKAZO_HOST=your.domain
+# .env を編集: SANDBOX_PROVIDER=boat（または e2b / daytona / createos）とその API キー、MATEBOT_HOST=your.domain
 bash install-images-matebot.sh
 ```
 
@@ -115,13 +115,13 @@ pnpm 9、Docker が必要です。Node.js 23.x と 25.x はサポートしてい
 
 ```bash
 git clone https://github.com/elie222/rakazo.git
-cd rakazo
+cd matebot
 cp .env.example .env
 ```
 
 `POSTGRES_PASSWORD` と `POSTGRES_APP_PASSWORD` に `openssl rand -hex 16` で生成した 2 つの値を設定し、
 それらを `DATABASE_MIGRATION_URL` と `DATABASE_URL` に記入します。アプリは専用の
-`rakazo_app` ログインで接続し、行レベルセキュリティが適用されます。マイグレーションはオーナーとして実行されます
+`matebot_app` ログインで接続し、行レベルセキュリティが適用されます。マイグレーションはオーナーとして実行されます
 （[データベースロール](docs/self-host-configuration.md#database-roles)）。`BETTER_AUTH_SECRET`、`ENCRYPTION_KEY`、`SCREEN_PROXY_SECRET` には
 それぞれ独立した長いランダム値を設定します。Docker サンドボックスには専用の
 `SANDBOX_SUPERVISOR_TOKEN` も必要です。`OPENROUTER_API_KEY` を設定するか、オンボーディング中に
@@ -234,11 +234,11 @@ chmod +x Matebot-*.AppImage
 ```
 
 **This computer** は `docker` CLI を探し、Podman は検出しません。`compose` コマンドに対応した別の
-Docker 互換 CLI を試すには、アプリを起動する前に `RAKAZO_DOCKER_BINARY` にそのパスを設定してください。
+Docker 互換 CLI を試すには、アプリを起動する前に `MATEBOT_DOCKER_BINARY` にそのパスを設定してください。
 
 接続先を変えるには、アプリケーションメニューの **Change Matebot Server…**（Matebot サーバーを変更）を使います。保存せずに
-そのウィンドウを閉じると、以前のインスタンスに戻ります。開発の自動化では、`RAKAZO_WEB_URL` を設定すると
-保存済みのインスタンスを変えずにシェルの接続先を変更でき、`RAKAZO_FORCE_SETUP=1` を設定するとセットアップを
+そのウィンドウを閉じると、以前のインスタンスに戻ります。開発の自動化では、`MATEBOT_WEB_URL` を設定すると
+保存済みのインスタンスを変えずにシェルの接続先を変更でき、`MATEBOT_FORCE_SETUP=1` を設定するとセットアップを
 再実行できます。
 
 モバイルのビルドとリリースの手順は [docs/mobile-release.md](./docs/mobile-release.md) にあります。
@@ -302,7 +302,7 @@ pnpm test:e2e
 
 ## 上流
 
-Matebot は [elie222/rakazo](https://github.com/elie222/rakazo) を追跡しています。上流の README、デモ、ストアの掲載は
+Matebot は [Lizer2009/matebot](https://github.com/elie222/rakazo) を追跡しています。上流の README、デモ、ストアの掲載は
 上流のホスト型製品についてのもので、このフォークはそのサービスを運用していません。Matebot が基づくコードを
 知りたい場合や貢献したい場合は、そのリポジトリから始めてください。
 

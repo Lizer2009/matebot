@@ -51,7 +51,7 @@ describeJourneys("required product journeys", () => {
   let jobs: Awaited<ReturnType<typeof createApp>>["jobs"];
   let sandbox: Awaited<ReturnType<typeof createApp>>["sandbox"];
   const stamp = Date.now();
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-journey-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-journey-"));
 
   /** Runs every action without a card, for journeys about something other than approvals. */
   async function runWithoutAsking(cookie: string) {

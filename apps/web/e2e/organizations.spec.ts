@@ -12,7 +12,7 @@ test.afterEach(async ({ page }) => {
 });
 
 function selectedSpace(page: Page) {
-  return page.evaluate(() => window.localStorage.getItem("rakazo:space-id"));
+  return page.evaluate(() => window.localStorage.getItem("matebot:space-id"));
 }
 
 async function openAvatarMenu(page: Page) {

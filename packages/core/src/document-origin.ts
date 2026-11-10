@@ -2,13 +2,13 @@
  * Which origin this deployment's own documentation lives on.
  *
  * The marketing site and the app are separate hosts and both move between
- * environments, so the help skill must not embed a literal. `RAKAZO_MARKETING_URL`
+ * environments, so the help skill must not embed a literal. `MATEBOT_MARKETING_URL`
  * is the existing setting the site itself builds from; reading the same variable
  * here means a fork that sets it once gets consistent links everywhere.
  */
 
 /** The name the site already uses for its own origin. */
-export const DOCUMENT_ORIGIN_ENV = "RAKAZO_MARKETING_URL";
+export const DOCUMENT_ORIGIN_ENV = "MATEBOT_MARKETING_URL";
 
 /**
  * The product's default origin when nothing is configured.

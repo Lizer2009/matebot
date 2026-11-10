@@ -16,7 +16,7 @@ describe("desktop local computer consent", () => {
   let root: string;
   let computer: Awaited<ReturnType<typeof prepareHostComputer>>;
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), "rakazo-native-consent-"));
+    root = await mkdtemp(path.join(tmpdir(), "matebot-native-consent-"));
     computer = await prepareHostComputer(root);
   });
   afterEach(async () => {

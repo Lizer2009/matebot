@@ -88,7 +88,7 @@ describe("display and warnings", () => {
   it("shares the desktop private-network rules for cleartext servers", () => {
     expect(apiBaseWarning("http://127.0.0.2:3100")).toBeNull();
     expect(apiBaseWarning("http://[fd00::1]:3100")).toBeNull();
-    expect(apiBaseWarning("http://rakazo.localhost:3100")).toBeNull();
+    expect(apiBaseWarning("http://matebot.localhost:3100")).toBeNull();
     expect(apiBaseWarning("http://169.254.169.254")).toMatch(/https/i);
     expect(apiBaseWarning("http://100.100.100.200")).toMatch(/https/i);
     expect(apiBaseWarning("http://[fe80::1]:3100")).toMatch(/https/i);

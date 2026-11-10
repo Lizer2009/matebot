@@ -78,7 +78,7 @@ describe.skipIf(!databaseAvailable)("group history keeps roles and speakers", ()
         },
       ],
     });
-    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-group-history-"));
+    const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-group-history-"));
     let stop: (() => Promise<void>) | undefined;
     try {
       const { createApp } = await import("@matebot/api/app");

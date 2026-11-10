@@ -53,7 +53,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
   const loadPushToken = async (userId: string) => (await pushTokens.load(userId))?.token;
   let app: App;
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-authz-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-authz-"));
 
   beforeAll(async () => {
     const { createApp } = await import("@matebot/api/app");
@@ -2583,7 +2583,7 @@ async function raw(
     headers: {
       "content-type": "application/json",
       ...(cookie ? { cookie } : {}),
-      ...(spaceId ? { "x-rakazo-space-id": spaceId } : {}),
+      ...(spaceId ? { "x-matebot-space-id": spaceId } : {}),
       origin: "http://127.0.0.1:5173",
     },
     body: JSON.stringify({ json: body ?? {} }),

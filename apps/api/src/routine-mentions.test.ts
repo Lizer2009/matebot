@@ -54,7 +54,7 @@ function harness() {
       screenProxySecret: "fake-test-secret",
       sandboxProvider: "fake",
     },
-    dataDir: "/tmp/rakazo-routine-mentions-test",
+    dataDir: "/tmp/matebot-routine-mentions-test",
   } as unknown as RouterDeps;
   const handler = new RPCHandler(createRouter(deps));
   async function request(botIds: string[], requestActor: Actor | null = actor) {

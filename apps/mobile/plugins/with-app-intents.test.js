@@ -8,10 +8,10 @@ const mobile = join(import.meta.dirname, "..");
 const read = (file) => readFileSync(join(mobile, file), "utf8");
 const constant = (file, name) => read(file).match(new RegExp(`${name} = "([^"]+)"`))?.[1];
 
-describe("RakazoIntents", () => {
+describe("MatebotIntents", () => {
   // The intents read what the app saved; renaming a key on one side would break them silently.
   it("reads the secure-store keys the app writes", () => {
-    const swift = read("ios-intents/RakazoIntents.swift");
+    const swift = read("ios-intents/MatebotIntents.swift");
     for (const [file, name] of [
       ["lib/session.ts", "SESSION_KEY"],
       ["lib/server-config.ts", "API_BASE_STORAGE_KEY"],
@@ -27,12 +27,12 @@ describe("RakazoIntents", () => {
   });
 
   it("hands a voice chat to the module that reads it", () => {
-    const swift = read("ios-intents/RakazoIntents.swift");
-    const module = read("modules/rakazo-voice-chat/ios/RakazoVoiceChatModule.swift");
-    expect(swift).toContain('"rakazo.pending_voice_chat"');
-    expect(module).toContain('"rakazo.pending_voice_chat"');
+    const swift = read("ios-intents/MatebotIntents.swift");
+    const module = read("modules/matebot-voice-chat/ios/MatebotVoiceChatModule.swift");
+    expect(swift).toContain('"matebot.pending_voice_chat"');
+    expect(module).toContain('"matebot.pending_voice_chat"');
     for (const source of [swift, module]) {
-      expect(source).toContain('Notification.Name("RakazoPendingVoiceChat")');
+      expect(source).toContain('Notification.Name("MatebotPendingVoiceChat")');
     }
   });
 
@@ -47,14 +47,14 @@ describe("withAppIntents prebuild", () => {
     const files = new Set();
     const copied = [];
     const added = [];
-    const widgetSettings = { PRODUCT_NAME: '"RakazoWidgets"' };
+    const widgetSettings = { PRODUCT_NAME: '"MatebotWidgets"' };
     const config = {
       version: "2.0.0",
       ios: { bundleIdentifier: "com.example.app", buildNumber: "7" },
       modRequest: { projectRoot: "/project", platformProjectRoot: "/project/ios" },
       modResults: {
         hasFile: (file) => files.has(file),
-        pbxTargetByName: (name) => (name === "RakazoWidgets" ? {} : undefined),
+        pbxTargetByName: (name) => (name === "MatebotWidgets" ? {} : undefined),
         pbxXCBuildConfigurationSection: () => ({ widget: { buildSettings: widgetSettings } }),
       },
     };
@@ -94,15 +94,15 @@ describe("withAppIntents prebuild", () => {
     });
     module.exports(config);
     module.exports(config);
-    expect(plist.modResults.RakazoDefaultApiBase).toBe("https://api.example.test");
+    expect(plist.modResults.MatebotDefaultApiBase).toBe("https://api.example.test");
     expect(plist.modResults.UIBackgroundModes).toEqual(["audio"]);
     // The Xcode project name follows expo.name, so the copied sources land under Matebot/.
     expect(copied).toContainEqual([
-      join(mobile, "ios-intents/RakazoIntents.swift"),
-      "/project/ios/Matebot/RakazoIntents.swift",
+      join(mobile, "ios-intents/MatebotIntents.swift"),
+      "/project/ios/Matebot/MatebotIntents.swift",
     ]);
     expect(added.map((input) => input.filepath)).toEqual([
-      "Matebot/RakazoIntents.swift",
+      "Matebot/MatebotIntents.swift",
       "Matebot/VoiceMessageRecorder.swift",
       "Matebot/VoiceMessageActivity.swift",
     ]);

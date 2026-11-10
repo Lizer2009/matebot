@@ -35,9 +35,9 @@ describe("PWA build", () => {
   });
 
   it("names the cache after the build id the client-update handshake uses", () => {
-    const code = "install(self,__RAKAZO_SW_PRECACHE__,__RAKAZO_SW_CACHE__)";
+    const code = "install(self,__MATEBOT_SW_PRECACHE__,__MATEBOT_SW_CACHE__)";
     expect(injectShell(code, ["/", "/assets/a.js"], "20261023113220")).toBe(
-      'install(self,["/","/assets/a.js"],"rakazo-shell-20261023113220")',
+      'install(self,["/","/assets/a.js"],"matebot-shell-20261023113220")',
     );
     expect(() => injectShell(code, [], "")).toThrow();
     expect(() => injectShell("install(self)", [], "20261023113220")).toThrow();

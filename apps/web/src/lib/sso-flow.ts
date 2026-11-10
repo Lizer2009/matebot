@@ -8,7 +8,7 @@ type SsoResult = {
 };
 
 export const SSO_CALLBACK_PATH = "/sso/callback";
-const SSO_CHANNEL = "rakazo-sso-oauth";
+const SSO_CHANNEL = "matebot-sso-oauth";
 const SSO_TIMEOUT_MS = 5 * 60_000;
 let cancelActiveAttempt: (() => void) | undefined;
 

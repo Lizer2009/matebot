@@ -20,7 +20,7 @@ const DEDICATED_SECRET_PLACEHOLDERS = new Set([
 ]);
 
 export function isDevSecretAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
-  if (env.RAKAZO_ALLOW_DEV_SECRETS === "1") return true;
+  if (env.MATEBOT_ALLOW_DEV_SECRETS === "1") return true;
   if (env.VITEST === "true" || env.VITEST === "1") return true;
   const nodeEnv = env.NODE_ENV;
   return nodeEnv === "development" || nodeEnv === "test";
@@ -30,14 +30,14 @@ export function isDevSecretAllowed(env: NodeJS.ProcessEnv = process.env): boolea
  * `CONTENT_ENCRYPTION=on|off`: whether new content is encrypted at rest. Reads
  * decrypt existing ciphertext either way, so switching off never strands data.
  * Unset, it is on, except in local development (`NODE_ENV=development` or
- * `RAKAZO_ALLOW_DEV_SECRETS=1`). Tests keep the server default.
+ * `MATEBOT_ALLOW_DEV_SECRETS=1`). Tests keep the server default.
  */
 export function resolveContentEncryption(env: NodeJS.ProcessEnv = process.env): boolean {
   const value = env.CONTENT_ENCRYPTION?.trim().toLowerCase();
   if (value === "on") return true;
   if (value === "off") return false;
   if (value) throw new Error('CONTENT_ENCRYPTION must be "on" or "off".');
-  return env.NODE_ENV !== "development" && env.RAKAZO_ALLOW_DEV_SECRETS !== "1";
+  return env.NODE_ENV !== "development" && env.MATEBOT_ALLOW_DEV_SECRETS !== "1";
 }
 
 export function resolveAuthSecret(env: NodeJS.ProcessEnv = process.env): string {
@@ -135,11 +135,11 @@ export function resolveScreenProxySecret(env: NodeJS.ProcessEnv = process.env): 
  */
 export function resolveUpdaterToken(env: NodeJS.ProcessEnv = process.env): string {
   return resolveDedicatedSecret(env, {
-    name: "RAKAZO_UPDATER_TOKEN",
+    name: "MATEBOT_UPDATER_TOKEN",
     conflicts: ["BETTER_AUTH_SECRET", "SANDBOX_SUPERVISOR_TOKEN", "SCREEN_PROXY_SECRET"],
-    missingMessage: "Set RAKAZO_UPDATER_TOKEN to a dedicated random updater credential.",
+    missingMessage: "Set MATEBOT_UPDATER_TOKEN to a dedicated random updater credential.",
     conflictMessage:
-      "RAKAZO_UPDATER_TOKEN must differ from BETTER_AUTH_SECRET, SANDBOX_SUPERVISOR_TOKEN, and SCREEN_PROXY_SECRET.",
+      "MATEBOT_UPDATER_TOKEN must differ from BETTER_AUTH_SECRET, SANDBOX_SUPERVISOR_TOKEN, and SCREEN_PROXY_SECRET.",
   });
 }
 

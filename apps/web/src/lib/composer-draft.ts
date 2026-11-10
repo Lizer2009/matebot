@@ -1,8 +1,8 @@
 import type { ComposerMentionBinding } from "@matebot/core";
 import { validateComposerMentionBindings } from "@matebot/core";
 
-export const COMPOSER_DRAFT_STORAGE_PREFIX = "rakazo.composerDraft.";
-const COMPOSER_BINDINGS_STORAGE_PREFIX = "rakazo.composerBindings.";
+export const COMPOSER_DRAFT_STORAGE_PREFIX = "matebot.composerDraft.";
+const COMPOSER_BINDINGS_STORAGE_PREFIX = "matebot.composerBindings.";
 
 type ComposerDraftSubmission = { text: string; bindingRecord: string | null };
 const pendingSubmissions = new Map<string, ComposerDraftSubmission>();
