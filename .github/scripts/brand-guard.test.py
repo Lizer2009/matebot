@@ -152,6 +152,36 @@ class ProductLinksToTheOldHost(unittest.TestCase):
             result = run_guard(root)
             self.assertEqual(result.returncode, 1, f"{label} passed: {result.stdout}")
 
+    def test_an_install_command_naming_the_upstream_repo_is_a_defect(self) -> None:
+        # Someone following "install this" must clone the project they are installing. The guide
+        # said `git clone .../elie222/rakazo`, which installs the upstream project instead.
+        cases = {
+            "clone": "export const SOURCE = `git clone https://github.com/elie222/rakazo.git`;\n",
+            "mkdir": "export const INSTALL = `mkdir -p rakazo && cd rakazo &&`;\n",
+            "curl": (
+                "export const FETCH = `curl -fsSLO "
+                "https://raw.githubusercontent.com/elie222/rakazo/main/x.sh`;\n"
+            ),
+        }
+        for label, source in cases.items():
+            root = make_tree({"apps/www/src/guide.ts": source})
+            result = run_guard(root)
+            self.assertEqual(result.returncode, 1, f"{label} passed: {result.stdout}")
+
+    def test_the_same_command_in_a_comment_or_docs_is_allowed(self) -> None:
+        # Documentation about the upstream project's own install is attribution, not an
+        # instruction for this product.
+        root = make_tree(
+            {
+                "apps/www/src/x.ts": (
+                    "// Upstream: git clone https://github.com/elie222/rakazo.git\n"
+                    'export const URL = "https://github.com/elie222/rakazo";\n'
+                )
+            }
+        )
+        result = run_guard(root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_attribution_to_the_upstream_project_still_passes(self) -> None:
         # Crediting the upstream project is not the same as sending users to the old product.
         root = make_tree(

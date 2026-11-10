@@ -21,7 +21,7 @@ export const OPEN_SOURCE_REASONS = [
 
 export type ComparisonRow = {
   topic: string;
-  rakazo: string;
+  matebot: string;
   other: string;
 };
 
@@ -189,59 +189,59 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates.",
+        matebot: "Open source platform for persistent AI teammates.",
         other:
           "Meta's personal AI agent. Meta says it takes on tasks and longer-term goals, rather than only answering questions.",
       },
       {
         topic: "Who runs it",
-        rakazo:
+        matebot:
           "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other:
           "Meta. Muse runs on Muse Secure VM, a dedicated cloud virtual machine for the agent and for data from services you connect. Meta's September 29, 2026 post describes Muse as available in the US and Canada.",
       },
       {
         topic: "Source",
-        rakazo: "Apache-2.0 source on GitHub.",
+        matebot: "Apache-2.0 source on GitHub.",
         other: "Hosted service from Meta.",
       },
       {
         topic: "Model",
-        rakazo:
+        matebot:
           "Bring your own model credentials. Multiple providers are supported, including a custom model server.",
         other: "Muse Spark, which Meta's launch post describes as the model for this agent.",
       },
       {
         topic: "Computer",
-        rakazo:
+        matebot:
           "Sandboxed browser, terminal, files, and a graphical desktop, on a shared team computer or an isolated private computer. Docker is the default local computer, with optional E2B, Daytona, CreateOS, Boat, or a trusted local computer.",
         other:
           "A browser on Muse Secure VM. Meta says Muse can open that browser, fill out forms, and take on tasks such as email and booking travel. The Connect recap says Muse for Mac can drive apps on that Mac with your permission.",
       },
       {
         topic: "Connected apps",
-        rakazo:
+        matebot:
           "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Connector credentials are encrypted on the server and are not returned by the API.",
         other:
           "You choose which apps Muse can use and how much access each one gets. Meta publishes connectors, including work and shopping tools, and custom connectors.",
       },
       {
         topic: "Ongoing work",
-        rakazo:
+        matebot:
           "Each bot keeps its own conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. A bot can delegate to a peer bot or a short-lived subagent.",
         other:
           "Meta says Muse keeps working after you close the app and comes back when something changes or it needs approval.",
       },
       {
         topic: "Approval",
-        rakazo:
+        matebot:
           "A bot can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
         other:
           "Meta says Muse checks with you before sensitive actions such as sending an email or paying, and shows an audit trail. The small-business post says nothing publishes, sends, or spends without your approval. You can opt out of using interactions to train Meta's models. Meta says conversations and VM data are not shared with Meta's ad systems, and that stored credentials can be used without Muse seeing the passwords.",
       },
       {
         topic: "Where you use it",
-        rakazo:
+        matebot:
           "Web app, Electron desktop app, and Expo mobile app. Voice can speak replies, take dictation, and call a bot, with your own ElevenLabs, OpenAI, Cartesia, or Fish Audio key.",
         other:
           "Muse app on iOS and Android, WhatsApp, and muse.ai, per the launch. The Connect recap adds the Mac app, a voice mode you can shape, and Muse on AI glasses in the coming months.",
@@ -288,44 +288,44 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates.",
+        matebot: "Open source platform for persistent AI teammates.",
         other:
           "Always-on agents from OpenAI. OpenAI says a dot learns from feedback and can work toward your goals continuously.",
       },
       {
         topic: "Who runs it",
-        rakazo:
+        matebot:
           "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other: "OpenAI. The announcement says each dot has its own cloud computer.",
       },
       {
         topic: "Source",
-        rakazo: "Apache-2.0 source on GitHub.",
+        matebot: "Apache-2.0 source on GitHub.",
         other: "Hosted product from OpenAI.",
       },
       {
         topic: "Model",
-        rakazo:
+        matebot:
           "Bring your own model credentials. Multiple providers are supported, including a custom model server.",
         other: "GPT-6 Astra, according to OpenAI's announcement.",
       },
       {
         topic: "Connections",
-        rakazo:
+        matebot:
           "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Bots also get a sandboxed browser, terminal, files, and a graphical desktop.",
         other:
           "OpenAI says plugins connect a dot to more than 4,000 apps, and those permissions are shared with ChatGPT. The help center says you can also give a dot its own Slack account.",
       },
       {
         topic: "Ongoing work",
-        rakazo:
+        matebot:
           "Each bot keeps conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. A bot can delegate to a peer bot or a short-lived subagent.",
         other:
           "OpenAI says a dot can keep working in the background. Proactive research can read permitted sources and save private notes. The help center says that research cannot send messages, change content through plugins, or control a browser or computer.",
       },
       {
         topic: "Control and availability",
-        rakazo:
+        matebot:
           "A bot can pause for approval at a boundary you set, and actions are recorded in an audit log. The web, desktop, and mobile clients are available with self-hosting now.",
         other:
           "Built-in rules and Custom Rules say what a dot may do, must ask about, or must not do. Custom Rules cannot turn off core safety checks. The help center says changing a password or transferring money requires you to take over, and Activity View shows ongoing work. The first dot is included with Pro and Business Premium. Dots are not available to users under 18. OpenAI is also previewing specialist dots for organizations.",
@@ -367,60 +367,60 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates.",
+        matebot: "Open source platform for persistent AI teammates.",
         other:
           "A personal assistant. The privacy policy, revised August 26, 2026, calls it an autonomous assistant that thinks, plans, and acts on everyday tasks.",
       },
       {
         topic: "Who runs it",
-        rakazo:
+        matebot:
           "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other:
           "Spear Street Technology, Inc., under the Instinct name. The privacy policy describes a hosted service, including third-party hosting. It does not describe installing Instinct on a server you operate.",
       },
       {
         topic: "Source",
-        rakazo: "Apache-2.0 source on GitHub.",
+        matebot: "Apache-2.0 source on GitHub.",
         other: "Hosted service. The terms say the company owns the service and the technology that produces its actions.",
       },
       {
         topic: "Model",
-        rakazo:
+        matebot:
           "Bring your own model credentials. Multiple providers are supported, including a custom model server.",
         other:
           "The privacy policy and terms do not name a public model. They say Instinct may train its models on what you submit unless you opt out in settings, though material flagged for safety review can still be used. Vault materials and Google Workspace data are excluded.",
       },
       {
         topic: "Computer",
-        rakazo:
+        matebot:
           "Sandboxed browser, terminal, files, and a graphical desktop, on a shared team computer or an isolated private computer. Docker is the default local computer, with optional E2B, Daytona, CreateOS, Boat, or a trusted local computer.",
         other:
           "The homepage says Instinct can use a phone and a computer the way a person does. The privacy policy's examples include booking a ride, signing into an account with credentials you provide, and booking a medical appointment.",
       },
       {
         topic: "Connected apps",
-        rakazo:
+        matebot:
           "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Connector credentials are encrypted on the server and are not returned by the API.",
         other:
           "The terms let Instinct act in services you connect, including using a payment method for a purchase. Linking Google Workspace grants Calendar, Gmail, Drive, Docs, Sheets, Slides, and Tasks.",
       },
       {
         topic: "Ongoing work",
-        rakazo:
+        matebot:
           "Each bot keeps its own conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. A bot can delegate to a peer bot or a short-lived subagent.",
         other:
           "The privacy policy says the assistant is designed to be available when you engage it, and that it plans and completes tasks from the permissions you grant.",
       },
       {
         topic: "Approval",
-        rakazo:
+        matebot:
           "A bot can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
         other:
           "The terms say Instinct can act on what you send, including purchases, and that you remain responsible for those actions. Confirmation steps may exist but are not promised to prevent an unintended action.",
       },
       {
         topic: "Where you use it",
-        rakazo:
+        matebot:
           "Web app, Electron desktop app, and Expo mobile app. Voice can speak replies, take dictation, and call a bot, with your own ElevenLabs, OpenAI, Cartesia, or Fish Audio key.",
         other:
           "The homepage says you text or call it. The privacy policy and terms also describe the Instinct website, Mac apps, and mobile apps.",
@@ -485,67 +485,67 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Setup",
-        rakazo:
+        matebot:
           "Docker installer or the desktop app's local stack, then an account and a model. After that Matebot is just chat: a new bot interviews you, and you manage it from the chat.",
         other:
           "Desktop: first-run onboarding in the app, with Choose provider later if you skip a provider. The app shares `~/.hermes/` with the CLI and starts its own local backend. CLI: `hermes setup` and `hermes model`, then `hermes` or `hermes --tui`. Messaging platforms use `hermes gateway setup` and a separate gateway process.",
       },
       {
         topic: "Day-to-day management",
-        rakazo:
+        matebot:
           "You manage the bot from the same chat on the web, desktop, and mobile apps. Routines are readable Markdown and can run on a schedule. A bot can pause for approval at a boundary you set.",
         other:
           "Desktop settings cover providers, models, tools, credentials, MCP, and sessions. The CLI recovery commands are `hermes doctor`, `hermes model`, `hermes setup`, and `hermes gateway status`. Chat apps need a gateway process kept running apart from the desktop's local backend.",
       },
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates.",
+        matebot: "Open source platform for persistent AI teammates.",
         other:
           "Nous Research describes a self-improving agent: it creates skills from experience, keeps memory across sessions, and can run scheduled jobs. The README also documents a terminal UI and a messaging gateway.",
       },
       {
         topic: "Source",
-        rakazo: "Apache-2.0 source on GitHub.",
+        matebot: "Apache-2.0 source on GitHub.",
         other: "MIT source on GitHub, built by Nous Research.",
       },
       {
         topic: "Model",
-        rakazo:
+        matebot:
           "Bring your own model credentials. Multiple providers are supported, including a custom model server. Each bot can use a different model.",
         other:
           "You choose a provider with `hermes model`. The quickstart lists many, including Nous Portal, OpenAI, Anthropic, OpenRouter, Google, a custom OpenAI-compatible endpoint, and local servers such as Ollama and LM Studio. It says a model needs at least 64,000 tokens of context.",
       },
       {
         topic: "Computer",
-        rakazo:
+        matebot:
           "Sandboxed browser, terminal, files, and a graphical desktop. Docker is the default local computer, with optional E2B, Daytona, CreateOS, Boat, or a trusted local computer.",
         other:
           "The README lists seven terminal backends: local, Docker, SSH, Singularity, Modal, Daytona, and Vercel Sandbox. The quickstart shows `hermes config set terminal.backend` for Docker or SSH. The security guide says dangerous-command checks are skipped inside Docker, Singularity, Modal, Daytona, and Vercel Sandbox, because the container is the boundary.",
       },
       {
         topic: "Connections",
-        rakazo:
+        matebot:
           "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Connector credentials are encrypted on the server and are not returned by the API.",
         other:
           "MCP servers are configured in `config.yaml`. The project site also describes web search, browser automation, vision, image generation, and text-to-speech, including a Nous Portal Tool Gateway that bundles several of those.",
       },
       {
         topic: "Where you talk to it",
-        rakazo:
+        matebot:
           "The Matebot web, desktop, and mobile apps are the main surface. Optional connectors can attach Slack, WhatsApp, Telegram, iMessage via Sendblue, and Feishu/Lark.",
         other:
           "Hermes Desktop is a chat window that shares sessions with the CLI and TUI. The gateway adds Telegram, Discord, Slack, WhatsApp, Signal, Email, and other platforms, and the desktop guide says that gateway is a separate process.",
       },
       {
         topic: "Ongoing work",
-        rakazo:
+        matebot:
           "Each bot keeps conversations, memory, routines, and history. A bot can delegate to a peer bot or a short-lived subagent.",
         other:
           "The README describes agent-curated memory, skills that can be created after a task, a built-in cron scheduler, and isolated subagents. Scheduled jobs can be delivered back to a connected platform.",
       },
       {
         topic: "Approval",
-        rakazo:
+        matebot:
           "A bot can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
         other:
           "The security guide documents approval for dangerous shell commands (`approvals.mode` defaults to smart), file-write checks, and allowlists for who can message the gateway. Container backends skip the dangerous-command check. Cron and other unattended sessions deny those commands unless you change that setting.",
@@ -592,45 +592,45 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates.",
+        matebot: "Open source platform for persistent AI teammates.",
         other:
           "A standalone Anthropic app with one ongoing thread, by text or voice. Anthropic says it is for professionals and small business owners.",
       },
       {
         topic: "Who runs it",
-        rakazo:
+        matebot:
           "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other:
           "Anthropic. Duet works on its own cloud virtual machine with a browser. The help center says you cannot watch or take over that browser.",
       },
       {
         topic: "Source",
-        rakazo: "Apache-2.0 source on GitHub.",
+        matebot: "Apache-2.0 source on GitHub.",
         other: "Hosted service from Anthropic. Its pages do not describe self-hosting.",
       },
       {
         topic: "Model",
-        rakazo:
+        matebot:
           "Bring your own model credentials, including Claude Pro/Max sign-in, other providers, and a local server. Each bot can use a different model.",
         other: "Claude Opus 5.5. The help center says you cannot choose a model.",
       },
       {
         topic: "Connections",
-        rakazo:
+        matebot:
           "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Bots also get a sandboxed browser, terminal, files, and a graphical desktop.",
         other:
           "Claude's connectors and plugins, which Anthropic puts at more than 6,000. The help center names Gmail, Google Calendar, Google Drive, Slack, QuickBooks, HubSpot, Docusign, and Calendly. Microsoft 365 is not available yet. Purchases use Link by Stripe or Shop Pay with one-time virtual cards.",
       },
       {
         topic: "Ongoing work",
-        rakazo:
+        matebot:
           "Each bot keeps conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. A bot can delegate to a peer bot or a short-lived subagent.",
         other:
           "A morning brief, then check-ins on your accounts. The announcement says every few hours; the help center says set intervals. Duet uses your Claude memory, skills, and connectors.",
       },
       {
         topic: "Control and availability",
-        rakazo:
+        matebot:
           "A bot can pause for approval at a boundary you set, and actions are recorded in an audit log. The web, desktop, and mobile clients are available with self-hosting now.",
         other:
           "Duet asks before it sends a message, makes a payment, signs a document, or deletes anything. Trading securities, moving money between accounts, and accessing someone else's account are blocked. Pro and Max only, in the US, from a waitlist. Usage counts against the plan's limits.",
@@ -673,69 +673,69 @@ export const ALTERNATIVES: readonly Alternative[] = [
     rows: [
       {
         topic: "Product",
-        rakazo: "Open source platform for persistent AI teammates.",
+        matebot: "Open source platform for persistent AI teammates.",
         other:
           "Hark Pro, a hosted personal agent launched October 6, 2026, on the web, iOS, and Android. Hark says it remembers what you tell it and can act on the web.",
       },
       {
         topic: "Who runs it",
-        rakazo:
+        matebot:
           "You do: run the published Docker images or a source checkout, and point the desktop and mobile apps at it.",
         other:
           "The terms name Hark Labs, Inc. as the operator of the hosted service. They do not describe a self-host install, and they restrict reverse engineering the service.",
       },
       {
         topic: "Price",
-        rakazo:
+        matebot:
           "No seat fee for the open source software. You pay the model and computer providers you use.",
         other:
           "Free, including the features named in the launch article. $20 a month is twice the usage. $100 a month is ten times the usage.",
       },
       {
         topic: "Day-to-day management",
-        rakazo:
+        matebot:
           "After you connect a model, Matebot is just chat. You manage the bot from that chat on the web, desktop, and mobile apps. Routines are readable Markdown.",
         other:
           "The launch article describes a messaging-style conversation. Projects are dedicated chats with their own threads. Home, Action Buttons, and Panels sit beside that. The privacy policy says you can review, edit, or delete memory by asking the agent.",
       },
       {
         topic: "Model",
-        rakazo:
+        matebot:
           "Bring your own model credentials. Multiple providers are supported, including a custom model server. Each bot can use a different model.",
         other:
           "The launch article says Hark is training models. The security page says Hark prioritizes its own models, and that models from vetted third parties keep no data. The terms do not name a public model you can swap. They say Hark may train on what you submit unless you opt out, though feedback and material flagged for safety review can still be used.",
       },
       {
         topic: "Computer",
-        rakazo:
+        matebot:
           "Sandboxed browser, terminal, files, and a graphical desktop. Docker is the default local computer, with optional E2B, Daytona, CreateOS, Boat, or a trusted local computer.",
         other:
           "Handoff, introduced August 5, 2026, is a virtual computer with a browser, files, and a terminal. The October 6 launch article says it can run up to 6 browsers at once and log in on your behalf. Hark operates that computer.",
       },
       {
         topic: "Connected apps",
-        rakazo:
+        matebot:
           "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Connector credentials are encrypted on the server and are not returned by the API.",
         other:
           "The launch article names Google and Outlook APIs, files, external databases, and MCP. Passwords and cards sit in Secured by Hark, which Hark says it cannot see inside.",
       },
       {
         topic: "Ongoing work",
-        rakazo:
+        matebot:
           "Each bot keeps conversations, memory, routines, and history. A bot can delegate to a peer bot or a short-lived subagent.",
         other:
           "Memory persists unless you ask Hark to forget. You can create scheduled tasks. Action Buttons are suggested from what Hark knows, and a tap runs that action.",
       },
       {
         topic: "Approval",
-        rakazo:
+        matebot:
           "A bot can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
         other:
           "The homepage says Hark checks in before an action that needs approval. The security page says tasks start from consent, you can watch the computer-use agent, and you can cancel. The launch article says that if you allow it, Hark can finish some tasks on its own.",
       },
       {
         topic: "Where you use it",
-        rakazo:
+        matebot:
           "The Matebot web, desktop, and mobile apps. Optional connectors can attach Slack, WhatsApp, Telegram, iMessage via Sendblue, and Feishu/Lark.",
         other:
           "The web app, iOS, and Android. The privacy policy says you work through one ongoing conversation, and that inputs can include chat, voice, and file uploads. You must be 18 or older.",
@@ -853,7 +853,7 @@ export function alternativeMarkdown(alternative: Alternative): string {
     `| Topic | Matebot | ${alternative.otherName} |`,
     "| --- | --- | --- |",
     ...alternative.rows.map(
-      (row) => `| ${cell(row.topic)} | ${cell(row.rakazo)} | ${cell(row.other)} |`,
+      (row) => `| ${cell(row.topic)} | ${cell(row.matebot)} | ${cell(row.other)} |`,
     ),
     "",
     "## Why open source and self-hosted",

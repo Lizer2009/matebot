@@ -205,7 +205,10 @@ ALLOWED = [
      "link to the upstream repository; the licence requires naming the source"),
     (r"^https://raw\.githubusercontent\.com/elie222/rakazo.*$",
      "upstream install script, referenced when documenting the original project"),
-    (r"^https://rakazo\.com.*$", "the upstream hosted service's own pages"),
+    # A blanket allowance for `rakazo.com` was removed: it excused the product's own links to the
+    # old host. The one place a link to the upstream service is legitimate — the terms page
+    # describing that service — no longer needs it, and the product-URL rule below is what
+    # catches a regression.
     (r"^Rakazo$",
      "the upstream project's own name and the brand of the hosted service it belongs to; "
      "used when stating what this product is a fork of, which is a licence obligation"),
@@ -375,6 +378,30 @@ UPSTREAM_LINKING = re.compile(
 )
 
 
+# A command a reader copies and runs is a product instruction, even when it names the upstream
+# repository: someone following "install this" must clone the project they are installing.
+COPIED_COMMAND = re.compile(
+    r"(git\s+clone\s+\S*elie222/rakazo|raw\.githubusercontent\.com/elie222/rakazo"
+    r"|curl[^\n]*elie222/rakazo|mkdir\s+-p\s+rakazo|cd\s+rakazo(?![\w-]))",
+    re.I,
+)
+
+
+def _in_comment(lines: list[str], index: int) -> bool:
+    """Whether this line is a comment, where naming the upstream repository is documentation."""
+    stripped = lines[index].strip()
+    return stripped.startswith(("#", "//", "*", "<!--"))
+
+
+# A command a reader copies and runs is a product instruction, even when it names the upstream
+# repository: someone following "install this" must clone the project they are installing.
+COPIED_COMMAND = re.compile(
+    r"(git\s+clone\s+\S*elie222/rakazo|raw\.githubusercontent\.com/elie222/rakazo"
+    r"|curl[^\n]*elie222/rakazo|mkdir\s+-p\s+rakazo|cd\s+rakazo(?![\w-]))",
+    re.I,
+)
+
+
 def _in_upstream_section(lines: list[str], index: int, window: int = 12) -> bool:
     """Whether this line sits in a section that is explicitly about the upstream service.
 
@@ -414,6 +441,11 @@ def _visible_defects():
                 continue
             # A product URL is checked before the attribution excuse, because the old host
             # appearing there means we are linking people to it, not crediting it.
+            # A command someone copies is never attribution, wherever it sits: it tells them what
+            # to install, and "install the upstream project" is the wrong instruction here.
+            if COPIED_COMMAND.search(line) and not _in_comment(all_lines, number - 1):
+                found.append((path, number, line.strip()[:120]))
+                continue
             if (
                 PRODUCT_URL.search(line)
                 and not UPSTREAM_LINKING.search(line)
