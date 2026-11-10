@@ -19,7 +19,8 @@ const surface = {
   empty: false,
 };
 
-function deps(storedSummary: string | null) {
+function deps(storedSummary: string | null, existingBlocks: unknown[] = []) {
+  const updates: Array<{ data: { blocks: Array<Record<string, unknown>> } }> = [];
   const prisma = {
     interaction: {
       findFirst: async () => ({
@@ -35,8 +36,11 @@ function deps(storedSummary: string | null) {
       upsert: async () => ({ surface: {}, documentRef: "a2ui:interaction:ix-1:surface:surf-1" }),
     },
     message: {
-      findUnique: async () => ({ id: "msg-1", blocks: [] }),
-      update: async () => ({}),
+      findUnique: async () => ({ id: "msg-1", blocks: existingBlocks }),
+      update: async (args: { data: { blocks: Array<Record<string, unknown>> } }) => {
+        updates.push(args);
+        return {};
+      },
     },
     $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),
   };
@@ -44,6 +48,7 @@ function deps(storedSummary: string | null) {
     prisma: prisma as never,
     appendEvent: vi.fn(async () => ({ seq: 1 })),
     notify: vi.fn(async () => undefined),
+    updates,
   };
 }
 
@@ -74,5 +79,48 @@ describe("republishResultSurface", () => {
       },
     });
     expect(result.ok).toBe(true);
+  });
+
+  it("keeps the sender label when it refreshes a card in place", async () => {
+    // A refresh changes the window, not the card. Rebuilding the block without the connection's
+    // label would blank the read-only sender row on a card the person is already reading.
+    const d = deps("user-provided CSV", [
+      {
+        kind: "a2ui_surface",
+        interactionId: "ix-1",
+        surfaceId: "surf-1",
+        draftVersion: 3,
+        senderLabel: "Gmail",
+      },
+    ]);
+    const result = await republishResultSurface(d, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      surface: {
+        ...surface,
+        provenance: {
+          ...surface.provenance,
+          window: { from: "2026-07-01", to: "2026-09-30" },
+        },
+      },
+    });
+    expect(result.ok).toBe(true);
+    expect(d.updates.at(-1)?.data.blocks[0]?.senderLabel).toBe("Gmail");
+  });
+
+  it("does not invent a label on a card that never had one", async () => {
+    const d = deps("user-provided CSV", [
+      { kind: "a2ui_surface", interactionId: "ix-1", surfaceId: "surf-1", draftVersion: 3 },
+    ]);
+    await republishResultSurface(d, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      surface,
+    });
+    expect(d.updates.at(-1)?.data.blocks[0]).not.toHaveProperty("senderLabel");
   });
 });

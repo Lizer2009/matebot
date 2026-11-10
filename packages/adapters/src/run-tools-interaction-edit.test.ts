@@ -1,4 +1,5 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
+import { userEditedFieldNames } from "@matebot/core";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { editInteraction } from "./run-tools-interaction-edit.js";
 
@@ -141,6 +142,9 @@ function context(
             confirmedVersion: row.confirmedVersion,
             slots: row.slots,
             plan: row.plan,
+            // Production reads provenance off the stored plan; without it the harness would let
+            // a model edit overwrite what the person typed, which the real path refuses.
+            userEditedFields: userEditedFieldNames(row.plan),
           }
         : null;
     },
@@ -350,6 +354,54 @@ describe("edit_interaction reports what the card holds afterwards", () => {
     ]);
     expect(result.missingRequired).toEqual(["body"]);
     expect(result.actionable).toBe(false);
+  });
+
+  it("reports what the row holds when a write was skipped, not what was asked for", async () => {
+    // The person typed the recipient, so a model edit to it is skipped and nothing is written.
+    // The readback must then still show the person's value: reporting the requested one would
+    // tell the model it changed something the card never accepted, which is the exact misreport
+    // this phase exists to remove. Request and stored row differ here, which is what makes the
+    // case able to tell "read the row" from "echo the request".
+    const harness = context({
+      rows: [
+        {
+          plan: {
+            intent: "email.compose",
+            title: "Email",
+            fields: [
+              {
+                name: "to",
+                value: "typed@example.com",
+                required: true,
+                status: "resolved",
+                source: "user",
+              },
+              { name: "subject", value: "Hi", required: true, status: "resolved" },
+              { name: "body", value: "Hello", required: true, status: "resolved" },
+            ],
+            nextStep: "render",
+            riskLevel: "medium",
+          },
+          slots: { to: "typed@example.com", subject: "Hi", body: "Hello" },
+        },
+      ],
+    });
+
+    const result = (await editInteraction(
+      harness.ctx as never,
+      { fields: { to: "model@example.com" }, revision: 2 },
+      harness.services,
+    )) as Record<string, unknown>;
+
+    expect(result.ok).toBe(true);
+    // The protected field was not written at all.
+    expect(harness.writes.map((write) => write.name)).toEqual([]);
+    expect(result.skippedFields).toContain("to");
+    const to = (result.fields as Array<{ name: string; value: string }>).find(
+      (field) => field.name === "to",
+    );
+    // The card still shows the person's address, and the readback says the same.
+    expect(to?.value).toBe("typed@example.com");
   });
 
   it("never reports a from field the card does not have", async () => {
