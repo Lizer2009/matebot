@@ -2,7 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { documentOriginConfigured, documentOriginFromEnv } from "./document-origin.js";
+import {
+  DEFAULT_DOCUMENT_ORIGIN,
+  documentOriginConfigured,
+  documentOriginFromEnv,
+} from "./document-origin.js";
 import {
   DOCS_ROOT_PATH,
   documentationUrl,
@@ -85,6 +89,22 @@ describe("offline fallback", () => {
 
   it("names no upstream product host", () => {
     expect(PRODUCT_DOCS_FALLBACK).not.toMatch(/rakazo/i);
+  });
+});
+
+describe("documentOriginFromEnv without a process", () => {
+  it("falls back to the default instead of throwing where `process` does not exist", () => {
+    // A browser bundle has no `process`. Reading it unconditionally threw at module scope, and
+    // the symptom was a screen that silently never rendered rather than an error.
+    const saved = globalThis.process;
+    // @ts-expect-error simulating a browser: there is no process global
+    delete globalThis.process;
+    try {
+      expect(documentOriginFromEnv()).toBe(DEFAULT_DOCUMENT_ORIGIN);
+      expect(documentOriginConfigured()).toBe(false);
+    } finally {
+      globalThis.process = saved;
+    }
   });
 });
 

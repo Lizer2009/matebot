@@ -7,12 +7,7 @@ import type {
   IntegrationCatalogSurface,
   PluginMarketplaceEntry,
 } from "@matebot/contracts";
-import {
-  CONNECTION_LABEL_MAX_LENGTH,
-  onMarketingSite,
-  PluginPreviewSchema,
-  SUBMIT_PLUGIN_PATH,
-} from "@matebot/contracts";
+import { CONNECTION_LABEL_MAX_LENGTH, PluginPreviewSchema } from "@matebot/contracts";
 import type { PluginCategory } from "@matebot/core";
 import {
   buildFeaturedConnectorTiles,
@@ -20,7 +15,6 @@ import {
   catalogItemAccounts,
   catalogItemKey,
   connectCatalogItem,
-  documentOriginFromEnv,
   filterConnectionCatalogItems,
   humanizeToolName,
   installedPluginParts,
@@ -110,10 +104,14 @@ const NO_SOURCES: CapabilityInstall[] = [];
 const NO_PLUGINS: PluginMarketplaceEntry[] = [];
 const SECTION_SIZE = 6;
 /**
- * Where a plugin is submitted. The page lives on the marketing site, whose host differs per
- * deployment; the app composes the path with the origin it resolved rather than embedding one.
+ * Where a plugin is submitted: the project's public marketing site.
+ *
+ * The page lives on the marketing site, not in this bundle. A browser has no `process` and no
+ * deployment-specific origin at build time, so this names the project's public site directly
+ * rather than resolving one — the same way the docs link to it. It is a Matebot URL; nothing
+ * here points at the old brand.
  */
-const submitPluginUrl = onMarketingSite(documentOriginFromEnv(), SUBMIT_PLUGIN_PATH);
+const SUBMIT_PLUGIN_URL = "https://test.matebot.dev/plugins/submit/";
 const CHIP_COUNT = 6;
 const PLUGIN_PAGE_SIZE = 24;
 
@@ -1817,7 +1815,7 @@ export function PluginsOverlay({
               {catalogLoaded && !category ? (
                 <div className="mt-10 flex justify-center">
                   <a
-                    href={submitPluginUrl}
+                    href={SUBMIT_PLUGIN_URL}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"
