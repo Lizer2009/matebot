@@ -116,8 +116,19 @@ export function routeIsActionable(route: LayerRoute): boolean {
   return route.kind === "draft" && route.connected;
 }
 
-/** A tool name the connector uses to search its own catalog rather than to act. */
-const DISCOVERY_TOOL = /(^|_)SEARCH(_|$)/i;
+/**
+ * A tool that returns tool *schemas* rather than acting: the connector's own meta-search.
+ *
+ * The name has to end in `SEARCH_TOOL` or `SEARCH_TOOLS`. Matching any name that merely contains
+ * "search" would also catch real actions — `GOOGLE_SEARCH_CONSOLE_SUBMIT_SITEMAP` writes,
+ * `SLACK_SEARCH_MESSAGES` and `NOTION_SEARCH` read a workspace — and silently deny them their
+ * effect row, which is the opposite of what this predicate is for.
+ *
+ * This is a name heuristic, which is why it is kept narrow: a connector whose meta-tool is named
+ * something else is simply not detected, and its call is treated as ordinary. That failure is
+ * visible; the other one silently swallows a write.
+ */
+const DISCOVERY_TOOL = /(^|_)SEARCH_TOOLS?$/i;
 
 /** Whether a tool call is a search. A search result is discovered, never executed. */
 export function isDiscoveryTool(tool: string): boolean {

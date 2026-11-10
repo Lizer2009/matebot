@@ -100,6 +100,32 @@ describe("a tool search is not a tool call", () => {
     expect(routeDidExecute(route)).toBe(false);
   });
 
+  it("does not treat a real action merely named after search as discovery", () => {
+    // The catalog-search meta-tool is the only thing that returns schemas. A provider action
+    // that happens to contain the word "search" is a real call — some read, some write — and
+    // denying it an effect row would be the opposite of what this predicate is for. This is the
+    // regression that a `SEARCH` substring match caused.
+    for (const tool of [
+      "GOOGLE_SEARCH_CONSOLE_SUBMIT_SITEMAP",
+      "SLACK_SEARCH_MESSAGES",
+      "GMAIL_SEARCH_EMAILS",
+      "NOTION_SEARCH",
+    ]) {
+      expect(isDiscoveryTool(tool), tool).toBe(false);
+      // With a ledger row it is an execution; without one it is only discovered.
+      expect(classifyToolCall({ tool, effectId: "effect-1" }).kind, tool).toBe("executed");
+    }
+  });
+
+  it("recognises the meta-search under the spellings it actually has", () => {
+    // Only the documented shape: the connector's catalog-search tool, whose name ends in
+    // SEARCH_TOOL or SEARCH_TOOLS. Other spellings are deliberately not guessed at — see the
+    // module comment for why an over-broad match is the worse failure.
+    for (const tool of ["COMPOSIO_SEARCH_TOOLS", "composio_search_tools", "SEARCH_TOOL"]) {
+      expect(isDiscoveryTool(tool), tool).toBe(true);
+    }
+  });
+
   it("refuses to call a search executed even when an id is supplied", () => {
     // A caller that mislabels a search must not be able to talk this into an execution claim.
     const route = classifyToolCall({
