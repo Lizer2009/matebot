@@ -947,8 +947,21 @@ export const PLUGIN_SUBMISSIONS_PATH = "/api/v1/plugin-submissions";
 export const INTEGRATION_CLAIMS_PATH = "/api/v1/integration-claims";
 /** Opened from the email that proves a claimant reads mail at the app's domain. */
 export const INTEGRATION_CLAIM_CONFIRM_PATH = "/api/v1/integration-claims/confirm";
-export const SUBMIT_PLUGIN_URL = "https://rakazo.com/plugins/submit/";
-export const integrationPageUrl = (slug: string) => `https://rakazo.com/integrations/${slug}/`;
+/**
+ * Pages that live on the product's *marketing* site, which is a different host from the app.
+ *
+ * These are paths, not origins. The host moves between environments (and between forks), and the
+ * single place that knows the deployed origin is `documentOriginFromEnv` in `@matebot/core`, which
+ * reads the same `RAKAZO_MARKETING_URL` the site itself builds from. Hardcoding a host here meant
+ * a shipped app pointed at a domain the deployment had never heard of.
+ */
+export const SUBMIT_PLUGIN_PATH = "/plugins/submit/";
+export const integrationPagePath = (slug: string) => `/integrations/${slug}/`;
+
+/** `<marketingOrigin>` + a path, with the join tolerant of a trailing slash on the origin. */
+export function onMarketingSite(origin: string, path: string): string {
+  return `${origin.replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
+}
 
 /** People type a bare domain like `acme.com`, so a URL without a scheme gets `https://`. */
 const HttpsUrlSchema = z

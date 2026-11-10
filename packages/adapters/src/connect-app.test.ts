@@ -101,6 +101,20 @@ describe("connect_app execution", () => {
     expect(await f.call()).toMatchObject({ status: "connected" });
     expect(stored).toHaveLength(0);
   });
+  it("tells the model a connected app is a connection, not an action that ran", async () => {
+    // "Already connected" is L2/L3. Nothing has been executed, and a reply that conflates the
+    // two is what made an earlier turn claim work it had not done.
+    const f = fixture([{ ...entry, connected: true }]);
+    const result = (await f.call()) as Record<string, unknown>;
+    expect(result).toMatchObject({ layer: "connection", connected: true, executed: false });
+    expect(String(result.message)).toMatch(/Nothing has been run/);
+  });
+  it("tells the model a posted catalog card is not a connection", async () => {
+    const f = fixture();
+    const result = (await f.call()) as Record<string, unknown>;
+    expect(result).toMatchObject({ layer: "catalog", connected: false, executed: false });
+    expect(String(result.message)).toMatch(/not connected yet and nothing has run/);
+  });
   it("dedupes replay even after the original card connects", async () => {
     const f = fixture();
     await f.call();

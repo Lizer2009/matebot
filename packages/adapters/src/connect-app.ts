@@ -42,7 +42,14 @@ export async function connectApp(
   if (entry.connected)
     return {
       status: "connected",
-      message: "This app is already connected and its tools are available.",
+      // A connected app is still only L2/L3: the connection exists, nothing has run. Saying
+      // "connected" without that distinction is what let an earlier turn report a connection as
+      // though work had been done.
+      layer: "connection",
+      connected: true,
+      executed: false,
+      message:
+        "This app is already connected and its tools are available. Nothing has been run: no action has happened yet.",
     };
   const block = appConnectCard(entry);
   const committed = await deps.prisma.$transaction(async (tx) => {
@@ -96,8 +103,13 @@ export async function connectApp(
     );
   return {
     status: "pending",
+    // A catalog card the person has not authorized yet. It is shown, not connected, and it has
+    // run nothing — three different things that must not be conflated in what the model reads.
+    layer: "catalog",
+    connected: false,
+    executed: false,
     message: committed
-      ? "Connection card shown. Wait for the user to connect the app."
-      : "Connection card already shown. Wait for the user to connect the app.",
+      ? "Connection card shown. Wait for the user to connect the app. The app is not connected yet and nothing has run."
+      : "Connection card already shown. Wait for the user to connect the app. The app is not connected yet and nothing has run.",
   };
 }

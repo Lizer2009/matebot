@@ -14,7 +14,8 @@ import type {
   AiRecipient,
   SettingsScope,
 } from "@matebot/contracts";
-import { AI_DISCLOSURE_VERSION, AI_PRIVACY_URL } from "@matebot/contracts";
+import { AI_DISCLOSURE_VERSION, AI_PRIVACY_PATH, onMarketingSite } from "@matebot/contracts";
+import { documentOriginFromEnv } from "@matebot/core";
 import {
   findDefaultVoiceCredential,
   findModelCredential,
@@ -252,7 +253,10 @@ export async function aiConsentStatus(
       .update(JSON.stringify([actor.userId, actor.spaceId]))
       .digest("hex"),
     version: AI_DISCLOSURE_VERSION,
-    privacyUrl: deps.env.privacyPolicyUrl ?? AI_PRIVACY_URL,
+    // An operator with its own policy sets PRIVACY_POLICY_URL; otherwise this points at the
+    // deployment's own marketing site, whose host is resolved rather than hardcoded.
+    privacyUrl:
+      deps.env.privacyPolicyUrl ?? onMarketingSite(documentOriginFromEnv(), AI_PRIVACY_PATH),
     recipients: [...recipients.values()],
   };
 }

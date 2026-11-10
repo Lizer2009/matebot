@@ -19,11 +19,12 @@ import {
   INTEGRATION_CLAIM_CONFIRM_PATH,
   INTEGRATION_CLAIMS_PATH,
   IntegrationClaimInputSchema,
-  integrationPageUrl,
+  integrationPagePath,
+  onMarketingSite,
   PLUGIN_SUBMISSIONS_PATH,
   PluginSubmissionInputSchema,
 } from "@matebot/contracts";
-import { pluginCategory } from "@matebot/core";
+import { documentOriginFromEnv, pluginCategory } from "@matebot/core";
 import type { PluginSubmission as PluginSubmissionRow, PrismaClient } from "@matebot/db";
 import { ORPCError } from "@orpc/server";
 import type { Context } from "hono";
@@ -220,14 +221,20 @@ export function pluginSubmissionRoutes(
       return c.text("This link was already used or is invalid.", 404);
     }
     if (row.confirmExpiresAt.getTime() < Date.now()) {
-      return c.redirect(`${integrationPageUrl(row.claim)}claim/?expired`, 303);
+      return c.redirect(
+        onMarketingSite(documentOriginFromEnv(), integrationPagePath(row.claim)) + "claim/?expired",
+        303,
+      );
     }
     const confirmed = await deps.prisma.pluginSubmission.updateMany({
       where: { id: row.id, status: "unconfirmed", confirmToken: row.confirmToken },
       data: { status: "pending", confirmToken: null, confirmExpiresAt: null },
     });
     if (confirmed.count > 0) notifyAdmins(row);
-    return c.redirect(`${integrationPageUrl(row.claim)}claim/?confirmed`, 303);
+    return c.redirect(
+      onMarketingSite(documentOriginFromEnv(), integrationPagePath(row.claim)) + "claim/?confirmed",
+      303,
+    );
   });
 
   // The marketing site reads this when it builds; a few minutes of staleness is fine.

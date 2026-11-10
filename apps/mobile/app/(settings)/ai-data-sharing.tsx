@@ -1,5 +1,6 @@
 import type { AiConsentStatus } from "@matebot/contracts";
-import { AI_DATA_DISCLOSURES, AI_PRIVACY_URL } from "@matebot/contracts";
+import { AI_DATA_DISCLOSURES, AI_PRIVACY_PATH, onMarketingSite } from "@matebot/contracts";
+import { documentOriginFromEnv } from "@matebot/core";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet } from "react-native";
 import {
@@ -138,7 +139,11 @@ export default function AiDataSharing() {
               title={t("Matebot")}
               accessibilityRole="link"
               chevron="right"
-              onPress={() => void Linking.openURL(status.privacyUrl ?? AI_PRIVACY_URL)}
+              onPress={() =>
+                void Linking.openURL(
+                  status.privacyUrl ?? onMarketingSite(documentOriginFromEnv(), AI_PRIVACY_PATH),
+                )
+              }
             />
           </SettingsGroup>
           <SettingsGroup>

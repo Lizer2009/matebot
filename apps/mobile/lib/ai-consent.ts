@@ -1,5 +1,6 @@
 import type { AiRecipient } from "@matebot/contracts";
-import { AI_DATA_DISCLOSURES, AI_PRIVACY_URL } from "@matebot/contracts";
+import { AI_DATA_DISCLOSURES, AI_PRIVACY_PATH, onMarketingSite } from "@matebot/contracts";
+import { documentOriginFromEnv } from "@matebot/core";
 import { Alert, AppState, Linking } from "react-native";
 import { t } from "./i18n";
 
@@ -7,7 +8,7 @@ export const FOREGROUND_FALLBACK_MS = 400;
 
 export function promptAiConsent(
   recipient: AiRecipient,
-  privacyUrl = AI_PRIVACY_URL,
+  privacyUrl = onMarketingSite(documentOriginFromEnv(), AI_PRIVACY_PATH),
 ): Promise<boolean> {
   return new Promise((resolve) => {
     let settled = false;

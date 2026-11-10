@@ -10,7 +10,8 @@ import type {
 import {
   CONNECTION_LABEL_MAX_LENGTH,
   MCP_OAUTH_CLIENT_REQUIRED,
-  SUBMIT_PLUGIN_URL,
+  onMarketingSite,
+  SUBMIT_PLUGIN_PATH,
 } from "@matebot/contracts";
 import type { PluginCategory } from "@matebot/core";
 import {
@@ -19,6 +20,7 @@ import {
   catalogItemAccounts,
   catalogItemKey,
   connectCatalogItem,
+  documentOriginFromEnv,
   EMPTY_PLUGIN_CATALOG_MESSAGE,
   filterConnectionCatalogItems,
   humanizeToolName,
@@ -1513,7 +1515,11 @@ export default function Integrations() {
                   <NativeActionButton
                     fill={false}
                     label={t("Submit a plugin")}
-                    onPress={() => void Linking.openURL(SUBMIT_PLUGIN_URL)}
+                    onPress={() =>
+                      void Linking.openURL(
+                        onMarketingSite(documentOriginFromEnv(), SUBMIT_PLUGIN_PATH),
+                      )
+                    }
                     prominence="quiet"
                     size="compact"
                     variant="text"

@@ -2,7 +2,12 @@ import { randomUUID } from "node:crypto";
 import type { SandboxProvider } from "@matebot/adapter-kit";
 import type { ComputerCommand } from "@matebot/contracts";
 import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@matebot/contracts";
-import { redactSecrets, sandboxCommandTimeoutMs } from "@matebot/core";
+import {
+  describeRoute,
+  redactSecrets,
+  routeWebRequest,
+  sandboxCommandTimeoutMs,
+} from "@matebot/core";
 import { RunHistoryWriteError } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { redactShellStreams } from "./agent-environment.js";
@@ -279,8 +284,30 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
       name,
       result,
     );
-    return browserResultForModel(result);
+    return browserResultForModel(withRouteLayer(name, result));
   }, call.finish);
+}
+
+/**
+ * Say which layer an `browser_navigate` result belongs to.
+ *
+ * Opening a page in the browser is L1. It is not an app connection and not an action, and the
+ * model reads this result to decide what to tell the person — so the distinction has to travel
+ * with the result rather than be inferred from the tool name. `browser_snapshot` and
+ * `browser_act` are not annotated: they read or drive a page already open, and this marker is
+ * about the entry step.
+ */
+function withRouteLayer<T>(name: string, result: T): T {
+  if (name !== "browser_navigate") return result;
+  if (!result || typeof result !== "object") return result;
+  const candidate = result as unknown as { url?: unknown };
+  const url = typeof candidate.url === "string" ? candidate.url : undefined;
+  const route = routeWebRequest({ url: url ?? "about:blank" });
+  return {
+    ...(result as Record<string, unknown>),
+    route: { layer: route.layer, kind: route.kind, connected: false, executed: false },
+    routeNotice: describeRoute(route),
+  } as T;
 }
 
 /** Tools that drive the bot's computer: screen, page browser and shell. */

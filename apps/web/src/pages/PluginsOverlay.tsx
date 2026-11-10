@@ -9,8 +9,9 @@ import type {
 } from "@matebot/contracts";
 import {
   CONNECTION_LABEL_MAX_LENGTH,
+  onMarketingSite,
   PluginPreviewSchema,
-  SUBMIT_PLUGIN_URL,
+  SUBMIT_PLUGIN_PATH,
 } from "@matebot/contracts";
 import type { PluginCategory } from "@matebot/core";
 import {
@@ -19,6 +20,7 @@ import {
   catalogItemAccounts,
   catalogItemKey,
   connectCatalogItem,
+  documentOriginFromEnv,
   filterConnectionCatalogItems,
   humanizeToolName,
   installedPluginParts,
@@ -107,6 +109,11 @@ const NO_CONNECTIONS: Connection[] = [];
 const NO_SOURCES: CapabilityInstall[] = [];
 const NO_PLUGINS: PluginMarketplaceEntry[] = [];
 const SECTION_SIZE = 6;
+/**
+ * Where a plugin is submitted. The page lives on the marketing site, whose host differs per
+ * deployment; the app composes the path with the origin it resolved rather than embedding one.
+ */
+const submitPluginUrl = onMarketingSite(documentOriginFromEnv(), SUBMIT_PLUGIN_PATH);
 const CHIP_COUNT = 6;
 const PLUGIN_PAGE_SIZE = 24;
 
@@ -1810,7 +1817,7 @@ export function PluginsOverlay({
               {catalogLoaded && !category ? (
                 <div className="mt-10 flex justify-center">
                   <a
-                    href={SUBMIT_PLUGIN_URL}
+                    href={submitPluginUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"

@@ -1,3 +1,4 @@
+import { classifyToolCall, describeRoute, isDiscoveryTool, routeDidExecute } from "@matebot/core";
 import { normalizedHttpUrl } from "@matebot/core/egress";
 import { executeCloudAgentTool } from "./cloud-agent-service.js";
 import { collectLogIds } from "./composio-connector.js";
@@ -25,7 +26,7 @@ export async function cloudAgentTool(ctx: RunContext, call: ToolCall) {
 
 export async function connectorTool(ctx: RunContext, call: ToolCall) {
   const { deps, run, bot, thread, context } = ctx;
-  const { name, args, effectKey, connectorCall } = call;
+  const { name, args, effectKey, connectorCall, applied } = call;
   if (deps.connector) {
     let result: unknown = { error: `unknown tool ${name}` };
     for await (const event of deps.connector.execute(
@@ -60,9 +61,39 @@ export async function connectorTool(ctx: RunContext, call: ToolCall) {
         }
       }
     }
-    return call.finish(result);
+    // Only a discovery call is annotated. A real action's own result is what the model needs, and
+    // adding a marker to every connector result would change a payload read all over the product
+    // for a distinction that only matters where a search could be mistaken for work done.
+    return call.finish(
+      isDiscoveryTool(name) ? withConnectorLayer(name, result, applied?.effect.id) : result,
+    );
   }
   return call.finish({ error: `unknown tool ${name}` });
+}
+
+/**
+ * Say which layer a connector result belongs to: discovery or execution.
+ *
+ * The model reads this result to write its reply, and "the tool returned something" is not the
+ * same as "the work was done". A catalog search returns schemas and has no effect row; a real
+ * action has one. Classifying from the ledger entry — rather than from the tool name alone — is
+ * what keeps a search from being reported as a completed action.
+ */
+function withConnectorLayer<T>(name: string, result: T, effectId: string | undefined): T {
+  if (!result || typeof result !== "object") return result;
+  const route = classifyToolCall({ tool: name, effectId });
+  const executed = routeDidExecute(route);
+  return {
+    ...(result as Record<string, unknown>),
+    route: {
+      layer: route.layer,
+      kind: route.kind,
+      executed,
+      // Only an executed route has a ledger row to name; a discovered one has none.
+      effectId: route.kind === "executed" ? route.effectId : null,
+    },
+    routeNotice: describeRoute(route),
+  } as T;
 }
 
 /** Web, cloud agents, MCP servers, app connections and connector tools. */
