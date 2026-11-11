@@ -1,9 +1,9 @@
 # Matebot 二次开发计划
 
-> **仓库**：[Lizer2009/matebot](https://github.com/Lizer2009/matebot)（fork 自 [elie222/rakazo](https://github.com/elie222/rakazo)）  
+> **仓库**：[Lizer2009/matebot](https://github.com/Lizer2009/matebot)（fork 自 [Rakazo](https://github.com/elie222/rakazo) 0.6.0）  
 > **目标**：把 matebot 作为**第二个 Grok Bot 实例**，在**不依赖本地电脑**的前提下，通过 Cursor Cloud Agent / 云端 VPS 完成在线迭代。  
 > **本文档性质**：规划稿（Planning pass）。实现工作按文末 P0/P1/P2 分阶段进行。  
-> **验证日期**：2026-11-04 — fork `main` 在合并部署文档 PR 后为 `5480b877`，upstream `main` 为 `d97c5fd7`（见 [MATEBOT_DEPLOY.md](./MATEBOT_DEPLOY.md#跟踪-commit2026-11-04-自本仓库观测)）。**部署路径已定为 VPS/LAN Compose（2026-11-05 起主机为 `192.168.10.5`，原 `192.168.10.12` 已迁移并清理）；Railway 暂缓。** P1-5 **轻量品牌** 与 **P2-4 / P2-5 / P2-6 全量品牌**（2026-11-05）均已完成：`@matebot/*` 包名、桌面 productName/AppData/安装包、www 独立站点、README 三语；`RAKAZO_*` 环境变量与 `rakazo_app` 角色刻意保留，映射见 §6.1 与 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)。
+> **验证日期**：2026-11-04 — fork `main` 为 `5480b877`。**部署路径已定为 VPS/LAN Compose（2026-11-05 起主机为 `192.168.10.5`，原 `192.168.10.12` 已迁移并清理）；Railway 暂缓。** P1-5 **轻量品牌** 与 **P2-4 / P2-5 / P2-6 全量品牌**（2026-11-05）均已完成：`@matebot/*` 包名、桌面 productName/AppData/安装包、www 独立站点、README 三语；环境变量、数据库角色、Compose 项目与卷名当时刻意保留，后来已全量改为 Matebot 命名，见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)。
 
 ---
 
@@ -11,7 +11,7 @@
 
 | 维度 | 结论 |
 | --- | --- |
-| 与 upstream 关系 | 2026-11-05 起**不再字节级一致**：包名、桌面身份、www 与 README 已品牌化；`RAKAZO_*` 环境变量、`rakazo_app` 角色、GHCR 上游镜像与本仓库镜像并存。 |
+| 与 upstream 关系 | 2026-11-05 起**不再字节级一致**：包名、桌面身份、www 与 README 已品牌化；此后环境变量、数据库角色、Compose 项目与卷名也已统一为 Matebot 命名。 |
 | 推荐部署形态（无本地机） | **Matebot 当前：VPS + Compose 镜像**（`192.168.10.5`）；**Railway 暂缓**。Bot **计算机**可用 Docker（有 socket）或 **E2B / Boat / Daytona** 等远程沙箱。 |
 | Cursor 集成 | 产品已内置 **Cursor Cloud Agent** 适配器（`CLOUD_AGENT_PROVIDER=cursor`）；Bot 可通过 `cloud_agent_*` 工具在**你的 GitHub 仓库**上启动 Cursor 云端 Agent，与「在 Cursor 里改 matebot 代码」是**互补**关系。 |
 | 首轮编码重点 | ✅ 自有 GHCR/安装脚本默认值、matebot 专用 `.env` 模板、CI 可绿；下一轮重点是 upstream 合并成本控制与移动端商店身份。 |
@@ -123,7 +123,7 @@ Bot 工具：`cloud_agent_launch` / `status` / `reply` / `cancel`。用于把**�
 | **Railway 模板** | 否 | Railway 托管 sandbox | ★★★ 个人第二实例最快 |
 | **VPS + `install-images-matebot.sh`** | 否（仅 SSH 到 VPS） | 默认 Docker；可改 E2B/Boat | ★★★ 可控、可 HTTPS |
 | **继续拉 upstream GHCR 镜像** | 否 | 同左 | ★ 零构建，但镜像仍是 upstream；本仓库镜像见上两行 |
-| **Fork 自建 GHCR + 改 `RAKAZO_IMAGE`** | 否（CI 构建） | 同左 | ★★★ 长期独立发布 |
+| **Fork 自建 GHCR + 改 `MATEBOT_IMAGE`** | 否（CI 构建） | 同左 | ★★★ 长期独立发布 |
 | **`pnpm dev` 源码开发** | **是**（Node 22+、pnpm、Docker） | 本地 Docker computer | ★ 仅适合有本机时 |
 | **Electron「本机计算机」** | **是** | 宿主 OS | ✗ 不符合「无本地机」 |
 | **Expo 移动构建 / 桌面签名发布** | **是**（macOS 等） | N/A | ✗ 非在线迭代必需 |
@@ -140,7 +140,7 @@ Bot 工具：`cloud_agent_launch` / `status` / `reply` / `cancel`。用于把**�
 mkdir -p matebot && cd matebot
 curl -fsSLO https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose/install-images-matebot.sh
 bash install-images-matebot.sh --prepare-only
-# 编辑 .env：RAKAZO_HOST、HTTPS 三件套、模型密钥、SANDBOX_PROVIDER=boat|e2b|…
+# 编辑 .env：MATEBOT_HOST、HTTPS 三件套、模型密钥、SANDBOX_PROVIDER=boat|e2b|…
 bash install-images-matebot.sh
 ```
 
@@ -148,20 +148,20 @@ bash install-images-matebot.sh
 
 1. **`SANDBOX_PROVIDER`**：在纯 PaaS（无 Docker socket）上不要用 `docker`；改用 `e2b`、`boat`、`daytona`、`createos` 等并配置对应 API key（[`docs/self-host-sandbox-providers.md`](./self-host-sandbox-providers.md)）。
 2. **`SANDBOX_PROVIDER=none`**：仅聊天/集成、不要 Bot 桌面时可用；Compose 仍要求 `SANDBOX_SUPERVISOR_TOKEN`（见文档）。
-3. **HTTPS**：公网访问必须设置 `BETTER_AUTH_URL`、`WEB_ORIGIN`、`API_URL`、`RAKAZO_HOST`（[`docs/self-host-production.md`](./self-host-production.md)）。
+3. **HTTPS**：公网访问必须设置 `BETTER_AUTH_URL`、`WEB_ORIGIN`、`API_URL`、`MATEBOT_HOST`（[`docs/self-host-production.md`](./self-host-production.md)）。
 
 ### 3.4 Fork 镜像与安装脚本（中期必做）
 
 当前默认值指向上游：
 
-- 应用镜像：`ghcr.io/elie222/rakazo/app:edge`
-- 计算机镜像：`ghcr.io/elie222/rakazo/computer:edge`
-- 安装脚本下载基址：`RAKAZO_DOWNLOAD_BASE=https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose`
+- 应用镜像：`ghcr.io/lizer2009/matebot/app:edge`
+- 计算机镜像：`ghcr.io/lizer2009/matebot/computer:edge`
+- 安装脚本下载基址：`MATEBOT_DOWNLOAD_BASE=https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose`
 
 **Matebot 独立迭代**应：
 
 1. 在 `Lizer2009/matebot` 启用 GitHub Actions **`publish-server-image`**（fork 上会在 GitHub runner 构建，无 Depot 变量时仍可用）。
-2. 发布到 **`ghcr.io/lizer2009/matebot/app`**（命名示例，需与 GHCR 权限一致）或在 `.env` 用 `RAKAZO_IMAGE` 覆盖。
+2. 发布到 **`ghcr.io/lizer2009/matebot/app`**（命名示例，需与 GHCR 权限一致）或在 `.env` 用 `MATEBOT_IMAGE` 覆盖。
 3. ~~提供 **`infra/compose/install-images-matebot.sh`**~~ — **已完成（2026-11-04）**：[`install-images-matebot.sh`](../infra/compose/install-images-matebot.sh) + [`MATEBOT_DEPLOY.md`](./MATEBOT_DEPLOY.md)。
 
 ### 3.5 Cursor Cloud Agent 开发环境（改代码）
@@ -189,19 +189,18 @@ bash install-images-matebot.sh
 
 ### 4.1 原则
 
-- Rakazo 活跃度高（fork 验证日 upstream 与 fork 同 SHA）。**长期分叉代码**会抬高合并成本。
-- 建议：**应用层/custom 尽量薄**——品牌化、默认 env、部署脚本、文档；核心逻辑 **rebase/merge upstream `main`**。
+- 本仓库自 0.6.0 起是独立开发基线，代码演进在本仓库内完成。
+- 改动尽量集中，一次 PR 一个主题，便于审阅与回滚。
 
-### 4.2 推荐 Git 工作流
+### 4.2 Git 工作流
 
 ```bash
-git remote add upstream https://github.com/elie222/rakazo.git
-git fetch upstream
-git checkout main
-git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase 时）
+git checkout -b cursor/<topic>-93ad
+git commit -m "<type>(<scope>): <what changed>"
+git push -u origin cursor/<topic>-93ad
 ```
 
-- **跟踪分支**：`main` 跟踪 `origin/main`，定期 merge upstream。
+- **分支**：功能分支从当前基线切出，通过 PR 合入。
 - **冲突热点**：`pnpm-lock.yaml`、Prisma migrations、`infra/compose/*`、`.github/workflows/*`。
 - **不要**在未协调的情况下改 `@matebot/*` 包名（牵涉全 monorepo + 移动客户端 bundle id）。
 
@@ -212,7 +211,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | Schema 迁移与「上一版本仍运行」规则 | 部署失败或数据不一致 | 严格按 [`AGENTS.md`](../AGENTS.md) 迁移规范；先读 upstream release notes |
 | GHCR 仍指 upstream | 运行的不是 fork 代码 | 自建镜像或明确 pin digest |
 | 双实例共用同一 Cursor Space / 同一 Bot 密钥 | 串单、越权 | matebot 独立 Space、`CLOUD_AGENT_SPACE_ID`、独立 DB |
-| Railway/Stripe/Slack 等模板默认值 | 指向 rakazo 官方 | fork 文档与 env 示例改为 matebot |
+| Railway/Stripe/Slack 等模板默认值 | 指向 matebot 官方 | fork 文档与 env 示例改为 matebot |
 | 许可证与商标 | README/商店仍写 Matebot | 合规改名：保留 Apache-2.0 声明，区分**产品名**与**上游致谢** |
 
 ---
@@ -230,7 +229,7 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | 阶段 | 名称 | 交付物 |
 | --- | --- | --- |
 | **M0** | 规划冻结 | 本文档 + PR 合并；✅ 部署目标：**VPS/LAN Compose**（Railway 暂缓，2026-11-04） |
-| **M1** | 可部署分叉 | fork GHCR 或文档化 `RAKAZO_IMAGE`；matebot 安装说明；**一处**在线实例可登录 |
+| **M1** | 可部署分叉 | fork GHCR 或文档化 `MATEBOT_IMAGE`；matebot 安装说明；**一处**在线实例可登录 |
 | **M2** | 迭代闭环 | `.cursor/environment.json`；CI 绿；默认 `CLOUD_AGENT_*` 文档；Bot 能 `cloud_agent_launch` 到 matebot 仓库 |
 | **M3** | 差异化（可选） | 默认模型/审批策略、关闭不需要的集成、自定义 www 落地页 |
 
@@ -265,8 +264,8 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 | P2-1 | 默认模型/审批模板（matebot 专用 `.env.matebot.example`） | 新部署复制即用 |
 | P2-2 | Railway template fork | 一键按钮指向 matebot 镜像与环境 |
 | P2-3 | 自动化 upstream sync PR（weekly workflow 可选） | 打开 PR 而非直接 push |
-| P2-4 | 独立 Astro/www 或关闭 www 构建 | ✅ **2026-11-05** — `apps/www` 站点身份改为 Matebot：`SITE_URL=https://test.matebot.dev`、链接指向本仓库、品牌套件/OG/wordmark 换成 Matebot 资产；只描述自托管的计费与法律文案已改写，上游托管服务仍以 Rakazo 名称出现；见 §6.2 |
-| P2-5 | 全包 rename `@rakazo` → `@matebot` | ✅ **2026-11-05** — 21 个工作区包与根包全部改名，导入路径、tsconfig、Dockerfile filter、lockfile 同步；`RAKAZO_*` 环境变量、`rakazo_app` 数据库角色、`rakazo://` scheme 与移动端 bundle id **保持不变**（映射见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)） |
+| P2-4 | 独立 Astro/www 或关闭 www 构建 | ✅ **2026-11-05** — `apps/www` 站点身份改为 Matebot：`SITE_URL=https://test.matebot.dev`、链接指向本仓库、品牌套件/OG/wordmark 换成 Matebot 资产；只描述自托管的计费与法律文案已改写，上游托管服务仍以 Matebot 名称出现；见 §6.2 |
+| P2-5 | 全包 rename `@matebot` → `@matebot` | ✅ **2026-11-05** — 21 个工作区包与根包全部改名，导入路径、tsconfig、Dockerfile filter、lockfile 同步；同一轮只改包名，环境变量与数据库角色留待后一轮，见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名) |
 | P2-6 | **统一品牌外壳 + Windows 安装包** | ✅ **2026-11-05** — 桌面 `productName`/`appId`/`NSIS`/可执行名/配置目录迁移/更新源均指向 Matebot；`pack:win` 与 `desktop-windows-installer` 工作流产出 `Matebot-Setup-<version>.exe`；见 [`desktop-release.md#windows-installer`](./desktop-release.md#windows-installer) |
 | P2-7 | **Android APK 发布 + 站点下载** | ✅ **2026-11-06** — `apps/mobile` 重链到 `@lizer-expo/matebot`，scheme `matebot://`、包名 `com.matebot.app`；`release-android-apk` 不再要求 Firebase，发布滚动 Release `android` 的 `matebot.apk`；站点 `/api/download?platform=android` 与首页 Android 下载指向该资产；见 [`mobile-release.md`](./mobile-release.md) |
 
@@ -278,22 +277,22 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 
 | 面 | 现状 |
 | --- | --- |
-| npm 包名 | `@rakazo/*` → `@matebot/*`（21 个工作区包 + 根包 `matebot`），lockfile 已重算 |
+| npm 包名 | `@matebot/*` → `@matebot/*`（21 个工作区包 + 根包 `matebot`），lockfile 已重算 |
 | 桌面外壳 | `productName` `Matebot`、`appId` `dev.matebot.desktop`、`Matebot.exe`、`Matebot-Setup-<version>.exe`、Linux `matebot`、AppData `%APPDATA%\Matebot` |
-| 桌面配置迁移 | 启动时把旧的 `Rakazo` 配置目录迁到新目录；新旧并存时以新为准 |
+| 桌面配置迁移 | 启动时把旧的 `Matebot` 配置目录迁到新目录；新旧并存时以新为准 |
 | 桌面更新源 | `publish` 与 release 校验都指向 `Lizer2009/matebot`，避免 Matebot 装成上游应用 |
-| macOS/iOS 图标 | 新增 `packages/ui-tokens/assets/Matebot.icon`（全出血图层），不再使用上游 `Rakazo.icon` |
+| macOS/iOS 图标 | 新增 `packages/ui-tokens/assets/Matebot.icon`（全出血图层），不再使用上游 `Matebot.icon` |
 | www | 站点域名、品牌套件、OG、wordmark、法务与计费文案按自托管事实改写 |
 | README | 三语（en / zh-CN / ja）以 Matebot 为产品名，保留上游章节与 Apache-2.0 |
 | Windows 安装包 | `pnpm --filter @matebot/desktop pack:win` 与 `desktop-windows-installer` 工作流 |
 
 **遗留风险（按优先级）**
 
-1. **Passkey 域名**：桌面默认服务器改为 `test.matebot.dev`，旧域名注册的 passkey 在桌面端失效；需重新注册，且服务器 `WEB_ORIGIN` / `RAKAZO_PASSKEY_RP_ID` 必须与之一致。macOS 分发还依赖对应的 provisioning profile，否则桌面端会隐藏 passkey。
+1. **Passkey 域名**：桌面默认服务器改为 `test.matebot.dev`，旧域名注册的 passkey 在桌面端失效；需重新注册，且服务器 `WEB_ORIGIN` / `MATEBOT_PASSKEY_RP_ID` 必须与之一致。macOS 分发还依赖对应的 provisioning profile，否则桌面端会隐藏 passkey。
 2. **移动端发布身份已改为 Matebot 自有**：`com.matebot.app` 与 `matebot://` scheme 已随 Expo 项目 `@lizer-expo/matebot` 重链；Android APK 通过 GitHub Release `android` 标签分发（见 [`mobile-release.md`](./mobile-release.md)）。仍在旧 bundle id 上安装的包需要卸载后重装。
-3. **上游合并成本**：本轮改动面很大（包名、目录、品牌资产、文案），下一次 `merge upstream/main` 冲突会比 P1 阶段明显更高；包名与桌面身份的冲突应一律保留本 fork 版本。
-4. **环境变量与数据库角色仍是上游命名**（`RAKAZO_*`、`rakazo_app`、卷 `pgdata`、Compose 项目 `rakazo-desktop`）。改名需要停机与 `ALTER ROLE`，见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)。
-5. **上游归因值**：OpenRouter 的 `HTTP-Referer: https://rakazo.com` 与 web 工具 User-Agent 仍是上游值。它们不是品牌面，改动属于归因/流量策略决策。
+3. **命名迁移成本**：本轮把环境变量、数据库角色、Compose 项目与卷名一起改了，已有部署需要一次性迁移；未迁移的部署会读不到密钥或连不上原有数据库。
+4. **环境变量与数据库角色已改为 Matebot 命名**（`MATEBOT_*`、`matebot_app`、卷 `pgdata`、Compose 项目 `matebot`）。迁移步骤见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)。
+5. **归因值随部署**：OpenRouter 的 `HTTP-Referer` 与 web 工具 User-Agent 现在取部署自身的 origin，不再指向任何外部站点。
 6. **Windows 未签名**：本 PR 产出的安装包未签名，首次运行会触发 SmartScreen；正式分发仍应走 `release-desktop` 的 Azure 签名路径。
 7. **www 内容仍是上游视角**：对比页与博客中大量第三方产品事实来自上游撰写，本轮只把产品名与自身身份改对，未重新核实这些第三方陈述。
 
@@ -311,18 +310,17 @@ git merge upstream/main   # 或 git rebase upstream/main（团队习惯 rebase �
 
 ### 7.2 仍暂缓（有明确原因）
 
-- `RAKAZO_*` 环境变量、`rakazo_app` 数据库角色、`pgdata` 卷、`rakazo-desktop` Compose 项目：改名会破坏运行中的实例
-- 移动端 bundle id 与 `rakazo://` scheme：需商店侧协调
 - 删除 upstream 致谢与 Apache-2.0 归属：**不做**
-- OpenRouter 归因 URL 与 web 工具 User-Agent：属于归因策略，不是品牌
 - 大规模第三方事实复核（对比页/博客）：属内容工作，另开 PR
+
+§7.1 之外的命名（环境变量、数据库角色、Compose 项目与卷、移动端 scheme 与 bundle id）后来已全部改为 Matebot；已有部署需要一次性迁移，见 [`MATEBOT_DEPLOY.md#环境变量命名`](./MATEBOT_DEPLOY.md#环境变量命名)。
 
 ---
 
 ## 8. 安全与运维清单（matebot 实例）
 
 - [ ] 独立 `ENCRYPTION_KEY`、`BETTER_AUTH_SECRET`、Postgres 密码（**勿**与生产 Grok Bot 复用）
-- [ ] 公网：`SIGNUPS_ENABLED` 策略、`RAKAZO_ADMIN_EMAILS`、TLS
+- [ ] 公网：`SIGNUPS_ENABLED` 策略、`MATEBOT_ADMIN_EMAILS`、TLS
 - [ ] Cursor：`CURSOR_API_KEY` 仅服务器 env；Space 与仓库权限最小化
 - [ ] 备份：Postgres + `DATA_DIR`（Railway 卷或 VPS 定时任务），见 [`docs/self-host-backups.md`](./self-host-backups.md)
 - [ ] 升级：先读 [`docs/self-host-upgrading.md`](./self-host-upgrading.md)；迁移兼容上一版本代码

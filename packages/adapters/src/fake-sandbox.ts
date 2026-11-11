@@ -107,7 +107,7 @@ export class FakeSandboxProvider implements SandboxProvider {
     }
     // The shell tool wraps the model's command in a background-work launcher; answer the command.
     const wrapped =
-      request.argv[3] === "rakazo-background-launch" ? request.argv.at(-1) : undefined;
+      request.argv[3] === "matebot-background-launch" ? request.argv.at(-1) : undefined;
     const cmd = wrapped ?? request.argv.join(" ");
     if (wrapped?.startsWith("echo ")) {
       yield { type: "stdout", data: `${wrapped.slice(5)}\n` };
@@ -152,7 +152,7 @@ export class FakeSandboxProvider implements SandboxProvider {
       url: await this.terminals.open(
         computer.id,
         request.controlToken,
-        workspacePath("/home/rakazo", request.cwd ?? ""),
+        workspacePath("/home/matebot", request.cwd ?? ""),
       ),
     };
   }

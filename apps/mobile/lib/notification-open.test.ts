@@ -80,9 +80,9 @@ describe("notification tap routing", () => {
   it("reads the Android notification extra keys", () => {
     expect(
       notificationOpenTarget({
-        "rakazo.botId": "bot-1",
-        "rakazo.threadId": "thread-9",
-        "rakazo.spaceId": "space-2",
+        "matebot.botId": "bot-1",
+        "matebot.threadId": "thread-9",
+        "matebot.spaceId": "space-2",
       }),
     ).toEqual({
       pathname: "/thread",

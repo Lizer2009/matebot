@@ -41,7 +41,7 @@ export function PageFrame({
         text?: unknown;
         gesture?: unknown;
       };
-      if (message.type === "rakazo-page:height" && typeof message.height === "number") {
+      if (message.type === "matebot-page:height" && typeof message.height === "number") {
         const height = pageFrameHeight(message.height);
         if (interactive && box.current) {
           setDrawnAt({
@@ -57,7 +57,7 @@ export function PageFrame({
       if (gesture === usedGesture.current) return;
       const copy = pageCopyRequest(data);
       const url = copy ? null : pageLinkRequest(data);
-      const reply = !copy && !url && message.type === "rakazo-page:reply" && onReply;
+      const reply = !copy && !url && message.type === "matebot-page:reply" && onReply;
       if (!copy && !url && !reply) return;
       usedGesture.current = gesture;
       if (copy) void writeClipboard(copy.text).then((ok) => answer(pageCopyResult(copy.id, ok)));

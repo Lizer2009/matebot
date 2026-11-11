@@ -26,7 +26,7 @@ beforeEach(() => {
   mock.failWhen = () => false;
   mock.inspect.mockResolvedValue({
     Config: {
-      Labels: { "rakazo.managed": "true", "rakazo.botId": "bot", "rakazo.spaceId": "space" },
+      Labels: { "matebot.managed": "true", "matebot.botId": "bot", "matebot.spaceId": "space" },
     },
     State: { Running: true, StartedAt: "2026-01-01T00:00:00Z" },
     HostConfig: {},
@@ -51,8 +51,8 @@ function post(path: string, body: unknown) {
     headers: {
       authorization: `Bearer ${resolveSupervisorToken(process.env)}`,
       "content-type": "application/json",
-      "x-rakazo-bot-id": "bot",
-      "x-rakazo-space-id": "space",
+      "x-matebot-bot-id": "bot",
+      "x-matebot-space-id": "space",
     },
     body: JSON.stringify(body),
   });

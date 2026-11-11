@@ -7,9 +7,9 @@ CREATE OR REPLACE FUNCTION app_rls_bypass() RETURNS boolean
   SET search_path = pg_catalog, pg_temp
   AS $$
     SELECT coalesce(current_setting('app.rls_bypass', true) = 'on', false) AND (
-      NOT EXISTS (SELECT 1 FROM rakazo_private.rls_bypass_keys)
+      NOT EXISTS (SELECT 1 FROM matebot_private.rls_bypass_keys)
       OR EXISTS (
-        SELECT 1 FROM rakazo_private.rls_bypass_keys
+        SELECT 1 FROM matebot_private.rls_bypass_keys
         WHERE digest = sha256(convert_to(coalesce(current_setting('app.rls_bypass_key', true), ''), 'UTF8'))
       )
     )

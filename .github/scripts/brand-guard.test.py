@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Tests for brand-guard.py.
 
-The guard is only worth having if it fails when it should. Each case below is a way the guard
-used to report success while seeing nothing, so a future edit that reintroduces one of them
-breaks a test instead of quietly approving an old-brand string into a shipped build.
+The guard is only worth having if it fails when it should. Each case below is a way the old name
+could reach shipped output, so a future edit that reintroduces one of them breaks a test instead
+of quietly approving it.
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ import textwrap
 import unittest
 
 GUARD = pathlib.Path(__file__).with_name("brand-guard.py")
+UPSTREAM = "https://github.com/elie222/rakazo"
 
 
 def run_guard(root: pathlib.Path, *flags: str) -> subprocess.CompletedProcess[str]:
@@ -39,19 +40,31 @@ def make_tree(files: dict[str, str]) -> pathlib.Path:
 
 
 class GuardFailsWhenItShould(unittest.TestCase):
-    def test_an_unfamiliar_identifier_is_unclassified(self) -> None:
-        root = make_tree({"apps/web/src/new.ts": 'export const x = "rakazo-brand-new-thing";\n'})
-        result = run_guard(root)
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn("unclassified       : 1", result.stdout)
+    def test_any_identifier_with_the_old_name_fails(self) -> None:
+        # Identity was renamed, so there is no class of identifier left to excuse. A new one is a
+        # regression, not a legacy exception.
+        identifiers = {
+            "environment variable": 'export const A = process.env.RAKAZO_IMAGE;\n',
+            "header": 'export const B = "x-rakazo-client-build";\n',
+            "storage key": 'export const C = "rakazo.signedInUser";\n',
+            "compose project": 'const D = { name: "rakazo" };\n',
+            "database role": 'const E = "postgres://rakazo@db:5432/rakazo";\n',
+            "native module": "const F = 'RakazoVoiceChat';\n",
+            "image": 'const G = "ghcr.io/elie222/rakazo/app:edge";\n',
+            "host path": 'const H = "/var/lib/rakazo-pitr";\n',
+        }
+        for label, source in identifiers.items():
+            root = make_tree({"packages/core/src/x.ts": source})
+            result = run_guard(root)
+            self.assertEqual(result.returncode, 1, f"{label} passed: {result.stdout}")
 
-    def test_a_heading_naming_the_old_product_is_a_visible_defect(self) -> None:
+    def test_a_heading_naming_the_old_product_fails(self) -> None:
         root = make_tree({"apps/web/src/page.tsx": "export const X = <h1>Welcome to Rakazo</h1>;\n"})
         result = run_guard(root)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn("VISIBLE DEFECTS: 1", result.stdout)
+        self.assertIn("VISIBLE OCCURRENCES", result.stdout)
 
-    def test_a_placeholder_naming_the_old_product_is_a_visible_defect(self) -> None:
+    def test_a_placeholder_naming_the_old_product_fails(self) -> None:
         root = make_tree({"apps/web/src/form.tsx": '<Input placeholder="rakazo-<space>" />\n'})
         result = run_guard(root)
         self.assertEqual(result.returncode, 1, result.stdout)
@@ -63,103 +76,26 @@ class GuardFailsWhenItShould(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("no files matched", result.stderr + result.stdout)
 
-    def test_a_stale_allowlist_entry_fails_only_when_asked(self) -> None:
-        # On a partial tree most rules legitimately match nothing, so staleness is opt-in. With
-        # the flag, a rule that outlived its subject must fail instead of absorbing a future
-        # string that happens to fit it.
-        root = make_tree({"apps/web/src/ok.ts": "export const y = 1;\n"})
-        lenient = run_guard(root)
-        self.assertEqual(lenient.returncode, 0, lenient.stdout)
-
-        strict = subprocess.run(
-            [sys.executable, str(GUARD), "--check-stale-allowlist"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            timeout=120,
-            check=False,
-        )
-        self.assertEqual(strict.returncode, 1, strict.stdout)
-        self.assertIn("STALE ALLOWLIST", strict.stdout)
-
-
-class GuardPassesRealLegacyIdentities(unittest.TestCase):
-    def test_a_documented_storage_key_is_not_a_defect(self) -> None:
-        root = make_tree(
-            {
-                "apps/web/src/store.ts": 'export const K = "rakazo.signedInUser";\n',
-                "packages/core/src/probe.ts": 'export const P = "rakazo_probe";\n',
-            }
-        )
-        result = run_guard(root)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_upstream_attribution_stays_visible(self) -> None:
-        root = make_tree(
-            {
-                "apps/www/src/pages/about.astro": (
-                    "<p>Matebot is a fork of Rakazo, the upstream project.</p>\n"
-                )
-            }
-        )
-        result = run_guard(root)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-
-class ProductLinksToTheOldHost(unittest.TestCase):
-    """A URL the product links to is not attribution, however the host is owned.
-
-    This is the defect that shipped in an APK: `SUBMIT_PLUGIN_URL` pointed at the old domain, and
-    the guard excused it because the host text was on the same line as the sanctioned-attribution
-    pattern. Nothing in the scan asked *who the link is for*.
-    """
-
-    def test_a_url_constant_pointing_at_the_old_host_is_a_defect(self) -> None:
-        root = make_tree(
-            {
-                "packages/contracts/src/domain.ts": (
-                    'export const SUBMIT_PLUGIN_URL = "https://rakazo.com/plugins/submit/";\n'
-                )
-            }
-        )
-        result = run_guard(root)
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn("VISIBLE DEFECTS", result.stdout)
-
-    def test_an_href_and_an_openurl_are_both_defects(self) -> None:
-        root = make_tree(
-            {
-                "apps/web/src/pages/x.tsx": '<a href="https://rakazo.com/privacy/">Privacy</a>\n',
-                "apps/mobile/app/y.tsx": (
-                    'void Linking.openURL("https://rakazo.com/terms/");\n'
-                ),
-            }
-        )
-        result = run_guard(root)
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-
-    def test_the_same_defect_in_other_shapes_is_caught(self) -> None:
-        # The first rule only matched `= "…"`, `href={"…"}` and `openURL("…")`, so the identical
-        # mistake written as a table, a bare origin, or a router call passed the guard.
+    def test_a_product_link_to_the_old_host_fails(self) -> None:
+        # The defect that shipped in an APK: a link the product opens for the user.
         cases = {
-            "object literal": 'export const links = { submit: "https://rakazo.com/plugins/submit/" };\n',
-            "bare origin": 'const OLD = "https://rakazo.com";\n',
-            "router call": 'router.push("https://rakazo.com/terms/");\n',
-            "template head": 'const u = `https://rakazo.com/privacy/`;\n',
+            "constant": 'export const U = "https://rakazo.com/plugins/submit/";\n',
+            "href": '<a href="https://rakazo.com/privacy/">Privacy</a>\n',
+            "template": "const u = `https://rakazo.com/privacy/`;\n",
+            "router": 'router.push("https://rakazo.com/terms/");\n',
         }
         for label, source in cases.items():
             root = make_tree({"packages/contracts/src/x.ts": source})
             result = run_guard(root)
             self.assertEqual(result.returncode, 1, f"{label} passed: {result.stdout}")
 
-    def test_an_install_command_naming_the_upstream_repo_is_a_defect(self) -> None:
-        # Someone following "install this" must clone the project they are installing. The guide
-        # said `git clone .../elie222/rakazo`, which installs the upstream project instead.
+    def test_an_install_command_naming_the_upstream_repo_fails(self) -> None:
+        # Someone following "install this" must clone the project they are installing.
         cases = {
-            "clone": "export const SOURCE = `git clone https://github.com/elie222/rakazo.git`;\n",
-            "mkdir": "export const INSTALL = `mkdir -p rakazo && cd rakazo &&`;\n",
+            "clone": f"export const S = `git clone {UPSTREAM}.git`;\n",
+            "mkdir": "export const I = `mkdir -p rakazo && cd rakazo &&`;\n",
             "curl": (
-                "export const FETCH = `curl -fsSLO "
+                "export const F = `curl -fsSLO "
                 "https://raw.githubusercontent.com/elie222/rakazo/main/x.sh`;\n"
             ),
         }
@@ -168,101 +104,64 @@ class ProductLinksToTheOldHost(unittest.TestCase):
             result = run_guard(root)
             self.assertEqual(result.returncode, 1, f"{label} passed: {result.stdout}")
 
-    def test_the_same_command_in_a_comment_or_docs_is_allowed(self) -> None:
-        # Documentation about the upstream project's own install is attribution, not an
-        # instruction for this product.
+    def test_a_credit_line_that_also_holds_a_command_still_fails(self) -> None:
+        root = make_tree(
+            {"README.md": f"Matebot is a fork of Rakazo. Install: `git clone {UPSTREAM}.git`\n"}
+        )
+        result = run_guard(root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+
+
+class GuardPassesUpstreamCredit(unittest.TestCase):
+    def test_a_link_to_the_upstream_repository_passes(self) -> None:
         root = make_tree(
             {
-                "apps/www/src/x.ts": (
-                    "// Upstream: git clone https://github.com/elie222/rakazo.git\n"
-                    'export const URL = "https://github.com/elie222/rakazo";\n'
+                "README.md": (
+                    f"This repository is a fork of **[Rakazo]({UPSTREAM})**, the Apache-2.0 "
+                    "project it is built on.\n"
+                ),
+                "apps/www/src/site.ts": f'export const UPSTREAM_URL = "{UPSTREAM}";\n',
+            }
+        )
+        result = run_guard(root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_naming_the_project_without_a_link_does_not_pass(self) -> None:
+        # A bare mention is this product using the old name. Credit has to say where it came from.
+        root = make_tree({"apps/web/src/about.tsx": "<p>Powered by Rakazo.</p>\n"})
+        result = run_guard(root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+
+
+class GuardPassesNoRuntimeReference(unittest.TestCase):
+    """No runtime code may keep the old name, including for migrating old installs.
+
+    The product was renamed in full and an install may be replaced cleanly, so there is no legacy
+    profile, slug, or folder the code has to keep recognising. A migration helper is exactly the
+    kind of thing that reintroduces the old identity, so it must fail like anything else.
+    """
+
+    def test_a_legacy_slug_constant_fails(self) -> None:
+        root = make_tree(
+            {
+                "apps/desktop/src/user-data-migration.ts": (
+                    'export const LEGACY_PRODUCT_SLUG = "Rakazo";\n'
                 )
             }
         )
         result = run_guard(root)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
 
-    def test_attribution_to_the_upstream_project_still_passes(self) -> None:
-        # Crediting the upstream project is not the same as sending users to the old product.
+    def test_a_documented_old_folder_fails(self) -> None:
         root = make_tree(
             {
-                "apps/www/src/site.ts": (
-                    'export const UPSTREAM_URL = "https://github.com/elie222/rakazo";\n'
-                ),
-                "apps/www/src/pages/terms.astro": (
-                    'const X = "https://rakazo.com/terms/"; // upstream terms\n'
-                ),
-            }
-        )
-        result = run_guard(root)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_a_link_inside_the_upstream_service_section_passes(self) -> None:
-        # The terms page links Rakazo's own terms *about that service*. The heading is above the
-        # link, which is why the rule looks at the section rather than only the line.
-        root = make_tree(
-            {
-                "apps/www/src/pages/terms.astro": (
-                    "<h2>Hosted Rakazo service</h2>\n"
-                    "<p>If you use the hosted service the upstream project operates, that\n"
-                    "service has its own <a href=\"https://rakazo.com/terms/\">terms</a>.\n"
-                    "</p>\n"
+                "docs/MATEBOT_DEPLOY.md": (
+                    "**Migration**: `%APPDATA%\\Rakazo` moves on first launch.\n"
                 )
             }
         )
         result = run_guard(root)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-
-class SpecificityOrdering(unittest.TestCase):
-    def test_the_narrow_rule_reports_a_narrow_reason(self) -> None:
-        sys.path.insert(0, str(GUARD.parent))
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location("brand_guard", GUARD)
-        module = importlib.util.module_from_spec(spec)
-        assert spec.loader is not None
-        spec.loader.exec_module(module)
-
-        # `rakazo.dump` matches both the backup-artifact rule and the broader stored-key family.
-        verdict = module.classify("rakazo.dump")
-        self.assertIsNotNone(verdict, "rakazo.dump must stay classified")
-        self.assertIn("dump", verdict[1], verdict[1])
-
-    def test_no_catch_all_pattern_accepts_any_suffix(self) -> None:
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location("brand_guard", GUARD)
-        module = importlib.util.module_from_spec(spec)
-        assert spec.loader is not None
-        spec.loader.exec_module(module)
-
-        # A rule shaped like `^rakazo.*$` or `^rakazo[a-z]*$` waves through any new string that
-        # starts with the six letters. Assert by behaviour: tokens that no real identity uses
-        # must stay unclassified.
-        for token in (
-            "rakazo-brand-new-thing",
-            "rakazo-newSetting",
-            "rakazo-somethingElse-entirely",
-            "rakazo/new/feature/flag",
-            # Environment and stored-key families are enumerated, not wildcarded: a new setting
-            # or storage key has to be registered with a reason rather than inherited.
-            "RAKAZO_A_BRAND_NEW_SETTING",
-            "rakazo.aBrandNewStoredKey",
-        ):
-            self.assertIsNone(module.classify(token), f"{token} must not be auto-approved")
-
-    def test_a_known_environment_name_is_still_accepted(self) -> None:
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location("brand_guard", GUARD)
-        module = importlib.util.module_from_spec(spec)
-        assert spec.loader is not None
-        spec.loader.exec_module(module)
-
-        # Tightening the rule must not break the variables a deployment actually reads.
-        for token in ("RAKAZO_COMPUTER_IMAGE", "RAKAZO_DEPLOY_DIR", "rakazo.session_token"):
-            self.assertIsNotNone(module.classify(token), f"{token} must stay classified")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

@@ -75,7 +75,7 @@ describePostgres("account deletion on bot computers (PostgreSQL)", () => {
   /** Another API or worker host: same bucket and database, its own empty cache. */
   const freshHost = async () =>
     new ObjectAgentHomeStore(
-      await mkdtemp(path.join(tmpdir(), "rakazo-account-delete-host-")),
+      await mkdtemp(path.join(tmpdir(), "matebot-account-delete-host-")),
       storage,
       records,
     );
@@ -103,7 +103,7 @@ describePostgres("account deletion on bot computers (PostgreSQL)", () => {
   beforeEach(async () => {
     suffix = `${process.pid}-${Date.now()}-${randomBytes(3).toString("hex")}`;
     ids = fixtureIds(suffix);
-    root = await mkdtemp(path.join(tmpdir(), "rakazo-account-delete-"));
+    root = await mkdtemp(path.join(tmpdir(), "matebot-account-delete-"));
     storage = new MemoryObjectStorage();
     records = new PrismaAgentHomeRecords(system, memoryRing());
     home = new ObjectAgentHomeStore(root, storage, records);
@@ -130,7 +130,7 @@ describePostgres("account deletion on bot computers (PostgreSQL)", () => {
       data: [ids.leaver, ids.stayer].map((id) => ({
         id,
         name: id,
-        email: `${id}@rakazo.test`,
+        email: `${id}@matebot.test`,
         emailVerified: false,
       })),
     });
@@ -537,7 +537,7 @@ function memoryRing() {
 }
 
 async function staged(files: readonly string[]) {
-  const dir = await mkdtemp(path.join(tmpdir(), "rakazo-account-delete-staging-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "matebot-account-delete-staging-"));
   for (const name of files) {
     await mkdir(path.dirname(path.join(dir, name)), { recursive: true });
     await writeFile(path.join(dir, name), name);

@@ -4,7 +4,7 @@ name: Settings
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
-      RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_EMAIL}
+      MATEBOT_ACTIVE_EMAIL: ${MATEBOT_SCREENSHOT_EMAIL}
 - openLink: "matebot:///account"
 - extendedWaitUntil:
     visible: ".*Change password.*"
@@ -91,14 +91,14 @@ name: Settings
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 10-ai-data-sharing
-- openLink: "matebot:///routine?botId=${RAKAZO_SCREENSHOT_BOT_ID}&botName=Researcher&routineId=${RAKAZO_SCREENSHOT_ROUTINE_ID}"
+- openLink: "matebot:///routine?botId=${MATEBOT_SCREENSHOT_BOT_ID}&botName=Researcher&routineId=${MATEBOT_SCREENSHOT_ROUTINE_ID}"
 - extendedWaitUntil:
     visible: ".*Weekly fixture review.*"
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 11-routine
-- openLink: "matebot:///bot-settings?botId=${RAKAZO_SCREENSHOT_BOT_ID}"
+- openLink: "matebot:///bot-settings?botId=${MATEBOT_SCREENSHOT_BOT_ID}"
 - scrollUntilVisible:
     element: "Advanced"
     direction: DOWN
@@ -107,7 +107,7 @@ name: Settings
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 12-bot-settings
-- openLink: "matebot:///bot-profile?botId=${RAKAZO_SCREENSHOT_BOT_ID}&name=Researcher"
+- openLink: "matebot:///bot-profile?botId=${MATEBOT_SCREENSHOT_BOT_ID}&name=Researcher"
 - extendedWaitUntil:
     visible: ".*Routines.*"
     timeout: 15000
@@ -121,14 +121,14 @@ name: Settings
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 14-bot-profile-menu
-- openLink: "matebot:///group-settings?groupId=${RAKAZO_SCREENSHOT_GROUP_ID}"
+- openLink: "matebot:///group-settings?groupId=${MATEBOT_SCREENSHOT_GROUP_ID}"
 - extendedWaitUntil:
     visible: ".*Delete group.*"
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 15-group-settings
-- openLink: "matebot:///computer?botId=${RAKAZO_SCREENSHOT_BOT_ID}&name=Researcher"
+- openLink: "matebot:///computer?botId=${MATEBOT_SCREENSHOT_BOT_ID}&name=Researcher"
 - extendedWaitUntil:
     visible: ".*Take control.*|.*Open computer.*"
     timeout: 20000

@@ -60,6 +60,10 @@ jobs:
         with:
           persist-credentials: false
       - run: bash infra/compose/run-smokes.sh
+      # Resolves the stacks with the real Compose binary, so the defaults are what Compose
+      # produces rather than a re-implementation of its interpolation.
+      - name: Compose identity resolves as expected
+        run: python3 scripts/compose-identity-proof.py --compose "docker compose"
 
   validate:
     name: Validate ${{ matrix.name }} image

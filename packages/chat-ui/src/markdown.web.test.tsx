@@ -797,7 +797,7 @@ describe("web markdown mentions", () => {
       <ChatMarkdown
         renderMention={(id, name) => (id === "bot-1" ? <b data-id={id}>{name}</b> : undefined)}
       >
-        {"[Planner](rakazo-mention:bot-1) and [Other](rakazo-mention:bot-2)"}
+        {"[Planner](matebot-mention:bot-1) and [Other](matebot-mention:bot-2)"}
       </ChatMarkdown>,
     );
     expect(html).toContain('<b data-id="bot-1">Planner</b>');

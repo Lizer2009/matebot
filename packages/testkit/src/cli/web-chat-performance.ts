@@ -110,7 +110,7 @@ async function benchmark() {
   const reportPath =
     argument("--out") ??
     path.join(root, ".context/performance", `web-chat-${safeName(label)}.json`);
-  const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "rakazo-web-chat-performance-"));
+  const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "matebot-web-chat-performance-"));
   const database = await startBenchmarkDatabase(
     argument("--database-url") ?? process.env.PERF_DATABASE_URL,
   );
@@ -260,7 +260,7 @@ async function prepareAccount(bench: Bench, sizes: number[]): Promise<Account> {
   const context = await newContext(bench);
   try {
     const page = await context.newPage();
-    const email = `benchmark-${Date.now()}@rakazo.test`;
+    const email = `benchmark-${Date.now()}@matebot.test`;
     const response = await page.request.post("/api/auth/sign-up/email", {
       data: { email, password: "password12", name: "Benchmark User" },
       headers: { origin: bench.webOrigin },

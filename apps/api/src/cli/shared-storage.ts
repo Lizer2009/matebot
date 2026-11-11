@@ -24,7 +24,7 @@ if (positionals.length !== 1 || !["artifacts", "push-tokens"].includes(positiona
   );
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required");
 const { prisma, pool, contentKeys } = createDb(process.env.DATABASE_URL, {
-  applicationName: "rakazo-storage-migration",
+  applicationName: "matebot-storage-migration",
   keyProvider: contentKeyProviderFromEnv(),
 });
 const dataDir = process.env.DATA_DIR ?? "./data";

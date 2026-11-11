@@ -145,7 +145,7 @@ describe.skipIf(!enabled)("product history diagnostic loop", () => {
         })),
       ],
     });
-    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-product-loop-"));
+    const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-product-loop-"));
     try {
       const { createApp } = await import("@matebot/api/app");
       const result = await runTrial(scenario, 1, {

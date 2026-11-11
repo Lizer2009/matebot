@@ -13,7 +13,7 @@ const webOrigin = "http://127.0.0.1:5173";
 it.skipIf(!databaseUrl || !process.env.COPY_TEST_DATABASE)(
   "the app-managed stack on this computer admits only its first account",
   async () => {
-    const dataDir = await mkdtemp(join(tmpdir(), "rakazo-desktop-accounts-"));
+    const dataDir = await mkdtemp(join(tmpdir(), "matebot-desktop-accounts-"));
     const handles = await createApp({
       databaseUrl: databaseUrl!,
       dataDir,

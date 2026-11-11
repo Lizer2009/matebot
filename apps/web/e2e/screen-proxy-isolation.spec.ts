@@ -112,7 +112,7 @@ for (const mode of ["development", "preview"] as const) {
     let authorityReached: (() => void) | undefined;
     let authorityHold: Promise<void> | undefined;
     test.beforeAll(async () => {
-      const root = await mkdtemp(path.join(tmpdir(), "rakazo-screen-test-"));
+      const root = await mkdtemp(path.join(tmpdir(), "matebot-screen-test-"));
       await mkdir(path.join(root, "dist"));
       const upstream = createHttpServer((req, res) => {
         upstreamRequests += 1;
@@ -446,7 +446,7 @@ for (const mode of ["development", "preview"] as const) {
           await page.evaluate(
             () => (window as unknown as { screenReports: unknown[] }).screenReports,
           ),
-        ).toEqual([{ rakazoScreen: "loading" }]);
+        ).toEqual([{ matebotScreen: "loading" }]);
         expect(JSON.parse(await body.innerText())).toEqual({
           asset: "module loaded",
           socket: "ok",

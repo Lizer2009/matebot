@@ -60,7 +60,7 @@ export function exportFiles(
 
 export function manifestFor(spaces: Array<{ id: string; name: string }>): AccountExportManifest {
   return {
-    format: "rakazo-account-export",
+    format: "matebot-account-export",
     version: 1,
     exportedAt: "2026-10-01T00:00:00.000Z",
     user: { name: "Ada", email: "ada@example.com", timezone: "UTC" },

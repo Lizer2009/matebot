@@ -44,7 +44,7 @@ export function notificationAvatarSource(bot: {
   if (parsed?.kind === "shape") {
     viewBox = SHIPPED_BOT_AVATAR_VIEWBOX;
     body = `<path d="${shippedBotAvatarShapePath(parsed.shapeIndex)}" fill="${color}"/>${barEyes(SHIPPED_BOT_AVATAR_EYES, botEyeInk(color, lightTokens))}`;
-  } else if (bot.avatarSet === "rakazo") {
+  } else if (bot.avatarSet === "matebot") {
     const fill = logoAvatarTraits(bot.id, color).color;
     const { width, height, leftCx, rightCx, cy } = LOGO_AVATAR_EYES;
     const eyes = [leftCx, rightCx]

@@ -8,7 +8,7 @@ const caddyfiles = ["Caddyfile.prod", "Caddyfile.cloudflare.example"];
 
 describe.each(caddyfiles)("%s HSTS", (filename) => {
   const config = readFileSync(path.join(composeDir, filename), "utf8");
-  const httpsSite = config.slice(config.lastIndexOf("{$RAKAZO_HOST:app.example.com} {"));
+  const httpsSite = config.slice(config.lastIndexOf("{$MATEBOT_HOST:app.example.com} {"));
 
   it("sends HSTS from the HTTPS site without preloading", () => {
     expect(httpsSite).toContain('header @hsts Strict-Transport-Security "max-age=31536000"');

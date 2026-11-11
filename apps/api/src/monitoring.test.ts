@@ -34,7 +34,7 @@ describe("monitoring routes", () => {
 
   it("reads browser config from the environment", () => {
     const base = {
-      DATABASE_URL: "postgres://rakazo:rakazo@127.0.0.1:5433/rakazo",
+      DATABASE_URL: "postgres://matebot:matebot@127.0.0.1:5433/matebot",
       NODE_ENV: "test",
     };
     expect(loadEnv(base).browserMonitoring).toBeUndefined();

@@ -33,7 +33,10 @@ export async function findOrganizeTarget(
     // Independent of inbox polling: only a newer organize press supersedes this request.
     const context = await captureApiRequestContext();
     const navigation = await rpc("spaces/list", undefined, {
-      requestContext: { ...context, headers: { ...context.headers, "x-rakazo-space-id": spaceId } },
+      requestContext: {
+        ...context,
+        headers: { ...context.headers, "x-matebot-space-id": spaceId },
+      },
       skipSpaceAuthRecovery: true,
     });
     if (navigation.current.id !== spaceId) return null;

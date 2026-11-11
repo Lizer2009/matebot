@@ -2,14 +2,14 @@
 
 set -Eeuo pipefail
 
-DOWNLOAD_BASE="${RAKAZO_DOWNLOAD_BASE:-https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose}"
+DOWNLOAD_BASE="${MATEBOT_DOWNLOAD_BASE:-https://raw.githubusercontent.com/Lizer2009/matebot/main/infra/compose}"
 while [[ "$DOWNLOAD_BASE" == */ ]]; do
   DOWNLOAD_BASE="${DOWNLOAD_BASE%/}"
 done
 case "$DOWNLOAD_BASE" in
   https://*) ;;
   *)
-    echo "Matebot setup failed: RAKAZO_DOWNLOAD_BASE must use https." >&2
+    echo "Matebot setup failed: MATEBOT_DOWNLOAD_BASE must use https." >&2
     exit 1
     ;;
 esac
@@ -18,7 +18,7 @@ readonly DOWNLOAD_BASE
 readonly COMPOSE_FILE="docker-compose.images.yml"
 # Optional operator overlay, layered after the base file the way Compose itself does by default.
 readonly OVERRIDE_FILE="docker-compose.override.yml"
-readonly ENV_EXAMPLE="${RAKAZO_ENV_IMAGES_EXAMPLE:-.env.images.example}"
+readonly ENV_EXAMPLE="${MATEBOT_ENV_IMAGES_EXAMPLE:-.env.images.example}"
 readonly ENV_FILE=".env"
 readonly EGRESS_SCRIPT="restrict-computer-egress.sh"
 
@@ -26,10 +26,10 @@ prepare_only=false
 skip_existing=false
 pull_never=false
 offline=false
-if [[ "${RAKAZO_DOWNLOAD_SKIP_EXISTING:-}" == "1" ]]; then
+if [[ "${MATEBOT_DOWNLOAD_SKIP_EXISTING:-}" == "1" ]]; then
   skip_existing=true
 fi
-if [[ "${RAKAZO_PULL_NEVER:-}" == "1" ]]; then
+if [[ "${MATEBOT_PULL_NEVER:-}" == "1" ]]; then
   pull_never=true
 fi
 
@@ -308,12 +308,12 @@ validate_required_secrets() {
 services:
   api:
     environment:
-      _RAKAZO_VALIDATE_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      _RAKAZO_VALIDATE_POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}
-      _RAKAZO_VALIDATE_BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
-      _RAKAZO_VALIDATE_ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
-      _RAKAZO_VALIDATE_SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Set SCREEN_PROXY_SECRET in .env}
-      _RAKAZO_VALIDATE_SANDBOX_SUPERVISOR_TOKEN: ${SANDBOX_SUPERVISOR_TOKEN:?Set SANDBOX_SUPERVISOR_TOKEN in .env}
+      _MATEBOT_VALIDATE_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      _MATEBOT_VALIDATE_POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}
+      _MATEBOT_VALIDATE_BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
+      _MATEBOT_VALIDATE_ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
+      _MATEBOT_VALIDATE_SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Set SCREEN_PROXY_SECRET in .env}
+      _MATEBOT_VALIDATE_SANDBOX_SUPERVISOR_TOKEN: ${SANDBOX_SUPERVISOR_TOKEN:?Set SANDBOX_SUPERVISOR_TOKEN in .env}
 YAML
   then
     fail "set every required secret in .env to a non-empty value."

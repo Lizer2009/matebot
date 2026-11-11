@@ -15,7 +15,7 @@ type Row = Record<string, unknown>;
 const actor = {
   spaceId: "space-1",
   userId: "user-1",
-  email: "user@rakazo.test",
+  email: "user@matebot.test",
   isDeploymentOwner: false,
 } satisfies Actor;
 
@@ -78,7 +78,7 @@ function walletDeps(paymentWallet: PaymentWalletProvider | null) {
       screenProxySecret: "fake-test-secret",
       sandboxProvider: "fake",
     },
-    dataDir: "/tmp/rakazo-router-test",
+    dataDir: "/tmp/matebot-router-test",
   } as unknown as RouterDeps;
   const handler = new RPCHandler(createRouter(deps));
   async function call(path: "status" | "connect" | "disconnect") {

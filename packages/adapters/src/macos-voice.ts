@@ -104,7 +104,7 @@ export class MacOsVoiceProvider implements VoiceProvider {
     if (!voices.some((voice) => voice.id === request.voiceId)) {
       throw new Error("That voice is not installed on this Mac.");
     }
-    const dir = await mkdtemp(join(tmpdir(), "rakazo-say-"));
+    const dir = await mkdtemp(join(tmpdir(), "matebot-say-"));
     try {
       const file = join(dir, "speech.wav");
       await this.run(

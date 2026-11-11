@@ -16,7 +16,7 @@ FEATURE_A2UI=1
 
 Accepted values: `1`, `true`, `on` (case-insensitive). Omit or set `0`/`false`/`off` to keep A2UI RPC gated and hide `present_interaction` from agent tool selection.
 
-Restart the API and Worker containers/processes after changing env. No `RAKAZO_*` renames.
+Restart the API and Worker containers/processes after changing env. No `MATEBOT_*` renames.
 
 ### Web (Vite)
 
@@ -75,7 +75,7 @@ echo "Pull: ghcr.io/lizer2009/matebot/app:sha-${TIP_SHA}"
 TIP_REF=cursor/a2ui-pr10-mobile-catalog-1fe7
 git fetch origin "$TIP_REF"
 TIP_SHA=$(git rev-parse "origin/$TIP_REF")
-export RAKAZO_IMAGE=ghcr.io/lizer2009/matebot/app:sha-${TIP_SHA}
+export MATEBOT_IMAGE=ghcr.io/lizer2009/matebot/app:sha-${TIP_SHA}
 # then restart the stack with the normal compose path for that host
 ```
 

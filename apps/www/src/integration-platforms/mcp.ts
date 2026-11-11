@@ -59,7 +59,7 @@ export const mcp: IntegrationPlatform = {
       heading: "Limits and security",
       bullets: [
         "Remote servers must be at a public HTTPS address. Localhost and private networks are refused unless the operator sets `MCP_ALLOW_PRIVATE_ENDPOINT=true` on the API and worker, which allows them for every user. Cloud metadata addresses stay blocked.",
-        "Stdio servers are off unless the API and worker have `MCP_STDIO_ENABLED=true` and the command is in `MCP_STDIO_ALLOWED_COMMANDS`. They run with the server's own access, so only admins, the verified accounts in `RAKAZO_ADMIN_EMAILS`, can add one. Bots never do.",
+        "Stdio servers are off unless the API and worker have `MCP_STDIO_ENABLED=true` and the command is in `MCP_STDIO_ALLOWED_COMMANDS`. They run with the server's own access, so only admins, the verified accounts in `MATEBOT_ADMIN_EMAILS`, can add one. Bots never do.",
         "`npx` packages are installed once without running install scripts. Other runners such as `uvx` are refused; install those servers on the host and allowlist the binary.",
         "Plugins can only include remote servers, and Matebot never runs code from a plugin's repository.",
         "Very large tool results are cut to fit the bot's context, unless you turn on **Keep tool results whole** for that server.",

@@ -42,7 +42,7 @@ describe("linuxUpdateSignatureMessage", () => {
   it("is the versioned four-line format the release workflow signs", () => {
     expect(
       linuxUpdateSignatureMessage("1.2.3", "Matebot-1.2.3.AppImage", "ab12").toString("utf8"),
-    ).toBe("rakazo-linux-update-v1\n1.2.3\nMatebot-1.2.3.AppImage\nab12\n");
+    ).toBe("matebot-linux-update-v1\n1.2.3\nMatebot-1.2.3.AppImage\nab12\n");
   });
 
   it("hashes the whole file with SHA-512", async () => {
@@ -90,7 +90,7 @@ describe("verifyLinuxUpdate", () => {
     const file = appImage();
     expect(await verifyLinuxUpdate(file, "", "1.2.3", publicKey)).toBe(false);
     expect(await verifyLinuxUpdate(file, "not base64!", "1.2.3", publicKey)).toBe(false);
-    const renamed = path.join(path.dirname(file), "rakazo.sh");
+    const renamed = path.join(path.dirname(file), "matebot.sh");
     writeFileSync(renamed, "fake appimage");
     expect(await verifyLinuxUpdate(renamed, await signatureFor(renamed), "1.2.3", publicKey)).toBe(
       false,
@@ -105,7 +105,7 @@ describe("fetchLinuxUpdateSignature", () => {
       "signature\n",
     );
     expect(fetchUrl).toHaveBeenCalledWith(
-      "https://github.com/elie222/rakazo/releases/download/v1.2.3/Matebot-1.2.3.AppImage.sig",
+      "https://github.com/Lizer2009/matebot/releases/download/v1.2.3/Matebot-1.2.3.AppImage.sig",
       expect.any(AbortSignal),
     );
   });

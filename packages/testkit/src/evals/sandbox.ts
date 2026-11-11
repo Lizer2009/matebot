@@ -15,7 +15,7 @@ export class EvalSandboxProvider extends FakeSandboxProvider {
     request: CommandRequest,
     context: AdapterContext,
   ): AsyncIterable<ProcessEvent> {
-    if (request.argv[3] === "rakazo-background-launch") {
+    if (request.argv[3] === "matebot-background-launch") {
       const issue = "Shell execution is unavailable in this offline eval sandbox.";
       if (!this.harnessIssues.includes(issue)) this.harnessIssues.push(issue);
       yield { type: "stderr", data: issue };

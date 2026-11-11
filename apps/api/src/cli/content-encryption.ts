@@ -87,7 +87,7 @@ if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required");
 // only read, or write plaintext back.
 const encrypting = ["migrate", "rotate", "reencrypt"].includes(command);
 const { prisma, pool, contentKeys } = createDb(process.env.DATABASE_URL, {
-  applicationName: "rakazo-content-encryption",
+  applicationName: "matebot-content-encryption",
   keyProvider: contentKeyProviderFromEnv(),
   ...(encrypting ? { encryptContent: true } : {}),
 });

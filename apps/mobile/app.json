@@ -135,7 +135,7 @@
             "ios": {
               "appExtensions": [
                 {
-                  "targetName": "RakazoWidgets",
+                  "targetName": "MatebotWidgets",
                   "bundleIdentifier": "com.matebot.app.widgets"
                 },
                 {

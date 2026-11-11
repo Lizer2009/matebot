@@ -12,9 +12,9 @@ export type NativeApplication = Pick<
   "applicationId" | "nativeApplicationVersion" | "nativeBuildVersion"
 >;
 
-const KEY = "rakazo.startup-error";
+const KEY = "matebot.startup-error";
 const MAX_LENGTH = 8_192;
-const EXPO_LOG_KEY = "rakazo.expo-error-window";
+const EXPO_LOG_KEY = "matebot.expo-error-window";
 
 type ExpoErrorWindow = { server: string; since: number; reportedThrough: number };
 

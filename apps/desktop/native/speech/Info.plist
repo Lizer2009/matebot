@@ -4,7 +4,7 @@
 <plist version="1.0">
   <dict>
     <key>CFBundleIdentifier</key>
-    <string>dev.rakazo.desktop.speech</string>
+    <string>dev.matebot.desktop.speech</string>
     <key>CFBundleName</key>
     <string>Matebot</string>
     <key>NSSpeechRecognitionUsageDescription</key>

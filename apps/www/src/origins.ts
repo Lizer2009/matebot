@@ -3,14 +3,14 @@
  *
  * The marketing site and the app are separate hostnames, and both move: the
  * `test.` subdomains today, the primary domain later. Setting
- * `RAKAZO_MARKETING_URL` and `RAKAZO_APP_URL` at build time changes canonicals,
+ * `MATEBOT_MARKETING_URL` and `MATEBOT_APP_URL` at build time changes canonicals,
  * hreflang links, structured data, and every sign-in link at once.
  */
 export const DEFAULT_MARKETING_ORIGIN = "https://test.matebot.dev";
 export const DEFAULT_APP_ORIGIN = "https://app.test.matebot.dev";
 
-export const MARKETING_URL_ENV = "RAKAZO_MARKETING_URL";
-export const APP_URL_ENV = "RAKAZO_APP_URL";
+export const MARKETING_URL_ENV = "MATEBOT_MARKETING_URL";
+export const APP_URL_ENV = "MATEBOT_APP_URL";
 
 /** An absolute origin, or the fallback when unset or not a valid http(s) URL. */
 export function resolveOrigin(raw: string | undefined, fallback: string): string {

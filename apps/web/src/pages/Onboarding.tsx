@@ -68,9 +68,9 @@ import { useModelOAuthSignIn } from "../lib/use-model-oauth-signin";
 import { errorText } from "../lib/user-error";
 import { CompatibleKeyField } from "./model-settings/compatible-key-field";
 
-const CUSTOM_MODEL_OPTION = "__rakazo_custom_model__";
+const CUSTOM_MODEL_OPTION = "__matebot_custom_model__";
 /** Matebot credits sit among the providers as the one choice that needs no account of its own. */
-const CREDITS_OPTION = "__rakazo_credits__";
+const CREDITS_OPTION = "__matebot_credits__";
 /** A provider whose catalog entry offers both sign-in and a key appears once per way to connect. */
 type ProviderAuth = "sign-in" | "key";
 
@@ -91,7 +91,7 @@ const FIRST_BOT_NAME = PRODUCT_DISPLAY_NAME;
 /** Names an earlier first bot may already carry, so an existing space still finds its own. */
 const LEGACY_FIRST_BOT_NAMES = [FIRST_BOT_NAME, "Chief"];
 const FIRST_BOT_SPAWN_KEY = "onboarding:first";
-const FIRST_BOT_LOCK = "rakazo:onboarding-first-bot";
+const FIRST_BOT_LOCK = "matebot:onboarding-first-bot";
 
 /** Survives StrictMode remounts; concurrent first-bot creates share one in-flight attempt. */
 let firstBotEnsure: Promise<{ id: string }> | null = null;
@@ -564,7 +564,7 @@ export function OnboardingPage() {
   if (step === "loading" || (step === "bot" && !error)) return <PageLoading />;
 
   return (
-    <div className="min-h-full bg-background px-6 py-12" data-rakazo-surface="onboarding">
+    <div className="min-h-full bg-background px-6 py-12" data-matebot-surface="onboarding">
       <AccountMenu signingOut={signingOut} onLogOut={() => void logOut()} />
       <div className="mx-auto w-full max-w-[560px]">
         {step === "survey" ? <SignupSurvey onDone={() => setSurveyDone(true)} /> : null}

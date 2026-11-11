@@ -90,7 +90,7 @@ async function rpc(
       "content-type": "application/json",
       cookie,
       origin: "http://127.0.0.1:5173",
-      ...(spaceId ? { "x-rakazo-space-id": spaceId } : {}),
+      ...(spaceId ? { "x-matebot-space-id": spaceId } : {}),
     },
     body: JSON.stringify({ json: body }),
   });

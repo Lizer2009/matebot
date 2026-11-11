@@ -5,7 +5,7 @@ name: New account
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
-      RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_FREE_EMAIL}
+      MATEBOT_ACTIVE_EMAIL: ${MATEBOT_SCREENSHOT_FREE_EMAIL}
 - extendedWaitUntil:
     visible: ".*How did you hear about us.*"
     timeout: 15000

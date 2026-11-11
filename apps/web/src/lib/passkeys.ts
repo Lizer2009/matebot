@@ -3,7 +3,7 @@ import { hostMatchesPasskeyRpId } from "@matebot/core";
 import { WebAuthnAbortService } from "@simplewebauthn/browser";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { fetchAuthCapabilities } from "./auth-capabilities";
-import type { RakazoDesktop } from "./desktop";
+import type { MatebotDesktop } from "./desktop";
 import { desktopBridge } from "./desktop";
 import { authErrorText } from "./user-error";
 
@@ -12,7 +12,7 @@ type PasskeyBrowser = {
   credential?: {
     isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean>;
   };
-  desktop?: Pick<RakazoDesktop, "platform" | "passkeys">;
+  desktop?: Pick<MatebotDesktop, "platform" | "passkeys">;
 };
 
 function currentBrowser(): PasskeyBrowser {

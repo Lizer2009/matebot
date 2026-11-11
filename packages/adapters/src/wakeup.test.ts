@@ -404,7 +404,7 @@ describe("InMemoryJobQueue", () => {
       "@matebot/logging"
     );
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-worker", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-worker", sinks: [sink] }));
     const queue = new InMemoryJobQueue();
     const target = handlers();
     await queue.start(target);

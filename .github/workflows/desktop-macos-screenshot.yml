@@ -49,10 +49,10 @@ jobs:
           test -s "$RUNNER_TEMP/fallback-decoded.png"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' apps/desktop/out/mac-arm64/Matebot.app/Contents/Info.plist)" = Icon
         env:
-          RAKAZO_ALLOW_DEV_SECRETS: "1"
+          MATEBOT_ALLOW_DEV_SECRETS: "1"
       - name: Capture packaged macOS setup window and Dock
         env:
-          RAKAZO_E2E_EXECUTABLE: out/mac-arm64/Matebot.app/Contents/MacOS/Matebot
+          MATEBOT_E2E_EXECUTABLE: out/mac-arm64/Matebot.app/Contents/MacOS/Matebot
         run: >-
           pnpm --filter @matebot/desktop exec playwright test
           --config e2e/playwright.config.ts setup.spec.ts

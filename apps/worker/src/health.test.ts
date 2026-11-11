@@ -54,7 +54,7 @@ describe("worker health", () => {
   it("reports a blocked event loop with heap figures, and not ordinary timer jitter", async () => {
     vi.useFakeTimers();
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-worker", sinks: [sink], level: "debug" }));
+    installLogger(createLogger({ service: "matebot-worker", sinks: [sink], level: "debug" }));
     let clock = 0;
     const stop = watchEventLoopStalls(() => clock);
     const tick = async (elapsed: number) => {

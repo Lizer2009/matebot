@@ -42,7 +42,7 @@ describeE2b("live E2B canary", () => {
       signal: new AbortController().signal,
     };
     const computer = await sandbox.provision(
-      { botId: "canary", homePath: "/home/user/rakazo-home" },
+      { botId: "canary", homePath: "/home/user/matebot-home" },
       ctx,
     );
     try {
@@ -72,7 +72,7 @@ describeBoat("live Boat canary", () => {
       userId: "boat-canary",
       signal: new AbortController().signal,
     };
-    const request = { botId: "boat-canary", homePath: "/home/user/rakazo-home" };
+    const request = { botId: "boat-canary", homePath: "/home/user/matebot-home" };
     let computer = await sandbox.provision(request, ctx);
     try {
       await sandbox.prepare(computer, ctx);
@@ -126,7 +126,7 @@ describeBoxd("live boxd canary", () => {
       }
       return stdout;
     };
-    const request = { botId: "boxd-canary", homePath: "/home/boxd/rakazo-home" };
+    const request = { botId: "boxd-canary", homePath: "/home/boxd/matebot-home" };
     let computer = await sandbox.provision(request, ctx);
     try {
       await sandbox.prepare(computer, ctx);
@@ -175,7 +175,7 @@ describe.skipIf(!process.env.VERIFY_PROVIDERS || !process.env.NOVITA_API_KEY)(
         userId: "novita-canary",
         signal: new AbortController().signal,
       };
-      const request = { botId: "novita-canary", homePath: "/home/user/rakazo-home" };
+      const request = { botId: "novita-canary", homePath: "/home/user/matebot-home" };
       let computer = await sandbox.provision(request, ctx);
       try {
         await sandbox.prepare(computer, ctx);
@@ -224,7 +224,7 @@ describeCreateos("live CreateOS canary", () => {
       userId: "createos-canary",
       signal: new AbortController().signal,
     };
-    const request = { botId: "createos-canary", homePath: "/home/desktop/rakazo-home" };
+    const request = { botId: "createos-canary", homePath: "/home/desktop/matebot-home" };
     let computer = await sandbox.provision(request, ctx);
     try {
       await sandbox.prepare(computer, ctx);
@@ -321,7 +321,7 @@ describePiApp("live OpenRouter product journey", () => {
 
   it("completes a bot turn through the API with the live model", async () => {
     const { createApp } = await import("@matebot/api/app");
-    dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-pi-"));
+    dataDir = mkdtempSync(path.join(tmpdir(), "matebot-pi-"));
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,
@@ -330,7 +330,7 @@ describePiApp("live OpenRouter product journey", () => {
     });
     stop = handles.stop;
     const stamp = Date.now();
-    const email = `pi-${stamp}@rakazo.test`;
+    const email = `pi-${stamp}@matebot.test`;
     const signup = await handles.app.request("/api/auth/sign-up/email", {
       method: "POST",
       headers: { "content-type": "application/json", origin: "http://127.0.0.1:5173" },

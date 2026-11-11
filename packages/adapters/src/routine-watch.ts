@@ -38,7 +38,7 @@ import { loadPurchaseRedactions } from "./purchase-service.js";
  */
 
 /** Virtual root for validating watch paths; providers resolve the actual workspace. */
-const WORKSPACE = "/home/rakazo";
+const WORKSPACE = "/home/matebot";
 const CHECK_TIMEOUT_MS = 60_000;
 /** Starting a stopped computer can take longer than a check; it gets its own budget. */
 const PROVISION_TIMEOUT_MS = 5 * 60_000;

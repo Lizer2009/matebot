@@ -44,7 +44,7 @@ jobs:
   shard:
     name: Web E2E (${{ matrix.shard }}/${{ inputs.nightly && 4 || 2 }})
     if: ${{ !inputs.skip }}
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -74,7 +74,7 @@ jobs:
         # The page-browser tests run the computer image's helper, which drives Chromium through it.
         run: |
           infra/sandboxes/computer/install-agent-browser.sh "$RUNNER_TEMP/agent-browser"
-          echo "RAKAZO_AGENT_BROWSER=$RUNNER_TEMP/agent-browser/agent-browser" >> "$GITHUB_ENV"
+          echo "MATEBOT_AGENT_BROWSER=$RUNNER_TEMP/agent-browser/agent-browser" >> "$GITHUB_ENV"
       - name: Run Playwright tests
         id: playwright_tests
         env:
@@ -104,7 +104,7 @@ jobs:
     name: Web E2E
     needs: shard
     if: ${{ !cancelled() && !inputs.skip }}
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
       group: ${{ inputs.publish_report && 'playwright-publication' || format('playwright-{0}', github.run_id) }}

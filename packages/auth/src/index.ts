@@ -121,7 +121,7 @@ function isUnusedEmailCodePath(path: string, body: { type?: unknown } | undefine
  * The only header Better Auth reads a client IP from. The API sets it from the socket peer and its
  * trusted proxies and drops any client-supplied copy, so a caller cannot choose its own address.
  */
-export const CLIENT_IP_HEADER = "x-rakazo-client-ip";
+export const CLIENT_IP_HEADER = "x-matebot-client-ip";
 
 /** Routes that end sessions other than the caller's own sign-out. Recorded per deleted session. */
 const REVOCATION_PATHS = new Set(["/revoke-session", "/revoke-sessions", "/revoke-other-sessions"]);
@@ -198,7 +198,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
   /** Admits the sole account one at a time, so two first signups cannot both get in. */
   const admitSoleAccount = (userId: string) =>
     prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('rakazo:single-account'))`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('matebot:single-account'))`;
       if (await hasAdmittedAccount(tx, userId)) return false;
       // Committed before the lock is released, so the next signup sees it.
       await bootstrapUserSpace(prisma, { id: userId }, env);

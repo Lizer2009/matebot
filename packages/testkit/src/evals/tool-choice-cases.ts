@@ -2,7 +2,7 @@ import type { ToolChoiceCase } from "./tool-choice.js";
 import { toolChoiceEvalCase } from "./tool-choice.js";
 
 /** Synthetic prompts only. Production-derived cases belong in a local --cases-file. */
-const PRODUCT_HELP = { anyOf: [{ tool: "skill_read", args: { name: "~rakazo" } }] };
+const PRODUCT_HELP = { anyOf: [{ tool: "skill_read", args: { name: "~matebot" } }] };
 
 export const TOOL_CHOICE_DEFINITIONS: ToolChoiceCase[] = [
   // Bot settings the user asks for.

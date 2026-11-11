@@ -40,7 +40,7 @@
 - Web/Electron 共享渲染；Mobile Native Catalog  
 - LLM → InteractionPlan → 服务端编译 A2UI（勿让模型直接吐任意 UI 代码）  
 - 不引入并行 AG-UI/A2A/WebSocket 聊天总线  
-- 保留 `RAKAZO_*` 部署兼容名  
+- 保留 `MATEBOT_*` 部署兼容名  
 
 ## 建议的下一文档修订（仍属设计，非本仓库运行时）
 

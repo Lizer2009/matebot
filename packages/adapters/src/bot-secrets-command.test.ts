@@ -325,7 +325,7 @@ describe("shell command environment", () => {
       scope,
       registerRedactions: vi.fn(),
     });
-    const root = mkdtempSync(path.join(tmpdir(), "rakazo-command-env-"));
+    const root = mkdtempSync(path.join(tmpdir(), "matebot-command-env-"));
     const desktop = new DesktopSandboxProvider({ root });
     const context = {
       operationId: "test",

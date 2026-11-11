@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Matebot Browser
+Comment=Chromium with Matebot container flags and profile isolation
+Exec=/usr/local/bin/matebot-browser %U
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;
+StartupNotify=false

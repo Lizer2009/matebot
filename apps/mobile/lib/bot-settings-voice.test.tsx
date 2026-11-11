@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   instructions: "",
   description: "",
   crossSpaceCommunication: false,
-  avatarSet: undefined as "organic" | "rakazo" | undefined,
+  avatarSet: undefined as "organic" | "matebot" | undefined,
   focus: undefined as string | undefined,
   os: "ios",
   work: [] as unknown[],
@@ -560,7 +560,7 @@ describe("bot settings device voice menu", () => {
     expect(option("Original").dataset.state).toBe("on");
     expect(mocks.rpc).not.toHaveBeenCalled();
     await act(async () => option("Matebot").click());
-    mocks.rpc.mockResolvedValueOnce({ avatarSet: "rakazo" });
+    mocks.rpc.mockResolvedValueOnce({ avatarSet: "matebot" });
     await act(async () =>
       [...container.querySelectorAll<HTMLButtonElement>("button")]
         .find((button) => button.textContent === "Save")!
@@ -568,11 +568,11 @@ describe("bot settings device voice menu", () => {
     );
     expect(mocks.rpc).toHaveBeenCalledWith("bots/update", {
       botId: "bot-fixture",
-      avatarSet: "rakazo",
+      avatarSet: "matebot",
     });
     act(() => root.unmount());
     root = createRoot(container);
-    mocks.avatarSet = "rakazo";
+    mocks.avatarSet = "matebot";
     await render();
     await act(async () =>
       container.querySelector<HTMLButtonElement>('[aria-label="Edit avatar"]')!.click(),
@@ -836,13 +836,15 @@ describe("bot settings device voice menu", () => {
       {
         request: {
           identifier: "direct-chat",
-          content: { data: { "rakazo.botId": "bot-fixture", "rakazo.threadId": "thread-fixture" } },
+          content: {
+            data: { "matebot.botId": "bot-fixture", "matebot.threadId": "thread-fixture" },
+          },
         },
       },
       {
         request: {
           identifier: "group-chat",
-          content: { data: { "rakazo.botId": "bot-fixture", "rakazo.threadId": "group-thread" } },
+          content: { data: { "matebot.botId": "bot-fixture", "matebot.threadId": "group-thread" } },
         },
       },
     ] as never);

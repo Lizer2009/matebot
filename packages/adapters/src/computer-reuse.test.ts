@@ -132,8 +132,8 @@ describe("running Docker computer reuse", () => {
             expect.objectContaining({
               method: "GET",
               headers: expect.objectContaining({
-                "x-rakazo-bot-id": "bot",
-                "x-rakazo-space-id": "space",
+                "x-matebot-bot-id": "bot",
+                "x-matebot-space-id": "space",
               }),
             }),
           );

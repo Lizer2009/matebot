@@ -7,7 +7,7 @@ import { createRouter } from "./router.js";
 const actor: Actor = {
   spaceId: "space-1",
   userId: "user-1",
-  email: "user@rakazo.test",
+  email: "user@matebot.test",
   isDeploymentOwner: true,
 };
 
@@ -55,7 +55,7 @@ describe("voice catalog", () => {
   it.each([false, true])(
     "advertises self-hosted speech only with custom endpoint access (%s)",
     async (mcpAllowPrivateEndpoint) => {
-      vi.stubEnv("RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC", "0");
+      vi.stubEnv("MATEBOT_OPENAI_COMPAT_ALLOW_PUBLIC", "0");
       try {
         const client = createRouterClient(
           createRouter({ env: { mcpAllowPrivateEndpoint } } as unknown as RouterDeps),

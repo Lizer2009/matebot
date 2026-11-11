@@ -627,7 +627,7 @@ async function playWithNativeAudio(bytes: Uint8Array, session?: HostedSession): 
   });
   const file = new File(
     Paths.cache,
-    `rakazo-voice-${Date.now()}.${speechClipType(bytes).extension}`,
+    `matebot-voice-${Date.now()}.${speechClipType(bytes).extension}`,
   );
   file.create({ overwrite: true });
   file.write(bytesToBase64(bytes), { encoding: "base64" });

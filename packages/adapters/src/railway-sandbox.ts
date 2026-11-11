@@ -36,7 +36,7 @@ import {
 } from "./workspace-save-policy.js";
 
 const DISPLAY_START = 1;
-const WORKSPACE = "/home/rakazo";
+const WORKSPACE = "/home/matebot";
 const SCREEN_PORT = 6080;
 const RAILWAY_API = "https://backboard.railway.com/graphql/v2";
 const MAX_RESPONSE_BYTES = 16 * 1024 * 1024;
@@ -722,7 +722,7 @@ function railwayCwd(cwd: string | undefined) {
 
 const PREPARE_RAILWAY_DESKTOP = [
   "set -eu",
-  "exec 9>/tmp/rakazo-prepare.lock; flock -w 300 9",
+  "exec 9>/tmp/matebot-prepare.lock; flock -w 300 9",
   PREPARE_LINUX_DESKTOP,
   INSTALL_LINUX_BROWSER,
   `mkdir -p ${WORKSPACE}/.browser-profiles`,

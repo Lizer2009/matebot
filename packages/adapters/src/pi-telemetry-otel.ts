@@ -8,9 +8,9 @@ import { BatchSpanProcessor, NodeTracerProvider } from "@opentelemetry/sdk-trace
 
 // Allowlist metadata: unknown attributes (including future Pi payload fields) stay private.
 const safeAttributes = new Set([
-  "rakazo.bot.id",
-  "rakazo.run.id",
-  "rakazo.routine.id",
+  "matebot.bot.id",
+  "matebot.run.id",
+  "matebot.routine.id",
   "pi.ai.operation",
   "pi.ai.provider",
   "pi.ai.model",
@@ -58,7 +58,7 @@ export function otelPiContext(
       const correlation = {
         ...ids,
         ...Object.fromEntries(
-          Object.entries(options.attributes ?? {}).filter(([key]) => key.startsWith("rakazo.")),
+          Object.entries(options.attributes ?? {}).filter(([key]) => key.startsWith("matebot.")),
         ),
       };
       const parentContext = parent ?? correlatedLogContext();
@@ -103,7 +103,7 @@ export function otelPiContext(
 export function createPiTelemetryExporter() {
   const provider = new NodeTracerProvider({
     resource: resourceFromAttributes({
-      "service.name": process.env.OTEL_SERVICE_NAME?.trim() || "rakazo-worker",
+      "service.name": process.env.OTEL_SERVICE_NAME?.trim() || "matebot-worker",
     }),
     // The exporter honors standard OTLP endpoint and header env vars, including /v1/traces.
     spanProcessors: [
@@ -112,7 +112,7 @@ export function createPiTelemetryExporter() {
   });
   return {
     context: otelPiContext(
-      provider.getTracer("rakazo.pi", "0.87.1"),
+      provider.getTracer("matebot.pi", "0.87.1"),
       process.env.OTEL_CAPTURE_CONTENT === "true",
     ),
     shutdown: () => provider.shutdown(),

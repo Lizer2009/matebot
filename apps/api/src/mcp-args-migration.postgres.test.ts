@@ -149,7 +149,7 @@ describe
     it("skips a server it cannot move and keeps going", () =>
       runAsSystem("mcp args migration", async () => {
         const sink = createTestSink();
-        installLogger(createLogger({ service: "rakazo-api", sinks: [sink] }));
+        installLogger(createLogger({ service: "matebot-api", sinks: [sink] }));
         await prisma.secret.create({
           data: { id: `unreadable-${suffix}`, userId, spaceId, kind: "mcp", ciphertext: "fake" },
         });
@@ -181,7 +181,7 @@ describe
           expect(counts.failed).toBeGreaterThanOrEqual(3);
           expect(JSON.stringify(sink.events)).not.toMatch(/leak1|leak2/);
         } finally {
-          installLogger(createLogger({ service: "rakazo-api", level: "off", sinks: [] }));
+          installLogger(createLogger({ service: "matebot-api", level: "off", sinks: [] }));
         }
         expect(
           await prisma.mcpServer.findUniqueOrThrow({ where: { id: broken.id } }),
@@ -195,7 +195,7 @@ describe
       const row = await runAsSystem("mcp args migration", () =>
         server("startup", { args: ["--startup", "fake-startup"] }),
       );
-      const dataDir = await mkdtemp(join(tmpdir(), "rakazo-mcp-args-"));
+      const dataDir = await mkdtemp(join(tmpdir(), "matebot-mcp-args-"));
       const handles = await createApp({
         databaseUrl: process.env.DATABASE_URL!,
         encryptionKey,

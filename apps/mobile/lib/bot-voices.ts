@@ -10,7 +10,7 @@ import { pickUnusedVoice } from "./voice-assignment";
 
 // Assignments stay on this device.
 function assignmentsFile(): File {
-  return new File(Paths.document, "rakazo-bot-voices.json");
+  return new File(Paths.document, "matebot-bot-voices.json");
 }
 
 async function loadAssignments(): Promise<Record<string, string>> {

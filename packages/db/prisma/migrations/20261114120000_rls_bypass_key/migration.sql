@@ -6,10 +6,10 @@
 -- role cannot read it. Until then it accepts the bypass alone, as the previous release
 -- running beside this one sends no key.
 
-CREATE SCHEMA IF NOT EXISTS rakazo_private;
-REVOKE ALL ON SCHEMA rakazo_private FROM PUBLIC;
+CREATE SCHEMA IF NOT EXISTS matebot_private;
+REVOKE ALL ON SCHEMA matebot_private FROM PUBLIC;
 
-CREATE TABLE rakazo_private.rls_bypass_keys (
+CREATE TABLE matebot_private.rls_bypass_keys (
   digest BYTEA PRIMARY KEY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

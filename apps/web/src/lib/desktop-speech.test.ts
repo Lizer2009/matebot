@@ -1,22 +1,22 @@
-import type { RakazoDesktopSpeechEvent } from "@matebot/contracts";
+import type { MatebotDesktopSpeechEvent } from "@matebot/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DesktopSpeechRecognition } from "./desktop-speech.js";
 import { Dictation } from "./dictation.js";
 
 function fakeSpeech(started: () => Promise<boolean> = async () => true) {
-  const listeners = new Set<(event: RakazoDesktopSpeechEvent) => void>();
+  const listeners = new Set<(event: MatebotDesktopSpeechEvent) => void>();
   const speech = {
     start: vi.fn((_language: string, _session: number) => started()),
     stop: vi.fn(async (_session: number) => undefined),
     abort: vi.fn(async (_session: number) => undefined),
-    onEvent: vi.fn((listener: (event: RakazoDesktopSpeechEvent) => void) => {
+    onEvent: vi.fn((listener: (event: MatebotDesktopSpeechEvent) => void) => {
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
       };
     }),
   };
-  const emit = (event: RakazoDesktopSpeechEvent) => {
+  const emit = (event: MatebotDesktopSpeechEvent) => {
     for (const listener of [...listeners]) listener(event);
   };
   const session = () => speech.start.mock.calls.at(-1)?.[1] ?? 0;
@@ -24,7 +24,7 @@ function fakeSpeech(started: () => Promise<boolean> = async () => true) {
 }
 
 function useDesktop(speech: ReturnType<typeof fakeSpeech>["speech"]) {
-  vi.stubGlobal("window", { rakazoDesktop: { platform: "darwin", speech } });
+  vi.stubGlobal("window", { matebotDesktop: { platform: "darwin", speech } });
   vi.stubGlobal("navigator", { language: "es-CL", userAgent: "Mozilla/5.0 Electron/45.0.0" });
 }
 

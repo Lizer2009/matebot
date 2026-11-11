@@ -14,7 +14,7 @@ type FileDropModule = {
 
 // Android only: absent on iOS, on web, and in binaries built before the module existed.
 function nativeFileDrop(): FileDropModule | null {
-  return requireOptionalNativeModule<FileDropModule>("RakazoFileDrop");
+  return requireOptionalNativeModule<FileDropModule>("MatebotFileDrop");
 }
 
 export async function releaseDroppedFile(uri: string): Promise<void> {

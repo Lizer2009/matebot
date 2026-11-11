@@ -1,0 +1,3 @@
+<resources>
+  <style name="MatebotIncomingCallTheme" parent="android:style/Theme.DeviceDefault.DayNight" />
+</resources>

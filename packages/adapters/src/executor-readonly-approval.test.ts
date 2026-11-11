@@ -2537,7 +2537,7 @@ describe("outbound destinations", () => {
   it("fetches the product docs pages without asking, but not other URLs on that site", async () => {
     // The exempt set is the pages this build ships, on the origin this deployment
     // configured. A path outside it — even on the same host — still asks.
-    vi.stubEnv("RAKAZO_MARKETING_URL", "https://docs.example.test");
+    vi.stubEnv("MATEBOT_MARKETING_URL", "https://docs.example.test");
     const docsUrl = productDocumentationUrls()[0]!;
     const otherOnSameSite = new URL("/?q=secret", docsUrl).href;
     const f = fixture({ builtin: true });
@@ -2557,7 +2557,7 @@ describe("outbound destinations", () => {
    * to it would be a weaker guard than asking — the operator never chose that host.
    */
   it("asks before fetching the default docs origin when none was configured", async () => {
-    vi.stubEnv("RAKAZO_MARKETING_URL", "");
+    vi.stubEnv("MATEBOT_MARKETING_URL", "");
     const docsUrl = productDocumentationUrls()[0]!;
     const f = fixture({ builtin: true });
     f.setCalls([{ name: "web_fetch", args: { url: docsUrl }, executionId: "call-1" }]);
@@ -3001,8 +3001,8 @@ describe("selected approval decision model execution", () => {
 });
 
 it("tries a connected approval backup when the deployment checker is unavailable", async () => {
-  vi.stubEnv("RAKAZO_AUTO_REVIEW_PROVIDER", "missing-provider");
-  vi.stubEnv("RAKAZO_AUTO_REVIEW_MODEL", "missing-model");
+  vi.stubEnv("MATEBOT_AUTO_REVIEW_PROVIDER", "missing-provider");
+  vi.stubEnv("MATEBOT_AUTO_REVIEW_MODEL", "missing-model");
   const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
     new Response(
       JSON.stringify({
@@ -3058,8 +3058,8 @@ it("asks instead of using deployment credentials after a selected approval conne
 
 it("uses the OpenRouter environment key for a decision checker on another deployment provider", async () => {
   vi.stubEnv("PI_DEFAULT_PROVIDER", "anthropic");
-  vi.stubEnv("RAKAZO_AUTO_REVIEW_PROVIDER", "openrouter");
-  vi.stubEnv("RAKAZO_AUTO_REVIEW_MODEL", "typesafe/jev-1.14");
+  vi.stubEnv("MATEBOT_AUTO_REVIEW_PROVIDER", "openrouter");
+  vi.stubEnv("MATEBOT_AUTO_REVIEW_MODEL", "typesafe/jev-1.14");
   vi.stubEnv("OPENROUTER_API_KEY", "fake-environment-review-key");
   const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
     new Response(

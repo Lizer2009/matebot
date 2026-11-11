@@ -3,7 +3,7 @@
 #
 #   sudo infra/compose/upgrade-postgres.sh [COMPOSE_FILE...]
 #
-# Compose files are relative to RAKAZO_DEPLOY_DIR (default /srv/rakazo) and default to the
+# Compose files are relative to MATEBOT_DEPLOY_DIR (default /srv/matebot) and default to the
 # production file. The stack is stopped while it runs. It dumps every role and database from the
 # 16 cluster, restores them into a new 18 cluster on the `postgres` volume, checks that roles,
 # grants, row-level security and row counts match, and only then moves the new cluster to where
@@ -12,14 +12,14 @@
 set -Eeuo pipefail
 umask 077
 
-PROJECT_DIR="${RAKAZO_DEPLOY_DIR:-/srv/rakazo}"
-[[ "${PROJECT_DIR}" == /* ]] || { echo "RAKAZO_DEPLOY_DIR must be an absolute path" >&2; exit 1; }
+PROJECT_DIR="${MATEBOT_DEPLOY_DIR:-/srv/matebot}"
+[[ "${PROJECT_DIR}" == /* ]] || { echo "MATEBOT_DEPLOY_DIR must be an absolute path" >&2; exit 1; }
 ENV_FILE="${PROJECT_DIR}/.env"
 # The image the 16 cluster ran on. Override it only with a mirror of the same image.
-OLD_IMAGE="${RAKAZO_POSTGRES_16_IMAGE:-postgres:16@sha256:e17e86066e5ef83e0952a9347f5c792b7ece00972e2aa787a6986f471b3dd3d5}"
+OLD_IMAGE="${MATEBOT_POSTGRES_16_IMAGE:-postgres:16@sha256:e17e86066e5ef83e0952a9347f5c792b7ece00972e2aa787a6986f471b3dd3d5}"
 LEGACY_DIR=/var/lib/postgresql/16/docker
 STAGING_DIR=/var/lib/postgresql/18/upgrade
-RUNTIME_LOGIN=rakazo_app
+RUNTIME_LOGIN=matebot_app
 # Services this run stopped, kept in the volume so a retry after a failure still restarts them.
 STOPPED_FILE=/var/lib/postgresql/upgrade-stopped-services
 
@@ -34,7 +34,7 @@ in_volume() { "${compose[@]}" run --rm --no-deps -T --entrypoint sh postgres -c 
 # while the other runs; only an existing deploy lock is used, as one created here would belong to
 # root and lock the deploy user out.
 if command -v flock >/dev/null; then
-  exec 8>>"${TMPDIR:-/tmp}/rakazo-postgres-upgrade.lock"
+  exec 8>>"${TMPDIR:-/tmp}/matebot-postgres-upgrade.lock"
   flock -n 8 || { echo "Another Postgres upgrade is running" >&2; exit 1; }
   if [[ -e "${PROJECT_DIR}/.deploy.lock" ]]; then
     exec 9>>"${PROJECT_DIR}/.deploy.lock"
@@ -85,8 +85,8 @@ app_password="${app_password%[\"\']}"
 
 # The Compose project keeps helpers of runs on a shared Docker daemon apart (their PIDs can match).
 helper_suffix="${COMPOSE_PROJECT_NAME:+${COMPOSE_PROJECT_NAME}-}$$"
-old="rakazo-postgres16-upgrade-${helper_suffix}"
-new="rakazo-postgres18-upgrade-${helper_suffix}"
+old="matebot-postgres16-upgrade-${helper_suffix}"
+new="matebot-postgres18-upgrade-${helper_suffix}"
 finish() {
   local status=$?
   docker rm --force "${old}" "${new}" >/dev/null 2>&1 || true

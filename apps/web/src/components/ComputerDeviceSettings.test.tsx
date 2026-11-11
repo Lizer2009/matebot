@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { RakazoDesktop } from "@matebot/contracts";
+import type { MatebotDesktop } from "@matebot/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -53,14 +53,14 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
-  delete window.rakazoDesktop;
+  delete window.matebotDesktop;
 });
 
 const laptop = { deviceId: "d1", name: "Laptop", connected: true };
 const desk = { deviceId: "d2", name: "Desk PC", connected: false };
 
-function desktopWith(device: NonNullable<RakazoDesktop["device"]>) {
-  window.rakazoDesktop = { platform: "darwin", device } as RakazoDesktop;
+function desktopWith(device: NonNullable<MatebotDesktop["device"]>) {
+  window.matebotDesktop = { platform: "darwin", device } as MatebotDesktop;
 }
 
 it("stays hidden without any computer", async () => {

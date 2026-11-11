@@ -110,16 +110,16 @@ export const BotAvatar = memo(function BotAvatar({
   if (parsed.isImage && parsed.imageUrl) {
     return (
       <div
-        className={cn("rakazo-bot-avatar relative shrink-0 select-none", className)}
+        className={cn("matebot-bot-avatar relative shrink-0 select-none", className)}
         data-working={isWorking}
         style={{ width: size, height: size }}
       >
-        <div className="rakazo-bot-avatar-picture relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-border bg-secondary">
+        <div className="matebot-bot-avatar-picture relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-border bg-secondary">
           <img src={parsed.imageUrl} alt="" className="h-full w-full object-cover" />
         </div>
         {isWorking ? (
           <svg
-            className="rakazo-bot-avatar-ring rakazo-bot-avatar-ring-working absolute pointer-events-none"
+            className="matebot-bot-avatar-ring matebot-bot-avatar-ring-working absolute pointer-events-none"
             style={{
               inset: -4,
               width: size + 8,
@@ -144,7 +144,7 @@ export const BotAvatar = memo(function BotAvatar({
     );
   }
 
-  if (parsed.shapeIndex === undefined && avatarSet === "rakazo") {
+  if (parsed.shapeIndex === undefined && avatarSet === "matebot") {
     const Avatar = activity === undefined ? LiveLogoAvatar : LogoAvatar;
     return (
       <Avatar
@@ -172,7 +172,7 @@ export const BotAvatar = memo(function BotAvatar({
   return (
     <div
       className={cn(
-        "rakazo-bot-avatar bot-avatar-container relative inline-flex items-center justify-center shrink-0 select-none",
+        "matebot-bot-avatar bot-avatar-container relative inline-flex items-center justify-center shrink-0 select-none",
         className,
       )}
       style={{
@@ -182,7 +182,7 @@ export const BotAvatar = memo(function BotAvatar({
       data-working={isWorking}
     >
       <svg
-        className="rakazo-bot-avatar-ring absolute pointer-events-none"
+        className="matebot-bot-avatar-ring absolute pointer-events-none"
         style={{
           inset: -4,
           width: size + 8,
@@ -283,7 +283,7 @@ function OrganicAvatar({
       ref={ref}
       viewBox={ORGANIC_AVATAR_VIEWBOX}
       aria-hidden="true"
-      className={cn("rakazo-organic-avatar overflow-visible select-none", className)}
+      className={cn("matebot-organic-avatar overflow-visible select-none", className)}
       data-working={isWorking}
       data-paused={!visible}
       data-shape-family={seed % 10}
@@ -297,12 +297,12 @@ function OrganicAvatar({
       {(["idle", "working"] as const).map((mode) => (
         <path
           key={mode}
-          className={`rakazo-organic-avatar-body rakazo-organic-avatar-body-${mode}`}
+          className={`matebot-organic-avatar-body matebot-organic-avatar-body-${mode}`}
           d={shapeA}
           fill={color}
           style={
             {
-              "--rakazo-organic-path": `path("${shapeA}")`,
+              "--matebot-organic-path": `path("${shapeA}")`,
               filter:
                 mode === "working"
                   ? `drop-shadow(0 0 ${Math.round(size * 0.16)}px ${color})`
@@ -325,7 +325,7 @@ function OrganicAvatar({
         {(["idle", "working"] as const).map((mode) => (
           <g
             key={mode}
-            className={`rakazo-organic-avatar-eyes rakazo-organic-avatar-eyes-${mode} ${eyeFill(color)}`}
+            className={`matebot-organic-avatar-eyes matebot-organic-avatar-eyes-${mode} ${eyeFill(color)}`}
           >
             <BarEyes eyes={ORGANIC_AVATAR_EYES} />
           </g>

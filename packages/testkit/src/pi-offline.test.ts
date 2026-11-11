@@ -399,7 +399,7 @@ describe("real Pi against an offline model HTTP endpoint", () => {
   });
 
   it("assembles fragmented tool arguments, executes the write, and sends its result back", async () => {
-    const dir = await mkdtemp(path.join(tmpdir(), "rakazo-pi-offline-"));
+    const dir = await mkdtemp(path.join(tmpdir(), "matebot-pi-offline-"));
     cleanups.push(() => rm(dir, { recursive: true, force: true }));
     const calls: Array<{ name: string; args: Record<string, unknown>; id?: string }> = [];
     const server = await startModelEmulator({

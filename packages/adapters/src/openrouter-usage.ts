@@ -1,8 +1,18 @@
 import type { AgentUsage, ModelUsageLookup } from "@matebot/adapter-kit";
+import { documentOriginFromEnv } from "@matebot/core";
 import { z } from "zod";
 
-/** Attribution is restricted to OpenRouter inference endpoints, never compatible/custom hosts. */
-export function openRouterInferenceFetch(fetcher: typeof fetch, userId?: string): typeof fetch {
+/**
+ * Attribution is restricted to OpenRouter inference endpoints, never compatible/custom hosts.
+ *
+ * The referer names the deployment that made the call, so a self-hosted install is attributed to
+ * itself rather than to a host it does not run.
+ */
+export function openRouterInferenceFetch(
+  fetcher: typeof fetch,
+  userId?: string,
+  referer = documentOriginFromEnv(),
+): typeof fetch {
   return async (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     if (
@@ -17,7 +27,7 @@ export function openRouterInferenceFetch(fetcher: typeof fetch, userId?: string)
           ? input.headers
           : undefined,
     );
-    headers.set("HTTP-Referer", "https://rakazo.com");
+    headers.set("HTTP-Referer", referer);
     headers.set("X-OpenRouter-Title", "Matebot");
     const body = init?.body ?? (input instanceof Request ? await input.clone().text() : undefined);
     if (typeof body !== "string") throw new Error("OpenRouter inference requires a JSON body");

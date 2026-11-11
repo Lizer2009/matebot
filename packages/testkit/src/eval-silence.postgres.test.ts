@@ -123,7 +123,7 @@ describe.skipIf(!databaseAvailable)("routine silence eval through the product", 
           : []),
       ]);
       const model = await startModelEmulator({ apiKey: "offline-silence-key", steps });
-      const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-silence-eval-"));
+      const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-silence-eval-"));
       let evidence: Evidence | undefined;
       try {
         const { createApp } = await import("@matebot/api/app");

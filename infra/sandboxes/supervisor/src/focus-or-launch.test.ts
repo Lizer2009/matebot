@@ -28,17 +28,17 @@ describe("focus-or-launch desktop helper", () => {
           path.join(bin, "wmctrl"),
           [
             "#!/bin/sh",
-            'if [ "$1" = "-lxp" ]; then cat "$RAKAZO_TEST_WINDOWS";',
-            'else printf "wmctrl %s\\n" "$*" >> "$RAKAZO_TEST_ARGS"; fi',
+            'if [ "$1" = "-lxp" ]; then cat "$MATEBOT_TEST_WINDOWS";',
+            'else printf "wmctrl %s\\n" "$*" >> "$MATEBOT_TEST_ARGS"; fi',
           ].join("\n"),
         );
-        for (const name of ["xterm", "rakazo-browser"]) {
+        for (const name of ["xterm", "matebot-browser"]) {
           writeFileSync(
             path.join(bin, name),
-            `#!/bin/sh\nprintf '${name} %s\\n' "$*" >> "$RAKAZO_TEST_ARGS"\n`,
+            `#!/bin/sh\nprintf '${name} %s\\n' "$*" >> "$MATEBOT_TEST_ARGS"\n`,
           );
         }
-        for (const name of ["wmctrl", "xterm", "rakazo-browser"]) {
+        for (const name of ["wmctrl", "xterm", "matebot-browser"]) {
           chmodSync(path.join(bin, name), 0o755);
         }
         const run = async (listing: string, argv: string[], expected: string[]) => {
@@ -46,13 +46,13 @@ describe("focus-or-launch desktop helper", () => {
           writeFileSync(argvLog, "");
           const result = spawnSync(
             "python3",
-            [path.join(computerDir, "rakazo-focus-or-launch"), ...argv],
+            [path.join(computerDir, "matebot-focus-or-launch"), ...argv],
             {
               env: {
                 ...process.env,
                 PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-                RAKAZO_TEST_WINDOWS: windows,
-                RAKAZO_TEST_ARGS: argvLog,
+                MATEBOT_TEST_WINDOWS: windows,
+                MATEBOT_TEST_ARGS: argvLog,
               },
               encoding: "utf8",
             },
@@ -81,33 +81,33 @@ describe("focus-or-launch desktop helper", () => {
         // A URI still reaches the live browser's launcher, then raises its window.
         await run(
           listing,
-          ["rakazo-browser", "https://example.test"],
-          ["rakazo-browser https://example.test", "wmctrl -ia 0x01800003"],
+          ["matebot-browser", "https://example.test"],
+          ["matebot-browser https://example.test", "wmctrl -ia 0x01800003"],
         );
         await run(
           "",
-          ["rakazo-browser", "https://example.test"],
-          ["rakazo-browser https://example.test"],
+          ["matebot-browser", "https://example.test"],
+          ["matebot-browser https://example.test"],
         );
         // A launcher that stays up must not block the raise of the window already found.
         const pids = path.join(temp, "pids");
         writeFileSync(
-          path.join(bin, "rakazo-browser"),
+          path.join(bin, "matebot-browser"),
           [
             "#!/bin/sh",
-            'printf \'rakazo-browser %s\\n\' "$*" >> "$RAKAZO_TEST_ARGS"',
+            'printf \'matebot-browser %s\\n\' "$*" >> "$MATEBOT_TEST_ARGS"',
             `echo $$ >> ${JSON.stringify(pids)}`,
             "exec sleep 30",
             "",
           ].join("\n"),
         );
-        chmodSync(path.join(bin, "rakazo-browser"), 0o755);
+        chmodSync(path.join(bin, "matebot-browser"), 0o755);
         writeFileSync(pids, "");
         const started = Date.now();
         await run(
           listing,
-          ["rakazo-browser", "https://example.test"],
-          ["rakazo-browser https://example.test", "wmctrl -ia 0x01800003"],
+          ["matebot-browser", "https://example.test"],
+          ["matebot-browser https://example.test", "wmctrl -ia 0x01800003"],
         );
         expect(Date.now() - started).toBeLessThan(5_000);
         for (const pid of readFileSync(pids, "utf8").split("\n")) {

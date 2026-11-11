@@ -49,7 +49,7 @@ export const wuying: Sandbox = {
       ],
       bullets: [
         "Run PowerShell commands. Output is switched to UTF-8, so Chinese text comes back readable.",
-        "Read and write files. Each bot computer gets its own home folder under `%USERPROFILE%\\rakazo`, kept on the desktop's own disk.",
+        "Read and write files. Each bot computer gets its own home folder under `%USERPROFILE%\\matebot`, kept on the desktop's own disk.",
         "Take screenshots and use the mouse and keyboard, so it can work in Windows apps such as Excel, not only in a browser.",
         "Let you watch the screen live and take over when it needs a login or a decision.",
         "Matebot starts the desktop when a bot needs it and powers it off when the last computer on it stops. Deleting a bot computer removes only its folder, never the desktop.",

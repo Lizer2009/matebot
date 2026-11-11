@@ -767,7 +767,7 @@ async function startRemoteAuthorization(
     authProvider: provider,
     fetch: provider.wrapFetch(network.fetch),
   });
-  const client = new Client({ name: "rakazo-oauth", version: "0.1.0" });
+  const client = new Client({ name: "matebot-oauth", version: "0.1.0" });
   const signal = AbortSignal.timeout(15_000);
   try {
     await client.connect(transport, { signal, timeout: 15_000 });

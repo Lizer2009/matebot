@@ -117,7 +117,7 @@ vi.mock("./avatar-studio-popover", () => ({
         aria-label="Avatar set"
         data-avatar-set={avatarSet}
         data-color={value}
-        onClick={() => onChange("#F97316", avatarSet === "rakazo" ? "organic" : "rakazo")}
+        onClick={() => onChange("#F97316", avatarSet === "matebot" ? "organic" : "matebot")}
       />
     </>
   ),
@@ -739,12 +739,12 @@ describe("BotSettings avatar set persistence", () => {
     await render("Billing", { color: "#10B981" });
     const control = () => container.querySelector<HTMLButtonElement>('[aria-label="Avatar set"]')!;
     await act(async () => control().click());
-    expect(onSave.mock.lastCall?.[0]).toMatchObject({ avatarSet: "rakazo", color: "#F97316" });
-    expect(control().getAttribute("data-avatar-set")).toBe("rakazo");
+    expect(onSave.mock.lastCall?.[0]).toMatchObject({ avatarSet: "matebot", color: "#F97316" });
+    expect(control().getAttribute("data-avatar-set")).toBe("matebot");
     await act(async () => root.unmount());
     root = createRoot(container);
-    await render("Billing", { color: "#F97316", avatarSet: "rakazo" });
-    expect(control().getAttribute("data-avatar-set")).toBe("rakazo");
+    await render("Billing", { color: "#F97316", avatarSet: "matebot" });
+    expect(control().getAttribute("data-avatar-set")).toBe("matebot");
   });
 
   it("restores the accepted colour and set when switching fails", async () => {
@@ -760,14 +760,14 @@ describe("BotSettings avatar set persistence", () => {
   });
 
   it("keeps a colour edit in its existing set", async () => {
-    await render("Billing", { avatarSet: "rakazo" });
+    await render("Billing", { avatarSet: "matebot" });
     await act(async () =>
       container.querySelector<HTMLButtonElement>('[aria-label="Avatar color"]')!.click(),
     );
     expect(onSave.mock.lastCall?.[0]).not.toHaveProperty("avatarSet");
     expect(
       container.querySelector('[aria-label="Avatar set"]')?.getAttribute("data-avatar-set"),
-    ).toBe("rakazo");
+    ).toBe("matebot");
   });
 });
 

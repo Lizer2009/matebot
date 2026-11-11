@@ -299,7 +299,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     ? { prisma: prismaOverride, pool: undefined }
     : createDb(env.databaseUrl, {
         poolMax,
-        applicationName: "rakazo-api",
+        applicationName: "matebot-api",
         keyProvider: contentKeyProviderFromEnv(),
         encryptContent: env.contentEncryption,
       });
@@ -366,7 +366,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   if (!inMemoryJobs && !created.pool) {
     ownedJobPool = createPool(env.databaseUrl, {
       poolMax: parsePositiveInteger(process.env.DB_POOL_MAX, 4),
-      applicationName: "rakazo-api-jobs",
+      applicationName: "matebot-api-jobs",
     });
   }
   const jobPool = created.pool ?? ownedJobPool;
@@ -974,7 +974,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       requireMembership(
         prisma,
         session.user.id,
-        request.headers.get("x-rakazo-space-id"),
+        request.headers.get("x-matebot-space-id"),
         session.session.id,
       ),
     );

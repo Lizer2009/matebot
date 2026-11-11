@@ -295,7 +295,7 @@ it("hides server updates and never requests server authority", async () => {
 });
 
 it("shows Updates in the desktop app", async () => {
-  vi.stubGlobal("rakazoDesktop", { update: {} });
+  vi.stubGlobal("matebotDesktop", { update: {} });
   const { container, cleanup } = await render({});
   try {
     expect(updatesNav(container)).not.toBeNull();

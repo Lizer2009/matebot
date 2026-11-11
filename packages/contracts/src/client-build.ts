@@ -5,9 +5,9 @@
  */
 
 /** Request header: `web/20261022093015`. */
-export const CLIENT_BUILD_HEADER = "x-rakazo-client-build";
+export const CLIENT_BUILD_HEADER = "x-matebot-client-build";
 /** Response header: the web build deployed beside the API. */
-export const SERVER_BUILD_HEADER = "x-rakazo-build";
+export const SERVER_BUILD_HEADER = "x-matebot-build";
 /** Error code sent with HTTP 426 when the server no longer supports the client's build. */
 export const CLIENT_UPDATE_REQUIRED = "CLIENT_UPDATE_REQUIRED";
 export const CLIENT_UPDATE_REQUIRED_STATUS = 426;
@@ -16,7 +16,14 @@ export const CLIENT_KINDS = ["web", "mobile"] as const;
 export type ClientKind = (typeof CLIENT_KINDS)[number];
 export type MinimumClientBuilds = Partial<Record<ClientKind, string>>;
 
-export const IOS_APP_STORE_URL = "https://apps.apple.com/app/rakazo/id6801531099";
+/**
+ * Where an iOS user without an installable build goes: this deployment's own download page.
+ *
+ * There is deliberately no App Store link here. The store listing that exists belongs to the
+ * upstream project this fork was taken from, and sending this product's users to it would hand
+ * them a different product.
+ */
+export const IOS_DOWNLOAD_PATH = "/download/";
 /** The rolling `android` release keeps one download URL across builds (docs/mobile-release.md). */
 export const ANDROID_APK_URL =
   "https://github.com/Lizer2009/matebot/releases/download/android/matebot.apk";
@@ -59,7 +66,7 @@ export function parseMinimumClientBuilds(value: string | undefined): MinimumClie
     const [kind, build, ...rest] = trimmed.split("=").map((part) => part.trim());
     if (rest.length || !CLIENT_KINDS.includes(kind as ClientKind) || !isBuildId(build)) {
       throw new Error(
-        `Invalid RAKAZO_MIN_CLIENT_BUILD entry "${trimmed}": use web=YYYYMMDDHHMMSS or mobile=YYYYMMDDHHMMSS`,
+        `Invalid MATEBOT_MIN_CLIENT_BUILD entry "${trimmed}": use web=YYYYMMDDHHMMSS or mobile=YYYYMMDDHHMMSS`,
       );
     }
     minimums[kind as ClientKind] = build;

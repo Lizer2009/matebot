@@ -5,7 +5,7 @@
 **架构锁：** [`matebot-a2ui-integration-design.md`](./matebot-a2ui-integration-design.md) v1.1。  
 **事实源：** [`matebot-a2ui-source-audit.md`](./matebot-a2ui-source-audit.md)、[`matebot-a2ui-gap-checklist.md`](./matebot-a2ui-gap-checklist.md)。  
 **采纳清单：** [`matebot-a2ui-orchestration-addendum.md`](./matebot-a2ui-orchestration-addendum.md)。  
-**范围：** 文档 only。Feature flag `FEATURE_A2UI` 默认关闭。不改 `RAKAZO_*`。不合并进 `main`。
+**范围：** 文档 only。Feature flag `FEATURE_A2UI` 默认关闭。不改 `MATEBOT_*`。不合并进 `main`。
 
 冲突时：**审计 > 设计 v1.1 > 本文件/addendum > 编排规格原文**。编排规格里的包路径在对齐前是意向，不是仓库目录。
 
@@ -323,7 +323,7 @@ PR-C′/D′ 可按评审容量对调，但 **A′ 必须先于 B′**（先停�
 * 把 interactive Send 改成「必须先入 Graphile」。
 * 重写 Pi。
 * 把 A2UI 并进 `page-kit`。
-* 改 `RAKAZO_*`、DB role、compose volume。
+* 改 `MATEBOT_*`、DB role、compose volume。
 * 默认打开 `FEATURE_A2UI`。
 * 在 contracts 或用户文案里写死 Gmail/Outlook 品牌（adapters 内部 tool slug 除外）。
 

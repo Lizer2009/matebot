@@ -68,10 +68,10 @@ export interface AppEnv {
   ticketBoardEnabled: boolean;
   /** USER_DEVICES_ENABLED=false stops users connecting their own computers. Default on. */
   userDevicesEnabled: boolean;
-  /** Operator menu links that frame a same-origin page (RAKAZO_NAV_LINKS). */
+  /** Operator menu links that frame a same-origin page (MATEBOT_NAV_LINKS). */
   navLinks?: NavLink[];
   /** Verified accounts that review plugin submissions, add stdio MCP servers, and grant access
-   * (RAKAZO_ADMIN_EMAILS), lowercased. */
+   * (MATEBOT_ADMIN_EMAILS), lowercased. */
   adminEmails: string[];
   phoneCallsEnabled: boolean;
   phoneCallRingSeconds: number;
@@ -167,7 +167,7 @@ export interface AppEnv {
   mcpAllowPrivateEndpoint: boolean;
   port: number;
   gitSha: string | undefined;
-  /** Oldest client build per kind the API still serves (RAKAZO_MIN_CLIENT_BUILD). */
+  /** Oldest client build per kind the API still serves (MATEBOT_MIN_CLIENT_BUILD). */
   minimumClientBuilds?: MinimumClientBuilds;
   /** Browser error reporting, served to the web app at runtime. The DSN is public by design. */
   browserMonitoring:
@@ -234,7 +234,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     nodeEnv: source.NODE_ENV ?? "",
     databaseUrl: required(source, "DATABASE_URL"),
     realtimeDatabaseUrl: source.REALTIME_DATABASE_URL ?? required(source, "DATABASE_URL"),
-    desktopStackToken: optional(source.RAKAZO_DESKTOP_STACK_TOKEN),
+    desktopStackToken: optional(source.MATEBOT_DESKTOP_STACK_TOKEN),
     authSecret,
     authUrl: resolveWebOrigin(source.BETTER_AUTH_URL, webOrigin, "BETTER_AUTH_URL"),
     webOrigin,
@@ -256,8 +256,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     piSessionRecording: source.PI_SESSION_RECORDING === "true",
     ticketBoardEnabled: source.TICKET_BOARD_ENABLED === "true",
     userDevicesEnabled: source.USER_DEVICES_ENABLED !== "false",
-    navLinks: parseNavLinks(source.RAKAZO_NAV_LINKS),
-    adminEmails: list(source.RAKAZO_ADMIN_EMAILS).map((email) => email.toLowerCase()),
+    navLinks: parseNavLinks(source.MATEBOT_NAV_LINKS),
+    adminEmails: list(source.MATEBOT_ADMIN_EMAILS).map((email) => email.toLowerCase()),
     ...phoneCallSettings(source),
     maxUploadSizeBytes: uploadSizeFromEnv(source),
     maxAttachmentsPerMessage: attachmentCountFromEnv(source),
@@ -329,7 +329,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     photonWebhookSecret: optional(source.PHOTON_WEBHOOK_SECRET),
     photonProjects: photonProjectsFromEnv(source),
     messagingOpenSignup: source.MESSAGING_OPEN_SIGNUP === "true",
-    teamChatBotId: optional(source.TEAM_CHAT_BOT_ID) ?? optional(source.SLACK_RAKAZO_BOT_ID),
+    teamChatBotId: optional(source.TEAM_CHAT_BOT_ID) ?? optional(source.SLACK_MATEBOT_BOT_ID),
     teamChatJudgeProvider: optional(source.TEAM_CHAT_JUDGE_PROVIDER),
     teamChatJudgeModel: optional(source.TEAM_CHAT_JUDGE_MODEL),
     defaultProvider: deploymentModel.provider,
@@ -343,8 +343,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     mcpStdio: mcpStdioOptionsFromEnv(source),
     mcpAllowPrivateEndpoint: source.MCP_ALLOW_PRIVATE_ENDPOINT === "true",
     port: Number(source.API_PORT ?? 3100),
-    gitSha: optional(source.GIT_SHA) ?? optional(source.RAKAZO_GIT_SHA),
-    minimumClientBuilds: parseMinimumClientBuilds(source.RAKAZO_MIN_CLIENT_BUILD),
+    gitSha: optional(source.GIT_SHA) ?? optional(source.MATEBOT_GIT_SHA),
+    minimumClientBuilds: parseMinimumClientBuilds(source.MATEBOT_MIN_CLIENT_BUILD),
     browserMonitoring: browserMonitoringFromEnv(source),
     crispWebsiteId: parseCrispWebsiteId(source.CRISP_WEBSITE_ID),
   };

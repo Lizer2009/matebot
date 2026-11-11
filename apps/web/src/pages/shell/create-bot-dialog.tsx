@@ -78,7 +78,7 @@ export function CreateBotDialog({
       await onCreate({
         name: trimmed,
         color: look.value,
-        ...(avatarSet === "rakazo" ? { id: previewId } : {}),
+        ...(avatarSet === "matebot" ? { id: previewId } : {}),
         ...(organic ? { avatarFamily: organicAvatarFamily(look.identity) } : {}),
       });
     } catch (err) {
@@ -116,7 +116,7 @@ export function CreateBotDialog({
           <div className="flex justify-center py-2">
             <BotAvatar
               color={look.value}
-              identity={avatarSet === "rakazo" ? previewId : look.identity}
+              identity={avatarSet === "matebot" ? previewId : look.identity}
               size={96}
               avatarSet={avatarSet}
             />
@@ -137,7 +137,7 @@ export function CreateBotDialog({
           ) : null}
           <BotLookPicker
             value={look.value}
-            identity={avatarSet === "rakazo" ? previewId : look.identity}
+            identity={avatarSet === "matebot" ? previewId : look.identity}
             organicIdentities={ORGANIC_IDENTITIES}
             avatarSet={avatarSet}
             onChange={(value, identity) => {

@@ -192,7 +192,7 @@ describe("clientIpMiddleware", () => {
 
   it("keeps caller details on security events only", async () => {
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-api", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-api", sinks: [sink] }));
     const body = await fromSocket(app(["192.0.2.3"]), "192.0.2.3", {
       [header]: "203.0.113.5",
       "user-agent": "curl/8.5.0",

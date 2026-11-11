@@ -4,7 +4,13 @@ import { loadUserIncomingCalls } from "./call-request.js";
 
 describe("incoming-call stream snapshots", () => {
   it("loads only the call owner's one-to-one requests and removes expired or answered state", async () => {
-    const bot = { id: "bot-1", spaceId: "space-1", name: "Caller", color: "", avatarSet: "rakazo" };
+    const bot = {
+      id: "bot-1",
+      spaceId: "space-1",
+      name: "Caller",
+      color: "",
+      avatarSet: "matebot",
+    };
     const call = {
       kind: "call_request",
       callId: "call-1",

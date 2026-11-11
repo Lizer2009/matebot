@@ -272,7 +272,7 @@ A2UI 字段变更/确认应新增 **同类 oRPC 过程**（或扩展 `threads.an
 | 包 | `packages/page-kit`（`@matebot/page-kit`） |
 | 组件白名单 | `packages/page-kit/src/components.ts` → `PAGE_KIT_COMPONENTS` |
 | 校验/编译 | `validate.ts` / `compile.ts`（Sucrase JSX → CJS） |
-| 运行时 | `runtime.tsx`（沙箱 mount；`RakazoPage.mount`；CSP 内联脚本工厂） |
+| 运行时 | `runtime.tsx`（沙箱 mount；`MatebotPage.mount`；CSP 内联脚本工厂） |
 | 持久化 | Prisma `Page` / `PageVersion`（`source` + 预编译 `code`） |
 | 消息嵌入 | `MessageBlock` `kind: "page"`；Web `PageBlockCard` |
 
@@ -372,7 +372,7 @@ Page 是 **工件（artifact）**：机器人 `save_page` 后用户打开查看�
 | §10 API/SSE | `threads.subscribe`, 新 interaction.* RPC | Reuse transport / Extend API |
 | §11 DB | Thread/Message/Event/Run/ExternalEffect；Interaction* 待定 | Extend / New |
 | §14 多 package 结构 | 见 §13 | 缩减为 Extend-first |
-| 附录 C RAKAZO_* | `.env.example` / turbo `RAKAZO_*`；部署兼容 | **禁止改名** |
+| 附录 C MATEBOT_* | `.env.example` / turbo `MATEBOT_*`；部署兼容 | **禁止改名** |
 
 ---
 
@@ -417,7 +417,7 @@ A2UI 插入点（未来，本 PR 不实现）：
 
 约束回顾：
 
-- 不碰 `RAKAZO_*`、DB role、compose volume 改名。  
+- 不碰 `MATEBOT_*`、DB role、compose volume 改名。  
 - 不把 A2UI 并进 `page-kit`。  
 - 不引入并行 WebSocket 聊天总线。  
 - 不把 interactive run 改回全局队列。

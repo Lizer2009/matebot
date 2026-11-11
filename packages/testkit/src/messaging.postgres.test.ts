@@ -30,7 +30,7 @@ describeMessaging("messaging surface journeys", () => {
   let prisma: any;
   const emulator = new SendBlueEmulator();
   const platform = createEmulatedSendbluePlatform(emulator);
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-messaging-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-messaging-"));
   // Unique per run: identities, threads, and outbox rows persist in the dev
   // database. Random E.164 fixtures — a timestamp suffix repeats within
   // hours and collides with earlier runs.
@@ -634,7 +634,7 @@ describeMessaging("messaging surface journeys", () => {
       content: "legacy path",
       handle: `legacy-dm-${stamp}`,
     });
-    const res = await app.request("https://rakazo.test/api/v1/phone/webhook", {
+    const res = await app.request("https://matebot.test/api/v1/phone/webhook", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -651,7 +651,7 @@ describeMessaging("messaging surface journeys", () => {
     const stranger = uniqueNumber();
     // A mistaken parser that unwraps `data` would treat this as a message and
     // provision. The SendBlue inbound shape is flat; nested envelopes are ignored.
-    const res = await app.request("https://rakazo.test/api/v1/phone/webhook", {
+    const res = await app.request("https://matebot.test/api/v1/phone/webhook", {
       method: "POST",
       headers: {
         "content-type": "application/json",

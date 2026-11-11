@@ -519,7 +519,7 @@ describe("device socket upgrade", () => {
           headers: { authorization: `Bearer ${"a".repeat(64)}` },
         });
         ws.on("unexpected-response", (_request, response) =>
-          resolve(String(response.headers["x-rakazo-device-revoked"] ?? "none")),
+          resolve(String(response.headers["x-matebot-device-revoked"] ?? "none")),
         );
         ws.on("open", () => {
           ws.close();

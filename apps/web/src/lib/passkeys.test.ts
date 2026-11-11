@@ -68,8 +68,8 @@ describe("passkeysSupported", () => {
   });
 
   it("leaves other desktop platforms to their own platform authenticator", async () => {
-    const windows = { ...browser("rakazo.example.com"), desktop: { platform: "win32" } };
-    await expect(passkeysSupported("rakazo.example.com", windows)).resolves.toBe(true);
+    const windows = { ...browser("matebot.example.com"), desktop: { platform: "win32" } };
+    await expect(passkeysSupported("matebot.example.com", windows)).resolves.toBe(true);
   });
 
   it("does not ask the authenticator when the host cannot use the relying party", async () => {

@@ -225,7 +225,7 @@ describe("composio tool mapping", () => {
     } as never;
     const connector = new ConnectorRegistry([destination, failing]);
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-api", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-api", sinks: [sink] }));
 
     try {
       await expect(connector.discoverTools({ userId: "u" } as AdapterContext)).resolves.toEqual([
@@ -239,7 +239,7 @@ describe("composio tool mapping", () => {
       expect(logged).toContain("[redacted]");
       expect(logged).not.toContain("ak_secretvaluehere");
     } finally {
-      installLogger(createLogger({ service: "rakazo-api", level: "off", sinks: [] }));
+      installLogger(createLogger({ service: "matebot-api", level: "off", sinks: [] }));
     }
   });
 
@@ -601,7 +601,7 @@ describe("composio tool mapping", () => {
         sessionPreset: config.sessionPreset,
       })),
     ).toEqual([
-      { userId: "__rakazo_catalog__", toolkits: undefined, sessionPreset: undefined },
+      { userId: "__matebot_catalog__", toolkits: undefined, sessionPreset: undefined },
       { userId: "user-1", toolkits: ["GITHUB"], sessionPreset: undefined },
     ]);
 

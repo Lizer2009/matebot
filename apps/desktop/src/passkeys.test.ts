@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { associatedPasskeyRpIds, PASSKEY_RP_ID, passkeyEntitlements } from "./passkeys.js";
-import { RAKAZO_CLOUD_URL } from "./setup-config.js";
+import { MATEBOT_CLOUD_URL } from "./setup-config.js";
 
 const root = path.resolve(import.meta.dirname, "..");
 const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")) as {
@@ -81,17 +81,17 @@ describe("self-hosted passkey domain", () => {
   });
 
   async function load(rpId: string) {
-    vi.stubEnv("RAKAZO_PASSKEY_RP_ID", rpId);
+    vi.stubEnv("MATEBOT_PASSKEY_RP_ID", rpId);
     vi.resetModules();
     return import("./passkeys.js");
   }
 
   it("defaults to the hosted server's domain", async () => {
     const passkeys = await load("");
-    expect(passkeys.PASSKEY_RP_ID).toBe(new URL(RAKAZO_CLOUD_URL).hostname);
+    expect(passkeys.PASSKEY_RP_ID).toBe(new URL(MATEBOT_CLOUD_URL).hostname);
   });
 
-  it("associates the build with RAKAZO_PASSKEY_RP_ID", async () => {
+  it("associates the build with MATEBOT_PASSKEY_RP_ID", async () => {
     const passkeys = await load(" Matebot.Example.org ");
     expect(passkeys.PASSKEY_RP_ID).toBe("matebot.example.org");
     expect(passkeys.passkeyEntitlements(base, "ABCDE12345", pkg.build.appId)).toContain(
@@ -99,12 +99,12 @@ describe("self-hosted passkey domain", () => {
     );
   });
 
-  it.each(["https://rakazo.example.org", "localhost", "192.168.1.20", "rakazo.example.org:8443"])(
+  it.each(["https://matebot.example.org", "localhost", "192.168.1.20", "matebot.example.org:8443"])(
     "refuses to sign entitlements for %s",
     async (rpId) => {
       const passkeys = await load(rpId);
       expect(() => passkeys.passkeyEntitlements(base, "ABCDE12345", pkg.build.appId)).toThrow(
-        "RAKAZO_PASSKEY_RP_ID",
+        "MATEBOT_PASSKEY_RP_ID",
       );
     },
   );

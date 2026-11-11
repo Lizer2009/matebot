@@ -29,7 +29,7 @@ describePostgres("direct run dispatch (PostgreSQL)", () => {
   let db: ReturnType<typeof createDb>;
   let system: PrismaClient;
   let identity: { userId: string; spaceId: string; botId: string; threadId: string };
-  const address = `dispatch-${randomUUID()}@rakazo.test`;
+  const address = `dispatch-${randomUUID()}@matebot.test`;
   beforeAll(async () => {
     db = createDb(url!);
     system = asSystem(db.prisma);

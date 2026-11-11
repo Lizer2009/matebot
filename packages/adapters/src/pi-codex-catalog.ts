@@ -95,7 +95,7 @@ export async function fetchCodexCatalog(
       headers: {
         authorization: `Bearer ${accessToken}`,
         "chatgpt-account-id": accountId,
-        originator: "rakazo",
+        originator: "matebot",
         accept: "application/json",
       },
       redirect: "error",

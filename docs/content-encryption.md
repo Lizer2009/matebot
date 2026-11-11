@@ -205,8 +205,8 @@ be set, so leave the pair out of the laptop's `.env`, and the key policy must
 allow that principal:
 
 ```bash
-aws login --profile rakazo-kms
-AWS_KMS_PROFILE=rakazo-kms pnpm -s --filter @matebot/api content-encryption export --bot <bot id> > rakazo-export.jsonl
+aws login --profile matebot-kms
+AWS_KMS_PROFILE=matebot-kms pnpm -s --filter @matebot/api content-encryption export --bot <bot id> > matebot-export.jsonl
 ```
 
 ### Wrapped settings

@@ -8,7 +8,7 @@ import { createRouter } from "./router.js";
 const actor = {
   spaceId: "space-current",
   userId: "user-1",
-  email: "user@rakazo.test",
+  email: "user@matebot.test",
   isDeploymentOwner: false,
 } satisfies Actor;
 
@@ -59,7 +59,7 @@ function renameHarness(target: TargetSpace, currentOrganizationId: string | null
       screenProxySecret: "fake-test-secret",
       sandboxProvider: "fake",
     },
-    dataDir: "/tmp/rakazo-space-rename-test",
+    dataDir: "/tmp/matebot-space-rename-test",
   } as unknown as RouterDeps;
   return { update, transaction, handler: new RPCHandler(createRouter(deps)) };
 }

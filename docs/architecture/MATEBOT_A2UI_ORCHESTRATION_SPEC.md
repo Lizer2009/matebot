@@ -4,7 +4,7 @@
 
 > **文档地位（本仓库）：** 本文是上传规格的**清理后原文**（修了损坏的 Markdown 表与代码围栏；把示例收件人改成 `example.com`）。**§3–§7 中的包路径与 Prisma 模型名是意向**，在对照 [`matebot-a2ui-orchestration-gap-analysis.md`](./matebot-a2ui-orchestration-gap-analysis.md) 之前**不得**当作落地目录。架构锁以 [`matebot-a2ui-integration-design.md`](./matebot-a2ui-integration-design.md) **v1.1** 为准。采纳而不破坏 v1.1 的条目见 [`matebot-a2ui-orchestration-addendum.md`](./matebot-a2ui-orchestration-addendum.md)。
 >
-> Feature flag **`a2ui` / `FEATURE_A2UI` 默认关闭**。不改 `RAKAZO_*`。本文不引入运行时行为。
+> Feature flag **`a2ui` / `FEATURE_A2UI` 默认关闭**。不改 `MATEBOT_*`。本文不引入运行时行为。
 
 | 属性 | 内容 |
 | :--- | :--- |

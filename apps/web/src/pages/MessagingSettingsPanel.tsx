@@ -217,7 +217,7 @@ export function MessagingSettingsPanel() {
   }
 
   function installSlack() {
-    const popup = window.open("about:blank", "rakazo-slack-install");
+    const popup = window.open("about:blank", "matebot-slack-install");
     if (popup) popup.opener = null;
     void act(async () => {
       try {

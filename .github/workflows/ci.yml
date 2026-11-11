@@ -28,7 +28,7 @@ jobs:
   changes:
     name: Changed areas
     if: github.event_name == 'pull_request'
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       web: ${{ steps.areas.outputs.web }}
@@ -51,7 +51,7 @@ jobs:
     name: Production builds
     needs: changes
     if: needs.changes.outputs.web == 'true'
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -68,7 +68,7 @@ jobs:
         run: infra/install-electron.sh
       - run: pnpm build
         env:
-          DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
+          DATABASE_URL: postgres://matebot:matebot@127.0.0.1:5433/matebot
           BETTER_AUTH_SECRET: ci-build-auth-secret-at-least-32-characters
           ENCRYPTION_KEY: ci-build-encryption-key-at-least-32-characters
       - name: Electron smoke
@@ -87,7 +87,7 @@ jobs:
   # main always runs everything.
   static-checks:
     name: Lint and typecheck
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 25
     concurrency:
       group: ci-checks-${{ github.ref == 'refs/heads/main' && 'main' || github.run_id }}
@@ -115,7 +115,7 @@ jobs:
           git diff --exit-code -- apps/web/src/locales
       - run: pnpm db:generate
         env:
-          DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
+          DATABASE_URL: postgres://matebot:matebot@127.0.0.1:5433/matebot
       # Pull requests reuse main's typecheck results for packages whose inputs they leave unchanged.
       # Main starts with an empty cache, so it typechecks everything before a deploy.
       - name: Restore typecheck cache
@@ -160,14 +160,16 @@ jobs:
       - name: Optional vendor SDKs load lazily
         run: node --test scripts/lazy-vendors.test.mjs
       - name: Former product name stays out of shipped copy
-        run: python3 .github/scripts/brand-guard.py --check-stale-allowlist
+        run: python3 .github/scripts/brand-guard.py
       - name: Brand guard tests
         run: python3 .github/scripts/brand-guard.test.py
+      - name: Native module names agree across podspecs, sources, and JS
+        run: python3 scripts/native-registration-check.py
 
   # The unit suite is CPU-bound, so three runners finish in about a third of the time.
   unit-tests-shard:
     name: Unit tests (${{ matrix.shard }}/3)
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -195,7 +197,7 @@ jobs:
         run: infra/install-electron.sh
       - run: pnpm db:generate
         env:
-          DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
+          DATABASE_URL: postgres://matebot:matebot@127.0.0.1:5433/matebot
       - name: Install age for the encrypted backup round trip
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends age
       - name: Unit tests
@@ -220,7 +222,7 @@ jobs:
     name: Checks
     needs: [static-checks, unit-tests-shard]
     if: always()
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - run: test "${{ needs.static-checks.result }}" = success && test "${{ needs.unit-tests-shard.result }}" = success
 
@@ -254,7 +256,7 @@ jobs:
         run: infra/install-electron.sh
       - run: pnpm db:generate
         env:
-          DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
+          DATABASE_URL: postgres://matebot:matebot@127.0.0.1:5433/matebot
       - run: pnpm --filter @matebot/desktop build
       - run: pnpm exec vitest run packages/adapters/src/host-computer.test.ts packages/adapters/src/desktop-sandbox-command.test.ts packages/adapters/src/desktop-sandbox-paths.test.ts packages/adapters/src/desktop-workspace-cleanup.test.ts packages/adapters/src/computer-support.test.ts apps/desktop/src/host-computer.test.ts
       - name: Screen control on a real Windows desktop
@@ -270,7 +272,7 @@ jobs:
   # The suites are CPU-bound, so two runners finish in about half the time.
   test-integration-shard:
     name: Postgres journeys (${{ matrix.shard }}/2)
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -303,7 +305,7 @@ jobs:
     name: Postgres journeys
     needs: test-integration-shard
     if: always()
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - run: test "${{ needs.test-integration-shard.result }}" = success
 
@@ -311,7 +313,7 @@ jobs:
     name: Postgres upgrade
     needs: changes
     if: needs.changes.outputs.compose == 'true'
-    runs-on: ${{ github.repository == 'elie222/rakazo' && 'incredibuild-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -573,7 +575,7 @@ jobs:
       queue: max
     environment:
       name: production
-      url: https://app.rakazo.com
+      url: https://app.matebot.com
     permissions:
       contents: read
       id-token: write
@@ -596,10 +598,10 @@ jobs:
           test -n "$SSH_PRIVATE_KEY"
           test -n "$SSH_KNOWN_HOSTS"
           install -d -m 700 "$HOME/.ssh"
-          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/rakazo-production"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/matebot-production"
           printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/rakazo-production" "$HOME/.ssh/known_hosts"
-          ssh-keygen -y -f "$HOME/.ssh/rakazo-production" >/dev/null
+          chmod 600 "$HOME/.ssh/matebot-production" "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/matebot-production" >/dev/null
 
       - name: Deploy successful main revision
         env:
@@ -609,7 +611,7 @@ jobs:
           test -n "$SSH_HOST"
           test -n "$SSH_USER"
           ssh -F /dev/null \
-            -i "$HOME/.ssh/rakazo-production" \
+            -i "$HOME/.ssh/matebot-production" \
             -o BatchMode=yes \
             -o ConnectTimeout=15 \
             -o IdentitiesOnly=yes \

@@ -80,7 +80,7 @@ describe("mobile app config", () => {
 
   it("asks a development build to fetch the association itself in developer mode", () => {
     vi.stubEnv("EAS_BUILD_PROFILE", "development");
-    vi.stubEnv("RAKAZO_PASSKEY_DEVELOPER_MODE", "1");
+    vi.stubEnv("MATEBOT_PASSKEY_DEVELOPER_MODE", "1");
 
     expect(appConfig(context(config))).toEqual({
       ...config,

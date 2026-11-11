@@ -1,6 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { NavLink } from "@matebot/contracts";
-import { ANDROID_APK_URL, IOS_APP_STORE_URL } from "@matebot/contracts";
+import { ANDROID_APK_URL, IOS_DOWNLOAD_PATH, onMarketingSite } from "@matebot/contracts";
+import { documentOriginFromEnv } from "@matebot/core";
 import {
   AppMarkStack,
   Button,
@@ -228,7 +229,11 @@ export function SidebarFooter({
             <div className="my-1 border-t border-border" />
             <a
               className={`${buttonVariants({ variant: "ghost" })} h-9 w-full justify-start gap-2.5 font-normal`}
-              href={/Android/i.test(navigator.userAgent) ? ANDROID_APK_URL : IOS_APP_STORE_URL}
+              href={
+                /Android/i.test(navigator.userAgent)
+                  ? ANDROID_APK_URL
+                  : onMarketingSite(documentOriginFromEnv(), IOS_DOWNLOAD_PATH)
+              }
               target="_blank"
               rel="noreferrer"
             >
@@ -247,7 +252,7 @@ export function SidebarFooter({
             ) : null}
             <a
               className={`${buttonVariants({ variant: "ghost" })} h-9 w-full justify-start gap-2.5 font-normal`}
-              href="https://github.com/elie222/rakazo/blob/main/docs/self-host.md"
+              href="https://github.com/Lizer2009/matebot/blob/main/docs/self-host.md"
               target="_blank"
               rel="noreferrer"
             >

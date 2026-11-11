@@ -206,7 +206,7 @@ describe.skipIf(!enabled)("history retrieval through executor", () => {
         })),
       ],
     });
-    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-history-redaction-"));
+    const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-history-redaction-"));
     let stop: (() => Promise<void>) | undefined;
     try {
       const { createApp } = await import("@matebot/api/app");
@@ -233,7 +233,7 @@ describe.skipIf(!enabled)("history retrieval through executor", () => {
         method: "POST",
         headers: { "content-type": "application/json", origin },
         body: JSON.stringify({
-          email: `history-${randomUUID()}@rakazo.test`,
+          email: `history-${randomUUID()}@matebot.test`,
           password: "password12",
           name: "History fixture",
         }),

@@ -23,7 +23,7 @@ export interface DesktopUpdateState {
   checkedAt: string | null;
 }
 
-export interface RakazoDesktopUpdate {
+export interface MatebotDesktopUpdate {
   state: () => Promise<DesktopUpdateState>;
   check: () => Promise<DesktopUpdateState>;
   download: () => Promise<DesktopUpdateState>;
@@ -31,12 +31,12 @@ export interface RakazoDesktopUpdate {
   install: () => Promise<DesktopUpdateState>;
 }
 
-export interface RakazoDesktopOAuthCallback {
+export interface MatebotDesktopOAuthCallback {
   code: string;
   state?: string;
 }
 
-export interface RakazoDesktopDevice {
+export interface MatebotDesktopDevice {
   /** Null until paired. */
   deviceId: string | null;
   name: string;
@@ -48,7 +48,7 @@ export interface RakazoDesktopDevice {
  * `result` carries the session's whole text so far, `error` a Web Speech error code,
  * and `end` always comes last.
  */
-export type RakazoDesktopSpeechEvent =
+export type MatebotDesktopSpeechEvent =
   | { session: number; type: "result"; text: string }
   | { session: number; type: "error"; error: string }
   | { session: number; type: "end" };
@@ -71,7 +71,7 @@ export function isDesktopMenuCommand(value: unknown): value is DesktopMenuComman
   return (DESKTOP_MENU_COMMANDS as readonly unknown[]).includes(value);
 }
 
-export interface RakazoDesktop {
+export interface MatebotDesktop {
   /** Optional for compatibility with older desktop releases. */
   badge?: {
     set: (count: number) => Promise<boolean>;
@@ -86,9 +86,9 @@ export interface RakazoDesktop {
   /** Optional for compatibility with older desktop releases. */
   device?: {
     /** Null when the app shows its own local server. */
-    state: () => Promise<RakazoDesktopDevice | null>;
+    state: () => Promise<MatebotDesktopDevice | null>;
     /** Turning it on asks with a native prompt the page cannot answer. */
-    setAllowed: (allowed: boolean) => Promise<RakazoDesktopDevice | null>;
+    setAllowed: (allowed: boolean) => Promise<MatebotDesktopDevice | null>;
   };
   /** Absent on older desktop releases, whose menus carry no app commands. */
   menu?: {
@@ -123,7 +123,7 @@ export interface RakazoDesktop {
     /** Ends the utterance: its final text and `end` still arrive. */
     stop: (session: number) => Promise<void>;
     abort: (session: number) => Promise<void>;
-    onEvent: (listener: (event: RakazoDesktopSpeechEvent) => void) => () => void;
+    onEvent: (listener: (event: MatebotDesktopSpeechEvent) => void) => () => void;
   };
   platform: string;
   /** Absent on older frameless releases, which still need in-app controls. */
@@ -134,7 +134,7 @@ export interface RakazoDesktop {
     toggleMaximize: () => Promise<void>;
     state: () => Promise<{ minimized: boolean; maximized: boolean; fullScreen: boolean }>;
   };
-  update: RakazoDesktopUpdate;
+  update: MatebotDesktopUpdate;
   oauth: {
     /**
      * Open system-browser auth. A redirect_uri must be HTTP loopback with state;
@@ -146,7 +146,7 @@ export interface RakazoDesktop {
      * Authorization codes captured from the system browser or a legacy popup.
      * Returns an unsubscribe function.
      */
-    onCallback: (listener: (callback: RakazoDesktopOAuthCallback) => void) => () => void;
+    onCallback: (listener: (callback: MatebotDesktopOAuthCallback) => void) => () => void;
   };
 }
 
@@ -219,9 +219,9 @@ export type DesktopSetupLink = "docker-desktop" | "orbstack" | "docker-engine";
 
 /**
  * Bridge exposed only to the first-run setup window. The app window keeps the
- * narrower `rakazoDesktop` bridge so a connected server can never re-point the app.
+ * narrower `matebotDesktop` bridge so a connected server can never re-point the app.
  */
-export interface RakazoSetup {
+export interface MatebotSetup {
   /** Used only to reserve space for native window controls in the local setup UI. */
   platform: string;
   /** The page's language and its translations, keyed by the English text; empty for English. */

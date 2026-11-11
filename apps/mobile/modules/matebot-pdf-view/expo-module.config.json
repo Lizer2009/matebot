@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["MatebotPdfViewModule"]
+  },
+  "android": {
+    "modules": ["com.matebot.pdfview.MatebotPdfViewModule"]
+  }
+}

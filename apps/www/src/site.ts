@@ -36,7 +36,7 @@ export function isSiteUrl(href: string): boolean {
  * rather than pretending to be part of this fork.
  */
 export const CATALOG_URL =
-  "https://rakazo-public.fsn1.your-objectstorage.com/integrations/catalog.json";
+  "https://matebot-public.fsn1.your-objectstorage.com/integrations/catalog.json";
 
 /**
  * This fork publishes no App Store or Play Store listing yet. The site hides

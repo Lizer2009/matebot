@@ -24,7 +24,7 @@ afterEach(async () => {
 });
 
 async function tempDir() {
-  const dir = await mkdtemp(path.join(tmpdir(), "rakazo-home-archive-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "matebot-home-archive-"));
   dirs.push(dir);
   return dir;
 }

@@ -16,7 +16,7 @@ import { clampMaxChars, clampMaxResults, clampOffset, pageWindow } from "./web-l
 import { assertSafeWebUrl, withAbort } from "./web-ssrf.js";
 
 const ENDPOINT = "https://search.parallel.ai/mcp";
-const USER_AGENT = "Matebot/0.1 (+https://github.com/elie222/rakazo; web tools)";
+const USER_AGENT = "Matebot/0.1 (+https://github.com/Lizer2009/matebot; web tools)";
 const MAX_SNIPPET_CHARS = 8_000;
 const pageSchema = z.object({
   url: z.string().max(8_192),
@@ -124,7 +124,7 @@ export class ParallelWebProvider implements WebProvider {
     signal.throwIfAborted();
     // Scope conversation accounting to this deployment without disclosing raw IDs.
     const sessionId = createHmac("sha256", this.sessionKey)
-      .update("rakazo:parallel:web-session:v1\0")
+      .update("matebot:parallel:web-session:v1\0")
       .update(
         JSON.stringify([
           context.spaceId,

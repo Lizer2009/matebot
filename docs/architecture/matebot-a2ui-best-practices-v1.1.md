@@ -126,7 +126,7 @@
 - 不保证任意意图分类 100% 准确；不把「能聊」当成「已登记可执行能力」
 - 不把销售趋势伪装成「注册一个销售编辑器」就能出图；无数据不编造
 - 不引入任意 HTML/JS/外链/未审计 Vega remote fetch
-- 不重命名为 RAKAZO_*；不在未批准时升级依赖或部署
+- 不在 A2UI 提案中重命名环境变量；不在未批准时升级依赖或部署
 - 不把 sim 强制模板盖戳、也不把提案性能目标当成已测结果
 
 ---
@@ -354,7 +354,7 @@ calendar draft 或 FieldsEditor；真实 provider 创建；时区/全天/部分�
 - [ ] 扩展-first：Thread/MessageBlock/oRPC SSE/ExternalEffect（提案约束）
 - [ ] 不新建 ActionExecution 表 / 包爆炸（提案约束）
 - [ ] FEATURE_A2UI 默认 off；契约测试先于晋升（提案约束）
-- [ ] 无 RAKAZO_* 重命名（提案约束）
+- [ ] 不在 A2UI 提案中重命名环境变量（提案约束）
 - [ ] 公开仓 main 不合入；无单独授权不升级依赖/部署（流程约束）
 - [ ] UX/多轮/revision 在 Phase 0，非末尾可选项（v1.1）
 

@@ -29,7 +29,7 @@ describeLive("real model and sandbox computer journey", () => {
     ]) {
       if (!process.env[key]) throw new Error(`${key} is required for pnpm test:computer`);
     }
-    dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-computer-e2e-"));
+    dataDir = mkdtempSync(path.join(tmpdir(), "matebot-computer-e2e-"));
     const { createApp } = await import("@matebot/api/app");
     handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
@@ -89,7 +89,7 @@ describeLive("real model and sandbox computer journey", () => {
       method: "POST",
       headers: { "content-type": "application/json", origin: "http://127.0.0.1:5173" },
       body: JSON.stringify({
-        email: `computer-${stamp}@rakazo.test`,
+        email: `computer-${stamp}@matebot.test`,
         password: "password12",
         name: "Computer E2E",
       }),

@@ -26,9 +26,9 @@ type Result = { code: number; stdout: string; stderr?: string };
 function host(result: Result | ((command: string) => Result), commands: string[] = []) {
   return {
     environment: async () => ({
-      homeDir: "/home/rakazo",
-      workspaceDir: "/home/rakazo",
-      browserProfilesDir: "/home/rakazo/.browser-profiles",
+      homeDir: "/home/matebot",
+      workspaceDir: "/home/matebot",
+      browserProfilesDir: "/home/matebot/.browser-profiles",
       displayStart: 1,
     }),
     run: async (_computer: ComputerRef, command: string) => {
@@ -39,12 +39,12 @@ function host(result: Result | ((command: string) => Result), commands: string[]
   };
 }
 
-const releasesBrowser = (command: string) => command.includes("RAKAZO_DESKTOP_RELEASED");
+const releasesBrowser = (command: string) => command.includes("MATEBOT_DESKTOP_RELEASED");
 
 describe("LinuxDesktop.releaseScreen", () => {
   it("reports the browser stopped when slot cleanup fails after the release marker", async () => {
     const desktop = new LinuxDesktop(
-      host({ code: 1, stdout: "RAKAZO_DESKTOP_RELEASED=0\n", stderr: "slot lock failed" }),
+      host({ code: 1, stdout: "MATEBOT_DESKTOP_RELEASED=0\n", stderr: "slot lock failed" }),
     );
 
     await expect(desktop.releaseScreen(computer, context)).rejects.toBeInstanceOf(

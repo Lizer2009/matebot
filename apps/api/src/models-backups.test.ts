@@ -10,7 +10,7 @@ import { createRouter } from "./router.js";
 const owner: Actor = {
   userId: "user-one",
   spaceId: "space-one",
-  email: "one@rakazo.test",
+  email: "one@matebot.test",
   isDeploymentOwner: true,
 };
 
@@ -173,7 +173,7 @@ function setup(
       screenProxySecret: "fixture-secret",
       sandboxProvider: "fake",
     },
-    dataDir: "C:/scratch/rakazo-model-backups",
+    dataDir: "C:/scratch/matebot-model-backups",
   } as unknown as RouterDeps;
   const actor = options.actor ?? owner;
   const handler = new RPCHandler(createRouter(deps));
@@ -427,7 +427,7 @@ describe("model backup settings API", () => {
       ...owner,
       userId: "user-two",
       spaceId: "space-two",
-      email: "two@rakazo.test",
+      email: "two@matebot.test",
     };
     const kept = { userId: owner.userId, provider: "openrouter", modelId: "keep", position: 0 };
     const { rows, call, userModelRoleChoice } = setup({ actor, existing: [kept] });

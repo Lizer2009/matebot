@@ -134,7 +134,12 @@ describePostgres("row-level security (PostgreSQL)", () => {
     });
     for (const t of tenants) {
       await o.user.create({
-        data: { id: t.userId, name: t.name, email: `${t.userId}@rakazo.test`, emailVerified: true },
+        data: {
+          id: t.userId,
+          name: t.name,
+          email: `${t.userId}@matebot.test`,
+          emailVerified: true,
+        },
       });
       await o.space.create({ data: { id: t.spaceId, organizationId, name: t.name } });
       await o.bot.create({
@@ -568,7 +573,7 @@ describePostgres("row-level security (PostgreSQL)", () => {
   it("reports a bypass key that no longer matches until db:migrate runs again", async () => {
     expect((await describeRowSecurity(db)).systemBlocked).toBeUndefined();
     await owner.prisma
-      .$executeRaw`UPDATE rakazo_private.rls_bypass_keys SET digest = sha256('stale')`;
+      .$executeRaw`UPDATE matebot_private.rls_bypass_keys SET digest = sha256('stale')`;
     expect((await describeRowSecurity(db)).systemBlocked).toBe(true);
     await provisionRuntimeRole(migrationUrl!, runtimeUrl!);
     expect((await describeRowSecurity(db)).systemBlocked).toBeUndefined();
@@ -593,7 +598,7 @@ describePostgres("row-level security (PostgreSQL)", () => {
         expect(bots.rows.map((row) => row.id)).toEqual([a.botId]);
       }
       await expect(
-        client.query("SELECT count(*) FROM rakazo_private.rls_bypass_keys"),
+        client.query("SELECT count(*) FROM matebot_private.rls_bypass_keys"),
       ).rejects.toThrow(/permission denied/);
     } finally {
       client.release(true);

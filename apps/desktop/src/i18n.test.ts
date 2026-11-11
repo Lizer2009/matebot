@@ -209,7 +209,7 @@ describe("desktop language", () => {
   });
 
   it("opens the next launch in the language the app window last reported", async () => {
-    const userData = await mkdtemp(path.join(tmpdir(), "rakazo-locale-"));
+    const userData = await mkdtemp(path.join(tmpdir(), "matebot-locale-"));
     try {
       await expect(readUiLocale(userData)).resolves.toBeNull();
       const { event, target } = appFrame();

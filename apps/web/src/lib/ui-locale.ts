@@ -5,7 +5,7 @@ export const UI_LOCALES = AppLocaleSchema.options;
 
 export type UiLocale = (typeof UI_LOCALES)[number];
 
-export const UI_LOCALE_STORAGE_KEY = "rakazo.uiLocale";
+export const UI_LOCALE_STORAGE_KEY = "matebot.uiLocale";
 
 export const UI_LOCALE_LABELS: Record<UiLocale, string> = {
   en: "English",

@@ -58,7 +58,7 @@ if (webPort === apiPort) {
 const webOrigin = `http://127.0.0.1:${webPort}`;
 const apiOrigin = `http://127.0.0.1:${apiPort}`;
 const reportDirectory = path.join(root, ".context/performance");
-const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "rakazo-desktop-performance-"));
+const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "matebot-desktop-performance-"));
 
 const container = await startPostgres();
 let preview: ChildProcess | undefined;
@@ -164,9 +164,9 @@ function performanceEnvironment(databaseUrl: string): NodeJS.ProcessEnv {
       apiPort,
       dataDir: path.join(temporaryRoot, "data"),
     }),
-    RAKAZO_DISABLE_BUNDLED_RENDERER: remoteRenderer ? "1" : "0",
-    RAKAZO_DISABLE_WARM_WINDOW: disableWarmWindow ? "1" : "0",
-    RAKAZO_PERFORMANCE_ASSET_DELAY_MS: String(assetDelayMs),
+    MATEBOT_DISABLE_BUNDLED_RENDERER: remoteRenderer ? "1" : "0",
+    MATEBOT_DISABLE_WARM_WINDOW: disableWarmWindow ? "1" : "0",
+    MATEBOT_PERFORMANCE_ASSET_DELAY_MS: String(assetDelayMs),
     CSC_IDENTITY_AUTO_DISCOVERY: "false",
   };
 }
@@ -216,7 +216,7 @@ async function prepareAuthenticatedProfile(benchmark: BenchmarkContext, profile:
     const stamp = Date.now();
     await page.goto(`${webOrigin}/sign-up`);
     await page.getByPlaceholder("Your name").fill("Benchmark User");
-    await page.getByPlaceholder("Your email address").fill(`benchmark-${stamp}@rakazo.test`);
+    await page.getByPlaceholder("Your email address").fill(`benchmark-${stamp}@matebot.test`);
     await page.getByPlaceholder("Password").fill("password12");
     await page.getByRole("button", { name: "Create account" }).click();
     await page
@@ -307,8 +307,8 @@ async function launchDesktop(
     executablePath: benchmark.executablePath,
     env: {
       ...benchmark.env,
-      RAKAZO_PERFORMANCE_USER_DATA: profile,
-      RAKAZO_PERFORMANCE_CLEAR_CACHE: clearCache ? "1" : "0",
+      MATEBOT_PERFORMANCE_USER_DATA: profile,
+      MATEBOT_PERFORMANCE_CLEAR_CACHE: clearCache ? "1" : "0",
     },
   });
   const page = await app.firstWindow();
@@ -473,7 +473,7 @@ async function measureInteractions(app: ElectronApplication, page: Page) {
     const target = document.querySelector<HTMLInputElement>('input[placeholder^="Message "]');
     if (!target) throw new Error("Composer is missing");
     const samples: number[] = [];
-    (window as typeof window & { __rakazoKeyPaintSamples?: number[] }).__rakazoKeyPaintSamples =
+    (window as typeof window & { __matebotKeyPaintSamples?: number[] }).__matebotKeyPaintSamples =
       samples;
     target.addEventListener("keydown", () => {
       const started = performance.now();
@@ -483,14 +483,14 @@ async function measureInteractions(app: ElectronApplication, page: Page) {
   await page.keyboard.type("a".repeat(characterCount), { delay: 16 });
   await page.waitForFunction(
     (count) =>
-      ((window as typeof window & { __rakazoKeyPaintSamples?: number[] }).__rakazoKeyPaintSamples
+      ((window as typeof window & { __matebotKeyPaintSamples?: number[] }).__matebotKeyPaintSamples
         ?.length ?? 0) >= count,
     characterCount,
   );
   const keyPaintMs = await page.evaluate(
     () =>
-      (window as typeof window & { __rakazoKeyPaintSamples?: number[] }).__rakazoKeyPaintSamples ??
-      [],
+      (window as typeof window & { __matebotKeyPaintSamples?: number[] })
+        .__matebotKeyPaintSamples ?? [],
   );
   const typingAfter = await cdpMetrics(session);
 

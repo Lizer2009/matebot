@@ -241,7 +241,7 @@ it.each([null, "user-b"])(
 );
 
 it.each([
-  ["another tab switches the account", () => storageEvent("rakazo.signedInUser", "user-b")],
+  ["another tab switches the account", () => storageEvent("matebot.signedInUser", "user-b")],
   ["this tab signs out", (signOut: (to: string) => Promise<void>) => signOut("/")],
 ])(
   "reloads with an answer pending when %s, and the late answer starts no call",

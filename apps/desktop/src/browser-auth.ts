@@ -1,6 +1,6 @@
 import type { Server } from "node:http";
 import { createServer } from "node:http";
-import type { RakazoDesktopOAuthCallback } from "@matebot/contracts";
+import type { MatebotDesktopOAuthCallback } from "@matebot/contracts";
 import { t } from "./i18n.js";
 import { LOOPBACK_HOSTS } from "./oauth-callback.js";
 
@@ -10,7 +10,7 @@ export async function openBrowserAuth(
   options: {
     signal: AbortSignal;
     openExternal: (url: string) => Promise<unknown>;
-    onCallback: (callback: RakazoDesktopOAuthCallback) => void;
+    onCallback: (callback: MatebotDesktopOAuthCallback) => void;
     onClose?: () => void;
   },
 ): Promise<void> {

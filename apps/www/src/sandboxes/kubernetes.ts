@@ -79,7 +79,7 @@ export const kubernetes: Sandbox = {
       ],
       steps: [
         "Run the Matebot API, worker and web app in your cluster from the published app image. Matebot doesn't ship Kubernetes manifests, so you write your own deployments; the [self-hosting guide](/docs/self-host/) lists the services and the settings each one needs.",
-        "Create a namespace for computers. The default name is `rakazo-sandboxes`.",
+        "Create a namespace for computers. The default name is `matebot-sandboxes`.",
         "Give the API and worker's service account a Role in that namespace that can create, get and delete `pods` and create and get `pods/exec`, and bind it with a RoleBinding.",
         "Set `SANDBOX_PROVIDER=kubernetes` on the API and worker, plus `KUBERNETES_SANDBOX_NAMESPACE` if you chose another name. Pin `KUBERNETES_SANDBOX_COMPUTER_IMAGE` to a digest for production.",
         "Optionally set `KUBERNETES_SANDBOX_RUNTIME_CLASS_NAME`, `KUBERNETES_SANDBOX_CPU_LIMIT` and `KUBERNETES_SANDBOX_MEMORY_LIMIT`, and add a NetworkPolicy.",

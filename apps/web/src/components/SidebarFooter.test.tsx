@@ -25,7 +25,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
-  delete window.rakazoDesktop;
+  delete window.matebotDesktop;
   vi.restoreAllMocks();
 });
 async function render(
@@ -35,7 +35,7 @@ async function render(
   onBoard?: () => void,
   logos?: Array<{ name: string; logo?: string }>,
 ) {
-  const email = "account@rakazo.test";
+  const email = "account@matebot.test";
   await act(async () =>
     root.render(
       <DesktopUpdatesProvider>
@@ -76,7 +76,7 @@ function bridge(phase: DesktopUpdateState["phase"]) {
     checkedAt: null,
   };
   const install = vi.fn(async () => state);
-  window.rakazoDesktop = {
+  window.matebotDesktop = {
     platform: "darwin",
     window: {
       close: async () => {},
@@ -192,7 +192,7 @@ it.each(["throw", "state"] as const)(
     if (failure === "throw") install.mockRejectedValueOnce(new Error("offline"));
     else
       install.mockResolvedValueOnce({
-        ...(await window.rakazoDesktop!.update.state()),
+        ...(await window.matebotDesktop!.update.state()),
         phase: "error",
         message: "Update could not be installed",
       });
@@ -271,7 +271,7 @@ async function renderOrganizations(
         <SidebarFooter
           name="Demo User"
           initials="DU"
-          email="account@rakazo.test"
+          email="account@matebot.test"
           open
           onOpenChange={() => {}}
           onIntegrations={() => {}}

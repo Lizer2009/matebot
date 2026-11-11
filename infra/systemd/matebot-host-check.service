@@ -1,0 +1,13 @@
+[Unit]
+Description=Check host storage, backup health and SSH access rules
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/matebot/backup.env
+ExecStart=/usr/local/sbin/matebot-host-check
+StateDirectory=matebot/alerts
+StateDirectoryMode=0700
+ProtectSystem=strict
+ReadWritePaths=/var/lib/matebot/alerts
+ProtectHome=true
+PrivateTmp=true

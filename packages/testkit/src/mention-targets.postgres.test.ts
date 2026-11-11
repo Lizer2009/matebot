@@ -22,7 +22,7 @@ describeWithDatabase("structured @ mention targets", () => {
   let app: App;
   let prisma: AppHandles["prisma"];
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-mention-targets-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-mention-targets-"));
 
   beforeAll(async () => {
     const { createApp } = await import("@matebot/api/app");
@@ -44,7 +44,7 @@ describeWithDatabase("structured @ mention targets", () => {
   });
 
   it("starts a routine test run on the owning bot", async () => {
-    const cookie = await signup(app, `mention-routine-${stamp}@rakazo.test`, "Routine Owner");
+    const cookie = await signup(app, `mention-routine-${stamp}@matebot.test`, "Routine Owner");
     const bot = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Chief",
       title: "",
@@ -70,7 +70,11 @@ describeWithDatabase("structured @ mention targets", () => {
   });
 
   it("replays routine testRun with the same clientNonce", async () => {
-    const cookie = await signup(app, `mention-routine-replay-${stamp}@rakazo.test`, "Replay Owner");
+    const cookie = await signup(
+      app,
+      `mention-routine-replay-${stamp}@matebot.test`,
+      "Replay Owner",
+    );
     const bot = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "ReplayBot",
       title: "",
@@ -137,7 +141,7 @@ describeWithDatabase("structured @ mention targets", () => {
     type Receipt = { routineRunIds: string[]; send?: { runId: string; taskId: string } };
 
     async function owner(name: string) {
-      const cookie = await signup(app, `send-routines-${name}-${stamp}@rakazo.test`, name);
+      const cookie = await signup(app, `send-routines-${name}-${stamp}@matebot.test`, name);
       const bot = await rpc<{ id: string }>(app, cookie, "bots/create", {
         name: "Chief",
         title: "",
@@ -378,7 +382,7 @@ describeWithDatabase("structured @ mention targets", () => {
   });
 
   it("includes connector intent on a 1:1 send prompt", async () => {
-    const cookie = await signup(app, `mention-connector-${stamp}@rakazo.test`, "Connector Owner");
+    const cookie = await signup(app, `mention-connector-${stamp}@matebot.test`, "Connector Owner");
     const bot = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Chief",
       title: "",
@@ -405,7 +409,7 @@ describeWithDatabase("structured @ mention targets", () => {
   });
 
   it("lands a group-targeted send in the group transcript, not the 1:1 bot thread", async () => {
-    const cookie = await signup(app, `mention-group-${stamp}@rakazo.test`, "Group Owner");
+    const cookie = await signup(app, `mention-group-${stamp}@matebot.test`, "Group Owner");
     const botA = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "BotA",
       title: "",
@@ -446,7 +450,11 @@ describeWithDatabase("structured @ mention targets", () => {
   });
 
   it("wakes exactly one bot on an unmentioned group send", async () => {
-    const cookie = await signup(app, `mention-group-default-${stamp}@rakazo.test`, "Group Default");
+    const cookie = await signup(
+      app,
+      `mention-group-default-${stamp}@matebot.test`,
+      "Group Default",
+    );
     const botA = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "BotA",
       title: "",
@@ -476,7 +484,7 @@ describeWithDatabase("structured @ mention targets", () => {
   });
 
   it("wakes a mentioned group member from typed bot chips and ignores non-members", async () => {
-    const cookie = await signup(app, `mention-out-${stamp}@rakazo.test`, "Out Of Chat");
+    const cookie = await signup(app, `mention-out-${stamp}@matebot.test`, "Out Of Chat");
     const botA = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "MemberA",
       title: "",
@@ -519,8 +527,8 @@ describeWithDatabase("structured @ mention targets", () => {
   });
 
   it("rejects another user's routine, connection, and group mentions", async () => {
-    const ada = await signup(app, `mention-auth-ada-${stamp}@rakazo.test`, "Ada Auth");
-    const bob = await signup(app, `mention-auth-bob-${stamp}@rakazo.test`, "Bob Auth");
+    const ada = await signup(app, `mention-auth-ada-${stamp}@matebot.test`, "Ada Auth");
+    const bob = await signup(app, `mention-auth-bob-${stamp}@matebot.test`, "Bob Auth");
     const adaBot = await rpc<{ id: string }>(app, ada, "bots/create", {
       name: "AdaBot",
       title: "",

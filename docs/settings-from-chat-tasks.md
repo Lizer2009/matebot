@@ -111,7 +111,7 @@ rest on demand. Every step is measured with tool-choice evals before and after.
 
 ### 4. Product help skill
 
-- [ ] Built-in `rakazo` skill: an index of product topics with links to the
+- [ ] Built-in `matebot` skill: an index of product topics with links to the
       published docs (`/docs/*.md`, `llms.txt`), loaded via `skill_read`, with
       the instruction to fetch the page before answering. One catalog line
       until used. Must work for self-hosted installs (docs URL from config).

@@ -1,0 +1,10 @@
+{
+  "platforms": ["android", "apple"],
+  "android": {
+    "modules": ["com.matebot.notifications.MatebotNotificationsModule"]
+  },
+  "apple": {
+    "modules": ["MatebotNotificationsModule"],
+    "appDelegateSubscribers": ["MatebotCallsSubscriber"]
+  }
+}

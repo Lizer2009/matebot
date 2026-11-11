@@ -20,9 +20,9 @@ name: Android live working status demonstration
 - tapOn: "Sign in"
 - runFlow: helpers/server.yaml
 - tapOn: "Email"
-- inputText: ${RAKAZO_SCREENSHOT_EMAIL}
+- inputText: ${MATEBOT_SCREENSHOT_EMAIL}
 - tapOn: "Password"
-- inputText: ${RAKAZO_SCREENSHOT_PASSWORD}
+- inputText: ${MATEBOT_SCREENSHOT_PASSWORD}
 - hideKeyboard
 - tapOn: "Sign in"
 - extendedWaitUntil:
@@ -30,13 +30,13 @@ name: Android live working status demonstration
     timeout: 30000
 
 # Only the public demo is recorded; sign-in uses disposable fixture credentials.
-- startRecording: ${RAKAZO_NOTIFICATION_VIDEO}
-- openLink: "rakazo:///account"
+- startRecording: ${MATEBOT_NOTIFICATION_VIDEO}
+- openLink: "matebot:///account"
 - scrollUntilVisible:
     element: "Live working status"
     direction: DOWN
 - tapOn: "Live working status"
-- openLink: "rakazo:///thread?botId=${RAKAZO_SCREENSHOT_BOT_ID}&name=Researcher"
+- openLink: "matebot:///thread?botId=${MATEBOT_SCREENSHOT_BOT_ID}&name=Researcher"
 - extendedWaitUntil:
     visible: "Message Researcher"
     timeout: 10000
@@ -54,7 +54,7 @@ name: Android live working status demonstration
     while:
       notVisible: "Researcher is working"
     commands:
-      - evalScript: ${output.expandNotifications = http.get(RAKAZO_EXPAND_NOTIFICATIONS_URL)}
+      - evalScript: ${output.expandNotifications = http.get(MATEBOT_EXPAND_NOTIFICATIONS_URL)}
       - assertTrue: ${output.expandNotifications.ok}
       - waitForAnimationToEnd:
           timeout: 2000
@@ -70,13 +70,13 @@ name: Android live working status demonstration
 - extendedWaitUntil:
     notVisible: "Stop"
     timeout: 30000
-- openLink: "rakazo:///account"
+- openLink: "matebot:///account"
 - scrollUntilVisible:
     element: "Live working status"
     direction: DOWN
 - tapOn: "Live working status"
 - pressKey: HOME
-- evalScript: ${output.expandNotifications = http.get(RAKAZO_EXPAND_NOTIFICATIONS_URL)}
+- evalScript: ${output.expandNotifications = http.get(MATEBOT_EXPAND_NOTIFICATIONS_URL)}
 - assertTrue: ${output.expandNotifications.ok}
 - waitForAnimationToEnd:
     timeout: 2000

@@ -7,7 +7,7 @@ import { createAgentSkillsService, resolveSkillContent } from "./agent-skills.js
 const actor: Actor = {
   spaceId: "space-1",
   userId: "user-1",
-  email: "user@rakazo.test",
+  email: "user@matebot.test",
   isDeploymentOwner: true,
 };
 

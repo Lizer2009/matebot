@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { RakazoDesktopDevice, UserDeviceSummary } from "@matebot/contracts";
+import type { MatebotDesktopDevice, UserDeviceSummary } from "@matebot/contracts";
 import { Button, Label, Switch } from "@matebot/ui-web";
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
@@ -11,7 +11,7 @@ export function ComputerDeviceSettings() {
   const { t } = useLingui();
   const desktop = desktopBridge()?.device;
   const [devices, setDevices] = useState<UserDeviceSummary[]>([]);
-  const [thisComputer, setThisComputer] = useState<RakazoDesktopDevice | null>(null);
+  const [thisComputer, setThisComputer] = useState<MatebotDesktopDevice | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const switchId = useId();

@@ -174,7 +174,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
  */
 export function rlsBypassKey(connectionString: string | undefined): string {
   const { password } = credentials(connectionString);
-  return password ? createHmac("sha256", password).update("rakazo rls bypass").digest("hex") : "";
+  return password ? createHmac("sha256", password).update("matebot rls bypass").digest("hex") : "";
 }
 
 // As pg-connection-string reads them: query parameters win over the URL's userinfo, and a

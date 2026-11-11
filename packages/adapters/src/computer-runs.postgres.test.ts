@@ -33,7 +33,7 @@ describePostgres("computer runs (PostgreSQL)", () => {
   beforeAll(async () => {
     db = createDb(url!);
     system = asSystem(db.prisma);
-    dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-computer-runs-"));
+    dataDir = await mkdtemp(path.join(tmpdir(), "matebot-computer-runs-"));
   });
 
   afterAll(async () => {

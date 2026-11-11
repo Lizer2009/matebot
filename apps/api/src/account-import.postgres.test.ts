@@ -62,7 +62,7 @@ function sourceRecords(): AccountExportRecord[] {
       description: "",
       instructions: "",
       color: "#F5A03C",
-      avatarSet: "rakazo",
+      avatarSet: "matebot",
       notifyOnFinish: true,
       pinned: false,
       position: 0,
@@ -283,7 +283,7 @@ describePostgres("account import (PostgreSQL)", () => {
   const actor: Actor = {
     userId,
     spaceId: baseSpaceId,
-    email: `${userId}@rakazo.test`,
+    email: `${userId}@matebot.test`,
     isDeploymentOwner: false,
   };
   const stored = new Map<string, Uint8Array>();
@@ -352,7 +352,7 @@ describePostgres("account import (PostgreSQL)", () => {
     db = createDb(databaseUrl!, { encryptContent: true });
     prisma = db.prisma;
     system = asSystem(prisma);
-    root = await mkdtemp(path.join(tmpdir(), "rakazo-account-import-"));
+    root = await mkdtemp(path.join(tmpdir(), "matebot-account-import-"));
     home = new LocalAgentHomeStore(root);
     const now = new Date();
     await system.user.create({

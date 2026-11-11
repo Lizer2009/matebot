@@ -21,7 +21,7 @@ async function main() {
     );
   }
 
-  const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-canary-"));
+  const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-canary-"));
   let postgres: StartedPostgreSqlContainer | undefined;
   try {
     if (runOpenRouter) postgres = await startPostgres();

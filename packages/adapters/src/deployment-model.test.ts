@@ -106,7 +106,7 @@ describe("resolveDeploymentModel", () => {
         PI_DEFAULT_PROVIDER: " local ",
         PI_DEFAULT_MODEL: " example-model ",
         PI_DEFAULT_CREDENTIALS: " host ",
-        RAKAZO_LOCAL_MODELS: "other-model, , example-model ,",
+        MATEBOT_LOCAL_MODELS: "other-model, , example-model ,",
         OPENROUTER_API_KEY: "or-key",
       }),
     ).toEqual({
@@ -119,10 +119,10 @@ describe("resolveDeploymentModel", () => {
   });
 
   it.each([
-    { RAKAZO_LOCAL_MODELS: undefined },
-    { RAKAZO_LOCAL_MODELS: " , , " },
-    { RAKAZO_LOCAL_MODELS: "example-model-extra,other-example-model" },
-    { RAKAZO_LOCAL_MODELS: "EXAMPLE-MODEL" },
+    { MATEBOT_LOCAL_MODELS: undefined },
+    { MATEBOT_LOCAL_MODELS: " , , " },
+    { MATEBOT_LOCAL_MODELS: "example-model-extra,other-example-model" },
+    { MATEBOT_LOCAL_MODELS: "EXAMPLE-MODEL" },
     { PI_DEFAULT_MODEL: undefined },
     { PI_DEFAULT_MODEL: " " },
     { PI_DEFAULT_CREDENTIALS: undefined },
@@ -134,7 +134,7 @@ describe("resolveDeploymentModel", () => {
         PI_DEFAULT_PROVIDER: "local",
         PI_DEFAULT_MODEL: "example-model",
         PI_DEFAULT_CREDENTIALS: "host",
-        RAKAZO_LOCAL_MODELS: "example-model",
+        MATEBOT_LOCAL_MODELS: "example-model",
         ...overrides,
       }),
     ).toMatchObject({ key: undefined, configured: false, hostCredentials: false });

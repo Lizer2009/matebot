@@ -49,7 +49,7 @@ function setup() {
       screenProxySecret: "fake-test-secret",
       sandboxProvider: "fake",
     },
-    dataDir: "/tmp/rakazo-router-test",
+    dataDir: "/tmp/matebot-router-test",
   } as unknown as RouterDeps;
   const client = (userId: string, spaceId = "space-1") =>
     createRouterClient(createRouter(deps), {
@@ -57,7 +57,7 @@ function setup() {
         actor: {
           userId,
           spaceId,
-          email: `${userId}@rakazo.test`,
+          email: `${userId}@matebot.test`,
           isDeploymentOwner: false,
         } satisfies Actor,
       } as never,

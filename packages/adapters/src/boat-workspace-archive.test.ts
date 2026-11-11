@@ -23,9 +23,9 @@ afterEach(async () => {
 });
 
 async function workspace() {
-  const dir = await mkdtemp(path.join(tmpdir(), "rakazo-boat-archive-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "matebot-boat-archive-"));
   temporary.push(dir);
-  const home = path.join(dir, "rakazo-home");
+  const home = path.join(dir, "matebot-home");
   await mkdir(home);
   const put = async (name: string, content: string, mode = 0o644) => {
     const target = path.join(home, name);
@@ -95,7 +95,7 @@ describe.skipIf(!gnuTools)("Boat workspace archive script", () => {
     ]);
     // The script leaves only the archive, which the adapter removes after downloading it.
     expect(execFileSync("ls", ["-A", dir], { encoding: "utf8" }).split("\n").sort()).toEqual(
-      ["", "rakazo-home", "workspace.tar.gz"].sort(),
+      ["", "matebot-home", "workspace.tar.gz"].sort(),
     );
   });
 
@@ -136,7 +136,7 @@ describe.skipIf(!gnuTools)("Boat workspace archive script", () => {
     await rm(archive);
     expect(archiveScript(home, archive, { limits: { ...within, maxFiles: 1 } }).status).toBe(4);
     expect(archiveScript(home, archive, { limits: { ...within, maxBytes: 19 } }).status).toBe(5);
-    expect(execFileSync("ls", ["-A", dir], { encoding: "utf8" }).trim()).toBe("rakazo-home");
+    expect(execFileSync("ls", ["-A", dir], { encoding: "utf8" }).trim()).toBe("matebot-home");
   });
 
   it.skipIf(root)("fails on a file it cannot read instead of leaving it out", async () => {

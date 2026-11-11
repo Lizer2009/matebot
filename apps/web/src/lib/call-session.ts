@@ -67,7 +67,7 @@ export const SIGN_OUT_HANG_UP_MS = 3_000;
  * The last signed-in user a tab confirmed. Signing in elsewhere sends no Better Auth message,
  * so other tabs learn of a new account from this key's storage event.
  */
-export const SIGNED_IN_USER_KEY = "rakazo.signedInUser";
+export const SIGNED_IN_USER_KEY = "matebot.signedInUser";
 let state: CallState | null = null;
 /** The signed-in user this page belongs to; undefined until the session first resolves. */
 let identity: string | null | undefined;

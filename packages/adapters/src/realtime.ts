@@ -2,7 +2,7 @@ import type { RealtimeFanout } from "@matebot/adapter-kit";
 import type { Notification } from "pg";
 import { Client } from "pg";
 
-const POSTGRES_CHANNEL = "rakazo_events";
+const POSTGRES_CHANNEL = "matebot_events";
 const MAX_NOTIFY_PAYLOAD_BYTES = 7_900;
 
 type Subscriber = (payload: string) => void;
@@ -46,7 +46,7 @@ export class PostgresRealtimeFanout implements RealtimeFanout {
       (() =>
         new Client({
           connectionString: options.connectionString,
-          application_name: "rakazo-realtime",
+          application_name: "matebot-realtime",
           connectionTimeoutMillis: 5_000,
         }) as RealtimeListenerClient);
     this.reconnectBaseMs = options.reconnectBaseMs ?? 250;

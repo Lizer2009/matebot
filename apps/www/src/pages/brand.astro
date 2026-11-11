@@ -3,6 +3,7 @@ import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import { BRAND_COLORS, BRAND_LOGOS } from "../brand";
 import { githubStarsLabel } from "../github";
+import { UPSTREAM_URL } from "../site";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const starsLabel = await githubStarsLabel();
@@ -42,7 +43,7 @@ const starsLabel = await githubStarsLabel();
       </ul>
       <h2>Usage</h2>
       <p>Write Matebot with a capital M in text. Do not alter the mark or imply an endorsement.</p>
-      <p>Logos are free to use under the terms in <a href="https://github.com/Lizer2009/matebot">the repository</a>. This site is a fork of Rakazo; its own brand assets are separate.</p>
+      <p>Logos are free to use under the terms in <a href="https://github.com/Lizer2009/matebot">the repository</a>. This site is a fork of <a href={UPSTREAM_URL}>Rakazo</a>; its own brand assets are separate.</p>
     </main>
     <Footer />
   </div>

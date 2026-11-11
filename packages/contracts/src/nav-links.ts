@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 /**
- * Operator-configured menu links (RAKAZO_NAV_LINKS) that open a same-origin page inside the app.
+ * Operator-configured menu links (MATEBOT_NAV_LINKS) that open a same-origin page inside the app.
  * The operator's reverse proxy serves the path; Matebot only frames it.
  */
 
@@ -10,8 +10,8 @@ const RESERVED_PREFIXES = ["/app", "/api", "/rpc", "/novnc", "/health"];
 
 function isSameOriginPath(path: string) {
   if (!path.startsWith("/") || path.startsWith("//") || /[\\\s]/.test(path)) return false;
-  const url = new URL(path, "http://rakazo.invalid");
-  if (url.origin !== "http://rakazo.invalid") return false;
+  const url = new URL(path, "http://matebot.invalid");
+  if (url.origin !== "http://matebot.invalid") return false;
   return !RESERVED_PREFIXES.some(
     (prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`),
   );
@@ -37,12 +37,12 @@ export function parseNavLinks(value: string | undefined): NavLink[] {
   try {
     json = JSON.parse(value);
   } catch {
-    throw new Error("RAKAZO_NAV_LINKS must be a JSON array");
+    throw new Error("MATEBOT_NAV_LINKS must be a JSON array");
   }
   const parsed = NavLinksSchema.safeParse(json);
   if (!parsed.success) {
     throw new Error(
-      `Invalid RAKAZO_NAV_LINKS: ${parsed.error.issues.map((issue) => `${issue.path.join(".") || "value"}: ${issue.message}`).join("; ")}`,
+      `Invalid MATEBOT_NAV_LINKS: ${parsed.error.issues.map((issue) => `${issue.path.join(".") || "value"}: ${issue.message}`).join("; ")}`,
     );
   }
   return parsed.data;

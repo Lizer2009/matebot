@@ -5,7 +5,7 @@ interface ImportMetaEnv {
   /** When `1`/`true`, enable A2UI Surface host in MessageView. Default off. */
   readonly VITE_FEATURE_A2UI?: string;
   /** Build id (`YYYYMMDDHHMMSS`) of a production build; empty on the dev server. */
-  readonly RAKAZO_BUILD?: string;
+  readonly MATEBOT_BUILD?: string;
 }
 
 interface ImportMeta {

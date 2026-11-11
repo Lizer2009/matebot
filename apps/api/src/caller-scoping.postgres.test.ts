@@ -46,7 +46,7 @@ describePostgres("caller and tenant scoping (PostgreSQL)", () => {
   const actorA: Actor = {
     userId: userA,
     spaceId: shared,
-    email: `${userA}@rakazo.test`,
+    email: `${userA}@matebot.test`,
     isDeploymentOwner: false,
   };
 
@@ -59,7 +59,7 @@ describePostgres("caller and tenant scoping (PostgreSQL)", () => {
     system = asSystem(runtime.prisma);
     for (const user of [userA, userB])
       await system.user.create({
-        data: { id: user, name: user, email: `${user}@rakazo.test`, emailVerified: true },
+        data: { id: user, name: user, email: `${user}@matebot.test`, emailVerified: true },
       });
     await system.organization.create({
       data: { id: organizationId, name: "Scoping", slug: organizationId, createdAt: new Date() },

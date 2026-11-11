@@ -476,7 +476,7 @@ class AccountImporter implements ArchiveSink {
       }
     });
     this.created.push({ ...created, sourceId: space.id });
-    const tempDir = await mkdtemp(path.join(tmpdir(), "rakazo-account-import-"));
+    const tempDir = await mkdtemp(path.join(tmpdir(), "matebot-account-import-"));
     return new SpaceImport(space.id, { ...this.actor, spaceId: created.id }, tempDir);
   }
 

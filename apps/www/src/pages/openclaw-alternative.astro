@@ -26,7 +26,7 @@ import {
 import { githubStarsLabel } from "../github";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { ogPublicPath } from "../og-pages";
-import { APP_URL, GITHUB_URL, SELF_HOST_GUIDE_PATH } from "../site";
+import { APP_URL, GITHUB_URL, SELF_HOST_GUIDE_PATH, UPSTREAM_URL } from "../site";
 import { vsCard } from "../vs-points";
 
 const starsLabel = await githubStarsLabel();
@@ -143,7 +143,7 @@ const card = vsCard("openclaw-alternative");
       </p>
       <h3>License</h3>
       <p>
-        Matebot is Apache-2.0, a fork of the Rakazo project by Inbox Zero Inc. OpenClaw is MIT,
+        Matebot is Apache-2.0, a fork of the <a href={UPSTREAM_URL}>Rakazo</a> project by Inbox Zero Inc. OpenClaw is MIT,
         stewarded by the OpenClaw Foundation, which the project describes as an independent 501(c)(3).
       </p>
 

@@ -23,7 +23,7 @@ related:
   - href: "/hermes-alternative/"
     title: "Open source Hermes alternative"
     description: "Desktop and CLI setup next to Matebot's installer."
-  - href: "/blog/openclaw-vs-hermes-vs-rakazo/"
+  - href: "/blog/openclaw-vs-hermes-vs-matebot/"
     title: "OpenClaw vs Hermes Agent vs Matebot"
     description: "Which shape is simplest depends on the product you want."
   - href: "/alternatives/"
@@ -156,7 +156,7 @@ Optional connectors can attach Slack, WhatsApp, Telegram, iMessage via Sendblue,
 
 Use the same installer on a VPS when bots should keep running after you close a laptop. Images Compose binds the web app to loopback `127.0.0.1:5173`. Terminate TLS on the host and proxy there. Do not publish port 3100. The web server proxies `/api`.
 
-Set `RAKAZO_HOST` to the hostname. Set `BETTER_AUTH_URL`, `WEB_ORIGIN`, and `API_URL` to that same `https://` origin. For a remote computer instead of local Docker, set `SANDBOX_PROVIDER` to `e2b`, `daytona`, `createos`, or `boat` and add that provider's key.
+Set `MATEBOT_HOST` to the hostname. Set `BETTER_AUTH_URL`, `WEB_ORIGIN`, and `API_URL` to that same `https://` origin. For a remote computer instead of local Docker, set `SANDBOX_PROVIDER` to `e2b`, `daytona`, `createos`, or `boat` and add that provider's key.
 
 A minimal Caddy site is a reverse proxy to `127.0.0.1:5173`. Replace the example host with yours. Desktop clients should use **Existing instance** with the `https://` address. HTTP is accepted only for loopback and private LAN addresses. **This computer** in the desktop app installs the published images with Docker Compose on that machine, on port 45173 by default so it can sit next to a dev server.
 
@@ -182,6 +182,6 @@ The desktop app's **This computer** option is the same published images, started
 
 ## How this sits next to other agents
 
-OpenClaw and Hermes Agent are also open source and can run on hardware you control. Their install docs describe a gateway or a desktop app and a CLI, plus config files under a home directory. Matebot's published-image path is the script above, then chat. The [comparison of those three](/blog/openclaw-vs-hermes-vs-rakazo/) is about that difference in shape, not a race.
+OpenClaw and Hermes Agent are also open source and can run on hardware you control. Their install docs describe a gateway or a desktop app and a CLI, plus config files under a home directory. Matebot's published-image path is the script above, then chat. The [comparison of those three](/blog/openclaw-vs-hermes-vs-matebot/) is about that difference in shape, not a race.
 
 If the first chat on loopback is the goal, stay on the published images, create the owner account, and connect one model. If the goal is a public URL, budget time for TLS and the secrets checklist after the installer finishes.

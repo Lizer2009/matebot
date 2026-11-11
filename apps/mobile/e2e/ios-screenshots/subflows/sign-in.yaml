@@ -10,9 +10,9 @@ appId: com.matebot.app
     visible: "Sign in to Matebot"
     timeout: 15000
 - tapOn: "Email"
-- inputText: ${RAKAZO_ACTIVE_EMAIL}
+- inputText: ${MATEBOT_ACTIVE_EMAIL}
 - tapOn: "Password"
-- inputText: ${RAKAZO_SCREENSHOT_PASSWORD}
+- inputText: ${MATEBOT_SCREENSHOT_PASSWORD}
 - hideKeyboard
 - tapOn: "Sign in"
 - tapOn:

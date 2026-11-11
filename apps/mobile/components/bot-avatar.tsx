@@ -130,12 +130,12 @@ export interface BotAvatarProps {
 /** Missing set metadata deliberately preserves every existing avatar. */
 export const BotAvatar = memo(function BotAvatar(props: BotAvatarProps) {
   if (usesLogoAvatar(props)) {
-    return <RakazoBotAvatar {...props} />;
+    return <MatebotBotAvatar {...props} />;
   }
   return <LegacyBotAvatar {...props} />;
 });
 
-function RakazoBotAvatar({
+function MatebotBotAvatar({
   color,
   identity,
   size = 54,
@@ -152,7 +152,7 @@ function RakazoBotAvatar({
     (): LogoAvatarActivity => "idle",
   );
   const resolved = botAvatarActivity(
-    { color, avatarSet: "rakazo" },
+    { color, avatarSet: "matebot" },
     activity ??
       (composing && (liveActivity === "working" || liveActivity === "idle")
         ? "writing"

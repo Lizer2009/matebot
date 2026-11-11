@@ -59,8 +59,8 @@ async function useStandInApi() {
   await new Promise<void>((resolve) => api.listen(0, "127.0.0.1", resolve));
   cleanup.push(() => new Promise((resolve) => api.close(() => resolve())));
   vi.stubEnv("API_PROXY_TARGET", `http://127.0.0.1:${(api.address() as AddressInfo).port}`);
-  vi.stubEnv("RAKAZO_HOST", "app.example.test");
-  vi.stubEnv("RAKAZO_ALLOWED_HOSTS", ".team.example.test");
+  vi.stubEnv("MATEBOT_HOST", "app.example.test");
+  vi.stubEnv("MATEBOT_ALLOWED_HOSTS", ".team.example.test");
   vi.stubEnv("SCREEN_PROXY_SECRET", "test-screen-proxy-secret-0123456789abcdef");
   // Lingui's plugin finds its config from the working directory, as `vite` runs it.
   vi.spyOn(process, "cwd").mockReturnValue(path.dirname(configFile));
@@ -81,7 +81,7 @@ describe("vite.config", () => {
 
   it("lets the device socket through for the hosts the preview server serves", async () => {
     await useStandInApi();
-    const outDir = await mkdtemp(path.join(tmpdir(), "rakazo-vite-config-"));
+    const outDir = await mkdtemp(path.join(tmpdir(), "matebot-vite-config-"));
     cleanup.push(() => rm(outDir, { recursive: true, force: true }));
     await writeFile(path.join(outDir, "index.html"), "<!doctype html>");
 

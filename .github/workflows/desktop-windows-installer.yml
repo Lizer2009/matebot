@@ -47,7 +47,7 @@ jobs:
       - name: Build renderer and Electron main process
         run: pnpm --filter @matebot/web build && pnpm --filter @matebot/desktop build
         env:
-          RAKAZO_ALLOW_DEV_SECRETS: "1"
+          MATEBOT_ALLOW_DEV_SECRETS: "1"
       # Unpackaged, unsigned build: no certificate is configured on a fork, and
       # `release-desktop` is the path that signs and publishes.
       - name: Package the unsigned installer
@@ -71,6 +71,25 @@ jobs:
             if ($info.ProductName -ne "Matebot") { throw "$path has product name '$($info.ProductName)'." }
             if ($info.CompanyName -ne "Matebot") { throw "$path has company name '$($info.CompanyName)'." }
           }
+      # The packaged app must carry this platform's native modules. Building on the wrong host, or
+      # cross-compiling, silently bundles another platform's binaries and the app dies at launch
+      # with "Cannot find the native Koffi module" - which a name check cannot see.
+      - name: Check the packaged app carries Windows native modules
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = "apps/desktop/out/win-unpacked/resources/app.asar.unpacked/node_modules"
+          if (-not (Test-Path $root)) { throw "No unpacked native modules were produced." }
+          $koffi = @(Get-ChildItem $root -Directory -Filter "koffi-*" | Select-Object -ExpandProperty Name)
+          if ($koffi -notcontains "koffi-win32-x64") {
+            throw "The packaged app is missing koffi-win32-x64 (found: $($koffi -join ', '))."
+          }
+          $foreign = @($koffi | Where-Object { $_ -notmatch "-win32-" })
+          if ($foreign.Count -gt 0) {
+            throw "The packaged app carries native modules for another platform: $($foreign -join ', ')."
+          }
+          $binary = "$root/koffi-win32-x64/win32_x64/koffi.node"
+          if (-not (Test-Path $binary)) { throw "koffi.node is missing from koffi-win32-x64." }
       - name: Upload the installer
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

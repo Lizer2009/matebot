@@ -38,7 +38,7 @@ A2UI 是 Matebot 实现**对话内、声明式、可流式更新**交互界面�
 | Worker | 易暗示 interactive 入队 | **异步副作用 only**；交互 turn 留在 API 热路径 `RunStarter` |
 | Generative UI | 未定义 page-kit | **Page = artifact（`kind: page`）**；**A2UI = 对话内交互 Surface**；永不合并/替换 |
 | Packages | §14 六七个新包 | **Extend-first**；最多薄 **`packages/a2ui-adapter`** |
-| 部署 | — | **`RAKAZO_*` / DB roles / compose volumes 不变** |
+| 部署 | — | **`MATEBOT_*` / DB roles / compose volumes 不变** |
 | Mobile | 可评估社区 RN | **自建 Native Catalog**；无官方 RN renderer；`saved-chats` ≠ 跨设备真相 |
 | 协议 pin | 锁死 v0.9.1 | 见 §4：**渲染 pin v0.9 族**；**服务端双轨**；依赖 pin 到具体 commit |
 
@@ -92,7 +92,7 @@ matebot-a2ui-orchestration-addendum.md        ← 采纳编排意图、不破坏
 - 不一次性新建六七个 interaction/a2ui 包。
 - 不依赖未发布的 `@a2ui/agent`。
 - 不把 mobile `saved-chats` 当作跨设备 Interaction 权威。
-- 不改 `RAKAZO_*` 环境变量名、DB 角色名、compose volume 命名。
+- 不改 `MATEBOT_*` 环境变量名、DB 角色名、compose volume 命名。
 - 不把「支持全部动态组件」当作第一版目标。
 
 ---
@@ -270,7 +270,7 @@ Matebot 使用 **pnpm workspace**；上游 a2ui 示例常用 yarn——**禁止*
 | Electron | `apps/desktop` → `web/dist` | **Reuse** |
 | Mobile Catalog | `apps/mobile/components/thread` | **New**（自建） |
 | Contracts | `packages/contracts` Zod + rpc | **Extend** |
-| 部署名 | `RAKAZO_*`, roles, volumes | **禁止改名** |
+| 部署名 | `MATEBOT_*`, roles, volumes | **禁止改名** |
 
 ---
 
@@ -488,7 +488,7 @@ type InteractionPlan = {
 - 长生命周期集成线：自 **main 0.6.0 线** 拉出 **`feature/a2ui`**（或等价命名），承载后续实现 PR 的合并目标。  
 - **本设计文档 PR 不合并进 main 的运行时**；文档可先合入 `feature/a2ui` 或按维护者意愿合文档-only 到 main——**运行时代码**仅在完整测试 + feature flag 关闭默认后合并。  
 - Feature flag：未开启时生产行为 = **0.6.0**（无 A2UI Surface、无新 RPC 副作用）。  
-- 约束回顾：不碰 `RAKAZO_*` / roles / volumes；不并 page-kit；不新 WebSocket 聊天总线；不改 interactive 热路径入全局队列。
+- 约束回顾：不碰 `MATEBOT_*` / roles / volumes；不并 page-kit；不新 WebSocket 聊天总线；不改 interactive 热路径入全局队列。
 
 ### 12.2 PR 链
 
@@ -553,7 +553,7 @@ type InteractionPlan = {
 8. Packages：**Extend-first** + 至多薄 `a2ui-adapter`；否决 §14 大包爆炸。  
 9. 协议 pin：渲染 **v0.9 族**；服务端 **双轨**；依赖 **commit/npm pin** + pnpm 安装策略；明确 re-pin。  
 10. Mobile：自建 Catalog；saved-chats 非跨设备真相。  
-11. 部署：明确 **不改 RAKAZO_*** / roles / volumes。  
+11. 部署：明确 **不改 MATEBOT_*** / roles / volumes。  
 12. 路线图：PR-0 = 审计已完成；分支策略 `feature/a2ui` + feature flag。  
 13. 审计边界从「实施前再查」改为「已完成 Phase 0，本设计以其为准」。  
 14. 编排规格（交互状态机 / 能力预检 / 工具分档）作为**意向**收录；与本设计的对齐、否决平行 `ActionExecution` / 包爆炸、以及 tip PR#26 之后的 PR-A′…E′ 见 `matebot-a2ui-orchestration-gap-analysis.md`。`FEATURE_A2UI` 仍默认关闭。

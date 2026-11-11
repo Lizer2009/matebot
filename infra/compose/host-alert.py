@@ -15,8 +15,8 @@ from pathlib import Path
 def notify(
     key,
     message,
-    config_path=Path("/etc/rakazo/alerts.json"),
-    state_dir=Path("/var/lib/rakazo/alerts"),
+    config_path=Path("/etc/matebot/alerts.json"),
+    state_dir=Path("/var/lib/matebot/alerts"),
 ):
     state_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     state_file = state_dir / (hashlib.sha256(key.encode()).hexdigest() + ".json")

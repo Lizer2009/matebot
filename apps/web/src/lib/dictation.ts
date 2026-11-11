@@ -58,8 +58,8 @@ export function webSpeechAvailable(): boolean {
  */
 function electronSpeechHost(): boolean {
   if (typeof window !== "undefined") {
-    const host = window as Window & { rakazoDesktop?: unknown };
-    if (host.rakazoDesktop) return true;
+    const host = window as Window & { matebotDesktop?: unknown };
+    if (host.matebotDesktop) return true;
   }
   if (typeof navigator === "undefined") return false;
   const agent = navigator.userAgent;

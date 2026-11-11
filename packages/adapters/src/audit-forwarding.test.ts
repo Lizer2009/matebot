@@ -62,7 +62,7 @@ function fakeDb(rows: ReturnType<typeof event>[]) {
 
 beforeEach(() => {
   installLogger(
-    createLogger({ service: "rakazo-worker", sinks: [createTestSink()], level: "debug" }),
+    createLogger({ service: "matebot-worker", sinks: [createTestSink()], level: "debug" }),
   );
 });
 

@@ -64,8 +64,8 @@ async function main() {
     // Test code that seeds or inspects rows directly connects as the owner.
     const migrationUrl = container.getConnectionUri();
     const runtimeUrl = new URL(migrationUrl);
-    runtimeUrl.username = "rakazo_app";
-    runtimeUrl.password = "rakazo-test-runtime";
+    runtimeUrl.username = "matebot_app";
+    runtimeUrl.password = "matebot-test-runtime";
     const databaseUrl = runtimeUrl.toString();
     const apiPort = Number(process.env.API_PORT ?? 3110);
     const webPort = Number(process.env.WEB_PORT ?? 5180);
@@ -78,13 +78,13 @@ async function main() {
     process.env.WAKEUP_DRIVER = "memory";
     process.env.SANDBOX_PROVIDER = sandboxProvider;
     process.env.AGENT_RUNTIME = agentRuntime;
-    process.env.RAKAZO_LIVE_MODEL_CATALOG = "off";
+    process.env.MATEBOT_LIVE_MODEL_CATALOG = "off";
     if (!integration) {
       process.env.TICKET_BOARD_ENABLED = "true";
       process.env.PHONE_CALLS_ENABLED = "true";
       // The offline wallet, so Settings shows Wallet and sign-in completes without a provider.
       process.env.PAYMENT_WALLET_PROVIDER = "emulator";
-      process.env.RAKAZO_NAV_LINKS = JSON.stringify([
+      process.env.MATEBOT_NAV_LINKS = JSON.stringify([
         { id: "clients", label: "Clients", path: "/ext/clients/" },
       ]);
     }

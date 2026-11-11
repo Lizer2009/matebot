@@ -36,7 +36,7 @@ export async function startIosScreenshotBackend(input: {
     SANDBOX_PROVIDER: "fake",
     AGENT_RUNTIME: "scripted",
     CLOUD_AGENT_PROVIDER: "emulator",
-    RAKAZO_LIVE_MODEL_CATALOG: "off",
+    MATEBOT_LIVE_MODEL_CATALOG: "off",
     COMPOSIO_API_KEY: "",
     BETTER_AUTH_URL: apiUrl,
     WEB_ORIGIN: "http://127.0.0.1:5180",
@@ -98,7 +98,7 @@ export async function startIosScreenshotBackend(input: {
   };
 }
 
-const DATABASE = "rakazo_ios_screenshots";
+const DATABASE = "matebot_ios_screenshots";
 
 /** A fresh database every run, so screenshots never depend on what an earlier run left. */
 async function recreateDatabase(serverUrl: string) {

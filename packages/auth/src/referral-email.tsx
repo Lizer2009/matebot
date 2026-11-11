@@ -30,12 +30,11 @@ export function referralEmail(
       <Text>{say("Have any questions? Just reply to this email.")}</Text>
       <Text>
         {say("If you're enjoying Matebot,")}{" "}
-        <Link href="https://github.com/elie222/rakazo" style={linkStyle}>
+        <Link href="https://github.com/Lizer2009/matebot" style={linkStyle}>
           {say("give us a star on GitHub")}
         </Link>
         .
       </Text>
-      <Text>Elie</Text>
     </>,
     unsubscribeUrl,
   );

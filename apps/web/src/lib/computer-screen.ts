@@ -115,7 +115,7 @@ export const SCREEN_FRAME_LOAD_TIMEOUT_MS = 15_000;
 export type ScreenFrameState = "loading" | "connecting" | "connected" | "failed" | "disconnected";
 
 export interface ScreenFrameMessage {
-  rakazoScreen: ScreenFrameState;
+  matebotScreen: ScreenFrameState;
   detail?: string;
 }
 
@@ -130,21 +130,21 @@ const SCREEN_FRAME_STATES: ReadonlySet<string> = new Set<ScreenFrameState>([
 /** A state report posted by a framed screen page, or null for any other message. */
 export function screenFrameMessage(data: unknown): ScreenFrameMessage | null {
   if (!data || typeof data !== "object") return null;
-  const { rakazoScreen, detail } = data as Record<string, unknown>;
-  if (typeof rakazoScreen !== "string" || !SCREEN_FRAME_STATES.has(rakazoScreen)) return null;
+  const { matebotScreen, detail } = data as Record<string, unknown>;
+  if (typeof matebotScreen !== "string" || !SCREEN_FRAME_STATES.has(matebotScreen)) return null;
   const text = typeof detail === "string" ? detail.trim().slice(0, 200) : "";
-  return { rakazoScreen: rakazoScreen as ScreenFrameState, ...(text ? { detail: text } : {}) };
+  return { matebotScreen: matebotScreen as ScreenFrameState, ...(text ? { detail: text } : {}) };
 }
 
 /** Whether a report shows the page got past loading; a page stalled there is still silent. */
 export function screenFrameStarted(message: ScreenFrameMessage): boolean {
-  return message.rakazoScreen !== "loading";
+  return message.matebotScreen !== "loading";
 }
 
 /** The error a frame report means for the screen, or null while it is fine. */
 export function screenFrameError(message: ScreenFrameMessage, fallback: string): string | null {
-  if (message.rakazoScreen !== "failed" && message.rakazoScreen !== "disconnected") return null;
-  return message.rakazoScreen === "disconnected" ? t`The screen connection closed.` : fallback;
+  if (message.matebotScreen !== "failed" && message.matebotScreen !== "disconnected") return null;
+  return message.matebotScreen === "disconnected" ? t`The screen connection closed.` : fallback;
 }
 
 /**

@@ -30,7 +30,7 @@ let cachedInitial: string | null = null;
 
 /** Fallback until the native call service owns the call. */
 function KeepCallAwake() {
-  useKeepAwake("rakazo-call");
+  useKeepAwake("matebot-call");
   return null;
 }
 

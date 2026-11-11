@@ -22,7 +22,7 @@ describe("honest offline eval shell results", () => {
           "bash",
           "-c",
           "wrapper",
-          "rakazo-background-launch",
+          "matebot-background-launch",
           "computer",
           "run",
           "call",

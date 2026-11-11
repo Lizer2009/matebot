@@ -7,7 +7,7 @@ import { createRouter } from "./router.js";
 const actor: Actor = {
   spaceId: "space-1",
   userId: "user-1",
-  email: "user@rakazo.test",
+  email: "user@matebot.test",
   isDeploymentOwner: true,
 };
 
@@ -83,7 +83,7 @@ it.each([false, true])("includes the board capability in me (%s)", async (ticket
   const prisma = {
     user: {
       findUniqueOrThrow: vi.fn(async () => ({
-        email: "user@rakazo.test",
+        email: "user@matebot.test",
         name: "Test",
         avatarStyle: "robot",
         secrets: [],

@@ -88,8 +88,7 @@ capability config, fixtures, logs, or snapshots; use the encrypted secret store 
 
 ## Contact
 
-| Address | Use for |
+| Channel | Use for |
 | --- | --- |
-| [security@rakazo.com](mailto:security@rakazo.com) | Vulnerabilities only — see [SECURITY.md](SECURITY.md) |
-| [support@rakazo.com](mailto:support@rakazo.com) | User and support questions |
-| [elie@rakazo.com](mailto:elie@rakazo.com) | Maintainer |
+| [Private vulnerability report](https://github.com/Lizer2009/matebot/security/advisories/new) | Vulnerabilities only — see [SECURITY.md](SECURITY.md) |
+| [Issues](https://github.com/Lizer2009/matebot/issues) | Bugs, user questions, and proposals |

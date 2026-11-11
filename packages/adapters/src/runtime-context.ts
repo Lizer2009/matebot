@@ -96,9 +96,9 @@ interface SentTranscript {
   appends: number;
 }
 interface OriginalMetadata {
-  rakazoHistory?: boolean;
-  rakazoMessageId?: string;
-  rakazoCreatedAt?: string;
+  matebotHistory?: boolean;
+  matebotMessageId?: string;
+  matebotCreatedAt?: string;
 }
 function text(message: Message): string {
   if (typeof message.content === "string") return message.content;
@@ -201,8 +201,8 @@ export function createRuntimeContextPolicy(
   );
   function original(message: Message) {
     const metadata = message as Message & OriginalMetadata;
-    if (metadata.rakazoMessageId) return historyById.get(metadata.rakazoMessageId);
-    if (metadataPresent && !metadata.rakazoHistory) return undefined;
+    if (metadata.matebotMessageId) return historyById.get(metadata.matebotMessageId);
+    if (metadataPresent && !metadata.matebotHistory) return undefined;
     const content = text(message);
     // Older persisted checkpoints replay own replies as user text "Assistant: ...".
     return request.history.find(
@@ -285,7 +285,7 @@ export function createRuntimeContextPolicy(
         ? "cache-aware"
         : DEFAULT_CONTEXT_STRATEGY);
     metadataPresent = ctx.messages.some((message) =>
-      Boolean((message as Message & OriginalMetadata).rakazoHistory),
+      Boolean((message as Message & OriginalMetadata).matebotHistory),
     );
     const fullPrefix = providerContextPrefix(ctx.systemPrompt ?? "", ctx.tools ?? [], ctx.messages);
     const cacheRequest: CacheRequest = cache.stamp({
@@ -439,8 +439,8 @@ export function createRuntimeContextPolicy(
     }
     const summaries = ctx.messages.filter(
       (message) =>
-        (message as Message & OriginalMetadata).rakazoHistory &&
-        !(message as Message & OriginalMetadata).rakazoMessageId &&
+        (message as Message & OriginalMetadata).matebotHistory &&
+        !(message as Message & OriginalMetadata).matebotMessageId &&
         (text(message).startsWith("Matebot-owned compacted context through message sequence ") ||
           text(message).startsWith(
             "Memory recalled from earlier conversations that fell outside the visible history.",

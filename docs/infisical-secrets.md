@@ -15,7 +15,7 @@ INFISICAL_CLIENT_ID=replace-with-machine-identity-client-id
 INFISICAL_CLIENT_SECRET=replace-with-machine-identity-client-secret
 INFISICAL_PROJECT_ID=replace-with-project-id
 INFISICAL_ENVIRONMENT=production
-INFISICAL_FOLDER=/rakazo
+INFISICAL_FOLDER=/matebot
 ```
 
 `INFISICAL_URL` requires HTTPS except for loopback hosts (`localhost`,

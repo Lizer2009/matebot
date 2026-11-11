@@ -3,8 +3,10 @@ import {
   buildIdAt,
   CLIENT_BUILD_HEADER,
   formatClientBuild,
-  IOS_APP_STORE_URL,
+  IOS_DOWNLOAD_PATH,
+  onMarketingSite,
 } from "@matebot/contracts";
+import { documentOriginFromEnv } from "@matebot/core";
 import * as Updates from "expo-updates";
 import type { AppStateStatus } from "react-native";
 import { Alert, AppState, Linking, Platform } from "react-native";
@@ -52,9 +54,11 @@ export async function applyRequiredUpdate(): Promise<void> {
   } catch {
     // An unreachable update server falls through to the store.
   }
-  await Linking.openURL(Platform.OS === "ios" ? IOS_APP_STORE_URL : ANDROID_APK_URL).catch(
-    () => undefined,
-  );
+  const target =
+    Platform.OS === "ios"
+      ? onMarketingSite(documentOriginFromEnv(), IOS_DOWNLOAD_PATH)
+      : ANDROID_APK_URL;
+  await Linking.openURL(target).catch(() => undefined);
 }
 
 let prompting = false;

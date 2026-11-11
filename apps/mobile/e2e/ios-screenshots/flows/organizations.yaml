@@ -5,7 +5,7 @@ name: Organizations
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
-      RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_EMAIL}
+      MATEBOT_ACTIVE_EMAIL: ${MATEBOT_SCREENSHOT_EMAIL}
 - openLink: "matebot:///account"
 - scrollUntilVisible:
     element: "Organization.*"

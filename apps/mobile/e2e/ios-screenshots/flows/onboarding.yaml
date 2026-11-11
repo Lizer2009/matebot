@@ -4,7 +4,7 @@ name: Onboarding
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
-      RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_EMPTY_EMAIL}
+      MATEBOT_ACTIVE_EMAIL: ${MATEBOT_SCREENSHOT_EMPTY_EMAIL}
 - extendedWaitUntil:
     visible: "Personal|Tap \\+ to create a bot"
     timeout: 20000

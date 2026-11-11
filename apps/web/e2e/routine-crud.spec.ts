@@ -20,7 +20,7 @@ async function addScheduleTrigger(page: Page, freq: string) {
 test("a delayed schedule is visible only while the routine is active", async ({
   page,
 }, testInfo) => {
-  await signup(page, `routine-delay-${Date.now()}@rakazo.test`, "password12", "Routine delay");
+  await signup(page, `routine-delay-${Date.now()}@matebot.test`, "password12", "Routine delay");
   await completeOnboarding(page);
   const botId = activeBotId(page);
   const routine = await rpc<Routine>(page, "routines/create", {
@@ -73,7 +73,7 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
   page,
 }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `routine-crud-${stamp}@rakazo.test`, "password12", "Routine CRUD");
+  await signup(page, `routine-crud-${stamp}@matebot.test`, "password12", "Routine CRUD");
   await completeOnboarding(page);
   const botId = activeBotId(page);
 
@@ -196,7 +196,7 @@ test("a successful routine create is not reported as failed when refresh fails",
   tag: "@nightly",
 }, async ({ page }) => {
   const stamp = Date.now();
-  await signup(page, `routine-refresh-${stamp}@rakazo.test`, "password12", "Routine Refresh");
+  await signup(page, `routine-refresh-${stamp}@matebot.test`, "password12", "Routine Refresh");
   await completeOnboarding(page);
   const botId = activeBotId(page);
 
@@ -234,7 +234,7 @@ test("switching bots while a routine save is pending does not reopen stale state
   tag: "@nightly",
 }, async ({ page }) => {
   const stamp = Date.now();
-  await signup(page, `routine-switch-${stamp}@rakazo.test`, "password12", "Routine Switch");
+  await signup(page, `routine-switch-${stamp}@matebot.test`, "password12", "Routine Switch");
   await completeOnboarding(page);
   const firstBotId = activeBotId(page);
   const secondBot = await rpc<Bot>(page, "bots/create", {
@@ -365,7 +365,7 @@ function localSchedule(iso: string, timezone: string) {
 test("change-trigger screenshot walkthrough", { tag: "@nightly" }, async ({ page }, testInfo) => {
   await page.emulateMedia({ colorScheme: "light" });
   const stamp = Date.now();
-  await signup(page, `routine-walkthrough-${stamp}@rakazo.test`, "password12", "Routine Watch");
+  await signup(page, `routine-walkthrough-${stamp}@matebot.test`, "password12", "Routine Watch");
   await completeOnboarding(page);
   const botId = activeBotId(page);
 

@@ -29,7 +29,8 @@ vi.mock("react-native", () => rn);
 vi.mock("./api", () => ({ configureClientBuild: vi.fn() }));
 vi.mock("./i18n", () => ({ t: (message: string) => message }));
 
-import { IOS_APP_STORE_URL } from "@matebot/contracts";
+import { IOS_DOWNLOAD_PATH, onMarketingSite } from "@matebot/contracts";
+import { documentOriginFromEnv } from "@matebot/core";
 import {
   clientBuildHeaders,
   FOREGROUND_UPDATE_CHECK_MS,
@@ -54,7 +55,7 @@ function pressUpdate() {
 describe("mobile client build", () => {
   it("names the running bundle by when its update was created", () => {
     expect(mobileClientBuild()).toBe("20261022093015");
-    expect(clientBuildHeaders()).toEqual({ "x-rakazo-client-build": "mobile/20261022093015" });
+    expect(clientBuildHeaders()).toEqual({ "x-matebot-client-build": "mobile/20261022093015" });
   });
 
   it("names no build where expo-updates is off", () => {
@@ -86,7 +87,9 @@ describe("update required", () => {
     pressUpdate();
     await flush();
     expect(updates.reloadAsync).not.toHaveBeenCalled();
-    expect(rn.Linking.openURL).toHaveBeenCalledWith(IOS_APP_STORE_URL);
+    expect(rn.Linking.openURL).toHaveBeenCalledWith(
+      onMarketingSite(documentOriginFromEnv(), IOS_DOWNLOAD_PATH),
+    );
     noteClientUpdateRequired();
     expect(rn.Alert.alert).toHaveBeenCalledTimes(2);
   });

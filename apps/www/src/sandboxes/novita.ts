@@ -75,7 +75,7 @@ export const novita: Sandbox = {
       ],
       steps: [
         "Create an API key in your Novita account.",
-        "Build the computer template in that same account: `NOVITA_API_KEY=<your-key> pnpm sandbox:novita-template`. It creates a template called `rakazo-computer` with 2 vCPU and 4 GB of memory, based on Novita's desktop image.",
+        "Build the computer template in that same account: `NOVITA_API_KEY=<your-key> pnpm sandbox:novita-template`. It creates a template called `matebot-computer` with 2 vCPU and 4 GB of memory, based on Novita's desktop image.",
         "Set `SANDBOX_PROVIDER=novita` and `NOVITA_API_KEY` on both the API and the worker, then restart them. Or, as an admin, open Settings → Computer and choose Novita under New computers run on.",
         "Open a bot's computer to check that it starts and shows a desktop.",
       ],
@@ -109,7 +109,7 @@ export const novita: Sandbox = {
     {
       question: "Why does Matebot need its own Novita template?",
       answer:
-        "The `rakazo-computer` template sizes the desktop at 2 vCPU and 4 GB instead of Novita's larger stock desktop. Matebot requires it and won't start computers without it, so build it once with `pnpm sandbox:novita-template`.",
+        "The `matebot-computer` template sizes the desktop at 2 vCPU and 4 GB instead of Novita's larger stock desktop. Matebot requires it and won't start computers without it, so build it once with `pnpm sandbox:novita-template`.",
     },
     {
       question: "Can I use Novita on a deployment that hosts computers for me?",

@@ -15,7 +15,7 @@ function allowedServerHeaderName(name: string): boolean {
       "x-forwarded-for",
       "x-forwarded-host",
       "x-forwarded-proto",
-    ].includes(lower) && !lower.startsWith("x-rakazo-")
+    ].includes(lower) && !lower.startsWith("x-matebot-")
   );
 }
 

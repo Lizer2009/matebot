@@ -251,7 +251,7 @@ export function renderPlaywrightDashboard(history: PlaywrightRun[]): string {
       <div class="actions">
         <a class="button" href="#" id="latest-screenshots">Latest screenshots</a>
         <a class="button" href="#" id="latest-report">Latest report</a>
-        <a class="button" href="https://github.com/elie222/rakazo/actions">GitHub Actions</a>
+        <a class="button" href="https://github.com/Lizer2009/matebot/actions">GitHub Actions</a>
       </div>
     </header>
 
@@ -582,7 +582,7 @@ function renderGalleryPage(input: GalleryInput): string {
   <script>
     const gallery = document.querySelector(".gallery");
     const viewOptions = Array.from(document.querySelectorAll(".view-option"));
-    const storageKey = "rakazo-playwright-gallery-columns";
+    const storageKey = "matebot-playwright-gallery-columns";
 
     function setGalleryColumns(value, persist = false) {
       if (!gallery || !["1", "2", "3", "4"].includes(value)) return;

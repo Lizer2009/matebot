@@ -57,7 +57,7 @@ describePostgres("moving routines with the account timezone (PostgreSQL)", () =>
         data: {
           id,
           name: id,
-          email: `${id}@rakazo.test`,
+          email: `${id}@matebot.test`,
           emailVerified: true,
           timezone: "Africa/Cairo",
         },

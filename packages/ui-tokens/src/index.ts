@@ -4,7 +4,7 @@ export type AppearancePreference = (typeof APPEARANCE_PREFERENCES)[number];
 
 export type ResolvedAppearance = "light" | "dark";
 
-export const UI_APPEARANCE_STORAGE_KEY = "rakazo.uiAppearance";
+export const UI_APPEARANCE_STORAGE_KEY = "matebot.uiAppearance";
 
 /**
  * Semantic palette shared by web, Electron, and Expo. Names follow the shadcn

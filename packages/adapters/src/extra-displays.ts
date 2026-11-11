@@ -10,8 +10,8 @@ export function observeExtraDisplayCommand(layout: ExtraDisplayLayout): string {
   // Fresh files per call: concurrent observations of one display (a bot and its subagent, a
   // viewer snapshot) shared one path, so one could read the other's half-written screenshot.
   return [
-    "mkdir -p /tmp/rakazo",
-    `dir=$(mktemp -d /tmp/rakazo/observe-${n}-XXXXXX)`,
+    "mkdir -p /tmp/matebot",
+    `dir=$(mktemp -d /tmp/matebot/observe-${n}-XXXXXX)`,
     `trap 'rm -rf "$dir"' EXIT`,
     'image="$dir/screen.png"; cursor="$dir/cursor.txt"',
     `DISPLAY=${layout.display} xdotool getmouselocation --shell >"$cursor" || true`,

@@ -20,7 +20,7 @@ describePostgres("routine timer coalescing (PostgreSQL)", () => {
   let db: ReturnType<typeof createDb>;
   let system: PrismaClient;
   let identity: { userId: string; spaceId: string; botId: string; threadId: string };
-  const address = `routine-${randomUUID()}@rakazo.test`;
+  const address = `routine-${randomUUID()}@matebot.test`;
   beforeAll(async () => {
     db = createDb(url!);
     system = asSystem(db.prisma);

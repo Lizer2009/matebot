@@ -30,7 +30,7 @@ const fakeHex = (bytes: number) => "ab".repeat(bytes);
 
 describe("stack locations", () => {
   it("keeps the compose project under user data", () => {
-    expect(stackDir("/data/rakazo")).toBe(path.join("/data/rakazo", "stack"));
+    expect(stackDir("/data/matebot")).toBe(path.join("/data/matebot", "stack"));
   });
 
   it("reads resources from the bundle when packaged and from the repo otherwise", () => {
@@ -53,7 +53,7 @@ describe("resolveImageTag", () => {
     expect(resolveImageTag({ version: "0.2.0-beta.1", packaged: true })).toBe("edge");
   });
 
-  it("lets RAKAZO_IMAGE_TAG override everything", () => {
+  it("lets MATEBOT_IMAGE_TAG override everything", () => {
     expect(resolveImageTag({ version: "0.2.0", packaged: true, override: " v9.9.9 " })).toBe(
       "v9.9.9",
     );
@@ -77,11 +77,11 @@ describe("renderStackEnv", () => {
     ]) {
       expect(lines).toContain(`${name}=${"ab".repeat(32)}`);
     }
-    expect(lines.some((line) => line.startsWith("RAKAZO_IMAGE_TAG="))).toBe(false);
-    expect(lines.some((line) => line.startsWith("RAKAZO_COMPUTER_IMAGE_TAG="))).toBe(false);
+    expect(lines.some((line) => line.startsWith("MATEBOT_IMAGE_TAG="))).toBe(false);
+    expect(lines.some((line) => line.startsWith("MATEBOT_COMPUTER_IMAGE_TAG="))).toBe(false);
     // Everything else, including the image names and empty optional keys, stays verbatim. The
     // image name is this product's: the desktop local stack runs the same images the server does.
-    expect(lines).toContain("RAKAZO_IMAGE=ghcr.io/lizer2009/matebot/app");
+    expect(lines).toContain("MATEBOT_IMAGE=ghcr.io/lizer2009/matebot/app");
     expect(lines).toContain("SANDBOX_PROVIDER=docker");
     expect(lines).toContain("OPENROUTER_API_KEY=");
     expect(rendered.endsWith("\n")).toBe(template.endsWith("\n"));
@@ -97,7 +97,7 @@ describe("renderStackEnv", () => {
 describe("ensureStackEnv", () => {
   let dir: string;
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), "rakazo-stack-env-"));
+    dir = await mkdtemp(path.join(tmpdir(), "matebot-stack-env-"));
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -183,7 +183,7 @@ describe("ensureStackEnv", () => {
 describe("stack identity", () => {
   let dir: string;
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), "rakazo-stack-token-"));
+    dir = await mkdtemp(path.join(tmpdir(), "matebot-stack-token-"));
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -359,7 +359,7 @@ const ok: Script = (args) => {
   if (args[0] === "info") return { stdout: "27.1.1\n" };
   const subcommand = args[7];
   if (subcommand === "pull") return { lines: ["app Pulled", "computer Pulled"] };
-  if (subcommand === "up") return { lines: ["Container rakazo-web-1 Started"] };
+  if (subcommand === "up") return { lines: ["Container matebot-web-1 Started"] };
   return {};
 };
 
@@ -369,7 +369,7 @@ describe("LocalStackController", () => {
   let phases: string[];
 
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), "rakazo-stack-"));
+    root = await mkdtemp(path.join(tmpdir(), "matebot-stack-"));
     calls = [];
     phases = [];
   });
@@ -456,7 +456,7 @@ describe("LocalStackController", () => {
     expect(state.output).toEqual([
       "app Pulled",
       "computer Pulled",
-      "Container rakazo-web-1 Started",
+      "Container matebot-web-1 Started",
     ]);
     expect(phases).toEqual([
       "checking-docker",
@@ -488,21 +488,21 @@ describe("LocalStackController", () => {
       expect(call.binary).toBe("/usr/bin/docker");
       expect(call.cwd).toBe(stackPath);
       expect(call.env).toMatchObject({
-        RAKAZO_IMAGE_TAG: "v1.2.3",
-        RAKAZO_COMPUTER_IMAGE_TAG: "v1.2.3",
+        MATEBOT_IMAGE_TAG: "v1.2.3",
+        MATEBOT_COMPUTER_IMAGE_TAG: "v1.2.3",
         COMPOSE_PROGRESS: "plain",
         HOME: "/home/me",
       });
       expect(call.env).not.toHaveProperty("OPENROUTER_API_KEY");
     }
-    expect(calls.at(-1)?.env.RAKAZO_DESKTOP_STACK_TOKEN).toBe("ab".repeat(32));
+    expect(calls.at(-1)?.env.MATEBOT_DESKTOP_STACK_TOKEN).toBe("ab".repeat(32));
 
     await expect(readFile(path.join(stackPath, STACK_COMPOSE_FILE), "utf8")).resolves.toBe(
       await readFile(path.join(COMPOSE_DIR, STACK_COMPOSE_FILE), "utf8"),
     );
     const env = await readFile(path.join(stackPath, STACK_ENV_FILE), "utf8");
     expect(env).toContain(`POSTGRES_PASSWORD=${"ab".repeat(16)}`);
-    expect(env).not.toContain("RAKAZO_IMAGE_TAG=");
+    expect(env).not.toContain("MATEBOT_IMAGE_TAG=");
     if (process.platform !== "win32") {
       expect((await stat(path.join(stackPath, STACK_ENV_FILE))).mode & 0o777).toBe(0o600);
       expect((await stat(stackPath)).mode & 0o777).toBe(0o700);
@@ -512,12 +512,12 @@ describe("LocalStackController", () => {
   it("keeps lifecycle commands off the standalone project despite environment overrides", async () => {
     const dir = path.join(root, "stack");
     await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, STACK_ENV_FILE), "COMPOSE_PROJECT_NAME=rakazo\n");
-    const stack = controller({ env: { COMPOSE_PROJECT_NAME: "rakazo" } }, (args) =>
+    await writeFile(path.join(dir, STACK_ENV_FILE), "COMPOSE_PROJECT_NAME=matebot\n");
+    const stack = controller({ env: { COMPOSE_PROJECT_NAME: "matebot" } }, (args) =>
       args[7] === "up" ? { code: 1, stderr: "port is already allocated" } : ok(args),
     );
     expect((await stack.start()).phase).toBe("failed");
-    // A fresh process must stop the same desktop project without discovering or adopting rakazo.
+    // A fresh process must stop the same desktop project without discovering or adopting matebot.
     expect((await controller().stop()).phase).toBe("idle");
     const commands = calls.filter(
       (call) => call.args[0] === "compose" && call.args[1] !== "version",
@@ -532,7 +532,7 @@ describe("LocalStackController", () => {
       "stop",
     ]);
     for (const call of commands) {
-      expect(call.args.slice(5, 7)).toEqual(["--project-name", "rakazo-desktop"]);
+      expect(call.args.slice(5, 7)).toEqual(["--project-name", "matebot-desktop"]);
       expect(call.env).not.toHaveProperty("COMPOSE_PROJECT_NAME");
     }
   });
@@ -663,7 +663,7 @@ describe("LocalStackController", () => {
             ProgramFiles: "C:\\Program Files",
             PATH: "C:\\Windows\\System32;C:\\custom-helpers",
             USERPROFILE: "C:\\Users\\example",
-            RAKAZO_DOCKER_BINARY: binary,
+            MATEBOT_DOCKER_BINARY: binary,
           },
           exists: (file) => file === binary,
         },
@@ -791,10 +791,10 @@ describe("LocalStackController", () => {
     expect(stack.webUrl()).toBe("http://127.0.0.1:45174");
     expect(calls.filter((call) => call.args[7] === "pull")).toHaveLength(1);
     expect(
-      calls.filter((call) => call.args[7] === "up").map((call) => call.env.RAKAZO_WEB_PORT),
+      calls.filter((call) => call.args[7] === "up").map((call) => call.env.MATEBOT_WEB_PORT),
     ).toEqual(["5173", "45174"]);
     expect(calls.at(-1)?.env).toMatchObject({
-      RAKAZO_API_PORT: "0",
+      MATEBOT_API_PORT: "0",
       WEB_ORIGIN: stack.webUrl(),
       BETTER_AUTH_URL: stack.webUrl(),
       API_URL: stack.webUrl(),
@@ -847,7 +847,7 @@ describe("LocalStackController", () => {
           return {
             code: 1,
             [stream]:
-              "failed to create network rakazo-desktop_data: Error response from daemon: all predefined address pools have been fully subnetted",
+              "failed to create network matebot-desktop_data: Error response from daemon: all predefined address pools have been fully subnetted",
           };
         }
         return ok(args);

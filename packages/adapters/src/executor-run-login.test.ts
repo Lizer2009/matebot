@@ -501,7 +501,7 @@ describe("request_secret for a login saved for another site", () => {
   });
 
   it("keeps turning down a change of type or a site off HTTPS", async () => {
-    vi.stubEnv("RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP", "1");
+    vi.stubEnv("MATEBOT_SECRETS_ALLOW_PRIVATE_HTTP", "1");
     try {
       const cases = [
         // Another kind of credential under the name, or a login asked for as another kind.

@@ -21,7 +21,7 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 describe("product help documentation URLs", () => {
   it("names a page for every entry, and every named page exists", () => {
-    const urls = productDocumentationUrls({ RAKAZO_MARKETING_URL: "https://docs.example.test" });
+    const urls = productDocumentationUrls({ MATEBOT_MARKETING_URL: "https://docs.example.test" });
     const missing = urls.filter((url) => {
       const slug = /\/docs\/([a-z0-9-]+)\/$/.exec(url)?.[1];
       // The docs root is the first page and has its own route.
@@ -32,17 +32,19 @@ describe("product help documentation URLs", () => {
   });
 
   it("keeps every entry on the deployment's configured origin", () => {
-    const urls = productDocumentationUrls({ RAKAZO_MARKETING_URL: "https://docs.example.test" });
+    const urls = productDocumentationUrls({ MATEBOT_MARKETING_URL: "https://docs.example.test" });
     for (const url of urls) expect(url.startsWith("https://docs.example.test/docs/")).toBe(true);
   });
 
   it("names no upstream product host", () => {
     const urls = productDocumentationUrls({});
+    // This product's docs, not the upstream project's.
+    expect(urls.join("\n")).toMatch(/matebot/i);
     expect(urls.join("\n")).not.toMatch(/rakazo/i);
   });
 
   it("accepts only the closed set, so a constructed path is not on it", () => {
-    const urls = productDocumentationUrls({ RAKAZO_MARKETING_URL: "https://docs.example.test" });
+    const urls = productDocumentationUrls({ MATEBOT_MARKETING_URL: "https://docs.example.test" });
     // The exact URL the audit saw the assistant try to open.
     expect(urls).not.toContain("https://docs.example.test/docs/cloud-agents/");
     expect(urls).not.toContain("https://docs.example.test/integrations");

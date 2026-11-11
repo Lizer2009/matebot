@@ -13,7 +13,7 @@ function fakePrisma(updateMany = vi.fn().mockResolvedValue({ count: 1 })) {
 }
 
 afterEach(() => {
-  installLogger(createLogger({ service: "rakazo", level: "off", sinks: [] }));
+  installLogger(createLogger({ service: "matebot", level: "off", sinks: [] }));
 });
 
 describe("recordMcpServerHealth", () => {
@@ -89,7 +89,7 @@ describe("recordMcpServerHealth", () => {
 
   it("swallows and logs a failed write", async () => {
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo", level: "info", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot", level: "info", sinks: [sink] }));
     const { prisma } = fakePrisma(vi.fn().mockRejectedValue(new Error("db down")));
 
     await expect(

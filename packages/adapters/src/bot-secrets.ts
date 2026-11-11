@@ -150,7 +150,7 @@ function credentialHeader(destination: BotSecretDestination, plaintext: string) 
 
 /** Owner escape enabling plain-HTTP origins on private LAN hosts (see #907). */
 export function allowPrivateHttpSecretOrigins(): boolean {
-  return process.env.RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP === "1";
+  return process.env.MATEBOT_SECRETS_ALLOW_PRIVATE_HTTP === "1";
 }
 
 export function normalizeSecretDestination(value: unknown): BotSecretDestination {

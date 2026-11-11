@@ -10,7 +10,7 @@ MCowBQYDK2VwAyEAklTbtzcfz7ZoFLioFRxwpa97Zs/N4/8oZNblx2Dfi/4=
 -----END PUBLIC KEY-----
 `;
 
-const RELEASES = "https://github.com/elie222/rakazo/releases/download";
+const RELEASES = "https://github.com/Lizer2009/matebot/releases/download";
 const MAX_SIGNATURE_BYTES = 1_024;
 const UPDATE_FILE = /^[A-Za-z0-9][A-Za-z0-9._-]*\.AppImage$/;
 const VERSION = /^\d+\.\d+\.\d+$/;
@@ -21,7 +21,7 @@ const SIGNATURE = /^[A-Za-z0-9+/]{86}==$/;
  * signed so a feed cannot relabel an older signed build as a newer release.
  */
 export function linuxUpdateSignatureMessage(version: string, fileName: string, sha512Hex: string) {
-  return Buffer.from(`rakazo-linux-update-v1\n${version}\n${fileName}\n${sha512Hex}\n`, "utf8");
+  return Buffer.from(`matebot-linux-update-v1\n${version}\n${fileName}\n${sha512Hex}\n`, "utf8");
 }
 
 export async function sha512File(file: string) {

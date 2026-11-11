@@ -51,7 +51,7 @@ export function dockerBinaryCandidates(platform: string, env: NodeJS.ProcessEnv)
 }
 
 /**
- * `RAKAZO_DOCKER_BINARY` is a test hook and the only candidate when set, so a
+ * `MATEBOT_DOCKER_BINARY` is a test hook and the only candidate when set, so a
  * fake docker in CI can never fall through to a real daemon.
  */
 export function resolveDockerBinary(
@@ -59,7 +59,7 @@ export function resolveDockerBinary(
   env: NodeJS.ProcessEnv,
   exists: (file: string) => boolean,
 ): string | null {
-  const override = env.RAKAZO_DOCKER_BINARY?.trim();
+  const override = env.MATEBOT_DOCKER_BINARY?.trim();
   if (override) return exists(override) ? override : null;
   return dockerBinaryCandidates(platform, env).find((candidate) => exists(candidate)) ?? null;
 }

@@ -46,7 +46,7 @@ bash install-images-matebot.sh
 
 上游安装脚本 `install-images.sh` 仍然可用，但它拉取上游镜像；只有在你确实想运行上游构建时才使用它。
 
-在受限网络中，可覆盖安装脚本下载基址（`RAKAZO_DOWNLOAD_BASE`）、跳过已存在的 Compose 文件（`--local` / `RAKAZO_DOWNLOAD_SKIP_EXISTING`），或镜像引导脚本 URL，见[受限网络 / 镜像下载](./docs/self-host.md#restricted-networks--mirror-downloads)。
+在受限网络中，可覆盖安装脚本下载基址（`MATEBOT_DOWNLOAD_BASE`）、跳过已存在的 Compose 文件（`--local` / `MATEBOT_DOWNLOAD_SKIP_EXISTING`），或镜像引导脚本 URL，见[受限网络 / 镜像下载](./docs/self-host.md#restricted-networks--mirror-downloads)。
 
 如需代理辅助安装，请使用 [SETUP_PROMPT.md](./SETUP_PROMPT.md)。
 
@@ -56,7 +56,7 @@ bash install-images-matebot.sh
 
 ```bash
 bash install-images-matebot.sh --prepare-only
-# 编辑 .env：SANDBOX_PROVIDER=boat（或 e2b / daytona / createos）及其 API 密钥，RAKAZO_HOST=your.domain
+# 编辑 .env：SANDBOX_PROVIDER=boat（或 e2b / daytona / createos）及其 API 密钥，MATEBOT_HOST=your.domain
 bash install-images-matebot.sh
 ```
 
@@ -72,9 +72,9 @@ cd matebot
 cp .env.example .env
 ```
 
-用 `openssl rand -hex 16` 生成两个值，分别填入 `POSTGRES_PASSWORD` 与 `POSTGRES_APP_PASSWORD`，再写入 `DATABASE_MIGRATION_URL` 与 `DATABASE_URL`。应用使用自己的 `rakazo_app` 登录，行级安全策略作用于该角色；迁移以所有者身份执行（见[数据库角色](docs/self-host-configuration.md#database-roles)）。`BETTER_AUTH_SECRET`、`ENCRYPTION_KEY` 与 `SCREEN_PROXY_SECRET` 应各自使用独立的长随机值。Docker 沙箱还需要专属的 `SANDBOX_SUPERVISOR_TOKEN`。你也可以设置 `OPENROUTER_API_KEY`，或在引导过程中连接受支持的模型提供方。
+用 `openssl rand -hex 16` 生成两个值，分别填入 `POSTGRES_PASSWORD` 与 `POSTGRES_APP_PASSWORD`，再写入 `DATABASE_MIGRATION_URL` 与 `DATABASE_URL`。应用使用自己的 `matebot_app` 登录，行级安全策略作用于该角色；迁移以所有者身份执行（见[数据库角色](docs/self-host-configuration.md#database-roles)）。`BETTER_AUTH_SECRET`、`ENCRYPTION_KEY` 与 `SCREEN_PROXY_SECRET` 应各自使用独立的长随机值。Docker 沙箱还需要专属的 `SANDBOX_SUPERVISOR_TOKEN`。你也可以设置 `OPENROUTER_API_KEY`，或在引导过程中连接受支持的模型提供方。
 
-本版本中环境变量仍保留 `RAKAZO_*` 命名，因此已有 `.env` 无需修改即可继续使用。映射关系与改名会影响的范围见[环境变量命名](./docs/MATEBOT_DEPLOY.md#环境变量命名)。
+环境变量、数据库角色与 Compose 项目及卷名均已统一为 Matebot 命名。重命名之前创建的部署需要一次性迁移 `.env` 与数据库，见[环境变量命名](./docs/MATEBOT_DEPLOY.md#环境变量命名)。
 
 使用 Docker Desktop 进行主机侧开发时，在 `.env` 中设置 `SANDBOX_CONTROL_VIA_LOOPBACK=true`。supervisor 会自动发现 Docker Desktop 的用户 socket；`DOCKER_HOST` 或 `DOCKER_SOCKET` 可覆盖为其他 Docker 运行时。
 
@@ -88,7 +88,7 @@ pnpm sandbox:build
 pnpm dev
 ```
 
-`pnpm dev` 在 `DATABASE_URL` 可连接时直接使用该 Postgres；否则用 Docker 启动本地 `rakazo-dev-postgres` 容器，所有检出共用同一个。它会在启动前应用迁移并生成 Prisma 客户端。若某分支带有 main 上不存在的迁移，它会在同一服务器上获得独立数据库，并尽量从共享库复制，避免未合并的 schema 变更混入。默认端口被占用时（例如另一个 git worktree），它会顺延到下一段空闲端口并打印 URL。也可用 `WEB_PORT` 与 `API_PORT` 自行指定端口。
+`pnpm dev` 在 `DATABASE_URL` 可连接时直接使用该 Postgres；否则用 Docker 启动本地 `matebot-dev-postgres` 容器，所有检出共用同一个。它会在启动前应用迁移并生成 Prisma 客户端。若某分支带有 main 上不存在的迁移，它会在同一服务器上获得独立数据库，并尽量从共享库复制，避免未合并的 schema 变更混入。默认端口被占用时（例如另一个 git worktree），它会顺延到下一段空闲端口并打印 URL。也可用 `WEB_PORT` 与 `API_PORT` 自行指定端口。
 
 如需改用 Compose 中的 Postgres，可用 `postgres-host` 覆盖文件启动，它在回环地址 `127.0.0.1:5433` 上发布端口，再把 `DATABASE_URL` 与 `DATABASE_MIGRATION_URL` 指向它：
 
@@ -132,17 +132,17 @@ chmod +x Matebot-*.AppImage
 ./Matebot-*.AppImage --appimage-extract-and-run
 ```
 
-**This computer** 会查找 `docker` CLI，不检测 Podman。若要尝试其他支持 `compose` 子命令的 Docker 兼容 CLI，请在启动应用前把 `RAKAZO_DOCKER_BINARY` 设为其路径。
+**This computer** 会查找 `docker` CLI，不检测 Podman。若要尝试其他支持 `compose` 子命令的 Docker 兼容 CLI，请在启动应用前把 `MATEBOT_DOCKER_BINARY` 设为其路径。
 
-用应用菜单中的 **Change Matebot Server…** 重新连接。关闭该窗口而不保存会回到原实例。开发自动化中可用 `RAKAZO_WEB_URL` 把外壳指向别处而不改动已保存实例，或用 `RAKAZO_FORCE_SETUP=1` 重新运行设置。
+用应用菜单中的 **Change Matebot Server…** 重新连接。关闭该窗口而不保存会回到原实例。开发自动化中可用 `MATEBOT_WEB_URL` 把外壳指向别处而不改动已保存实例，或用 `MATEBOT_FORCE_SETUP=1` 重新运行设置。
 
 手机端构建与发布说明见 [docs/mobile-release.md](./docs/mobile-release.md)。
 
-## 从 Rakazo 命名的旧版本升级
+## 从 Matebot 命名的旧版本升级
 
-早期构建以 Rakazo 为名发布，其桌面配置目录名称不同。桌面应用会在首次启动时把该目录迁移到新位置，因此已保存的服务器、屏幕驱动设置与本地 Compose 栈都会保留。若新旧两个目录同时存在，则以新目录为准，旧目录保持不变。
+早期构建以 Matebot 为名发布，其桌面配置目录名称不同。桌面应用会在首次启动时把该目录迁移到新位置，因此已保存的服务器、屏幕驱动设置与本地 Compose 栈都会保留。若新旧两个目录同时存在，则以新目录为准，旧目录保持不变。
 
-除此之外无需其他改动：环境变量仍保留 `RAKAZO_*` 命名，数据库角色仍是 `rakazo_app`，Compose 卷沿用原有项目名。
+除此之外无需其他改动：环境变量、数据库角色与 Compose 项目及卷名均已是 Matebot 命名。
 
 ## 界面语言
 
@@ -230,6 +230,6 @@ pnpm test:e2e
 
 ## 上游
 
-Matebot 跟踪 [elie222/rakazo](https://github.com/elie222/rakazo)。上游 README、演示与商店页面介绍的是上游的托管产品，本 fork 并不运营该服务。想了解或参与 Matebot 所基于的代码，请从该仓库开始。
+Matebot 基于 [Rakazo](https://github.com/elie222/rakazo) 项目 0.6.0 版本分叉后独立开发。上游 README、演示与商店页面介绍的是上游的托管产品，本 fork 并不运营该服务。Matebot 自身的源码就在本仓库。
 
 Matebot 采用 [Apache License 2.0](./LICENSE) 许可，与上游一致。该许可证及其要求的声明保持不变；Matebot 名称与标识属于本 fork。

@@ -232,13 +232,13 @@ describe("activateUiLocale", () => {
     const set = vi.fn(async (_locale: string) => {
       throw new Error("refused");
     });
-    vi.stubGlobal("window", { rakazoDesktop: { locale: { set } } });
+    vi.stubGlobal("window", { matebotDesktop: { locale: { set } } });
 
     await expect(activateUiLocale("es")).resolves.toBe("es");
     expect(set).toHaveBeenCalledWith("es");
 
     // Older desktop releases have no locale bridge.
-    vi.stubGlobal("window", { rakazoDesktop: {} });
+    vi.stubGlobal("window", { matebotDesktop: {} });
     await expect(activateUiLocale("de")).resolves.toBe("de");
     vi.unstubAllGlobals();
   });

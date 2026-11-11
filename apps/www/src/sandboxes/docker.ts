@@ -68,7 +68,7 @@ export const docker: Sandbox = {
       ],
       bullets: [
         "A container shares your server's kernel. It is not a virtual machine, so a kernel bug could let a process escape it. If that matters to you, use a hosted provider or Kubernetes with gVisor or Kata.",
-        "Restricted networking gives computers the public internet but blocks your LAN, the Docker host and cloud metadata addresses. It needs Linux Docker Engine with iptables and the host rules from `infra/compose/restrict-computer-egress.sh`. By default the stack checks for those rules and falls back to open networking without them, so a server without the rules lets bots reach your LAN. Set `SANDBOX_COMPUTER_EGRESS=restricted` to refuse to start computers instead. Docker Desktop for Mac or Windows, rootless Docker and nftables hosts can't use restricted networking. The [Docker computers guide](https://github.com/elie222/rakazo/blob/main/docs/self-host-docker-computers.md) has the details.",
+        "Restricted networking gives computers the public internet but blocks your LAN, the Docker host and cloud metadata addresses. It needs Linux Docker Engine with iptables and the host rules from `infra/compose/restrict-computer-egress.sh`. By default the stack checks for those rules and falls back to open networking without them, so a server without the rules lets bots reach your LAN. Set `SANDBOX_COMPUTER_EGRESS=restricted` to refuse to start computers instead. Docker Desktop for Mac or Windows, rootless Docker and nftables hosts can't use restricted networking. The [Docker computers guide](https://github.com/Lizer2009/matebot/blob/main/docs/self-host-docker-computers.md) has the details.",
         "There is no per-domain allowlist. A bot can reach any public website.",
         "Anyone who controls the supervisor controls Docker on that machine, which is why it stays on the internal network behind its own token.",
       ],
@@ -82,7 +82,7 @@ export const docker: Sandbox = {
         "Install Docker Engine 26 or newer with the Compose plugin on the machine that will run Matebot.",
         "Run the installer from the [self-hosting guide](/docs/self-host/). It writes a `.env` with random secrets, including the `SANDBOX_SUPERVISOR_TOKEN` the supervisor needs, and starts Matebot with `SANDBOX_PROVIDER=docker`.",
         "On Linux Docker Engine, let the installer apply the restricted-networking rules when it asks for sudo, or run `sudo bash infra/compose/restrict-computer-egress.sh` later.",
-        "Optionally change the limits with `RAKAZO_COMPUTER_MEMORY`, `RAKAZO_COMPUTER_CPUS` and `RAKAZO_COMPUTER_PIDS_LIMIT`, or share host folders with `SANDBOX_COMPUTER_MOUNTS`, as described in [Docker computers](/docs/self-host-docker-computers/).",
+        "Optionally change the limits with `MATEBOT_COMPUTER_MEMORY`, `MATEBOT_COMPUTER_CPUS` and `MATEBOT_COMPUTER_PIDS_LIMIT`, or share host folders with `SANDBOX_COMPUTER_MOUNTS`, as described in [Docker computers](/docs/self-host-docker-computers/).",
         "Sign up, open a bot and open its computer to check that the desktop comes up.",
       ],
     },

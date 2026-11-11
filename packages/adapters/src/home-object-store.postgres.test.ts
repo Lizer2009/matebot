@@ -19,7 +19,7 @@ describePostgres("agent home storage records (PostgreSQL)", () => {
   let db: ReturnType<typeof createDb>;
   let system: PrismaClient;
   let identity: { userId: string; spaceId: string };
-  const address = `home-records-${randomUUID()}@rakazo.test`;
+  const address = `home-records-${randomUUID()}@matebot.test`;
 
   beforeAll(async () => {
     db = createDb(url!);

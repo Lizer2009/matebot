@@ -234,13 +234,13 @@ describe("formatRecalledMemory", () => {
         memory: "Ava prefers feature flags.",
         id: "fact-1",
         provenance: "evals/corpora/ava.yaml",
-        entity: "rakazo-space/workspace-1",
+        entity: "matebot-space/workspace-1",
       },
     ]);
     expect(block).toContain("Ava prefers feature flags.");
     expect(block).toContain("provenance: evals/corpora/ava.yaml");
     expect(block).toContain("id: fact-1");
-    expect(block).toContain("entity: rakazo-space/workspace-1");
+    expect(block).toContain("entity: matebot-space/workspace-1");
   });
 });
 
@@ -469,12 +469,12 @@ describe("summarizeTimeoutMs", () => {
 
 function installCompactionLogger() {
   const sink = createTestSink();
-  installLogger(createLogger({ service: "rakazo-worker", sinks: [sink] }));
+  installLogger(createLogger({ service: "matebot-worker", sinks: [sink] }));
   return sink;
 }
 
 function silenceLogger() {
-  installLogger(createLogger({ service: "rakazo-worker", level: "off", sinks: [] }));
+  installLogger(createLogger({ service: "matebot-worker", level: "off", sinks: [] }));
 }
 
 describe("recordHistoryCompactAttemptsExhausted", () => {
@@ -904,7 +904,7 @@ describe("compactHistory", () => {
     });
     harness.purgeHistory.mockRejectedValueOnce(new Error("provider unavailable"));
     const sink = createTestSink();
-    installLogger(createLogger({ service: "rakazo-worker", sinks: [sink] }));
+    installLogger(createLogger({ service: "matebot-worker", sinks: [sink] }));
 
     await expect(compactHistory(harness.deps, "thread-1")).resolves.toBeUndefined();
 
@@ -914,7 +914,7 @@ describe("compactHistory", () => {
         (event) => event.message === "history.compact could not purge stale semantic memory",
       ),
     ).toBe(true);
-    installLogger(createLogger({ service: "rakazo-worker", level: "off", sinks: [] }));
+    installLogger(createLogger({ service: "matebot-worker", level: "off", sinks: [] }));
   });
 
   it("falls back to the deployment's configured default model when no deployment key is available", async () => {

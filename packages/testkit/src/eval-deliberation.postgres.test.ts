@@ -78,7 +78,7 @@ describe.skipIf(!databaseAvailable)("bot deliberation eval through the product",
         apiKey: fixtureKey,
         steps: turns.flatMap(peerTurn),
       });
-      const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-deliberation-eval-"));
+      const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-deliberation-eval-"));
       let evidence: Evidence | undefined;
       try {
         const { createApp } = await import("@matebot/api/app");

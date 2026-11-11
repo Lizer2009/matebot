@@ -22,7 +22,7 @@ describeAttachments("chat attachments", () => {
   let app: App;
   let stop: () => Promise<void>;
   const stamp = Date.now();
-  const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-attachments-"));
+  const dataDir = mkdtempSync(path.join(tmpdir(), "matebot-attachments-"));
   const tinyPng = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
     "base64",
@@ -46,7 +46,7 @@ describeAttachments("chat attachments", () => {
   });
 
   it("uploads, sends with image/file, and rejects invalid attachments", async () => {
-    const cookie = await signup(app, `attachments-${stamp}@rakazo.test`, "Attachment User");
+    const cookie = await signup(app, `attachments-${stamp}@matebot.test`, "Attachment User");
     const bot = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Attacher",
       title: "Attacher",
@@ -153,7 +153,7 @@ describeAttachments("chat attachments", () => {
   });
 
   it("attaches a workspace file into the thread", async () => {
-    const cookie = await signup(app, `attach-thread-${stamp}@rakazo.test`, "Attach Thread User");
+    const cookie = await signup(app, `attach-thread-${stamp}@matebot.test`, "Attach Thread User");
     const bot = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Attacher",
       title: "Attacher",
@@ -180,8 +180,8 @@ describeAttachments("chat attachments", () => {
     );
   });
   it("persists server-owned reply previews, isolates threads, and handles deletion", async () => {
-    const cookie = await signup(app, `replies-${stamp}@rakazo.test`, "Reply User");
-    const otherCookie = await signup(app, `replies-other-${stamp}@rakazo.test`, "Other User");
+    const cookie = await signup(app, `replies-${stamp}@matebot.test`, "Reply User");
+    const otherCookie = await signup(app, `replies-other-${stamp}@matebot.test`, "Other User");
     const bot = await rpc<{ id: string }>(app, cookie, "bots/create", {
       name: "Helper",
       title: "Helper",

@@ -198,7 +198,7 @@ async function* iterate<T>(items: AsyncIterable<T>): AsyncGenerator<T> {
 }
 
 export function accountExportFilename(now = new Date()): string {
-  return `rakazo-export-${now.toISOString().slice(0, 10)}.zip`;
+  return `matebot-export-${now.toISOString().slice(0, 10)}.zip`;
 }
 
 /**

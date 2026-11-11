@@ -38,7 +38,7 @@ describe.skipIf(!databaseAvailable)("eval history accounting", () => {
           },
         ]),
       });
-      const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-eval-history-"));
+      const dataDir = await mkdtemp(path.join(tmpdir(), "matebot-eval-history-"));
       try {
         const { createApp } = await import("@matebot/api/app");
         const result = await runTrial(
