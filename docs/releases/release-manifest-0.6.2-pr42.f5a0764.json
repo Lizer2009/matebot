@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "channel": "prerelease",
+  "releasedAt": "2026-11-08T08:45:00Z",
+  "supersedes": {
+    "release": "v0.6.2-pr42.d8928810",
+    "reason": "That build was published before the last card fix, so its version named a commit that was not the code inside it. Its GitHub release was deleted so a test machine cannot install it; the image tags it produced remain in GHCR but are not referenced here."
+  },
+  "source": {
+    "repository": "https://github.com/Lizer2009/matebot",
+    "branch": "cursor/a2ui-card-gate-recovery-a097",
+    "tip": "f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
+    "releaseTag": "v0.6.2-pr42.f5a0764",
+    "releaseTagCommit": "f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
+    "androidBuildTag": "android-pr42.5",
+    "androidBuildTagCommit": "f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
+    "pullRequest": 43,
+    "recoveredFrom": {
+      "cloudAgent": "bc-9a9ef1a1-fd21-5f81-98e3-ecae2e3ca097",
+      "branch": "cursor/a2ui-manual-audit-remediation-a097",
+      "tipAtRecovery": "8a9457083b2f015b8dea10d15dc76bdbb50fc4e1",
+      "note": "The original branch was left untouched: no force push, no rewrite, no deletion."
+    }
+  },
+  "previous": {
+    "release": "v0.6.1-pr42.f4509d1a1",
+    "source": "f4509d1a1",
+    "runningBuild": "48117f1fb8a1bf3d38f12a8fe2fd010d9624764f",
+    "desktopVersion": "0.6.1-pr42.f4509d1a1",
+    "androidVersion": "1.0.13",
+    "androidVersionCode": 14
+  },
+  "versions": {
+    "desktop": "0.6.2-pr42.f5a0764",
+    "android": {
+      "versionName": "1.0.16",
+      "versionCode": 16,
+      "package": "com.matebot.app",
+      "minSdk": 24,
+      "targetSdk": 36,
+      "compileSdk": 36
+    }
+  },
+  "images": {
+    "registry": "ghcr.io/lizer2009/matebot",
+    "tag": "0.6.2-pr42.f5a0764",
+    "shaTag": "sha-f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
+    "platforms": ["linux/amd64", "linux/arm64"],
+    "app": {
+      "manifestDigest": "sha256:2c72d07c6b3f8b6a9d4e64d54917ecea44df65a496ed674442c8afe21df45a9d",
+      "revisionLabel": "f578c4d3b065946b5a5dc32ac55c573c0a1a43ca",
+      "created": "2026-11-08T08:15:54.102Z"
+    },
+    "computer": {
+      "manifestDigest": "sha256:06a83f01f343655befa199cd9c9c58b22c8047b072317f0477a250808e6eafe9"
+    },
+    "updater": {
+      "manifestDigest": "sha256:12c89b04f324236a7ce201ef66de7d40429d14953b926d4ff2e3960e93052e34"
+    },
+    "floatingTagsMoved": [],
+    "notes": [
+      "edge is not moved: it only follows refs/heads/main.",
+      "latest is not moved: it is the stable tag 0.6.0 only, verified after publishing.",
+      "A floating vMAJOR.MINOR tag is not created for a prerelease, so a pin cannot silently receive it.",
+      "Each digest above was read back from the registry as an OCI image index containing both linux/amd64 and linux/arm64."
+    ]
+  },
+  "windows": {
+    "release": "https://github.com/Lizer2009/matebot/releases/tag/v0.6.2-pr42.f5a0764",
+    "prerelease": true,
+    "latest": false,
+    "signed": false,
+    "installer": {
+      "name": "Matebot-Setup-0.6.2-pr42.f5a0764.exe",
+      "bytes": 135498864,
+      "sha256": "4d21ed349303b2d64453b6d98201a705d61d1df262bcc3832d9153c8172f313d",
+      "sha256VerifiedByDownload": true
+    },
+    "blockmap": {
+      "name": "Matebot-Setup-0.6.2-pr42.f5a0764.exe.blockmap",
+      "bytes": 142045,
+      "sha256": "3816006b87623073b65adb4d61bac6d4b4a7cd2e0baa99dadcaf8370f9af0e65"
+    },
+    "checksums": {
+      "name": "SHA256SUMS",
+      "bytes": 219,
+      "sha256": "dc72bd0594b179b48cac3f76bf2502e7e7b00befef3f9ddc80261edca4b4f18a"
+    },
+    "updateFeedIncluded": false,
+    "note": "Downloaded the installer and hashed it locally; the result matches both SHA256SUMS and the asset digest GitHub reports."
+  },
+  "android": {
+    "release": "https://github.com/Lizer2009/matebot/releases/tag/android",
+    "releaseTitle": "Matebot for Android 1.0.16 (16) from android-pr42.5",
+    "apk": {
+      "name": "matebot.apk",
+      "bytes": 112732558,
+      "sha256": "a9467c9acd384f221f9644cdd0a89226c4d85be75575fe76c3878fed931d6a51",
+      "downloadUrl": "https://github.com/Lizer2009/matebot/releases/download/android/matebot.apk",
+      "entries": 1831,
+      "bundledApiUrl": "https://app.matebot.dev"
+    },
+    "signing": {
+      "scheme": "v2",
+      "algorithm": "SHA256withRSA",
+      "keyBits": 2048,
+      "certificateSha256": "55:48:3D:6B:30:18:06:1F:CB:2B:1D:5D:0B:6C:BE:05:A5:2B:5B:DC:B0:0A:56:D3:3C:8A:FA:C5:74:66:ED:E8",
+      "certificateNotBefore": "2026-11-06T02:38:16Z",
+      "certificateNotAfter": "2054-03-24T02:38:16Z",
+      "sameSignerAsSupersededApk": true,
+      "evidence": "Both the 1.0.15 APK and this 1.0.16 APK were downloaded and their v2 signer certificates extracted; the SHA-256 fingerprints are identical, so an in-place update is accepted."
+    },
+    "downloadEntry": {
+      "url": "https://test.matebot.dev/api/download?platform=android",
+      "status": 302,
+      "location": "https://github.com/Lizer2009/matebot/releases/download/android/matebot.apk"
+    },
+    "stableChannelUntouched": {
+      "desktopLatest": "v0.6.0",
+      "androidRollingReleaseIsLatest": false
+    }
+  },
+  "upgrade": {
+    "fromBuild": "48117f1fb8a1bf3d38f12a8fe2fd010d9624764f",
+    "prismaMigrationsAdded": [],
+    "prismaSchemaChanged": false,
+    "databaseMigrationRequired": false,
+    "rollbackInvariant": "Old and new images read the same schema, so a rollback is a digest swap with no data step.",
+    "spaceBudgetNote": "No new schema objects; three image layers per architecture. The root volume was grown to 45 GiB in the previous round with about 10.65 GiB free after deployment; check df -h / and docker system df before pulling."
+  },
+  "gates": {
+    "pullRequestCi": {
+      "runId": 42462085926,
+      "conclusion": "success",
+      "webE2E": "passed on this head, including the flag-off case that failed before this change"
+    },
+    "releasePrerelease": {
+      "runId": 42462083581,
+      "conclusion": "success"
+    },
+    "publishServerImage": {
+      "runId": 42462083605,
+      "conclusion": "success"
+    },
+    "releaseAndroidApk": {
+      "runId": 42462152955,
+      "conclusion": "success"
+    }
+  },
+  "notVerified": [
+    "No live model or external provider was contacted.",
+    "No physical Android device install; the user installs it.",
+    "No Windows click-through acceptance; the parent operator owns that machine.",
+    "No deployment to 192.168.10.5 and no operation on the Windows host.",
+    "Whether app.matebot.dev is served by the 192.168.10.5 database is still unknown from this environment."
+  ],
+  "ciNote": "The artefact commits passed CI twice. Two later empty commits re-ran CI on the identical tree and hit transient infrastructure failures with no assertion ever running: the GitHub releases host returned 504 for both the browser helper and the Electron binary, and a Windows runner had no Visual Studio to build a native module. Those are recorded here rather than hidden; the tree that produced every artefact is documented under source.tip and its CI runs are listed under gates."
+}

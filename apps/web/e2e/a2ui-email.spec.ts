@@ -21,10 +21,21 @@ test("email review card discard hides the draft without sending", async ({ page 
   await expect(page.getByTestId("a2ui-email-sent")).toHaveCount(0);
 });
 
-test("email surface stays hidden when the flag is off", async ({ page }) => {
+/**
+ * A server that does not serve cards says so, once, instead of leaving a gap.
+ *
+ * Counting zero cards alone also passes when nothing rendered at all — the blank
+ * region this suite exists to prevent — so the notice itself is asserted.
+ */
+test("email surface stays hidden when the flag is off", async ({ page }, testInfo) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?flag=off");
   await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(0);
   await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  const notice = page.getByTestId("a2ui-surface-disabled");
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText(/interactive cards are off/i);
+  await captureScreenshot(page, testInfo, "a2ui-email-flag-off");
 });
 
 test("unbound email card shows connect and no Send", async ({ page }) => {

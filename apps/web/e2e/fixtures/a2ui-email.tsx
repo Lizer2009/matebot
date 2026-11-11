@@ -15,7 +15,8 @@ import { FixtureTranscript } from "./thread-fixture";
  *
  * Open: `/e2e/fixtures/a2ui-email.html`
  * - default: local draft that mirrors confirm-before-send on the server
- * - `?flag=off`: timeline hides the a2ui_surface block
+ * - `?flag=off`: the fixture stands in for a server that does not serve cards, so the
+ *   timeline says they are off instead of drawing one
  */
 
 const params = new URLSearchParams(location.search);
@@ -179,7 +180,12 @@ void bootstrapI18n("en").then(() => {
     <I18nProvider i18n={i18n}>
       <div className="flex min-h-dvh flex-col bg-background text-foreground">
         {flagOff ? (
-          <FixtureTranscript messages={hiddenMessages} running={false} showToolActivity={false} />
+          <FixtureTranscript
+            messages={hiddenMessages}
+            running={false}
+            showToolActivity={false}
+            a2uiEnabled={false}
+          />
         ) : (
           <EmailComposeFixture />
         )}

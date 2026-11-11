@@ -63,6 +63,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Install the Electron binary
+        # `pnpm install` downloads it once and gives up; the releases host answers 504 in bursts.
+        run: infra/install-electron.sh
       - run: pnpm build
         env:
           DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
@@ -182,6 +185,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Install the Electron binary
+        # `pnpm install` downloads it once and gives up; the releases host answers 5xx in bursts,
+        # and the desktop suites in this shard cannot import without it.
+        run: infra/install-electron.sh
       - run: pnpm db:generate
         env:
           DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
@@ -218,7 +225,9 @@ jobs:
     needs: changes
     if: needs.changes.outputs.native == 'true'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    # The screen driver is downloaded on first use and retries a refused host with backoff, so a
+    # bad day on the releases host adds minutes rather than failing the job.
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -236,6 +245,9 @@ jobs:
         if: runner.os == 'Windows'
         run: node --test scripts/pnpm.test.mjs
       - run: pnpm install --frozen-lockfile
+      - name: Install the Electron binary
+        # `pnpm install` downloads it once and gives up; the releases host answers 504 in bursts.
+        run: infra/install-electron.sh
       - run: pnpm db:generate
         env:
           DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo

@@ -78,6 +78,19 @@ const TAR =
     ? path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe")
     : "/usr/bin/tar";
 
+/**
+ * How many times a server-side download failure is retried before the person is told.
+ * The releases host answers 504 in bursts; a 4xx is not retried at all.
+ */
+const DRIVER_DOWNLOAD_ATTEMPTS = 4;
+
+/** The error `download` throws for a status it has already decided not to retry. */
+class DriverHttpStatusError extends Error {}
+
+function isHttpStatusError(cause: unknown): cause is DriverHttpStatusError {
+  return cause instanceof DriverHttpStatusError;
+}
+
 async function fileSha256(file: string) {
   try {
     return createHash("sha256")
@@ -107,9 +120,7 @@ export function screenDriverInstaller(options: {
     await mkdir(options.dir, { recursive: true });
     const staging = await mkdtemp(path.join(options.dir, ".download-"));
     try {
-      const response = await options.fetch(release.url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const archive = Buffer.from(await response.arrayBuffer());
+      const archive = await download(release.url);
       if (createHash("sha256").update(archive).digest("hex") !== release.sha256)
         throw new Error("checksum mismatch");
       const archivePath = path.join(staging, "driver.tar.gz");
@@ -123,8 +134,10 @@ export function screenDriverInstaller(options: {
           await rm(path.join(options.dir, entry), { recursive: true, force: true });
       await renameSoon(staging, path.dirname(command));
       return command;
-    } catch {
-      throw new HostScreenError(SCREEN_DRIVER_DOWNLOAD_MESSAGE);
+    } catch (cause) {
+      // The person only needs the sentence, but whoever has to fix this needs the reason: a 504,
+      // a checksum mismatch and a failed untar are three different problems.
+      throw new HostScreenError(SCREEN_DRIVER_DOWNLOAD_MESSAGE, { cause });
     } finally {
       await rm(staging, { recursive: true, force: true });
     }
@@ -132,6 +145,33 @@ export function screenDriverInstaller(options: {
 
   async function verified() {
     return (await fileSha256(command)) === release.driverSha256 ? command : install();
+  }
+
+  /**
+   * Fetch the archive, retrying while the host refuses it.
+   *
+   * The releases host fails in bursts — a 5xx, or the connection closed mid-response — and
+   * screen control is set up on first use, so a single click during one of those windows tells
+   * the person their network is broken. Retrying is safe here because the archive is verified
+   * against its pinned hash before anything is extracted, so a retry cannot install other bytes.
+   */
+  async function download(url: string): Promise<Buffer> {
+    for (let attempt = 1; ; attempt += 1) {
+      const last = attempt >= DRIVER_DOWNLOAD_ATTEMPTS;
+      try {
+        const response = await options.fetch(url);
+        if (response.ok) return Buffer.from(await response.arrayBuffer());
+        // A 4xx is this app's own mistake; retrying cannot change it.
+        if (response.status < 500 || last)
+          throw new DriverHttpStatusError(`HTTP ${response.status}`);
+      } catch (cause) {
+        // An HTTP status we already decided on is final; only a transport failure is retried.
+        // A dropped connection (`fetch failed`, socket closed mid-body) arrives here instead of
+        // as a status, and is exactly the transient case this retry exists for.
+        if (last || isHttpStatusError(cause)) throw cause;
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+    }
   }
 
   return () => {

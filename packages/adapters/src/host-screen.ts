@@ -92,9 +92,15 @@ export interface HostScreen {
 
 /** A message written for the bot. It reveals nothing beyond the person's own screen. */
 export class HostScreenError extends Error {
-  constructor(message: string) {
+  /**
+   * @param cause the underlying failure, kept for whoever reads the log. The person sees only
+   *   `message`, so a download error, a checksum mismatch and a failed extract stay
+   *   distinguishable without showing any of them a raw technical reason.
+   */
+  constructor(message: string, options?: { cause?: unknown }) {
     super(message.length > 500 ? `${message.slice(0, 500)}…` : message);
     this.name = "HostScreenError";
+    if (options && "cause" in options) this.cause = options.cause;
   }
 }
 

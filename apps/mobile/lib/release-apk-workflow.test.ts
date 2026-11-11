@@ -168,9 +168,11 @@ describe("Android APK release workflow", () => {
     // The released Android build (1.0.12, versionCode 11) must not be reproducible here.
     expect(app.expo.version).not.toBe("1.0.12");
     expect(app.expo.version > "1.0.12").toBe(true);
-    // And not the version published for the previous build either.
-    expect(app.expo.version).not.toBe("1.0.13");
-    expect(app.expo.version > "1.0.13").toBe(true);
+    // Nor any version published since, so a phone cannot think it already has this one.
+    for (const released of ["1.0.13", "1.0.14", "1.0.15", "1.0.16", "1.0.17"]) {
+      expect(app.expo.version).not.toBe(released);
+      expect(app.expo.version > released).toBe(true);
+    }
     // The app config's code is only a fallback; EAS owns the built value. Assert the
     // fallback is not below what has shipped, so a local build cannot look older.
     expect(app.expo.android.versionCode).toBeGreaterThanOrEqual(10);

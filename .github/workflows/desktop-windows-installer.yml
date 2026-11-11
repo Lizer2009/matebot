@@ -37,6 +37,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Install the Electron binary
+        # `pnpm install` downloads it once and gives up; the releases host answers 504 in bursts.
+        run: infra/install-electron.sh
       - name: Generate the database client for desktop compilation
         run: pnpm db:generate
         env:

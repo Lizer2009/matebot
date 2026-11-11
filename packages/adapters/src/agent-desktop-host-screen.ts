@@ -392,7 +392,7 @@ export function createAgentDesktopHostScreen(options: AgentDesktopHostScreenOpti
         ]);
         for (const name of items) {
           if (!item) break;
-          await run("click", "--", item);
+          await clickMenu(run, item);
           item = await first(run, [
             "find",
             ...scope,
@@ -404,7 +404,7 @@ export function createAgentDesktopHostScreen(options: AgentDesktopHostScreenOpti
         }
         if (!item)
           throw new HostScreenError(`${found.name} has no menu item ${action.path.join(" > ")}.`);
-        await run("click", "--", item);
+        await clickMenu(run, item);
         return;
       }
       case "wait":
@@ -436,6 +436,32 @@ export function createAgentDesktopHostScreen(options: AgentDesktopHostScreenOpti
 async function first(run: (...args: string[]) => Promise<unknown>, args: string[]) {
   const data = (await run(...args, "--first")) as { match?: AgentDesktopNode | null } | null;
   return data?.match?.ref_id;
+}
+
+/**
+ * Activates a menu item, and says what to do when Windows refuses.
+ *
+ * A menu item can only be chosen while its window is the active one; the driver refuses the
+ * click otherwise, and the generic "use click, set, or menu instead" reads as nonsense when the
+ * action that failed *was* the menu. It also failed this way intermittently on CI, with the same
+ * tree passing in the same job — so the reason is worth naming rather than hiding behind a
+ * sentence about gestures that were never attempted.
+ *
+ * The driver can make the window active, but only with `--headed`, which brings it to the front
+ * and takes the foreground. This product is deliberately strict-headless: a bot must not steal
+ * the window a person is working in. So the refusal is surfaced rather than overridden, and the
+ * person is asked to click the window — the same rule the rest of this file follows for anything
+ * that would take over their pointer or keyboard.
+ */
+async function clickMenu(run: (...args: string[]) => Promise<unknown>, item: string) {
+  try {
+    await run("click", "--", item);
+  } catch (error) {
+    if (!(error instanceof AgentDesktopError) || error.code !== "POLICY_DENIED") throw error;
+    throw new HostScreenError(
+      "That menu can only be chosen while its window is active, and Windows wouldn't let Matebot make it active. Ask the user to click the app's window, then observe it again.",
+    );
+  }
 }
 
 function appName(window: AgentDesktopWindow) {

@@ -108,6 +108,8 @@ RUN set -eux; \
   uv --version; \
   uvx --version
 # Bookworm has no gh package; pin the upstream binary and verify sha256, same as uv.
+# The releases host answers 504 intermittently, and a single attempt turns that into a failed
+# image build; the sha256 check still decides whether the bytes are the pinned binary.
 ARG GH_VERSION=2.100.0
 RUN set -eux; \
   case "$TARGETARCH" in \
@@ -116,7 +118,15 @@ RUN set -eux; \
     *) echo "unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
   esac; \
   archive="$(mktemp)"; \
-  curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${gh_arch}.tar.gz" -o "$archive"; \
+  attempt=1; \
+  while :; do \
+    if curl -fsSL --retry 3 --retry-delay 3 --retry-connrefused "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${gh_arch}.tar.gz" -o "$archive"; then break; fi; \
+    if [ "$attempt" -ge 10 ]; then echo "could not download gh after $attempt attempts" >&2; exit 1; fi; \
+    wait_seconds=$((attempt * 10)); [ "$wait_seconds" -gt 60 ] && wait_seconds=60; \
+    echo "gh download attempt $attempt failed; retrying in ${wait_seconds}s" >&2; \
+    sleep "$wait_seconds"; \
+    attempt=$((attempt + 1)); \
+  done; \
   echo "$gh_sha256  $archive" | sha256sum -c -; \
   tar -xzf "$archive" -C /usr/local/bin --strip-components=2 "gh_${GH_VERSION}_linux_${gh_arch}/bin/gh"; \
   rm -f "$archive"; \

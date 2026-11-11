@@ -65,9 +65,16 @@ export function A2uiNativeSurface({
    * controls, and the card would announce itself as an old one while it is merely
    * loading — or forever, if the fetch fails.
    */
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(!messages && block.documentRef && fetchDocument));
   const [loadError, setLoadError] = useState<string | null>(null);
+  /** Bumped to fetch again after a document could not be read. */
+  const [attempt, setAttempt] = useState(0);
   const source = messages ?? loaded;
+  /**
+   * Whether "Try again" can do anything. A stored ref with no fetcher will never load,
+   * so offering the button there would be a control that cannot change the outcome.
+   */
+  const canReload = Boolean(block.documentRef && fetchDocument);
   const [values, setValues] = useState<EmailFields>(() => emailFieldsFromSurfaceMessages(messages));
   const [error, setError] = useState<string | null>(null);
   const [discarded, setDiscarded] = useState(false);
@@ -130,7 +137,7 @@ export function A2uiNativeSurface({
     return () => {
       active = false;
     };
-  }, [block.documentRef, messages, t]);
+  }, [block.documentRef, messages, t, attempt]);
 
   if (isEmailComposeIntent(block.intent)) {
     const setField = (name: EmailFieldName) => (value: string) => {
@@ -363,6 +370,13 @@ export function A2uiNativeSurface({
         <View testID="a2ui-native-load-error">
           <Text>{t("This card could not be shown.")}</Text>
           <Text>{loadError}</Text>
+          {canReload ? (
+            <A2uiButton
+              label={t("Try again")}
+              testID="a2ui-native-reload"
+              onPress={() => setAttempt((value) => value + 1)}
+            />
+          ) : null}
         </View>
       ) : needsRecovery(source, { intent: block.intent }) ? (
         <View testID="a2ui-native-recovery">
@@ -373,7 +387,23 @@ export function A2uiNativeSurface({
           </Text>
           <Text>{t("Ask for the draft again to get an editable card.")}</Text>
         </View>
-      ) : null}
+      ) : source && source.length > 0 ? null : (
+        /*
+          Nothing arrived and nothing is coming: no stored document, no way to fetch it,
+          or an empty one. A title over an empty body is the blank card the audit found,
+          so the card says what happened and, when a ref exists, offers to load it again.
+        */
+        <View testID="a2ui-native-unavailable">
+          <Text>{t("This card could not be shown.")}</Text>
+          {canReload ? (
+            <A2uiButton
+              label={t("Try again")}
+              testID="a2ui-native-reload"
+              onPress={() => setAttempt((value) => value + 1)}
+            />
+          ) : null}
+        </View>
+      )}
     </View>
   );
 }
