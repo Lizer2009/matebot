@@ -31,6 +31,10 @@ export function errorText(error: unknown, fallback = t`Something went wrong. Try
   if (errorCode(error) === CONNECTOR_AUTH_UNAVAILABLE)
     return t`This app needs its own sign-in setup to connect.`;
   if (errorCode(error) === MCP_OAUTH_CLIENT_REQUIRED) return t`Needs an OAuth client ID`;
+  // A calendar card whose action was refused for a missing connection must say what to do. The
+  // server refuses with this code and a message naming the app, but the message alone reached
+  // nothing: the action looked like a dead button.
+  if (errorCode(error) === "needs_connection") return t`Connect the app first, then try again.`;
   return (
     voiceAccountErrorText(error) ??
     userErrorMessage(error, { fallback, offline: t`Could not reach the server` })

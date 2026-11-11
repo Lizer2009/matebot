@@ -5,6 +5,7 @@ import {
   dispatchInteractionActionService,
   resetInteractionDispatchState,
 } from "./interaction-dispatch.js";
+import { InteractionSendRejectedError } from "./interaction-service.js";
 
 /**
  * The API layer of the one action bridge. These fail if a dispatch can reach an
@@ -145,6 +146,30 @@ describe("dispatchInteractionActionService", () => {
     expect(await dispatchInteractionActionService(d, input)).toMatchObject({
       ok: false,
       error: "needs_connection",
+    });
+  });
+
+  it("keeps a missing connection distinct from a failed action", async () => {
+    // The effect path names why it refused. Collapsing that into `action_failed` is what made
+    // the card's button look dead: the client had nothing specific to say.
+    const refused = vi.fn(async () => {
+      throw new InteractionSendRejectedError("needs_connection", "Connect a calendar first");
+    });
+    const d = deps({});
+    d.runAction = refused;
+    expect(await dispatchInteractionActionService(d, input)).toMatchObject({
+      ok: false,
+      error: "needs_connection",
+    });
+
+    const broken = vi.fn(async () => {
+      throw new Error("provider exploded");
+    });
+    const other = deps({});
+    other.runAction = broken;
+    expect(await dispatchInteractionActionService(other, input)).toMatchObject({
+      ok: false,
+      error: "action_failed",
     });
   });
 });

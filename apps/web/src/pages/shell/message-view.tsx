@@ -1,4 +1,4 @@
-import { plural } from "@lingui/core/macro";
+import { plural, t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown, LinkifiedText, withBlockMentions } from "@matebot/chat-ui/web";
 import type {
@@ -9,7 +9,7 @@ import type {
 } from "@matebot/contracts";
 import type { ChildBotBlock, PeerExchange } from "@matebot/core";
 import { isPeerReceiptBlocks, isToolActivityBlock } from "@matebot/core";
-import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@matebot/ui-web";
+import { BotAvatar, Button, cn, resolvePersonaColorDef, toast } from "@matebot/ui-web";
 import { UserRound } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
@@ -40,6 +40,7 @@ import {
   shouldRenderToolCard,
   toolStepCount,
 } from "../../lib/tool-activity-view";
+import { errorText } from "../../lib/user-error";
 import { ReplyLine } from "./chat-context";
 import { FALLBACK_BOT_COLOR, previewMessageText } from "./chat-shared";
 import type { ImportSetupTarget } from "./import-setup-card";
@@ -61,6 +62,7 @@ export const MessageView = memo(function MessageView({
   mentions,
   pages,
   isPageSuperseded,
+  isSurfaceSuperseded,
   onAnswer,
   onOpenBot,
   onOpenPeerMessages,
@@ -96,6 +98,11 @@ export const MessageView = memo(function MessageView({
   pages?: readonly PageBlock[];
   /** Whether a later card in the chat shows the same page. */
   isPageSuperseded?: (messageId: string, block: PageBlock) => boolean;
+  /**
+   * Whether a later draft in this thread corrects this card's interaction, so it must not offer
+   * to create or send again.
+   */
+  isSurfaceSuperseded?: (block: { interactionId: string }) => boolean;
   onAnswer: (
     message: ThreadMessage,
     text: string,
@@ -501,6 +508,7 @@ export const MessageView = memo(function MessageView({
               <div key={i} className="flex justify-start">
                 <A2uiSurfaceCard
                   block={block}
+                  superseded={isSurfaceSuperseded?.(block) ?? false}
                   fetchDocument={
                     block.documentRef
                       ? async (documentRef) => {
@@ -589,13 +597,21 @@ export const MessageView = memo(function MessageView({
                       ? async (action) => {
                           const parsed = parseSurfaceAction(action);
                           if (!parsed) return;
-                          await rpc.threads.dispatchInteractionAction({
-                            ...(botId ? { botId } : { groupId: groupId! }),
-                            interactionId: parsed.interactionId,
-                            surfaceId: action.surfaceId,
-                            action: parsed.action,
-                            revision: parsed.revision,
-                          });
+                          try {
+                            await rpc.threads.dispatchInteractionAction({
+                              ...(botId ? { botId } : { groupId: groupId! }),
+                              interactionId: parsed.interactionId,
+                              surfaceId: action.surfaceId,
+                              action: parsed.action,
+                              revision: parsed.revision,
+                            });
+                          } catch (error) {
+                            // A refused action used to look like a dead button: nothing changed,
+                            // and nothing said why. Say it, and name the fix when the server says
+                            // the app is simply not connected yet.
+                            toast.error(actionFailureMessage(error));
+                            return;
+                          }
                           await onRefresh();
                         }
                       : undefined
@@ -821,6 +837,22 @@ export const MessageView = memo(function MessageView({
     </>
   );
 });
+
+/**
+ * What to say when a card's button was refused.
+ *
+ * The server refuses an action for reasons the user can act on — most often that the app the
+ * action needs is not connected — and the card used to swallow all of them, so pressing the
+ * button looked like nothing happened.
+ */
+function actionFailureMessage(error: unknown): string {
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? (error as { code?: unknown }).code
+      : undefined;
+  if (code === "needs_connection") return t`Connect the app this card needs, then try again.`;
+  return errorText(error);
+}
 
 /** A bot named inline in its color. A deleted, archived, or missing bot keeps only its name. */
 function BotMention({

@@ -11,7 +11,13 @@ export const DEFAULT_LOCAL_WEB_URL = "http://127.0.0.1:45173";
  * any other. The constant keeps its historical name because `passkeys.ts`, the
  * setup IPC contract, and the tests all read it.
  */
-export const MATEBOT_CLOUD_URL = "https://test.matebot.dev";
+/**
+ * The hosted app a new install can pick in one click.
+ *
+ * This is the app origin, which serves `/rpc/health`; the marketing site is a separate host and
+ * answers that probe with 405, so pointing the preset at it made the default choice a dead end.
+ */
+export const MATEBOT_CLOUD_URL = "https://app.matebot.dev";
 export const PROBE_RESPONSE_LIMIT_BYTES = 64 * 1024;
 
 export const SETUP_FILE_NAME = "setup.json";

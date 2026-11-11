@@ -6,6 +6,7 @@ import {
   pageLinksAsTitles,
   pageReply,
   pageReplyTargetId,
+  surfaceCardIsLive,
   uniquePages,
 } from "./page-links.js";
 
@@ -108,6 +109,46 @@ describe("pageCardSuperseded", () => {
     // A card folded under the reply after it is that reply's card.
     const folded = newestPageCards(thread, (id) => (id === "m3" ? "m4" : id));
     expect(pageCardSuperseded(folded, "m4", { pageId: "p1", version: 2 })).toBe(false);
+  });
+});
+
+describe("surfaceCardIsLive", () => {
+  it("keeps only the draft nothing corrects", () => {
+    // Asking for a change publishes a new interaction naming the one it corrects, so the thread
+    // holds a chain. Every card in it used to keep a working Create button.
+    const cards = [{ interactionId: "i1" }, { interactionId: "i2", amendsInteractionId: "i1" }];
+    const live = surfaceCardIsLive(cards);
+    expect(live("i1")).toBe(false);
+    expect(live("i2")).toBe(true);
+  });
+
+  it("follows a chain of corrections, not just one step", () => {
+    const cards = [
+      { interactionId: "i1" },
+      { interactionId: "i2", amendsInteractionId: "i1" },
+      { interactionId: "i3", amendsInteractionId: "i2" },
+    ];
+    const live = surfaceCardIsLive(cards);
+    expect(live("i1")).toBe(false);
+    expect(live("i2")).toBe(false);
+    expect(live("i3")).toBe(true);
+  });
+
+  it("leaves cards for different effects alone", () => {
+    const cards = [
+      { interactionId: "calendar" },
+      { interactionId: "email" },
+      { interactionId: "calendar-2", amendsInteractionId: "calendar" },
+    ];
+    const live = surfaceCardIsLive(cards);
+    expect(live("email")).toBe(true);
+    expect(live("calendar-2")).toBe(true);
+    expect(live("calendar")).toBe(false);
+  });
+
+  it("marks an unamended draft live even beside unrelated corrections", () => {
+    const cards = [{ interactionId: "a" }, { interactionId: "b", amendsInteractionId: "a" }];
+    expect(surfaceCardIsLive(cards)("b")).toBe(true);
   });
 });
 

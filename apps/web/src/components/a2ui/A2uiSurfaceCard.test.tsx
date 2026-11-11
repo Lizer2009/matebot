@@ -36,11 +36,34 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderCard(block: A2uiSurfaceBlock, messages?: unknown[]) {
-  act(() => root.render(<A2uiSurfaceCard block={block} messages={messages} />));
+function renderCard(block: A2uiSurfaceBlock, messages?: unknown[], superseded?: boolean) {
+  act(() =>
+    root.render(
+      <A2uiSurfaceCard
+        block={block}
+        messages={messages}
+        {...(superseded === undefined ? {} : { superseded })}
+      />,
+    ),
+  );
 }
 
 describe("A2uiSurfaceCard", () => {
+  it("shows a corrected draft as replaced and offers nothing to press", () => {
+    // Two cards for the same event each had a working Create button, so a user could create it
+    // twice, and the older button gave no sign it was stale.
+    renderCard(
+      fixtureA2uiSurfaceBlock({ documentRef: undefined, title: "Old draft" }),
+      undefined,
+      true,
+    );
+    expect(
+      container.querySelector('[data-testid="a2ui-surface-superseded"]')?.textContent,
+    ).toContain("Replaced by a newer draft below");
+    expect(container.querySelector('[data-testid="a2ui-surface-host"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-surface-placeholder"]')).toBeNull();
+  });
+
   it("shows title and placeholder without a document", () => {
     renderCard(
       fixtureA2uiSurfaceBlock({

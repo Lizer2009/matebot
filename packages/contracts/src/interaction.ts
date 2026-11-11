@@ -403,6 +403,8 @@ export const InteractionDispatchError = z.enum([
   "forbidden",
   "invalid_schema",
   "action_failed",
+  /** The app the action needs is not connected, so the user must connect it before retrying. */
+  "needs_connection",
 ]);
 export type InteractionDispatchError = z.infer<typeof InteractionDispatchError>;
 

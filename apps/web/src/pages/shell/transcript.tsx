@@ -16,6 +16,7 @@ import {
   peerExchangeLines,
   projectBotMentions,
   projectMessageReactions,
+  surfaceCardIsLive,
   timeSeparatorIds,
   unreadDividerMessageId,
   voiceChatHoldsMessage,
@@ -208,13 +209,47 @@ export const Transcript = memo(function Transcript({
     if (committed.cardsKey === view.cardsKey) view.isSuperseded = committed.isSuperseded;
     return view;
   }, [mentionView]);
+  /**
+   * Which interaction cards are still the current draft for their effect. A correction is
+   * published as a new interaction naming the one it replaces, so every card in the chain is on
+   * screen; only the ones nothing corrects may keep a working button.
+   *
+   * The predicate keeps its identity while the set of corrected interactions is unchanged. A new
+   * function here reaches every memoized message and re-renders the whole transcript.
+   */
+  const committedSurfaces = useRef<{
+    key: string;
+    isSuperseded: (block: { interactionId: string }) => boolean;
+  } | null>(null);
+  const surfaceView = useMemo(() => {
+    const cards = mentionView.visibleMessages.flatMap((message) =>
+      message.blocks.flatMap((block) =>
+        block.kind === "a2ui_surface"
+          ? [{ interactionId: block.interactionId, amendsInteractionId: block.amendsInteractionId }]
+          : [],
+      ),
+    );
+    const key = cards
+      .map((card) => card.amendsInteractionId)
+      .filter((id): id is string => Boolean(id))
+      .sort()
+      .join(",");
+    const previous = committedSurfaces.current;
+    if (previous?.key === key) return previous;
+    const isLive = surfaceCardIsLive(cards);
+    return {
+      key,
+      isSuperseded: (block: { interactionId: string }) => !isLive(block.interactionId),
+    };
+  }, [mentionView]);
   // A progress tick rebuilds these views. The jump still reads the latest folds, without a new
   // callback that would rerender every memoized message.
-  const foldViews = useRef({ mentionView, pageView });
+  const foldViews = useRef({ mentionView, pageView, surfaceView });
   useLayoutEffect(() => {
-    foldViews.current = { mentionView, pageView };
+    foldViews.current = { mentionView, pageView, surfaceView };
     committedMentions.current = mentionView.mentions;
     committedPages.current = pageView;
+    committedSurfaces.current = surfaceView;
   }, [mentionView, pageView]);
   const jumpToMessage = useCallback(
     (messageId: string) => {
@@ -598,6 +633,7 @@ export const Transcript = memo(function Transcript({
                       mentions={mentionView.mentions.get(message.id)}
                       pages={pageView.pages.get(message.id)}
                       isPageSuperseded={pageView.isSuperseded}
+                      isSurfaceSuperseded={surfaceView.isSuperseded}
                       canAnswer={answerableAskIds.has(message.id)}
                       canDismiss={dismissableAskIds.has(message.id)}
                       onOpenBot={onOpenBot}

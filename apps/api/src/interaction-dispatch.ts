@@ -3,6 +3,7 @@ import { InteractionSurfaceSchema as InteractionSurfaceSchemaZ } from "@matebot/
 import type { SurfaceStatus } from "@matebot/core";
 import { canDispatchSurfaceAction, timingFields } from "@matebot/core";
 import { getLogger } from "@matebot/logging";
+import { codeOf } from "./interaction-run-action.js";
 
 /**
  * The API half of the action bridge: everything the browser claims is checked
@@ -119,9 +120,12 @@ export async function dispatchInteractionActionService(
       revision: input.revision,
       row,
     });
-  } catch {
+  } catch (error) {
     clicks.delete(key);
-    return { ok: false, error: "action_failed" };
+    // The effect path already names why it refused (a missing connection, an unconfirmed draft).
+    // Replacing that with a single `action_failed` is what left the card's button looking dead:
+    // the client had nothing specific to say. Carry the code the service chose.
+    return { ok: false, error: codeOf(error) };
   }
   if (!outcome.ok) {
     clicks.delete(key);

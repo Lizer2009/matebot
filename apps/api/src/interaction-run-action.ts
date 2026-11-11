@@ -51,7 +51,7 @@ export type ConfirmThenExecuteInput = {
 };
 
 /** The error code a rejected service call carries, when it has one. */
-function codeOf(error: unknown): string {
+export function codeOf(error: unknown): string {
   const code = (error as { code?: unknown } | null)?.code;
   return typeof code === "string" && code ? code : "action_failed";
 }

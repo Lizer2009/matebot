@@ -160,6 +160,30 @@ export function pageCardSuperseded(
   return latest !== undefined && latest !== `${messageId}:${block.version}`;
 }
 
+/**
+ * Which surface cards a thread should keep live.
+ *
+ * An interaction card is a draft of one external effect. Asking for a change publishes a new
+ * interaction that names the one it corrects (`amendsInteractionId`), so a thread accumulates a
+ * chain of drafts for the same effect — and every one of them stayed on screen with its own
+ * working button. Two cards then offered to create the same calendar event, and pressing the older
+ * one either did nothing visible or created a second copy.
+ *
+ * A card is live only when nothing corrects it. Following the chain is what makes that true for
+ * edits of edits, and it needs no new storage: the link is already on the published block.
+ */
+export function surfaceCardIsLive(
+  cards: readonly { interactionId: string; amendsInteractionId?: string | undefined }[],
+): (interactionId: string) => boolean {
+  const amended = new Set<string>();
+  for (const card of cards) {
+    if (card.amendsInteractionId) amended.add(card.amendsInteractionId);
+  }
+  // An id only present as the target of a correction is not itself a card in this list, so it
+  // cannot be live here; that is correct, its replacement is the card being shown.
+  return (interactionId: string) => !amended.has(interactionId);
+}
+
 /** The newest card for the page: a reply to it gives the bot an id that outlives renames. */
 export function pageReplyTargetId(
   messages: readonly { id: string; blocks: readonly MessageBlock[] }[],

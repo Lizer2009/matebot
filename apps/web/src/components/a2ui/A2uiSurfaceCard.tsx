@@ -17,6 +17,7 @@ import { useA2uiSurfaceDocument } from "./use-a2ui-surface-document";
  */
 export function A2uiSurfaceCard({
   block,
+  superseded = false,
   messages,
   fetchDocument,
   onFieldChange,
@@ -28,6 +29,11 @@ export function A2uiSurfaceCard({
   onDiscard,
 }: {
   block: A2uiSurfaceBlock;
+  /**
+   * A later draft in this thread corrects this one. Its buttons must not act: two live cards for
+   * the same event let a user create it twice, and the older card's button looked identical.
+   */
+  superseded?: boolean;
   /** Optional protocol messages; fixture documentRef fills this when omitted. */
   messages?: unknown[];
   /** Load a persisted documentRef from the API when not a fixture. */
@@ -89,93 +95,102 @@ export function A2uiSurfaceCard({
           ) : null}
         </div>
       )}
-      <div className="px-5 py-4">
-        {emailCompose ? (
-          <EmailComposeEditor
-            draftVersion={block.draftVersion}
-            confirmedVersion={block.confirmedVersion}
-            capability={block.capability}
-            template={block.template}
-            lifecycle={block.lifecycle}
-            providerMessageId={block.providerMessageId}
-            error={block.error}
-            fields={emailFieldsFromSurfaceMessages(document.messages)}
-            {...(block.senderLabel ? { senderLabel: block.senderLabel } : {})}
-            onFieldChange={onFieldChange}
-            onConfirm={onConfirm}
-            onSend={onSend}
-            onConnect={onConnect}
-            onCheckStatus={onCheckStatus}
-            onDiscard={onDiscard}
-          />
-        ) : document.messages ? (
-          <>
-            <A2uiSurfaceHost
-              surfaceId={block.surfaceId}
-              messages={document.messages}
-              onAction={onAction}
+      {superseded ? (
+        <div
+          data-testid="a2ui-surface-superseded"
+          className="px-5 py-4 text-[14px] leading-[20px] text-muted-foreground"
+        >
+          <Trans>Replaced by a newer draft below.</Trans>
+        </div>
+      ) : (
+        <div className="px-5 py-4">
+          {emailCompose ? (
+            <EmailComposeEditor
+              draftVersion={block.draftVersion}
+              confirmedVersion={block.confirmedVersion}
+              capability={block.capability}
+              template={block.template}
+              lifecycle={block.lifecycle}
+              providerMessageId={block.providerMessageId}
+              error={block.error}
+              fields={emailFieldsFromSurfaceMessages(document.messages)}
+              {...(block.senderLabel ? { senderLabel: block.senderLabel } : {})}
+              onFieldChange={onFieldChange}
+              onConfirm={onConfirm}
+              onSend={onSend}
+              onConnect={onConnect}
+              onCheckStatus={onCheckStatus}
+              onDiscard={onDiscard}
             />
-            {/*
+          ) : document.messages ? (
+            <>
+              <A2uiSurfaceHost
+                surfaceId={block.surfaceId}
+                messages={document.messages}
+                onAction={onAction}
+              />
+              {/*
               An early card stored a title and two lines of text, and nothing to press.
               The turn around it may still say "confirm in the card above", which nothing
               here can satisfy. It cannot grow the button that was never stored, so it
               says what is missing and offers a way forward.
             */}
-            {needsRecovery(document.messages, { intent: block.intent }) ? (
-              <div
-                data-testid="a2ui-surface-recovery"
-                className="mt-3 flex flex-col gap-2 border-t border-border/60 pt-3 text-[14px] text-muted-foreground"
-              >
-                <span>
-                  <Trans>
-                    This is an older card: it was saved before cards could be edited, so it has
-                    nothing to fill in or confirm.
-                  </Trans>
-                </span>
-                <span>
-                  <Trans>Ask for the draft again to get an editable card.</Trans>
-                </span>
-              </div>
-            ) : null}
-          </>
-        ) : (
-          /**
-           * Never a blank region. A published card whose document has not arrived,
-           * or whose load failed, says so and offers a way forward; the audit found
-           * an empty frame here where a calendar card should have been.
-           */
-          <div
-            data-testid="a2ui-surface-placeholder"
-            data-loading={document.loading ? "true" : "false"}
-            data-error={document.error ?? undefined}
-            role="status"
-            aria-live="polite"
-            className="flex flex-col gap-2 text-[14px] text-muted-foreground"
-          >
-            {document.loading ? (
-              <span>
-                <Trans>Loading this card…</Trans>
-              </span>
-            ) : (
-              <>
-                <span>
-                  <Trans>This card could not be shown.</Trans>
-                </span>
-                {document.error ? (
-                  <span data-testid="a2ui-surface-placeholder-reason" className="text-[13px]">
-                    {document.error}
+              {needsRecovery(document.messages, { intent: block.intent }) ? (
+                <div
+                  data-testid="a2ui-surface-recovery"
+                  className="mt-3 flex flex-col gap-2 border-t border-border/60 pt-3 text-[14px] text-muted-foreground"
+                >
+                  <span>
+                    <Trans>
+                      This is an older card: it was saved before cards could be edited, so it has
+                      nothing to fill in or confirm.
+                    </Trans>
                   </span>
-                ) : null}
-                <div>
-                  <Button variant="secondary" onClick={() => document.reload()}>
-                    <Trans>Try again</Trans>
-                  </Button>
+                  <span>
+                    <Trans>Ask for the draft again to get an editable card.</Trans>
+                  </span>
                 </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+              ) : null}
+            </>
+          ) : (
+            /**
+             * Never a blank region. A published card whose document has not arrived,
+             * or whose load failed, says so and offers a way forward; the audit found
+             * an empty frame here where a calendar card should have been.
+             */
+            <div
+              data-testid="a2ui-surface-placeholder"
+              data-loading={document.loading ? "true" : "false"}
+              data-error={document.error ?? undefined}
+              role="status"
+              aria-live="polite"
+              className="flex flex-col gap-2 text-[14px] text-muted-foreground"
+            >
+              {document.loading ? (
+                <span>
+                  <Trans>Loading this card…</Trans>
+                </span>
+              ) : (
+                <>
+                  <span>
+                    <Trans>This card could not be shown.</Trans>
+                  </span>
+                  {document.error ? (
+                    <span data-testid="a2ui-surface-placeholder-reason" className="text-[13px]">
+                      {document.error}
+                    </span>
+                  ) : null}
+                  <div>
+                    <Button variant="secondary" onClick={() => document.reload()}>
+                      <Trans>Try again</Trans>
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
