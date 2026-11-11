@@ -78,8 +78,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $root = "apps/desktop/out/win-unpacked/resources/app.asar.unpacked/node_modules"
-          if (-not (Test-Path $root)) { throw "No unpacked native modules were produced." }
+          $root = "apps/desktop/out/win-unpacked/resources/app.asar.unpacked/node_modules/@koromix"
+          if (-not (Test-Path $root)) { throw "No unpacked koffi modules were produced at $root." }
           $koffi = @(Get-ChildItem $root -Directory -Filter "koffi-*" | Select-Object -ExpandProperty Name)
           if ($koffi -notcontains "koffi-win32-x64") {
             throw "The packaged app is missing koffi-win32-x64 (found: $($koffi -join ', '))."

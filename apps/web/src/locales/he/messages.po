@@ -1744,6 +1744,14 @@ msgstr ""
 msgid "Connect OAuth"
 msgstr "חיבור OAuth"
 
+#: src/lib/user-error.ts
+msgid "Connect the app first, then try again."
+msgstr ""
+
+#: src/pages/shell/message-view.tsx
+msgid "Connect the app this card needs, then try again."
+msgstr ""
+
 #: src/lib/agent-import-errors.ts
 msgid "Connect this model's provider first."
 msgstr "יש לחבר קודם את הספק של המודל הזה."
@@ -5388,6 +5396,10 @@ msgstr "החלפת מפתח API"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "החלפת מפתח"
+
+#: src/components/a2ui/A2uiSurfaceCard.tsx
+msgid "Replaced by a newer draft below."
+msgstr ""
 
 #. placeholder {0}: block.replaces.origin
 #. placeholder {0}: initial.replacedSite
