@@ -59,6 +59,17 @@ export function asConnectorTools(input: unknown): ConnectorTool[] {
   return tools;
 }
 
+function declaredReadOnly(raw: Record<string, unknown>): boolean | undefined {
+  if (typeof raw.readOnly === "boolean") return raw.readOnly;
+  if (typeof raw.read_only === "boolean") return raw.read_only;
+  const annotations = raw.annotations;
+  if (annotations && typeof annotations === "object" && !Array.isArray(annotations)) {
+    const hint = (annotations as Record<string, unknown>).readOnlyHint;
+    if (typeof hint === "boolean") return hint;
+  }
+  return undefined;
+}
+
 function mapOneTool(item: unknown): ConnectorTool | undefined {
   if (!item || typeof item !== "object") return undefined;
   const raw = item as Record<string, unknown>;
@@ -66,16 +77,19 @@ function mapOneTool(item: unknown): ConnectorTool | undefined {
     const fn = raw.function as Record<string, unknown>;
     const name = String(fn.name ?? "");
     if (!name) return undefined;
+    const readOnly = declaredReadOnly(fn) ?? declaredReadOnly(raw);
     return {
       name,
       description: String(fn.description ?? name),
       inputSchema: asObject(fn.parameters) ?? { type: "object", properties: {} },
       batch: composioToolBatch(name),
       route: { connectorId: "composio", toolName: name },
+      ...(readOnly === undefined ? {} : { readOnly }),
     };
   }
   const name = String(raw.slug ?? raw.name ?? "");
   if (!name) return undefined;
+  const readOnly = declaredReadOnly(raw);
   return {
     name,
     description: String(raw.description ?? name),
@@ -84,6 +98,7 @@ function mapOneTool(item: unknown): ConnectorTool | undefined {
       asObject(raw.parameters) ?? { type: "object", properties: {} },
     batch: composioToolBatch(name),
     route: { connectorId: "composio", toolName: name },
+    ...(readOnly === undefined ? {} : { readOnly }),
   };
 }
 

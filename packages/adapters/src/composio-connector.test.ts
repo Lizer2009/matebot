@@ -182,6 +182,28 @@ describe("composio tool mapping", () => {
     ]);
   });
 
+  it("copies explicit readOnly metadata and leaves unmarked tools without the flag", () => {
+    const tools = asConnectorTools([
+      {
+        slug: "GMAIL_GET_PROFILE",
+        description: "Profile",
+        readOnly: true,
+      },
+      {
+        type: "function",
+        function: {
+          name: "GMAIL_SEND_EMAIL",
+          description: "Send",
+          annotations: { readOnlyHint: false },
+        },
+      },
+      { slug: "HACKERNEWS_GET_USER", description: "HN" },
+    ]);
+    expect(tools[0]?.readOnly).toBe(true);
+    expect(tools[1]?.readOnly).toBe(false);
+    expect(tools[2]?.readOnly).toBeUndefined();
+  });
+
   it("retains provider route metadata independently of the tool name", async () => {
     const destination = new DestinationEmulator();
     const events: ConnectorEvent[] = [];
