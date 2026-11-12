@@ -64,12 +64,19 @@ describe("capability registry", () => {
   it("returns nothing for an unregistered intent, so callers can fall back", () => {
     expect(findInteractionCapability("github.clone")).toBeUndefined();
     expect(findInteractionCapability("sales.annualTrend")).toBeUndefined();
+    expect(findInteractionCapability("test.form")).toBeUndefined();
     expect(interactionCapabilityForIntent("github.clone")).toBeUndefined();
   });
 
   it("exposes the registered intents for the prompt and docs to stay in sync", () => {
     expect(interactionIntents()).toEqual(
       expect.arrayContaining(["email.compose", "calendar.create"]),
+    );
+  });
+
+  it("exposes exactly the four product intents", () => {
+    expect(interactionIntents().sort()).toEqual(
+      ["calendar.create", "calendar.query", "email.compose", "interaction.result"].sort(),
     );
   });
 

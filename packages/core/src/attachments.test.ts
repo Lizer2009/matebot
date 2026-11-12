@@ -294,6 +294,23 @@ describe("a2ui surface history", () => {
       ]),
     ).toBe("[card: a2ui_surface → draft]");
   });
+
+  it("projects an unregistered test.form intent from the block", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "test.form",
+          lifecycle: "draft",
+          summary: "note: hello",
+        },
+      ]),
+    ).toBe("[card: test.form → draft (note: hello)]");
+  });
 });
 
 describe("artifactTypeLabel", () => {

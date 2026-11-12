@@ -26,7 +26,7 @@ export type InteractionCapability = {
    */
   requiresConnection: InteractionRequiredApp | null;
   /** ExternalEffect kind the action creates, or null for a read-only surface. */
-  effectKind: "email.send" | "calendar.create" | null;
+  effectKind: string | null;
   /** Read-only capabilities may render a result without any connection. */
   readOnly: boolean;
   /**

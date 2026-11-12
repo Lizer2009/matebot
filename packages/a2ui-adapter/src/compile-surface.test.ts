@@ -306,4 +306,23 @@ describe("compileInteractionSurface", () => {
     expect(model.revision).toBe(7);
     expect(model.interactionId).toBe("ix-1");
   });
+
+  it("compiles a third-domain form without email templates", async () => {
+    const schema: InteractionSurfaceSchema = {
+      schemaVersion: 1,
+      presentation: "form",
+      fields: [{ name: "note", label: "Note", kind: "text", required: true, maxLength: 80 }],
+      action: { id: "save", label: "Save", requiresRevision: true },
+    };
+    const result = await compileInteractionSurface({
+      schema,
+      values: { note: "hello" },
+      surfaceId: "s-test",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const components = componentsOf(result.messages);
+    expect(components.some((component) => component.component === "TextField")).toBe(true);
+    expect(JSON.stringify(result.messages)).not.toMatch(/email-draft-card|email.compose/);
+  });
 });
