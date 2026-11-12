@@ -135,7 +135,7 @@ export class PipedreamConnector implements ManagedConnectorProvider {
   private accessTokenRequest?: Promise<string>;
   private directory?: { value: PipedreamApp[]; expiresAt: number };
   private directoryRequest?: Promise<PipedreamApp[]>;
-  /** Reason embedded in each `pipedream__<app>__unavailable` tool, keyed by app slug. */
+  /** Last discovery failure per `${spaceId} ${userId} ${app}`, repeated when that placeholder is called. */
   private readonly unavailableReasons = new Map<string, string>();
 
   constructor(
@@ -193,45 +193,66 @@ export class PipedreamConnector implements ManagedConnectorProvider {
         ?.filter((connection) => connection.connectorId === "pipedream")
         .map((connection) => connection.externalId) ?? [];
     if (apps.length === 0) return [];
-    const token = await this.token();
+    const uniqueApps = [...new Set(apps)];
+    let token: string;
+    try {
+      token = await this.token();
+    } catch (error) {
+      const reason = sanitizeConnectorError(error);
+      getLogger().error("pipedream discovery failed before listing", reason);
+      return uniqueApps.flatMap((app) => this.unavailablePlaceholder(context, app, reason));
+    }
     const groups = await Promise.all(
-      [...new Set(apps)].map(async (app) => {
+      uniqueApps.map(async (app) => {
         try {
           const accounts = approvedAccounts(context, app);
-          return (
-            await Promise.all(
-              accounts.map(async (account) => {
-                try {
-                  const tools = await listRemoteMcpTools({
-                    endpoint: MCP_ENDPOINT,
-                    headers: this.mcpHeaders(context, app, account.id, token),
-                    signal: context.signal,
-                    fetch: this.dependencies.fetch,
-                    resolveHostname: this.dependencies.resolveHostname,
-                  });
-                  return scopeConnectorTools(tools, {
+          const listed = await Promise.all(
+            accounts.map(async (account) => {
+              try {
+                const tools = await listRemoteMcpTools({
+                  endpoint: MCP_ENDPOINT,
+                  headers: this.mcpHeaders(context, app, account.id, token),
+                  signal: context.signal,
+                  fetch: this.dependencies.fetch,
+                  resolveHostname: this.dependencies.resolveHostname,
+                });
+                return {
+                  ok: true as const,
+                  tools: scopeConnectorTools(tools, {
                     id: account.connectionId,
                     connectorId: "pipedream",
                     externalId: app,
                     displayName: account.label,
                     providerRef: account.id,
-                  });
-                } catch (error) {
-                  const reason = sanitizeConnectorError(error);
-                  getLogger().error("pipedream account discovery failed", reason, {
-                    "connector.app": app,
-                    "connection.id": account.connectionId,
-                  });
-                  return this.unavailablePlaceholder(app, reason);
-                }
-              }),
-            )
-          ).flat();
+                  }),
+                };
+              } catch (error) {
+                const reason = sanitizeConnectorError(error);
+                getLogger().error("pipedream account discovery failed", reason, {
+                  "connector.app": app,
+                  "connection.id": account.connectionId,
+                });
+                return { ok: false as const, reason };
+              }
+            }),
+          );
+          const available = listed.flatMap((entry) => (entry.ok ? entry.tools : []));
+          if (available.length > 0) {
+            this.unavailableReasons.delete(this.unavailableKey(context, app));
+            return available;
+          }
+          // An account that listed, even with an empty catalog, means this app is not fully down.
+          if (listed.some((entry) => entry.ok)) return [];
+          const failed = listed.find(
+            (entry): entry is { ok: false; reason: string } => !entry.ok,
+          );
+          if (failed) return this.unavailablePlaceholder(context, app, failed.reason);
+          return [];
         } catch (error) {
           // A single unavailable app must not hide tools from other connections.
           const reason = sanitizeConnectorError(error);
           getLogger().error(`pipedream discovery failed for app ${app}:`, reason);
-          return this.unavailablePlaceholder(app, reason);
+          return this.unavailablePlaceholder(context, app, reason);
         }
       }),
     );
@@ -259,8 +280,16 @@ export class PipedreamConnector implements ManagedConnectorProvider {
     ];
   }
 
-  private unavailablePlaceholder(app: string, reason: string): ConnectorTool[] {
-    this.unavailableReasons.set(app, unavailableBrief(reason));
+  private unavailableKey(context: AdapterContext, app: string): string {
+    return `${context.spaceId} ${context.userId} ${app}`;
+  }
+
+  private unavailablePlaceholder(
+    context: AdapterContext,
+    app: string,
+    reason: string,
+  ): ConnectorTool[] {
+    this.unavailableReasons.set(this.unavailableKey(context, app), unavailableBrief(reason));
     return [pipedreamUnavailableTool(app, reason)];
   }
 
@@ -277,10 +306,11 @@ export class PipedreamConnector implements ManagedConnectorProvider {
   async *execute(call: ConnectorCall, context: AdapterContext): AsyncIterable<ConnectorEvent> {
     const unavailableApp = pipedreamUnavailableApp(call);
     if (unavailableApp) {
-      let reason = this.unavailableReasons.get(unavailableApp);
+      const key = this.unavailableKey(context, unavailableApp);
+      let reason = this.unavailableReasons.get(key);
       if (!reason) {
         await this.allTools(context);
-        reason = this.unavailableReasons.get(unavailableApp);
+        reason = this.unavailableReasons.get(key);
       }
       yield {
         type: "error",

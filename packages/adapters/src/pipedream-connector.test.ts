@@ -82,6 +82,20 @@ function pipedreamMcpFetch(
   });
 }
 
+const PIPEDREAM_UNAVAILABLE_FALLBACK =
+  "The app is assigned but its tools could not be listed. Ask the user to reconnect rather than using shell to write a client.";
+
+function reasonShownToTheModel(tool: { description: string }): string {
+  const prefix = "Reason: ";
+  const suffix = ". Tell the user to reconnect rather than using shell to write a client.";
+  const start = tool.description.indexOf(prefix);
+  const end = tool.description.indexOf(suffix);
+  if (start < 0 || end < start) {
+    throw new Error(`placeholder description has no reason: ${tool.description}`);
+  }
+  return tool.description.slice(start + prefix.length, end);
+}
+
 function connectedContext(...apps: string[]): AdapterContext {
   return {
     ...context,
@@ -93,6 +107,65 @@ function connectedContext(...apps: string[]): AdapterContext {
       providerRef: `apn_${app}`,
     })),
   };
+}
+
+function accountContext(
+  spaceId: string,
+  userId: string,
+  rows: Array<{ app: string; providerRef: string }>,
+): AdapterContext {
+  return {
+    ...context,
+    spaceId,
+    userId,
+    operationId: `pipedream-${spaceId}-${userId}`,
+    traceId: `pipedream-${spaceId}-${userId}`,
+    connectedConnections: rows.map((row, index) => ({
+      id: `connection-${spaceId}-${userId}-${index}`,
+      connectorId: "pipedream",
+      externalId: row.app,
+      displayName: row.app,
+      providerRef: row.providerRef,
+    })),
+  };
+}
+
+function keyedOutageFetch() {
+  const down = new Map<string, string>([
+    ["apn_alpha", "alpha outage"],
+    ["apn_beta", "beta outage"],
+    ["apn_gamma", "gamma outage"],
+    ["apn_delta", "delta outage"],
+  ]);
+  const healthy = pipedreamMcpFetch({ gmail: ["send_email"], slack: ["list_channels"] });
+  const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+    const request = input instanceof Request ? input : new Request(input, init);
+    const account = request.headers.get("x-pd-account-id");
+    const reason = account ? down.get(account) : undefined;
+    if (reason) throw new Error(reason);
+    return healthy(input, init);
+  });
+  return { down, fetch };
+}
+
+async function executePlaceholder(
+  connector: PipedreamConnector,
+  tool: { name: string; route?: { connectorId: string; resourceId?: string; toolName?: string } },
+  ctx: AdapterContext,
+) {
+  const events = [];
+  for await (const event of connector.execute(
+    {
+      tool: tool.name,
+      args: {},
+      executionId: `${ctx.spaceId}-${ctx.userId}-${tool.name}`,
+      route: tool.route,
+    },
+    ctx,
+  )) {
+    events.push(event);
+  }
+  return events;
 }
 
 function appTools(app: string, count: number): Record<string, string[]> {
@@ -694,13 +767,134 @@ describe("PipedreamConnector", () => {
     expect(JSON.stringify(tools[1]?.inputSchema)).toContain("schema-apn_home");
     failWork = true;
     const remaining = await connector.discoverTools(ctx);
-    expect(remaining.map((tool) => tool.name)).toEqual([
-      "pipedream__gmail__unavailable",
-      tools[1]?.name,
+    expect(remaining.map((tool) => tool.name)).toEqual([tools[1]?.name]);
+    expect(remaining.some((tool) => tool.name === "pipedream__gmail__unavailable")).toBe(false);
+
+    const events = [];
+    for await (const event of connector.execute(
+      {
+        tool: "pipedream__gmail__unavailable",
+        args: {},
+        executionId: "gmail-sibling",
+        route: { connectorId: "pipedream", resourceId: "gmail", toolName: "unavailable" },
+      },
+      ctx,
+    )) {
+      events.push(event);
+    }
+    expect(events).toEqual([{ type: "error", message: PIPEDREAM_UNAVAILABLE_FALLBACK }]);
+  });
+
+  it("offers one unavailable tool when every gmail account fails", async () => {
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const request = new Request(input, init);
+      if (new URL(request.url).pathname === "/v1/oauth/token") {
+        return Response.json({ access_token: "fake-access-token", expires_in: 3_600 });
+      }
+      return new Response("both accounts down", { status: 503 });
+    });
+    const connector = new PipedreamConnector(FAKE_CONFIG, { ...TEST_NETWORK, fetch });
+    const tools = await connector.discoverTools(gmailContext("apn_work", "apn_home"));
+    expect(tools.map((tool) => tool.name)).toEqual(["pipedream__gmail__unavailable"]);
+    expect(tools.some((tool) => tool.name.includes("send_email"))).toBe(false);
+  });
+
+  it("keeps unavailable reasons for this space, user, and app", async () => {
+    const { fetch } = keyedOutageFetch();
+    const connector = new PipedreamConnector(FAKE_CONFIG, { ...TEST_NETWORK, fetch });
+    const userA = accountContext("space-a", "user-a", [
+      { app: "gmail", providerRef: "apn_alpha" },
+      { app: "slack", providerRef: "apn_gamma" },
     ]);
-    expect(remaining[0]).toEqual(
-      expect.objectContaining({ name: "pipedream__gmail__unavailable", readOnly: true }),
-    );
+    const userB = accountContext("space-a", "user-b", [{ app: "gmail", providerRef: "apn_beta" }]);
+    const sameUserOtherSpace = accountContext("space-b", "user-a", [
+      { app: "gmail", providerRef: "apn_delta" },
+    ]);
+    const toolsA = await connector.discoverTools(userA);
+    const toolsB = await connector.discoverTools(userB);
+    const toolsOther = await connector.discoverTools(sameUserOtherSpace);
+    const gmailA = toolsA.find((tool) => tool.name === "pipedream__gmail__unavailable");
+    const slackA = toolsA.find((tool) => tool.name === "pipedream__slack__unavailable");
+    const gmailB = toolsB.find((tool) => tool.name === "pipedream__gmail__unavailable");
+    const gmailOther = toolsOther.find((tool) => tool.name === "pipedream__gmail__unavailable");
+
+    expect(await executePlaceholder(connector, gmailA!, userA)).toEqual([
+      { type: "error", message: reasonShownToTheModel(gmailA!) },
+    ]);
+    expect(reasonShownToTheModel(gmailA!)).toContain("alpha outage");
+    expect(await executePlaceholder(connector, slackA!, userA)).toEqual([
+      { type: "error", message: reasonShownToTheModel(slackA!) },
+    ]);
+    expect(reasonShownToTheModel(slackA!)).toContain("gamma outage");
+    expect(await executePlaceholder(connector, gmailB!, userB)).toEqual([
+      { type: "error", message: reasonShownToTheModel(gmailB!) },
+    ]);
+    expect(await executePlaceholder(connector, gmailOther!, sameUserOtherSpace)).toEqual([
+      { type: "error", message: reasonShownToTheModel(gmailOther!) },
+    ]);
+  });
+
+  it("drops that user and app reason after a later listing succeeds", async () => {
+    const { down, fetch } = keyedOutageFetch();
+    const connector = new PipedreamConnector(FAKE_CONFIG, { ...TEST_NETWORK, fetch });
+    const userA = accountContext("space-a", "user-a", [
+      { app: "gmail", providerRef: "apn_alpha" },
+      { app: "slack", providerRef: "apn_gamma" },
+    ]);
+    const userB = accountContext("space-a", "user-b", [{ app: "gmail", providerRef: "apn_beta" }]);
+    const sameUserOtherSpace = accountContext("space-b", "user-a", [
+      { app: "gmail", providerRef: "apn_delta" },
+    ]);
+    const failedA = await connector.discoverTools(userA);
+    const toolsB = await connector.discoverTools(userB);
+    const toolsOther = await connector.discoverTools(sameUserOtherSpace);
+    const staleGmail = failedA.find((tool) => tool.name === "pipedream__gmail__unavailable")!;
+    const slackA = failedA.find((tool) => tool.name === "pipedream__slack__unavailable")!;
+    down.delete("apn_alpha");
+
+    const recovered = await connector.discoverTools(userA);
+    expect(recovered.some((tool) => tool.name === "pipedream__gmail__unavailable")).toBe(false);
+    expect(recovered.some((tool) => tool.name.startsWith("send_email"))).toBe(true);
+    expect(recovered.some((tool) => tool.name === "pipedream__slack__unavailable")).toBe(true);
+
+    expect(await executePlaceholder(connector, staleGmail, userA)).toEqual([
+      { type: "error", message: PIPEDREAM_UNAVAILABLE_FALLBACK },
+    ]);
+    expect(await executePlaceholder(connector, slackA, userA)).toEqual([
+      { type: "error", message: reasonShownToTheModel(slackA) },
+    ]);
+    const gmailB = toolsB.find((tool) => tool.name === "pipedream__gmail__unavailable")!;
+    const gmailOther = toolsOther.find((tool) => tool.name === "pipedream__gmail__unavailable")!;
+    expect(await executePlaceholder(connector, gmailB, userB)).toEqual([
+      { type: "error", message: reasonShownToTheModel(gmailB) },
+    ]);
+    expect(await executePlaceholder(connector, gmailOther, sameUserOtherSpace)).toEqual([
+      { type: "error", message: reasonShownToTheModel(gmailOther) },
+    ]);
+  });
+
+  it("offers one unavailable tool per app when the access token cannot be issued", async () => {
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const request = new Request(input, init);
+      if (new URL(request.url).pathname === "/v1/oauth/token") {
+        return new Response("nope", { status: 500 });
+      }
+      throw new Error("token failure should not list tools");
+    });
+    const connector = new PipedreamConnector(FAKE_CONFIG, { ...TEST_NETWORK, fetch });
+    const ctx = connectedContext("gmail", "slack");
+    const tools = await connector.discoverTools(ctx);
+    expect(tools.map((tool) => tool.name)).toEqual([
+      "pipedream__gmail__unavailable",
+      "pipedream__slack__unavailable",
+    ]);
+    expect(tools.every((tool) => tool.readOnly === true)).toBe(true);
+    const reasons = tools.map((tool) => reasonShownToTheModel(tool));
+    expect(reasons[0]).toBe(reasons[1]);
+    expect(reasons[0]).toContain("Pipedream authentication failed: 500");
+    expect(await executePlaceholder(connector, tools[0]!, ctx)).toEqual([
+      { type: "error", message: reasons[0] },
+    ]);
   });
 
   it.each(["gmail", "google_calendar"])(

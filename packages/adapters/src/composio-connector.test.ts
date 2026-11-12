@@ -36,6 +36,8 @@ const composioSdkState = vi.hoisted(() => ({
   failTools: null as null | string[],
   /** When set, the execute session's `tools()` rejects with this message. */
   toolsFail: null as null | string,
+  /** When true, `create` throws if `config.toolkits` is non-empty. */
+  createFails: false,
   logIds: null as null | string[],
   connectedAccounts: {
     list: async (_query?: Record<string, unknown>) => ({ items: [] as Array<{ id: string }> }),
@@ -86,6 +88,9 @@ vi.mock("@composio/core", () => ({
     async create(userId: string, config: Record<string, unknown>) {
       composioSdkState.created.push({ userId, config });
       const toolkits = Array.isArray(config.toolkits) ? config.toolkits : [];
+      if (toolkits.length > 0 && composioSdkState.createFails) {
+        throw new Error("session create failed");
+      }
       if (toolkits.length === 0) {
         const session = {
           sessionId: "catalog-session",
@@ -150,6 +155,44 @@ vi.mock("@composio/core", () => ({
 }));
 
 /** The sentence execute must repeat is the Reason clause of the placeholder description. */
+function composioConnectedUser(spaceId: string, userId: string): AdapterContext {
+  return {
+    operationId: `composio-${spaceId}-${userId}`,
+    traceId: `composio-${spaceId}-${userId}`,
+    spaceId,
+    userId,
+    signal: new AbortController().signal,
+    connectedConnections: [
+      {
+        id: `connection-${spaceId}-${userId}`,
+        connectorId: "composio",
+        externalId: "github",
+        displayName: "GitHub",
+      },
+    ],
+  };
+}
+
+async function executePlaceholder(
+  connector: ComposioConnector,
+  tool: ConnectorTool,
+  context: AdapterContext,
+): Promise<ConnectorEvent[]> {
+  const events: ConnectorEvent[] = [];
+  for await (const event of connector.execute(
+    {
+      tool: tool.name,
+      args: {},
+      executionId: `${context.spaceId}-${context.userId}-unavailable`,
+      route: tool.route,
+    },
+    context,
+  )) {
+    events.push(event);
+  }
+  return events;
+}
+
 function reasonShownToTheModel(tool: { description: string }): string {
   const prefix = "Reason: ";
   const suffix = ". Tell the user to reconnect rather than using shell to write a client.";
@@ -640,6 +683,95 @@ describe("composio tool mapping", () => {
       );
     } finally {
       composioSdkState.toolsFail = null;
+    }
+  });
+
+  it("keeps each space and user's unavailable reason on one connector", async () => {
+    composioSdkState.created.length = 0;
+    composioSdkState.sessions.clear();
+    composioSdkState.toolsFail = "alpha outage";
+    composioToolkitDirectory.invalidate();
+
+    try {
+      const connector = new ComposioConnector();
+      const userA = composioConnectedUser("space-a", "user-a");
+      const userB = composioConnectedUser("space-a", "user-b");
+      const sameUserOtherSpace = composioConnectedUser("space-b", "user-a");
+      const toolsA = await connector.discoverTools(userA);
+      composioSdkState.toolsFail = "beta outage";
+      const toolsB = await connector.discoverTools(userB);
+      composioSdkState.toolsFail = "gamma outage";
+      const toolsOtherSpace = await connector.discoverTools(sameUserOtherSpace);
+
+      expect(await executePlaceholder(connector, toolsA[0]!, userA)).toEqual([
+        { type: "error", message: reasonShownToTheModel(toolsA[0]!) },
+      ]);
+      expect(await executePlaceholder(connector, toolsB[0]!, userB)).toEqual([
+        { type: "error", message: reasonShownToTheModel(toolsB[0]!) },
+      ]);
+      expect(
+        await executePlaceholder(connector, toolsOtherSpace[0]!, sameUserOtherSpace),
+      ).toEqual([{ type: "error", message: reasonShownToTheModel(toolsOtherSpace[0]!) }]);
+    } finally {
+      composioSdkState.toolsFail = null;
+    }
+  });
+
+  it("drops that user's reason after a later listing succeeds", async () => {
+    composioSdkState.created.length = 0;
+    composioSdkState.sessions.clear();
+    composioSdkState.toolsFail = "alpha outage";
+    composioToolkitDirectory.invalidate();
+
+    try {
+      const connector = new ComposioConnector();
+      const userA = composioConnectedUser("space-a", "user-a");
+      const userB = composioConnectedUser("space-a", "user-b");
+      const toolsA = await connector.discoverTools(userA);
+      composioSdkState.toolsFail = "beta outage";
+      const toolsB = await connector.discoverTools(userB);
+      composioSdkState.toolsFail = null;
+
+      const recovered = await connector.discoverTools(userA);
+      expect(recovered.map((tool) => tool.name)).toContain("GITHUB_GET_REPOS");
+      expect(recovered.map((tool) => tool.name)).not.toContain("composio__unavailable");
+
+      expect(await executePlaceholder(connector, toolsA[0]!, userA)).toEqual([
+        {
+          type: "error",
+          message: "Connected apps are assigned but their tools could not be listed.",
+        },
+      ]);
+      expect(await executePlaceholder(connector, toolsB[0]!, userB)).toEqual([
+        { type: "error", message: reasonShownToTheModel(toolsB[0]!) },
+      ]);
+    } finally {
+      composioSdkState.toolsFail = null;
+    }
+  });
+
+  it("offers the unavailable tool when session creation throws", async () => {
+    composioSdkState.created.length = 0;
+    composioSdkState.sessions.clear();
+    composioSdkState.createFails = true;
+    composioToolkitDirectory.invalidate();
+
+    try {
+      const connector = new ComposioConnector();
+      const context = composioConnectedUser("workspace", "user-1");
+      const tools = await connector.discoverTools(context);
+      expect(tools).toEqual([
+        expect.objectContaining({
+          name: "composio__unavailable",
+          readOnly: true,
+        }),
+      ]);
+      expect(reasonShownToTheModel(tools[0]!)).toContain("session create failed");
+      expect(await executePlaceholder(connector, tools[0]!, context)).toEqual([
+        { type: "error", message: reasonShownToTheModel(tools[0]!) },
+      ]);
+    } finally {
+      composioSdkState.createFails = false;
     }
   });
 
