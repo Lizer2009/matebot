@@ -122,6 +122,7 @@ export function describeWuyingSandbox() {
       takeover: true,
       persistentHome: true,
       multiScreen: false,
+      inPlaceUpdate: false,
     },
   };
 }

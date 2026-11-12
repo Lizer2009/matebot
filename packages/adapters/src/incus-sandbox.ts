@@ -202,6 +202,7 @@ export class IncusSandboxProvider implements SandboxProvider {
         takeover: true,
         persistentHome: false,
         multiScreen: true,
+        inPlaceUpdate: true,
       },
     };
   }

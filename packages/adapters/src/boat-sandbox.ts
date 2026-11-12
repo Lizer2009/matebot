@@ -251,6 +251,7 @@ export class BoatSandboxProvider implements SandboxProvider {
         takeover: true,
         persistentHome: true,
         multiScreen: true,
+        inPlaceUpdate: true,
       },
     };
   }

@@ -120,6 +120,7 @@ export class RailwaySandboxProvider implements SandboxProvider {
         takeover: true,
         persistentHome: false,
         multiScreen: true,
+        inPlaceUpdate: true,
       },
     };
   }

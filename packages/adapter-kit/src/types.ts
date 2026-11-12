@@ -274,6 +274,8 @@ export interface SandboxCapabilities {
   persistentHome: boolean;
   /** Distinct graphical screens for concurrent Team bots on one computer. */
   multiScreen?: boolean;
+  /** In-place image/template upgrade. False for desktop, wuying, and none. */
+  inPlaceUpdate?: boolean;
 }
 
 export interface ConnectorTool {

@@ -4,6 +4,7 @@ import type {
   AgentHomeStore,
   ComputerRef,
   JobPublisher,
+  SandboxCapabilities,
   SandboxProvider,
 } from "@matebot/adapter-kit";
 import {
@@ -46,6 +47,7 @@ import {
   removeDeletedBotWorkspaces,
   restoreComputerWorkspace,
 } from "./computer-workspace.js";
+import { describeDesktopSandbox } from "./desktop-sandbox.js";
 import { resolveAgentHomePath } from "./home.js";
 import { ObjectAgentHomeStore } from "./home-object-store.js";
 import { sandboxAllowanceUsedUp } from "./sandbox-allowance.js";
@@ -54,6 +56,7 @@ import {
   isSandboxGoneError,
   isSandboxUnsafeStopError,
 } from "./sandbox-errors.js";
+import { describeWuyingSandbox } from "./wuying-sandbox.js";
 
 type ComputerUpdateProgress = (
   stage: Exclude<ComputerUpdate["stage"], "preparing">,
@@ -970,21 +973,77 @@ function isUniqueConstraintError(error: unknown) {
 export type ComputerReplaceMode = "recover" | "reset" | "update";
 
 export function computerSupportsUpdate(kind: string): boolean {
-  return kind !== "desktop" && kind !== "wuying" && kind !== "none";
+  return sandboxCapabilitiesForKind(kind).inPlaceUpdate === true;
 }
 
 /** Kinds whose provider opens a user terminal through the shared Linux screen gateway. */
 export function computerSupportsTerminal(kind: string): boolean {
-  return (
-    kind === "docker" ||
-    kind === "e2b" ||
-    kind === "novita" ||
-    kind === "daytona" ||
-    kind === "boat" ||
-    kind === "kubernetes" ||
-    kind === "incus" ||
-    kind === "fake"
-  );
+  return sandboxCapabilitiesForKind(kind).pty === true;
+}
+
+function sandboxCapabilitiesForKind(kind: string): SandboxCapabilities {
+  switch (kind) {
+    case "docker":
+    case "e2b":
+    case "novita":
+    case "daytona":
+    case "boat":
+    case "kubernetes":
+    case "incus":
+    case "fake":
+      return {
+        graphical: true,
+        pty: true,
+        snapshots: true,
+        takeover: true,
+        persistentHome: true,
+        inPlaceUpdate: true,
+      };
+    case "railway":
+      return {
+        graphical: true,
+        pty: false,
+        snapshots: true,
+        takeover: true,
+        persistentHome: false,
+        multiScreen: true,
+        inPlaceUpdate: true,
+      };
+    case "createos":
+    case "boxd":
+      return {
+        graphical: true,
+        pty: false,
+        snapshots: true,
+        takeover: true,
+        persistentHome: true,
+        multiScreen: true,
+        inPlaceUpdate: true,
+      };
+    case "desktop":
+      return describeDesktopSandbox().capabilities;
+    case "wuying":
+      return describeWuyingSandbox().capabilities;
+    case "none":
+      return {
+        graphical: false,
+        pty: false,
+        snapshots: false,
+        takeover: false,
+        persistentHome: false,
+        multiScreen: false,
+        inPlaceUpdate: false,
+      };
+    default:
+      return {
+        graphical: false,
+        pty: false,
+        snapshots: false,
+        takeover: false,
+        persistentHome: false,
+        inPlaceUpdate: true,
+      };
+  }
 }
 
 export async function replaceComputer(

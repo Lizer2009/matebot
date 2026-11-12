@@ -79,11 +79,13 @@ export function describeDesktopSandbox() {
     adapterVersion: "0.1.0",
     capabilities: {
       graphical: false,
-      pty: true,
+      // Settings terminal is the Linux screen gateway; this host is not on that list.
+      pty: false,
       snapshots: true,
       takeover: false,
       persistentHome: true,
       multiScreen: false,
+      inPlaceUpdate: false,
     },
   };
 }
