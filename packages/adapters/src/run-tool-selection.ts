@@ -5,7 +5,7 @@ import {
 } from "@matebot/contracts";
 import { isBackgroundRunTrigger, isOwnerStartedRun } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
-import { builtinAgentTools } from "./builtin-tools.js";
+import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
 import { selectMemoryTools } from "./memory-tools.js";
 import { filterImageReturningComputerTools } from "./model-vision.js";
@@ -44,7 +44,9 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
 /** Offered only to a user who connected a wallet. */
 const PURCHASE_TOOL_NAMES = new Set(["request_purchase", "purchase_status", "paid_request"]);
 
-export const BUILTIN_AGENT_TOOL_NAMES = new Set(builtinAgentTools.map((tool) => tool.name));
+export const BUILTIN_AGENT_TOOL_NAMES = new Set(
+  [...builtinAgentTools, ...agentConnectionTools].map((tool) => tool.name),
+);
 
 const FLEET_TOOL_NAMES_SET: ReadonlySet<string> = new Set(FLEET_TOOL_NAMES);
 

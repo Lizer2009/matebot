@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { agentConnectionTools } from "./builtin-tools.js";
 import {
   CORE_BUILTIN_TOOL_NAMES,
   FIND_TOOL,
@@ -129,5 +130,18 @@ describe("built-in tool bridge", () => {
     expect(
       describeToolActivity(USE_TOOL, { name: "create_space", arguments: { name: "Finance" } }),
     ).toBe("Creating space: Finance");
+  });
+
+  it("defers agent-connection tools instead of listing their schemas", () => {
+    const { listed, deferred } = partitionTools(agentConnectionTools);
+    expect(deferred.map((tool) => tool.name).sort()).toEqual([
+      "connect_agent",
+      "message_agent",
+      "respond_agent_connection",
+    ]);
+    expect(listed.map((tool) => tool.name).sort()).toEqual(["find_tool", "use_tool"]);
+    for (const name of ["connect_agent", "message_agent", "respond_agent_connection"]) {
+      expect(CORE_BUILTIN_TOOL_NAMES.has(name)).toBe(false);
+    }
   });
 });

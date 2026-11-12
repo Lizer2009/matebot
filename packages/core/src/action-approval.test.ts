@@ -952,6 +952,12 @@ it("requires human confirmation to approve an agent connection", () => {
   expect(toolRequiresApproval("respond_agent_connection", false)).toBe(true);
 });
 
+it("requires approval for cross-owner connect and message even as builtins", () => {
+  expect(toolRequiresApproval("connect_agent", false)).toBe(true);
+  expect(toolRequiresApproval("message_agent", false)).toBe(true);
+  expect(toolRequiresExplicitApproval("respond_agent_connection")).toBe(true);
+});
+
 describe("repeatsDeniedAction", () => {
   const WRAPPER = "COMPOSIO_MULTI_EXECUTE_TOOL";
   const sent = { tools: [{ tool_slug: "GMAIL_SEND_EMAIL" }] };

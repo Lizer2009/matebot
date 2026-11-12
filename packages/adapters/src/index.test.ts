@@ -219,4 +219,11 @@ describe("builtin tools", () => {
         .filter((name) => purchaseNames.includes(name)),
     ).toEqual(purchaseNames);
   });
+
+  it("puts every builtin, including agent-connection tools, in BUILTIN_AGENT_TOOL_NAMES", async () => {
+    const { BUILTIN_AGENT_TOOL_NAMES } = await import("./run-tool-selection.js");
+    for (const name of [...builtinAgentTools, ...agentConnectionTools].map((tool) => tool.name)) {
+      expect(BUILTIN_AGENT_TOOL_NAMES.has(name), name).toBe(true);
+    }
+  });
 });
