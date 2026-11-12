@@ -195,7 +195,10 @@ export function A2uiNativeSurface({
       );
     }
     return (
-      <View testID="a2ui-native-surface" style={{ gap: 8 }}>
+      <View
+        testID="a2ui-native-surface"
+        style={{ gap: 8, width: "100%", minWidth: 0, alignSelf: "stretch" }}
+      >
         <Text>{title}</Text>
         <Text
           testID={
@@ -266,6 +269,7 @@ export function A2uiNativeSurface({
             label={t("Message")}
             value={values.body}
             testID="a2ui-email-body"
+            multiline
             onChangeText={setField("body")}
           />
           {phase === "action-progress-card" ||

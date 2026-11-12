@@ -93,6 +93,17 @@ describe("native A2UI surface", () => {
     act(() => root.render(node));
   }
 
+  it("keeps the email form inside the thread card", () => {
+    render(<A2uiNativeSurface block={block} />);
+    const surface = document.querySelector('[data-testid="a2ui-native-surface"]');
+    expect(surface).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-native-sheet"]')).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-email-to"]')).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-email-subject"]')).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-email-body"]')).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
+  });
+
   it("sends with confirm+execute in one gesture when confirmation is missing", async () => {
     const onConfirm = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);

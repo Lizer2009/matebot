@@ -1,34 +1,37 @@
-import {
-  Host,
-  ModalBottomSheet,
-  OutlinedTextField,
-  RNHostView,
-  TextButton,
-  useNativeState,
-} from "@expo/ui/jetpack-compose";
+import { Host, OutlinedTextField, TextButton, useNativeState } from "@expo/ui/jetpack-compose";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { View } from "react-native";
+
+const fillRow = { width: "100%" as const, minWidth: 0, alignSelf: "stretch" as const };
 
 export function A2uiTextField({
   label,
   value,
   onChangeText,
   testID,
+  multiline,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   testID: string;
+  multiline?: boolean;
 }) {
   const text = useNativeState(value);
   useEffect(() => {
     text.set(value);
   }, [text, value]);
   return (
-    <View testID={testID}>
-      <Host matchContents>
-        <OutlinedTextField value={text} onValueChange={onChangeText}>
+    <View testID={testID} style={fillRow}>
+      <Host matchContents={{ vertical: true, horizontal: false }} style={fillRow}>
+        <OutlinedTextField
+          value={text}
+          onValueChange={onChangeText}
+          singleLine={!multiline}
+          minLines={multiline ? 4 : 1}
+          maxLines={multiline ? 8 : 1}
+        >
           <OutlinedTextField.Label>{label}</OutlinedTextField.Label>
         </OutlinedTextField>
       </Host>
@@ -63,25 +66,13 @@ export function A2uiSheet({
   testID?: string;
   label?: string;
 }) {
-  const [open, setOpen] = useState(true);
-  if (!open) {
-    return (
-      <View testID={testID ?? "a2ui-native-sheet"}>
-        <Host matchContents>
-          <TextButton onClick={() => setOpen(true)}>{label ?? ""}</TextButton>
-        </Host>
-      </View>
-    );
-  }
   return (
-    <View testID={testID ?? "a2ui-native-sheet"}>
-      <Host matchContents>
-        <ModalBottomSheet onDismissRequest={() => setOpen(false)} skipPartiallyExpanded>
-          <RNHostView matchContents>
-            <View style={{ gap: 8 }}>{children}</View>
-          </RNHostView>
-        </ModalBottomSheet>
-      </Host>
+    <View
+      testID={testID ?? "a2ui-native-sheet"}
+      accessibilityLabel={label}
+      style={{ ...fillRow, gap: 8 }}
+    >
+      {children}
     </View>
   );
 }
