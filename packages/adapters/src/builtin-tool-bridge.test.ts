@@ -7,6 +7,7 @@ import {
   partitionTools,
   USE_TOOL,
 } from "./builtin-tool-bridge.js";
+import { NAME_INDEX_MAX_BYTES } from "./lazy-tool-catalog.js";
 import { describeToolActivity } from "./pi-runtime-tools.js";
 import { BUILTIN_AGENT_TOOL_NAMES, selectBuiltinToolsForRun } from "./run-tool-selection.js";
 
@@ -130,6 +131,28 @@ describe("built-in tool bridge", () => {
     expect(
       describeToolActivity(USE_TOOL, { name: "create_space", arguments: { name: "Finance" } }),
     ).toBe("Creating space: Finance");
+  });
+
+  it("drops the inline name index when deferred tools overflow the catalog budget", () => {
+    const deferred = Array.from({ length: 80 }, (_, i) => ({
+      name: `scratchpad_extra_${String(i).padStart(3, "0")}_tool`,
+      description: "x",
+      inputSchema: { type: "object", properties: {} },
+    }));
+    // partitionTools only defers names in the built-in set. Register the fixture, then
+    // remove it so later cases still see the real catalog.
+    for (const tool of deferred) BUILTIN_AGENT_TOOL_NAMES.add(tool.name);
+    try {
+      const { listed } = partitionTools(deferred);
+      const description = listed.find((tool) => tool.name === FIND_TOOL)!.description;
+      expect(Buffer.byteLength(description, "utf8")).toBeLessThan(
+        400 + NAME_INDEX_MAX_BYTES + 200,
+      );
+      expect(description).toMatch(/Sources:/);
+      expect(description).not.toContain("scratchpad_extra_000_tool");
+    } finally {
+      for (const tool of deferred) BUILTIN_AGENT_TOOL_NAMES.delete(tool.name);
+    }
   });
 
   it("defers agent-connection tools instead of listing their schemas", () => {
