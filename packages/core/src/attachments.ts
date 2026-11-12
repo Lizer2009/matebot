@@ -200,6 +200,12 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
         }[block.status];
         return `[you called the user about: ${block.reason}; ${outcome}]${block.status === "answered" ? `\n${block.opening}` : ""}`;
       }
+      if (block.kind === "a2ui_surface") {
+        const intent = block.intent?.trim() || "a2ui_surface";
+        const state = block.lifecycle ?? "draft";
+        const hint = (block.summary ?? block.title)?.trim();
+        return hint ? `[card: ${intent} → ${state} (${hint})]` : `[card: ${intent} → ${state}]`;
+      }
       if ("text" in block && typeof block.text === "string") return block.text;
       return "";
     })

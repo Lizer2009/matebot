@@ -261,6 +261,41 @@ describe("ask history", () => {
   });
 });
 
+describe("a2ui surface history", () => {
+  it("projects intent and lifecycle so a later turn can see the card", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          // Brief projects this status word. EmailSurfaceLifecycle has no "sent" member.
+          // @ts-expect-error lifecycle "sent" is the projected status, not a contract enum value
+          lifecycle: "sent",
+          summary: "to: a@b.com",
+        },
+      ]),
+    ).toBe("[card: email.compose → sent (to: a@b.com)]");
+  });
+
+  it("never drops a legacy surface with no title or summary", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+        },
+      ]),
+    ).toBe("[card: a2ui_surface → draft]");
+  });
+});
+
 describe("artifactTypeLabel", () => {
   it("reads like the file's extension", () => {
     expect(artifactTypeLabel("text/plain")).toBe("TXT");
