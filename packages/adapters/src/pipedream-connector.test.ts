@@ -501,9 +501,68 @@ describe("PipedreamConnector", () => {
     const connector = new PipedreamConnector(FAKE_CONFIG, { ...TEST_NETWORK, fetch });
     const tools = await connector.discoverTools(connectedContext("broken", "gmail"));
     expect(tools.map((tool) => tool.name)).toEqual([
+      "pipedream__broken__unavailable",
       "pipedream_search_tools",
       "pipedream_load_tool",
       "pipedream_execute_tool",
+    ]);
+    expect(tools[0]).toEqual(
+      expect.objectContaining({ name: "pipedream__broken__unavailable", readOnly: true }),
+    );
+  });
+
+  it("returns no tools when the user never connected pipedream", async () => {
+    const connector = new PipedreamConnector(FAKE_CONFIG, {
+      ...TEST_NETWORK,
+      fetch: pipedreamMcpFetch({}),
+    });
+    expect(await connector.discoverTools(context)).toEqual([]);
+  });
+
+  it("offers a read-only unavailable tool when gmail listing fails and keeps slack", async () => {
+    const healthy = pipedreamMcpFetch({ slack: ["list_channels"] });
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      if (new URL(request.url).pathname === "/v1/oauth/token") {
+        return Response.json({ access_token: "fake-access-token", expires_in: 3_600 });
+      }
+      if (request.headers.get("x-pd-app-slug") === "gmail") {
+        return new Response("upstream down", { status: 503 });
+      }
+      return healthy(input, init);
+    });
+    const connector = new PipedreamConnector(FAKE_CONFIG, { ...TEST_NETWORK, fetch });
+    const ctx = connectedContext("gmail", "slack");
+    const tools = await connector.discoverTools(ctx);
+    const placeholder = tools.find((tool) => tool.name === "pipedream__gmail__unavailable");
+    expect(placeholder).toEqual(
+      expect.objectContaining({
+        name: "pipedream__gmail__unavailable",
+        readOnly: true,
+      }),
+    );
+    expect(tools.some((tool) => tool.name.startsWith("list_channels"))).toBe(true);
+
+    const events = [];
+    for await (const event of connector.execute(
+      {
+        tool: placeholder!.name,
+        args: {},
+        executionId: "pipedream-unavailable",
+        route: placeholder!.route,
+      },
+      ctx,
+    )) {
+      events.push(event);
+    }
+    const prefix = "Reason: ";
+    const suffix = ". Tell the user to reconnect rather than using shell to write a client.";
+    const description = placeholder!.description;
+    const start = description.indexOf(prefix);
+    const end = description.indexOf(suffix);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(events).toEqual([
+      { type: "error", message: description.slice(start + prefix.length, end) },
     ]);
   });
 
@@ -635,8 +694,13 @@ describe("PipedreamConnector", () => {
     expect(JSON.stringify(tools[1]?.inputSchema)).toContain("schema-apn_home");
     failWork = true;
     const remaining = await connector.discoverTools(ctx);
-    expect(remaining).toHaveLength(1);
-    expect(remaining[0]?.name).toBe(tools[1]?.name);
+    expect(remaining.map((tool) => tool.name)).toEqual([
+      "pipedream__gmail__unavailable",
+      tools[1]?.name,
+    ]);
+    expect(remaining[0]).toEqual(
+      expect.objectContaining({ name: "pipedream__gmail__unavailable", readOnly: true }),
+    );
   });
 
   it.each(["gmail", "google_calendar"])(

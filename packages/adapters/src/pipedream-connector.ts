@@ -106,11 +106,37 @@ function securePipedreamConnectUrl(value: string): URL {
   return url;
 }
 
+const UNAVAILABLE_TOOL = "unavailable";
+
+function unavailableBrief(reason: string): string {
+  return reason.length > 400 ? `${reason.slice(0, 400)}...` : reason;
+}
+
+/** Stand-in for one connected app whose tools could not be listed. */
+function pipedreamUnavailableTool(app: string, reason: string): ConnectorTool {
+  const brief = unavailableBrief(reason);
+  return {
+    name: `pipedream__${app}__unavailable`,
+    description: `The Pipedream app "${app}" is assigned but unavailable right now, so none of its tools can be used. Reason: ${brief}. Tell the user to reconnect rather than using shell to write a client. Calling this tool returns the same error.`,
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    readOnly: true,
+    route: { connectorId: "pipedream", resourceId: app, toolName: UNAVAILABLE_TOOL },
+  };
+}
+
+function pipedreamUnavailableApp(call: ConnectorCall): string | undefined {
+  const named = /^pipedream__(.+)__unavailable$/.exec(call.tool)?.[1];
+  if (call.route?.toolName === UNAVAILABLE_TOOL) return call.route.resourceId ?? named;
+  return named;
+}
+
 export class PipedreamConnector implements ManagedConnectorProvider {
   private accessToken?: { value: string; expiresAt: number };
   private accessTokenRequest?: Promise<string>;
   private directory?: { value: PipedreamApp[]; expiresAt: number };
   private directoryRequest?: Promise<PipedreamApp[]>;
+  /** Reason embedded in each `pipedream__<app>__unavailable` tool, keyed by app slug. */
+  private readonly unavailableReasons = new Map<string, string>();
 
   constructor(
     private readonly config: PipedreamConnectorConfig,
@@ -191,23 +217,21 @@ export class PipedreamConnector implements ManagedConnectorProvider {
                     providerRef: account.id,
                   });
                 } catch (error) {
-                  getLogger().error(
-                    "pipedream account discovery failed",
-                    sanitizeConnectorError(error),
-                    { "connector.app": app, "connection.id": account.connectionId },
-                  );
-                  return [];
+                  const reason = sanitizeConnectorError(error);
+                  getLogger().error("pipedream account discovery failed", reason, {
+                    "connector.app": app,
+                    "connection.id": account.connectionId,
+                  });
+                  return this.unavailablePlaceholder(app, reason);
                 }
               }),
             )
           ).flat();
         } catch (error) {
           // A single unavailable app must not hide tools from other connections.
-          getLogger().error(
-            `pipedream discovery failed for app ${app}:`,
-            sanitizeConnectorError(error),
-          );
-          return [];
+          const reason = sanitizeConnectorError(error);
+          getLogger().error(`pipedream discovery failed for app ${app}:`, reason);
+          return this.unavailablePlaceholder(app, reason);
         }
       }),
     );
@@ -216,13 +240,28 @@ export class PipedreamConnector implements ManagedConnectorProvider {
 
   async discoverTools(context: AdapterContext): Promise<ConnectorTool[]> {
     const tools = await this.allTools(context);
-    if (tools.length <= DIRECT_TOOL_LIMIT) return tools;
-    return lazyCatalogTools(
-      catalogToolPrefix("pipedream"),
-      "pipedream",
-      "app",
-      catalogEntries(tools),
-    );
+    const unavailableByName = new Map<string, ConnectorTool>();
+    const available: ConnectorTool[] = [];
+    for (const tool of tools) {
+      if (tool.route?.toolName === UNAVAILABLE_TOOL) unavailableByName.set(tool.name, tool);
+      else available.push(tool);
+    }
+    const unavailable = [...unavailableByName.values()];
+    if (available.length <= DIRECT_TOOL_LIMIT) return [...unavailable, ...available];
+    return [
+      ...unavailable,
+      ...lazyCatalogTools(
+        catalogToolPrefix("pipedream"),
+        "pipedream",
+        "app",
+        catalogEntries(available),
+      ),
+    ];
+  }
+
+  private unavailablePlaceholder(app: string, reason: string): ConnectorTool[] {
+    this.unavailableReasons.set(app, unavailableBrief(reason));
+    return [pipedreamUnavailableTool(app, reason)];
   }
 
   async resolveCall(
@@ -236,6 +275,21 @@ export class PipedreamConnector implements ManagedConnectorProvider {
   }
 
   async *execute(call: ConnectorCall, context: AdapterContext): AsyncIterable<ConnectorEvent> {
+    const unavailableApp = pipedreamUnavailableApp(call);
+    if (unavailableApp) {
+      let reason = this.unavailableReasons.get(unavailableApp);
+      if (!reason) {
+        await this.allTools(context);
+        reason = this.unavailableReasons.get(unavailableApp);
+      }
+      yield {
+        type: "error",
+        message:
+          reason ??
+          "The app is assigned but its tools could not be listed. Ask the user to reconnect rather than using shell to write a client.",
+      };
+      return;
+    }
     if (isLazyCatalogControlRoute(call.route)) {
       try {
         yield* executeLazyCatalogControl(
