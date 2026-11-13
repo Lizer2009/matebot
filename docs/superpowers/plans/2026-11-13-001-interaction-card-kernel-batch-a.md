@@ -1922,6 +1922,8 @@ git commit --allow-empty -m "chore: batch A (card kernel stop-the-bleeding) veri
 - **修正已执行记录时，若同一 intent 的卡位被别的草稿占着，就拒绝而不是覆盖。** 一个 intent 只有一个卡位；`publishOrAmend` 只在被占卡的 `amendsInteractionId` 等于本次修正对象时原地改写，否则抛 `InteractionCardOccupiedError`，工具层返回 `card_in_progress` 并说明先处理那张卡。改写会丢掉用户正在输入的内容，而回包仍会说「已新建」——两者都不能接受。
 - **卡在「列出来」和「写入」之间关闭时，字段写入答 409 而不是 500。** 迁移制造出 `superseded` 行之后，这个竞态变常见了：`updateInteractionFieldService` 现在抛 `InteractionTerminalError`，卡片控件路由与 `edit_interaction` 路由都映射为 `CONFLICT`，前端重载即可。
 - **AC-4 已 DEFERRED（本批未满足）。** `apps/api/src/interaction-service.ts` 的发送路径仍写入词表外的 `executing`，且数据库的 `status` 列还没有 CHECK 约束。把 in-flight 状态收敛到内核词表并补上约束需要一个能安全处理发送中途崩溃的方案：若本批就把 `executing` 拒之门外或直接加 CHECK，崩溃会留下无法结算的行，所以这两件事必须由同一个后续批次完成，届时一并迁移并结算这些卡。因此 AC-4 不由 A 批保证。
+- **原地改写要在事务里先锁行，再从锁住的行取下一个版本。** 只做 compare-and-set 不够：两个并发的 `present_interaction` 会读到同一个 `draftVersion`、算出同一个下一版本，后写者虽然能匹配上、却把前者的字段写回去了（实测 4 个并发呈现只剩 2 个版本、8 个只剩 5 个，且重试耗尽后还会报错）。现在 `amendPublishedCard` 在事务开始时 `SELECT … FOR UPDATE` 锁住该行，用锁内读到的 `status`/`draftVersion` 判定并递增；状态已离开草稿态则抛 `InteractionCardConcurrencyError`，由 `publishOrAmend` 重新查找后整段重做（最多 5 次）。同一实测下 8 个并发呈现得到 1 张卡、1 条消息、`draftVersion = 8`、零失败。
+- **`publishOrAmend` 的失败重试次数从 2 提到 5。** 输掉竞争的呈现现在重做而不是覆盖，2 次在 3 个以上并发时就会耗尽。
 
 ## 本批不做（明确留给后续批次）
 
