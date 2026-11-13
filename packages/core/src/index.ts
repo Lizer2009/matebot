@@ -55,6 +55,7 @@ export * from "./inbound-routine.js";
 export * from "./instruction-diff.js";
 export * from "./interaction-cancel.js";
 export * from "./interaction-capability.js";
+export * from "./interaction-card-key.js";
 export * from "./interaction-connection.js";
 export * from "./interaction-decision.js";
 export * from "./interaction-effect.js";
