@@ -1,6 +1,12 @@
 import type { PrismaClient } from "@matebot/db";
 import { describe, expect, it, vi } from "vitest";
-import { gcStaleCards, markOpenCardsStale, settleStaleCards } from "./interaction-stale.js";
+import {
+  gcStaleCards,
+  gcStaleCardsForRun,
+  markOpenCardsStale,
+  settleStaleCards,
+  settleStaleCardsForRun,
+} from "./interaction-stale.js";
 
 type Row = {
   id: string;
@@ -192,5 +198,32 @@ describe("gcStaleCards", () => {
     expect(settled.settled).toEqual(["old"]);
     expect(store.find((row) => row.id === "old")?.status).toBe("superseded");
     expect(store.find((row) => row.id === "fresh")?.status).toBe("ready_for_review");
+  });
+});
+
+describe("run hooks", () => {
+  it("skips routine runs so a wakeup does not close a draft", async () => {
+    const { prisma, store } = fakePrisma([openCard("open", { staleAt: mark })]);
+    await gcStaleCardsForRun(prisma, {
+      threadId: thread,
+      createdAt: new Date("2026-11-14T00:05:00.000Z"),
+      trigger: "routine",
+    });
+    await settleStaleCardsForRun(prisma, {
+      threadId: thread,
+      createdAt: mark,
+      trigger: "routine",
+    });
+    expect(store[0]?.status).toBe("ready_for_review");
+  });
+
+  it("settles a user run against its createdAt snapshot", async () => {
+    const { prisma, store } = fakePrisma([openCard("open", { staleAt: mark })]);
+    await settleStaleCardsForRun(prisma, {
+      threadId: thread,
+      createdAt: mark,
+      trigger: "user",
+    });
+    expect(store[0]?.status).toBe("superseded");
   });
 });

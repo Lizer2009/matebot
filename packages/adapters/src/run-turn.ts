@@ -34,6 +34,7 @@ import {
   HISTORY_WINDOW_SIZE,
   shouldEnqueueCompaction,
 } from "./history-compaction.js";
+import { settleStaleCardsForRun } from "./interaction-stale.js";
 import {
   backOffRoutineAfterAccountError,
   clearRoutineBackoff,
@@ -628,6 +629,7 @@ async function stopStuckToolLoop(ctx: RunContext, toolName: string) {
     blocks: isBackgroundRunTrigger(run.trigger) ? [] : [{ kind: "text", text: stuckText }],
   });
   if (!stopped) return;
+  await settleStaleAfterFinalize(ctx);
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -859,6 +861,7 @@ export async function completeRun(ctx: RunContext) {
     ),
   });
   if (!completed) return;
+  await settleStaleAfterFinalize(ctx);
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -982,6 +985,7 @@ export async function failRun(
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
+  await settleStaleAfterFinalize(ctx);
   if (
     error instanceof TransientModelError ||
     error instanceof ModelAccountError ||
@@ -1050,4 +1054,10 @@ export async function failRun(
       threadId: thread.id,
     });
   }
+}
+
+async function settleStaleAfterFinalize(ctx: RunContext): Promise<void> {
+  await settleStaleCardsForRun(ctx.deps.prisma, ctx.run).catch((error) => {
+    getLogger().error("interaction stale settle", error);
+  });
 }

@@ -83,6 +83,20 @@ describe("A2uiSurfaceCard", () => {
     expect(header.textContent).toContain("产品发布");
   });
 
+  it("hints that a live card may have a newer version without changing its controls", () => {
+    renderCard(fixtureA2uiSurfaceBlock({ stale: true, status: "ready_for_review" }));
+    expect(container.querySelector('[data-testid="a2ui-surface-stale-hint"]')?.textContent).toBe(
+      "There may be a newer version",
+    );
+    expect(container.querySelector('[data-testid="a2ui-surface-header"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="a2ui-surface-folded"]')).toBeNull();
+  });
+
+  it("does not show the stale hint on a replaced card", () => {
+    renderCard(fixtureA2uiSurfaceBlock({ status: "superseded", stale: true, lifecycle: "draft" }));
+    expect(container.querySelector('[data-testid="a2ui-surface-stale-hint"]')).toBeNull();
+  });
+
   it("treats a legacy block with no status as the draft it claims to be", () => {
     const { status: _omitted, ...legacy } = fixtureA2uiSurfaceBlock({
       lifecycle: "draft",

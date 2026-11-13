@@ -1,5 +1,11 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import { emailSurfacePhase, needsRecovery, surfacePhase, surfaceStatusCopy } from "@matebot/core";
+import {
+  emailSurfacePhase,
+  needsRecovery,
+  surfacePhase,
+  surfaceStaleHint,
+  surfaceStatusCopy,
+} from "@matebot/core";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { NativeCatalogNode } from "../../lib/a2ui-catalog";
@@ -245,6 +251,9 @@ export function A2uiNativeSurface({
         style={{ gap: 8, width: "100%", minWidth: 0, alignSelf: "stretch" }}
       >
         <Text>{title}</Text>
+        {block.stale ? (
+          <Text testID="a2ui-surface-stale-hint">{surfaceCopy(t, surfaceStaleHint())}</Text>
+        ) : null}
         {phase === "action-progress-card" || phase === "action-submitting-card" ? (
           <Text testID="a2ui-email-progress">{t("Sending email")}</Text>
         ) : phase === "action-result-success" ? (
@@ -402,6 +411,9 @@ export function A2uiNativeSurface({
   return (
     <View testID="a2ui-native-surface">
       {block.title ? <Text>{block.title}</Text> : null}
+      {block.stale ? (
+        <Text testID="a2ui-surface-stale-hint">{surfaceCopy(t, surfaceStaleHint())}</Text>
+      ) : null}
       <A2uiCatalogNodes nodes={catalog.nodes} block={block} onAction={onAction} />
       {/*
         An early card stored a title and two lines of text, and nothing to press. The turn

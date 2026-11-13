@@ -5,6 +5,7 @@ import {
   needsRecovery,
   surfaceCardTitle,
   surfacePhase,
+  surfaceStaleHint,
   surfaceStatusCopy,
 } from "@matebot/core";
 import { Button } from "@matebot/ui-web";
@@ -168,6 +169,14 @@ export function A2uiSurfaceCard({
         <div className="truncate text-[15px] font-medium leading-[21px] text-foreground">
           {heading.title}
         </div>
+        {block.stale ? (
+          <div
+            data-testid="a2ui-surface-stale-hint"
+            className="mt-0.5 truncate text-[13px] leading-[18px] text-muted-foreground"
+          >
+            {surfaceCopy(surfaceStaleHint())}
+          </div>
+        ) : null}
         {summary && !emailCompose ? (
           <div className="mt-0.5 truncate text-[14px] leading-[20px] text-muted-foreground">
             {summary}

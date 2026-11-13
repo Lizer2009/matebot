@@ -1,5 +1,5 @@
 import { runContinueJob, runJobKey } from "@matebot/adapter-kit";
-import { settleCallRequest } from "@matebot/adapters";
+import { markOpenCardsStale, settleCallRequest } from "@matebot/adapters";
 import type { Actor, ProductEvent } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef, parseA2uiSurfaceDocumentRef } from "@matebot/contracts";
 import {
@@ -510,9 +510,9 @@ export function threadsRoutes(ctx: RouterContext) {
               botId,
               status: { in: [...QUEUE_HOLDING_RUN_STATUSES] },
             },
-            select: { id: true },
+            select: { id: true, createdAt: true },
           });
-          let run: { id: string } | null = null;
+          let run: { id: string; createdAt: Date } | null = null;
           if (!active) {
             const task = await tx.task.create({
               data: {
@@ -535,7 +535,7 @@ export function threadsRoutes(ctx: RouterContext) {
                 trigger: "follow_up",
                 sourceMessageId: message.id,
               },
-              select: { id: true },
+              select: { id: true, createdAt: true },
             });
             await tx.message.update({ where: { id: message.id }, data: { runId: run.id } });
           } else {
@@ -558,7 +558,12 @@ export function threadsRoutes(ctx: RouterContext) {
             payload: { messageId: message.id, role: "user", blocks },
           });
           await touchGroupUpdatedAt(tx, target.groupId);
-          return { runId: run?.id, eventSeq: event.seq, message };
+          return {
+            runId: run?.id,
+            createdAt: run?.createdAt ?? active?.createdAt,
+            eventSeq: event.seq,
+            message,
+          };
         });
         if (committed) {
           deps.analytics?.capture(
@@ -568,6 +573,12 @@ export function threadsRoutes(ctx: RouterContext) {
           );
           await deps.events.notify(target.threadId, committed.eventSeq).catch((error) => {
             getLogger().error("group follow-up realtime notification", error);
+          });
+          await markOpenCardsStale(deps.prisma, {
+            threadId: target.threadId,
+            at: committed.createdAt ?? new Date(),
+          }).catch((error) => {
+            getLogger().error("interaction stale mark", error);
           });
           if (committed.runId) {
             await deps.jobs.enqueue(runContinueJob(committed.runId)).catch((error) => {

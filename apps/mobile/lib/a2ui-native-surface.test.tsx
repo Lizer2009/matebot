@@ -104,6 +104,12 @@ describe("native A2UI surface", () => {
     expect(surface?.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
   });
 
+  it("hints that a live card may have a newer version without hiding Send", () => {
+    render(<A2uiNativeSurface block={{ ...block, stale: true, status: "ready_for_review" }} />);
+    expect(text("a2ui-surface-stale-hint")).toBe("There may be a newer version");
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
+  });
+
   it("sends with confirm+execute in one gesture when confirmation is missing", async () => {
     const onConfirm = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);

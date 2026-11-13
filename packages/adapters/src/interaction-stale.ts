@@ -1,4 +1,4 @@
-import { AUTO_SETTLEABLE_STATUSES } from "@matebot/core";
+import { AUTO_SETTLEABLE_STATUSES, isConversationalRun } from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { restampInteractionSurface, settleInteraction } from "./interaction-kernel-store.js";
 
@@ -105,4 +105,26 @@ export async function gcStaleCards(
     if (result.settled) settled.push(row.id);
   }
   return { settled };
+}
+
+/** Crash leftovers from an earlier turn; this turn's own marks stay (`staleAt === createdAt`). */
+export async function gcStaleCardsForRun(
+  prisma: PrismaClient,
+  run: { threadId: string; createdAt: Date; trigger: string },
+): Promise<void> {
+  if (!isConversationalRun(run.trigger)) return;
+  await gcStaleCards(prisma, { threadId: run.threadId, before: run.createdAt });
+}
+
+/** Hard-settle cards still carrying the mark written for this run's user message. */
+export async function settleStaleCardsForRun(
+  prisma: PrismaClient,
+  run: { threadId: string; createdAt: Date; trigger: string },
+): Promise<void> {
+  if (!isConversationalRun(run.trigger)) return;
+  await settleStaleCards(prisma, {
+    threadId: run.threadId,
+    staleAtSnapshot: run.createdAt,
+    reason: "user_message",
+  });
 }

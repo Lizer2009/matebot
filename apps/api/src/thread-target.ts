@@ -1,6 +1,11 @@
 import type { JobPublisher, ProductAnalytics, SandboxProvider } from "@matebot/adapter-kit";
 import { runContinueJob } from "@matebot/adapter-kit";
-import { cancelComputerRunWork, screenLeaseIdForRun, toComputerRef } from "@matebot/adapters";
+import {
+  cancelComputerRunWork,
+  markOpenCardsStale,
+  screenLeaseIdForRun,
+  toComputerRef,
+} from "@matebot/adapters";
 import type {
   Actor,
   GroupMember,
@@ -900,6 +905,7 @@ export async function sendThreadMessage(
             taskId: true,
             status: true,
             trigger: true,
+            createdAt: true,
             modelProvider: true,
             modelId: true,
             modelPinned: true,
@@ -1111,6 +1117,7 @@ export async function sendThreadMessage(
           botId: true,
           status: true,
           trigger: true,
+          createdAt: true,
           modelProvider: true,
           modelId: true,
           modelPinned: true,
@@ -1286,6 +1293,14 @@ export async function sendThreadMessage(
     // Subscribers catch up from the durable event cursor after a missed realtime wake.
     getLogger().error("thread send realtime notification", error);
   });
+  const staleAt =
+    committed.runs.find((run): run is typeof run & { createdAt: Date } => "createdAt" in run)
+      ?.createdAt ?? new Date();
+  await markOpenCardsStale(deps.prisma, { threadId: target.threadId, at: staleAt }).catch(
+    (error) => {
+      getLogger().error("interaction stale mark", error);
+    },
+  );
   if (releaseTakeover) {
     for (const run of committed.runs) {
       if (steersUserMessage(run)) await releaseTakeover(run.id);

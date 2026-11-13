@@ -111,6 +111,7 @@ import {
   neutralizeSpeakerLabels,
   USER_SPEAKER,
 } from "./history-speakers.js";
+import { gcStaleCardsForRun } from "./interaction-stale.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
 import { HostedModelCreditsRequiredError } from "./model-credit-observer.js";
@@ -365,6 +366,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         data: { status: "running" },
       });
       if (started.count !== 1) return;
+      await gcStaleCardsForRun(deps.prisma, run).catch((error) => {
+        getLogger().error("interaction stale gc", error);
+      });
       const leaseTarget = await deps.prisma.bot.findUniqueOrThrow({
         where: { id: run.botId },
         select: {
