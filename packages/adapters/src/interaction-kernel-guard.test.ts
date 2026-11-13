@@ -94,10 +94,37 @@ function callArguments(source: string, openParen: number): string {
   return source.slice(openParen + 1);
 }
 
+function objectLiteral(source: string, openBrace: number): string {
+  let depth = 0;
+  for (let i = openBrace; i < source.length; i += 1) {
+    const char = source[i];
+    if (char === '"' || char === "'" || char === "`") {
+      i = skipString(source, i);
+      continue;
+    }
+    if (char === "{" || char === "[" || char === "(") depth += 1;
+    else if (char === "}" || char === "]" || char === ")") {
+      depth -= 1;
+      if (depth === 0) return source.slice(openBrace + 1, i);
+    }
+  }
+  return source.slice(openBrace + 1);
+}
+
+function dataPayload(args: string): string | undefined {
+  const match = /\bdata\s*:/.exec(args);
+  if (!match) return undefined;
+  const openBrace = args.indexOf("{", match.index);
+  if (openBrace < 0) return undefined;
+  return objectLiteral(args, openBrace);
+}
+
 function writesInteractionStatus(source: string): boolean {
   for (const match of source.matchAll(INTERACTION_WRITE)) {
     const openParen = (match.index ?? 0) + match[0].length - 1;
-    if (/\bstatus\s*:/.test(callArguments(source, openParen))) return true;
+    const data = dataPayload(callArguments(source, openParen));
+    // A WHERE `status:` is a compare-and-set read. Only the payload writes the column.
+    if (data && /\bstatus\s*:/.test(data)) return true;
   }
   return false;
 }
@@ -119,6 +146,12 @@ describe("interaction status write guard", () => {
 
   it("still sees the kernel store's own status write", () => {
     expect(statusWriteFiles()).toContain(KERNEL_STORE);
+  });
+
+  it("does not treat a staleAt CAS WHERE as a status write", () => {
+    expect(statusWriteFiles()).not.toContain("packages/adapters/src/interaction-stale.ts");
+    expect(statusWriteFiles()).not.toContain("apps/api/src/e2e-seed-expired-surface.ts");
+    expect(statusWriteFiles()).not.toContain("apps/api/src/e2e-expire-due-interactions.ts");
   });
 
   it("keeps the allowlist at the known kernel set, so it can only shrink by editing this list", () => {

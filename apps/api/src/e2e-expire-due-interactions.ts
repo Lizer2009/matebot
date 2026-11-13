@@ -2,7 +2,7 @@ import { expireDueInteractions } from "@matebot/adapters";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem } from "@matebot/db";
 import type { SeededSurface } from "./e2e-seed-expired-surface.js";
-import { inspectSeededSurface } from "./e2e-seed-expired-surface.js";
+import { amendLiveCardForE2e, inspectSeededSurface } from "./e2e-seed-expired-surface.js";
 
 /**
  * Isolated live helper: put a card into `awaiting_approval` with a past
@@ -14,12 +14,10 @@ export async function markAwaitingApprovalExpired(
   interactionId: string,
   expiresAt: Date = new Date(Date.now() - 60_000),
 ): Promise<SeededSurface> {
-  const system = asSystem(prisma, "isolated e2e mark approval expired");
-  const row = await system.interaction.findUnique({ where: { id: interactionId } });
-  if (!row) throw new Error(`missing interaction ${interactionId}`);
-  await system.interaction.update({
-    where: { id: interactionId },
-    data: { status: "awaiting_approval", expiresAt, staleAt: null },
+  await amendLiveCardForE2e(prisma, {
+    interactionId,
+    status: "awaiting_approval",
+    expiresAt,
   });
   return inspectSeededSurface(prisma, interactionId);
 }

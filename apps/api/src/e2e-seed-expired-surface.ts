@@ -1,5 +1,5 @@
-import { settleInteraction } from "@matebot/adapters";
-import type { MessageBlock } from "@matebot/contracts";
+import { publishOrAmend, settleInteraction } from "@matebot/adapters";
+import type { InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { surfaceStampFor } from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem } from "@matebot/db";
@@ -78,6 +78,33 @@ export async function inspectSeededSurface(
   };
 }
 
+/** Isolated live fixture: rewrite through `publishOrAmend`, never a raw status UPDATE. */
+export async function amendLiveCardForE2e(
+  prisma: PrismaClient,
+  input: {
+    interactionId: string;
+    status: "ready_for_review" | "awaiting_approval";
+    expiresAt?: Date | null;
+  },
+): Promise<void> {
+  const system = asSystem(prisma, "isolated e2e amend live card");
+  const row = await system.interaction.findUnique({ where: { id: input.interactionId } });
+  if (!row) throw new Error(`missing interaction ${input.interactionId}`);
+  const thread = await system.thread.findUnique({
+    where: { id: row.threadId },
+    select: { botId: true },
+  });
+  if (!thread?.botId) throw new Error(`interaction ${input.interactionId} thread has no bot`);
+  await publishOrAmend(system, {
+    spaceId: row.spaceId,
+    threadId: row.threadId,
+    botId: thread.botId,
+    plan: row.plan as InteractionPlan,
+    status: input.status,
+    ...(input.expiresAt !== undefined ? { expiresAt: input.expiresAt } : {}),
+  });
+}
+
 export async function seedExpiredSurface(
   prisma: PrismaClient,
   interactionId: string,
@@ -93,13 +120,10 @@ export async function seedExpiredSurface(
   if (!settled.settled && settled.reason === "exempt_from_settlement") {
     // Live e2e has no mailbox or calendar provider (external writes stay
     // paused), so present_interaction lands on needs_connection. The kernel
-    // will not expire that status — that is not a hole in this seed. The
-    // labeled fixture write below is only so settleInteraction can run on an
-    // open status; it is not the C-batch scanner and does not write staleAt.
-    await system.interaction.update({
-      where: { id: interactionId },
-      data: { status: "ready_for_review" },
-    });
+    // will not expire that status — that is not a hole in this seed. Amend
+    // through the production publisher onto an open status, then settle.
+    // Not the C-batch scanner and does not write staleAt.
+    await amendLiveCardForE2e(prisma, { interactionId, status: "ready_for_review" });
     const after = await settleInteraction(system, {
       interactionId,
       status: "expired",
