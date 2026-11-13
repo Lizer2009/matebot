@@ -14,7 +14,6 @@ import {
   createCalendarBatch,
   createCalendarEvent,
   deliverInteractionEmail,
-  scheduleInteractionExpiry,
   emailCapabilityFromRows,
   emailDraftSlots,
   emailSendAdapterContext,
@@ -26,6 +25,7 @@ import {
   loadProviderReadiness,
   projectInteractionEmailSurface,
   reconcileAmbiguousEmailEffect,
+  scheduleInteractionExpiry,
 } from "@matebot/adapters";
 import type { InteractionPlan } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
@@ -33,10 +33,10 @@ import {
   canExecuteConfirmedInteraction,
   confirmedEffectMatchesDraft,
   confirmInteractionDraftState,
-  expiresAtFor,
   deliveryNeedsReconnect,
   emailCapabilityAllowsSend,
   emailDeliveryOutcome,
+  expiresAtFor,
   interactionCapabilityForIntent,
   interactionConfirmEffectRequest,
   interactionConfirmIdempotencyKey,

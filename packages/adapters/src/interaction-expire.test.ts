@@ -57,12 +57,14 @@ function fakePrisma(rows: Row[]) {
         findUnique: vi.fn(async ({ where }: { where: { id: string } }) => {
           return messages.get(where.id) ?? null;
         }),
-        update: vi.fn(async ({ where, data }: { where: { id: string }; data: { blocks: unknown } }) => {
-          const current = messages.get(where.id);
-          if (!current) return null;
-          current.blocks = data.blocks as Record<string, unknown>[];
-          return current;
-        }),
+        update: vi.fn(
+          async ({ where, data }: { where: { id: string }; data: { blocks: unknown } }) => {
+            const current = messages.get(where.id);
+            if (!current) return null;
+            current.blocks = data.blocks as Record<string, unknown>[];
+            return current;
+          },
+        ),
       },
       interactionEvent: { create: vi.fn().mockResolvedValue({ id: "ev-1" }) },
     } as unknown as PrismaClient,
@@ -72,10 +74,20 @@ function fakePrisma(rows: Row[]) {
 function match(row: Row, where: Record<string, unknown>): boolean {
   if (where.id && row.id !== where.id) return false;
   if (typeof where.status === "string" && row.status !== where.status) return false;
-  if (where.status && typeof where.status === "object" && where.status !== null && "in" in where.status) {
+  if (
+    where.status &&
+    typeof where.status === "object" &&
+    where.status !== null &&
+    "in" in where.status
+  ) {
     if (!(where.status as { in: string[] }).in.includes(row.status)) return false;
   }
-  if (where.expiresAt && typeof where.expiresAt === "object" && where.expiresAt !== null && "lt" in where.expiresAt) {
+  if (
+    where.expiresAt &&
+    typeof where.expiresAt === "object" &&
+    where.expiresAt !== null &&
+    "lt" in where.expiresAt
+  ) {
     if (!row.expiresAt || !(row.expiresAt < (where.expiresAt as { lt: Date }).lt)) return false;
   }
   return true;

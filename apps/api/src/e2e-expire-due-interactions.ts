@@ -1,7 +1,8 @@
 import { expireDueInteractions } from "@matebot/adapters";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem } from "@matebot/db";
-import { inspectSeededSurface, type SeededSurface } from "./e2e-seed-expired-surface.js";
+import type { SeededSurface } from "./e2e-seed-expired-surface.js";
+import { inspectSeededSurface } from "./e2e-seed-expired-surface.js";
 
 /**
  * Isolated live helper: put a card into `awaiting_approval` with a past

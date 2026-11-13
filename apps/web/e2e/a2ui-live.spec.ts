@@ -287,9 +287,7 @@ async function markAwaitingApprovalExpired(interactionId: string): Promise<Seede
   });
   const body = (await response.json()) as SeededSurface & { error?: string };
   if (!response.ok) {
-    throw new Error(
-      `mark-awaiting-approval-expired ${response.status}: ${body.error ?? "failed"}`,
-    );
+    throw new Error(`mark-awaiting-approval-expired ${response.status}: ${body.error ?? "failed"}`);
   }
   return body;
 }

@@ -35,7 +35,8 @@ function fixture(options: { interactions?: Row[]; busy?: boolean; hasBot?: boole
     ...row,
     confirmedVersion: null,
     plan: row.plan ?? plan,
-    messageId: row.id === "ix-cal" || row.id === "ix-mail" ? `msg-${row.id.replace("ix-", "")}` : null,
+    messageId:
+      row.id === "ix-cal" || row.id === "ix-mail" ? `msg-${row.id.replace("ix-", "")}` : null,
     title: "Create calendar",
     summary: null,
     runId: "run-1",

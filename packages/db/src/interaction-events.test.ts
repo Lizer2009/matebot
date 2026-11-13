@@ -9,14 +9,11 @@ const here = dirname(fileURLToPath(import.meta.url));
 describe("appendInteractionEvent", () => {
   it("inserts a published row and never offers an update helper", async () => {
     const create = vi.fn().mockResolvedValue({ id: "ev-1" });
-    await appendInteractionEvent(
-      { interactionEvent: { create } } as never,
-      {
-        interactionId: "ix-1",
-        kind: "published",
-        toStatus: "needs_connection",
-      },
-    );
+    await appendInteractionEvent({ interactionEvent: { create } } as never, {
+      interactionId: "ix-1",
+      kind: "published",
+      toStatus: "needs_connection",
+    });
     expect(create).toHaveBeenCalledWith({
       data: {
         interactionId: "ix-1",
