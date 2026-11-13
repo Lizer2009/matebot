@@ -106,6 +106,7 @@ export * from "./interaction-email-outcome.js";
 export * from "./interaction-email-reconcile.js";
 export * from "./interaction-field-writer.js";
 export * from "./interaction-kernel-store.js";
+export * from "./interaction-stale.js";
 export * from "./interaction-publish.js";
 export * from "./interaction-result-publish.js";
 export * from "./jev-auto-review.js";

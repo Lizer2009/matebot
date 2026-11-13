@@ -1,7 +1,14 @@
 import type { InteractionPlan } from "@matebot/contracts";
 import type { InteractionStatus, SettleRefusal } from "@matebot/core";
-import { canRetryStatus, decideSettle, deriveCollectingStatus, OPEN_STATUSES } from "@matebot/core";
-import type { PrismaClient } from "@matebot/db";
+import {
+  canRetryStatus,
+  decideSettle,
+  deriveCollectingStatus,
+  historySlotsFromValues,
+  OPEN_STATUSES,
+  surfaceStampFor,
+} from "@matebot/core";
+import type { Prisma, PrismaClient } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 
 export type OpenCardRow = {
@@ -75,7 +82,14 @@ export async function settleInteraction(
 ): Promise<SettleResult> {
   const current = await prisma.interaction.findUnique({
     where: { id: input.interactionId },
-    select: { id: true, status: true, staleAt: true },
+    select: {
+      id: true,
+      status: true,
+      staleAt: true,
+      messageId: true,
+      intent: true,
+      slots: true,
+    },
   });
   if (!current) return { settled: false, reason: "not_found" };
 
@@ -88,9 +102,17 @@ export async function settleInteraction(
       status: current.status,
       ...(input.staleAtSnapshot !== undefined ? { staleAt: input.staleAtSnapshot } : {}),
     },
-    data: { status: decision.status },
+    data: { status: decision.status, staleAt: null },
   });
   if (written.count === 0) return { settled: false, reason: "concurrent" };
+
+  await restampInteractionSurface(prisma, {
+    interactionId: current.id,
+    messageId: current.messageId,
+    intent: current.intent,
+    status: decision.status,
+    slots: (current.slots ?? {}) as Record<string, unknown>,
+  });
 
   getLogger().info("interaction.settled", {
     "interaction.id": input.interactionId,
@@ -99,6 +121,49 @@ export async function settleInteraction(
     "interaction.reason": input.reason,
   });
   return { settled: true, previousStatus: current.status };
+}
+
+/**
+ * Copy the kernel status onto the timeline block the hosts actually read.
+ *
+ * Closing the row without this leaves a draft-looking card (B's labeled seed
+ * had to do this by hand). `stale` is a freshness flag, not a status: omit it
+ * on a settled card, set it while an open card is marked.
+ */
+export async function restampInteractionSurface(
+  prisma: PrismaClient,
+  input: {
+    interactionId: string;
+    messageId: string | null;
+    intent: string;
+    status: string;
+    slots?: Record<string, unknown>;
+    stale?: boolean;
+  },
+): Promise<void> {
+  if (!input.messageId) return;
+  const message = await prisma.message.findUnique({
+    where: { id: input.messageId },
+    select: { blocks: true },
+  });
+  if (!message || !Array.isArray(message.blocks)) return;
+  const stamp = surfaceStampFor({ status: input.status, intent: input.intent });
+  const historySlots = historySlotsFromValues(input.intent, input.slots ?? {});
+  const nextBlocks = message.blocks.map((entry) => {
+    const block = entry as { kind?: string; interactionId?: string };
+    if (block.kind !== "a2ui_surface" || block.interactionId !== input.interactionId) {
+      return entry;
+    }
+    const next = { ...(entry as Record<string, unknown>), ...stamp };
+    delete next.stale;
+    if (input.stale) next.stale = true;
+    if (historySlots) next.historySlots = historySlots;
+    return next;
+  });
+  await prisma.message.update({
+    where: { id: input.messageId },
+    data: { blocks: nextBlocks as Prisma.InputJsonValue },
+  });
 }
 
 export type ReviveResult =

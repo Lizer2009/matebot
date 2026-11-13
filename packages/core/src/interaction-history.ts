@@ -27,3 +27,18 @@ export function cardHistoryDigest(input: {
   const fallback = input.fallback?.trim();
   return fallback || undefined;
 }
+
+/** The digest fields currently stored on an interaction, if any are filled. */
+export function historySlotsFromValues(
+  intent: string,
+  slots: Record<string, unknown>,
+): Record<string, string> | undefined {
+  const names = findInteractionCapability(intent)?.historyDigestFields;
+  if (!names?.length) return undefined;
+  const out: Record<string, string> = {};
+  for (const name of names) {
+    const value = slots[name];
+    if (typeof value === "string" && value.trim()) out[name] = value.trim();
+  }
+  return Object.keys(out).length ? out : undefined;
+}
