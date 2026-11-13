@@ -18,7 +18,7 @@ import {
   loadOwnerEmailConnections,
   loadProviderReadiness,
 } from "./interaction-email-capability.js";
-import { publishInteractionSurface } from "./interaction-publish.js";
+import { publishOrAmend } from "./interaction-publish.js";
 import type { DraftSender } from "./interaction-readback.js";
 import { describeDraftForModel } from "./interaction-readback.js";
 import type { RunContext } from "./run-context.js";
@@ -114,36 +114,6 @@ function surfaceNudgeReply(
   return state ? surfaceNudgeText({ state, intent }) : undefined;
 }
 
-const OPEN_DRAFT_STATUSES = [
-  "collecting",
-  "ready_for_review",
-  "needs_connection",
-  "awaiting_approval",
-] as const;
-
-/**
- * A second present of the same intent must replace the card already on screen.
- * Publishing another interaction leaves two live buttons for one effect.
- */
-async function openDraftId(
-  ctx: RunContext,
-  intent: string,
-): Promise<string | undefined> {
-  const findFirst = ctx.deps.prisma.interaction?.findFirst;
-  if (typeof findFirst !== "function") return undefined;
-  const row = await findFirst.call(ctx.deps.prisma.interaction, {
-    where: {
-      spaceId: ctx.run.spaceId,
-      threadId: ctx.run.threadId,
-      intent,
-      status: { in: [...OPEN_DRAFT_STATUSES] },
-    },
-    orderBy: { updatedAt: "desc" },
-    select: { id: true },
-  });
-  return row?.id;
-}
-
 async function presentInteraction(ctx: RunContext, call: ToolCall) {
   if (!isA2uiFeatureEnabled()) {
     return { error: "Interactive drafts are not enabled on this server." };
@@ -190,15 +160,13 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
 
   try {
     const capabilityStamp = await interactionPublishCapability(ctx, plan);
-    const replacing = await openDraftId(ctx, plan.intent);
-    const published = await publishInteractionSurface(deps.prisma, {
+    const published = await publishOrAmend(deps.prisma, {
       spaceId: run.spaceId,
       threadId: run.threadId,
       botId: run.botId,
       runId: run.id,
       plan,
       lease: runLeaseFor(deps, run.id),
-      ...(replacing ? { amendsInteractionId: replacing } : {}),
       // The stamp carries the connection's label for the card's read-only row; the publisher
       // only accepts the label, because an address is not something it can vouch for.
       ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),

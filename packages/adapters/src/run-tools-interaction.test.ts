@@ -2,10 +2,13 @@ import type { InteractionPlan } from "@matebot/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { builtinAgentTools } from "./builtin-tools.js";
 
-const publishInteractionSurface = vi.fn();
-vi.mock("./interaction-publish.js", () => ({
-  publishInteractionSurface: (...args: unknown[]) => publishInteractionSurface(...args),
-}));
+const publishOrAmend = vi.fn();
+vi.mock("./interaction-publish.js", async () => {
+  const actual = await vi.importActual<typeof import("./interaction-publish.js")>(
+    "./interaction-publish.js",
+  );
+  return { ...actual, publishOrAmend: (...args: unknown[]) => publishOrAmend(...args) };
+});
 
 const {
   interactionPublishCapability,
@@ -139,7 +142,7 @@ describe("normalizeCalendarPlan", () => {
 
 describe("present_interaction", () => {
   beforeEach(() => {
-    publishInteractionSurface.mockReset();
+    publishOrAmend.mockReset();
     vi.stubEnv("FEATURE_A2UI", "1");
   });
 
@@ -148,7 +151,7 @@ describe("present_interaction", () => {
   });
 
   it("publishes an email.compose surface when FEATURE_A2UI is on", async () => {
-    publishInteractionSurface.mockResolvedValueOnce({
+    publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-1",
       surfaceId: "surface-1",
       messageId: "msg-1",
@@ -162,7 +165,7 @@ describe("present_interaction", () => {
       ctx as never,
       call({ plan: emailPlan }),
     )) as Record<string, unknown>;
-    expect(publishInteractionSurface).toHaveBeenCalledWith(
+    expect(publishOrAmend).toHaveBeenCalledWith(
       ctx.deps.prisma,
       expect.objectContaining({
         spaceId: "space-1",
@@ -186,7 +189,7 @@ describe("present_interaction", () => {
   });
 
   it("says nothing when the surface was published without a capability stamp", async () => {
-    publishInteractionSurface.mockResolvedValueOnce({
+    publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-2",
       surfaceId: "surface-2",
       messageId: "msg-2",
@@ -203,7 +206,7 @@ describe("present_interaction", () => {
   });
 
   it("answers a calendar request with a calendar surface, not prose", async () => {
-    publishInteractionSurface.mockResolvedValueOnce({
+    publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-cal",
       surfaceId: "surface-cal",
       messageId: "msg-cal",
@@ -225,7 +228,7 @@ describe("present_interaction", () => {
         },
       }),
     )) as Record<string, unknown>;
-    expect(publishInteractionSurface).toHaveBeenCalledWith(
+    expect(publishOrAmend).toHaveBeenCalledWith(
       ctx.deps.prisma,
       expect.objectContaining({
         plan: expect.objectContaining({
@@ -245,14 +248,15 @@ describe("present_interaction", () => {
     });
   });
 
-  it("replaces an open draft of the same intent instead of stacking a second card", async () => {
-    publishInteractionSurface.mockResolvedValueOnce({
+  it("leaves the open-card decision to the kernel instead of resolving a draft locally", async () => {
+    publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-2",
       surfaceId: "surface-2",
       messageId: "msg-2",
       documentRef: "a2ui:interaction:ix-2:surface:surface-2",
-      draftVersion: 1,
+      draftVersion: 2,
       eventSeq: 13,
+      amended: true,
       capability: "ready",
       plan: {
         intent: "calendar.create",
@@ -265,7 +269,6 @@ describe("present_interaction", () => {
       missingRequired: [],
     });
     const ctx = context();
-    ctx.deps.prisma.interaction.findFirst.mockResolvedValueOnce({ id: "ix-open" });
     await interactionTools.present_interaction!(
       ctx as never,
       call({
@@ -278,10 +281,10 @@ describe("present_interaction", () => {
         },
       }),
     );
-    expect(publishInteractionSurface).toHaveBeenCalledWith(
-      ctx.deps.prisma,
-      expect.objectContaining({ amendsInteractionId: "ix-open" }),
-    );
+    // One call decides create-or-amend; the card's own surface is the kernel's business.
+    expect(publishOrAmend).toHaveBeenCalledTimes(1);
+    expect(ctx.deps.prisma.interaction.findFirst).not.toHaveBeenCalled();
+    expect(publishOrAmend.mock.calls[0]![1]).not.toHaveProperty("amendsInteractionId");
   });
 
   it("refuses when FEATURE_A2UI is off", async () => {
@@ -291,7 +294,7 @@ describe("present_interaction", () => {
       call({ plan: emailPlan }),
     )) as Record<string, unknown>;
     expect(result.error).toMatch(/not enabled/i);
-    expect(publishInteractionSurface).not.toHaveBeenCalled();
+    expect(publishOrAmend).not.toHaveBeenCalled();
   });
 });
 
@@ -402,14 +405,14 @@ describe("interactionPublishCapability", () => {
 
 describe("present_interaction describes the card it stored", () => {
   beforeEach(() => {
-    publishInteractionSurface.mockReset();
+    publishOrAmend.mockReset();
     vi.stubEnv("FEATURE_A2UI", "1");
   });
 
   it("reports the fields, the gaps and the sender from what was published", async () => {
     // The publisher reports what it stored; the tool passes that through so the reply can be
     // written from the card instead of from the plan the model submitted.
-    publishInteractionSurface.mockResolvedValueOnce({
+    publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-1",
       surfaceId: "surface-1",
       messageId: "msg-1",
