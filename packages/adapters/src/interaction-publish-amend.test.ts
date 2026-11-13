@@ -55,10 +55,21 @@ const callInput = (index = 0) => {
 };
 
 function amendPrisma(existing: OpenCardRow, surfaceId = "s1", amendsInteractionId?: string) {
-  const updateInteraction = vi.fn().mockResolvedValue({});
+  const updateInteraction = vi.fn().mockResolvedValue({ count: 1 });
   const updateMessage = vi.fn().mockResolvedValue({});
+  // The row as it is once the amend holds its lock. Mutable, so a case can make
+  // the locked row disagree with the lookup that found the card.
+  const txFindUnique = vi.fn(async () => ({
+    status: existing.status,
+    draftVersion: existing.draftVersion,
+  }));
   const tx = {
-    interaction: { update: updateInteraction },
+    $executeRaw: vi.fn().mockResolvedValue(1),
+    interaction: {
+      updateMany: updateInteraction,
+      update: vi.fn().mockResolvedValue({}),
+      findUnique: txFindUnique,
+    },
     message: {
       findUnique: vi.fn().mockResolvedValue({
         id: "m1",
@@ -84,7 +95,7 @@ function amendPrisma(existing: OpenCardRow, surfaceId = "s1", amendsInteractionI
     interactionSurface: { findFirst: vi.fn().mockResolvedValue({ surfaceId }) },
     $transaction: vi.fn(async (run: (t: typeof tx) => unknown) => run(tx)),
   };
-  return { prisma, updateInteraction, updateMessage };
+  return { prisma, updateInteraction, updateMessage, txFindUnique };
 }
 
 function publishPrisma() {
@@ -159,7 +170,11 @@ describe("publishOrAmend", () => {
     expect(upsertInteractionSurface).toHaveBeenCalledTimes(1);
     expect(updateMessage).toHaveBeenCalledTimes(1);
     expect(updateInteraction).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "i1" } }),
+      expect.objectContaining({
+        // The write is a compare-and-set: the row must still carry the revision
+        // and status the amend was built from.
+        where: { id: "i1", status: "collecting", draftVersion: 1 },
+      }),
     );
     expect(updateInteraction.mock.calls[0]![0].data).toMatchObject({ draftVersion: 2 });
   });
@@ -464,5 +479,56 @@ describe("publishOrAmend", () => {
     expect(updateInteraction).not.toHaveBeenCalled();
     expect(updateMessage).not.toHaveBeenCalled();
     expect(upsertInteractionSurface).not.toHaveBeenCalled();
+  });
+
+  // The lock is what keeps two presents of one intent from losing a revision:
+  // the card is rewritten one at a time, each from the revision the previous
+  // write left behind, instead of both writing the same next version.
+  it("takes the next revision from the row as it is under the lock", async () => {
+    const { prisma, updateInteraction, updateMessage, txFindUnique } = amendPrisma(openCard);
+    // A sibling present landed first, so the row is already at revision 2.
+    txFindUnique.mockResolvedValue({ status: "collecting", draftVersion: 2 });
+
+    const result = await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+    });
+
+    expect(result.amended).toBe(true);
+    expect(result.draftVersion).toBe(3);
+    // The write is keyed on the revision read under the lock, not the stale lookup.
+    expect(updateInteraction).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ draftVersion: 2 }) }),
+    );
+    expect(updateInteraction).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ draftVersion: 3 }) }),
+    );
+    // Still one card and one message: the second present rewrote the first.
+    expect(createInteraction).not.toHaveBeenCalled();
+    expect(updateMessage).toHaveBeenCalledTimes(1);
+  });
+
+  // A card that left the draft state while the amend was being built must not be
+  // pulled back into it. The retry re-reads, and finds a state it may not amend.
+  it("will not reopen a card that was settled meanwhile", async () => {
+    const { prisma, updateInteraction, txFindUnique } = amendPrisma(openCard);
+    txFindUnique.mockResolvedValue({ status: "sent", draftVersion: 1 });
+    prisma.interaction.findFirst.mockResolvedValueOnce(openCard).mockResolvedValue(null);
+    createInteraction.mockRejectedValue({ code: "P2002" });
+
+    await expect(
+      publishOrAmend(prisma as never, {
+        spaceId: "sp1",
+        threadId: "t1",
+        botId: "b1",
+        runId: "r1",
+        plan,
+      }),
+    ).rejects.toBeTruthy();
+    // Nothing was written to the card that already left the draft state.
+    expect(updateInteraction).not.toHaveBeenCalled();
   });
 });

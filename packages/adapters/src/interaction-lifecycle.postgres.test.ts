@@ -13,7 +13,7 @@ import {
   cancelInteractionService,
   updateInteractionFieldService,
 } from "./interaction-field-writer.js";
-import { publishInteractionSurface } from "./interaction-publish.js";
+import { publishInteractionSurface, publishOrAmend } from "./interaction-publish.js";
 
 /**
  * The draft lifecycle against a real PostgreSQL database.
@@ -356,5 +356,78 @@ describePostgres("draft lifecycle (PostgreSQL)", () => {
     expect(waiting.status).toBe("needs_connection");
     expect((waiting.slots as Record<string, unknown>).body).toBe("正文");
     expect(waiting.confirmedVersion).toBeNull();
+  });
+
+  // The duplicate-card defect against the real tables, not a mocked client: two presents of one
+  // intent in one thread leave one row, one message and one block, and the second rewrites the
+  // first rather than stacking beside it.
+  it("turns a second present of one intent into one card on the timeline", async () => {
+    const first = await publish([
+      { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+      { name: "subject", value: "第一版", required: true, status: "resolved" },
+      { name: "body", value: "正文", required: true, status: "resolved" },
+    ]);
+    const second = await publishOrAmend(system, {
+      spaceId,
+      threadId,
+      botId: `bot-${stamp}`,
+      plan: EMAIL_PLAN([
+        { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "第二版", required: true, status: "resolved" },
+        { name: "body", value: "正文", required: true, status: "resolved" },
+      ]),
+    });
+
+    expect(second.amended).toBe(true);
+    expect(second.interactionId).toBe(first.interactionId);
+    expect(second.messageId).toBe(first.messageId);
+    expect(second.draftVersion).toBe(first.draftVersion + 1);
+
+    const rows = await system.interaction.findMany({
+      where: { id: { in: [first.interactionId, second.interactionId] } },
+    });
+    expect(rows).toHaveLength(1);
+    const messages = await system.message.findMany({
+      where: { id: { in: [first.messageId, second.messageId] } },
+      select: { id: true, blocks: true },
+    });
+    expect(messages).toHaveLength(1);
+    const blocks = messages[0]!.blocks as Array<{ kind: string; interactionId: string }>;
+    expect(blocks.filter((block) => block.kind === "a2ui_surface")).toHaveLength(1);
+    expect((rows[0]!.slots as Record<string, unknown>).subject).toBe("第二版");
+  });
+
+  // Concurrent presents cannot both insert: the partial unique index rejects one and the loser
+  // re-reads the winner's row, so the thread still ends with one open card and one message.
+  it("keeps one open card when several presents race", async () => {
+    const fields = (subject: string) => [
+      { name: "to", value: "alex@example.test", required: true, status: "resolved" as const },
+      { name: "subject", value: subject, required: true, status: "resolved" as const },
+      { name: "body", value: "正文", required: true, status: "resolved" as const },
+    ];
+    const results = await Promise.allSettled(
+      ["甲", "乙", "丙"].map((subject) =>
+        publishOrAmend(system, {
+          spaceId,
+          threadId,
+          botId: `bot-${stamp}`,
+          plan: EMAIL_PLAN(fields(subject)),
+        }),
+      ),
+    );
+
+    // A present is idempotent, so every caller gets a card — the same one.
+    const published = results.map((result) => {
+      if (result.status !== "fulfilled") throw result.reason;
+      return result.value;
+    });
+    expect(new Set(published.map((card) => card.interactionId)).size).toBe(1);
+    // One message, rewritten in place by each losing present, never a second one.
+    expect(new Set(published.map((card) => card.messageId)).size).toBe(1);
+    const open = await system.interaction.findMany({
+      where: { threadId, status: { in: [...OPEN_STATUSES] } },
+    });
+    expect(open).toHaveLength(1);
+    expect(await system.message.count({ where: { id: published[0]!.messageId } })).toBe(1);
   });
 });

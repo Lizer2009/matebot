@@ -44,6 +44,13 @@ function harness(occupying?: { id: string; status: string }) {
   };
   const snapshot = JSON.stringify(original);
 
+  const occupyingRow = occupying && {
+    ...original,
+    id: occupying.id,
+    status: occupying.status,
+    messageId: "msg-draft",
+  };
+
   const prisma = {
     interaction: {
       // The open-card lookup filters by status; a succeeded row can never match it, and a
@@ -51,17 +58,21 @@ function harness(occupying?: { id: string; status: string }) {
       findFirst: async ({ where }: { where: { status?: { in?: string[]; notIn?: string[] } } }) => {
         // The newest-card lookup filters with a denylist; there is nothing older here.
         if (!where.status?.in) return original;
-        if (occupying && where.status.in.includes(occupying.status)) {
+        if (occupyingRow && where.status.in.includes(occupying!.status)) {
           // Someone else's live draft holds this intent's one card slot.
-          return { ...original, id: occupying.id, messageId: "msg-draft" };
+          return occupyingRow;
         }
         return where.status.in.includes(original.status) ? original : null;
       },
       findMany: async () => [],
+      // The row the amendment locks and re-reads before writing it: the card the
+      // lookup found, whether that is the executed record or another draft.
       findUnique: async ({ where }: { where: { id: string } }) =>
         where.id === original.id
           ? original
-          : ((written.find((row) => row.id === where.id) as typeof original | undefined) ?? null),
+          : where.id === occupyingRow?.id
+            ? occupyingRow
+            : ((written.find((row) => row.id === where.id) as typeof original | undefined) ?? null),
       create: async ({ data }: { data: Record<string, unknown> }) => {
         const row = {
           ...data,

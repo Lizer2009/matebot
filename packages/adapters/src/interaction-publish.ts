@@ -213,6 +213,30 @@ export class InteractionCardOccupiedError extends Error {
   }
 }
 
+/**
+ * The card moved between the read and the write of an in-place amendment.
+ *
+ * Internal to the publisher: `publishOrAmend` re-reads and retries, so no caller
+ * sees this. It is thrown from inside the transaction, so whatever that attempt
+ * had written is rolled back.
+ */
+class InteractionCardConcurrencyError extends Error {
+  constructor(readonly interactionId: string) {
+    super("The card changed while it was being amended");
+    this.name = "InteractionCardConcurrencyError";
+  }
+}
+
+/**
+ * How many times a present may re-read the card and try again.
+ *
+ * A present is idempotent, so re-reading is always safe; the bound only stops a
+ * pathological race from spinning. It is generous because losing turns retry
+ * instead of overwriting, and every concurrent present of one intent is a loser
+ * until it wins.
+ */
+const MAX_PUBLISH_ATTEMPTS = 5;
+
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
 export async function publishInteractionSurface(
   prisma: PrismaClient,
@@ -420,19 +444,33 @@ export async function publishOrAmend(
   // An explicit `null` is a decision (no expiry), not a request to derive one.
   const expiresAt = input.expiresAt === undefined ? expiresAtFor(status) : input.expiresAt;
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < MAX_PUBLISH_ATTEMPTS; attempt += 1) {
     const existing = await findOpenCard(prisma, {
       threadId: input.threadId,
       intent: input.plan.intent,
     });
     if (existing?.messageId) {
-      return amendPublishedCard(prisma, {
-        ...input,
-        status,
-        expiresAt,
-        existing,
-        messageId: existing.messageId,
-      });
+      try {
+        return await amendPublishedCard(prisma, {
+          ...input,
+          status,
+          expiresAt,
+          existing,
+          messageId: existing.messageId,
+        });
+      } catch (error) {
+        // The row moved under us: the person confirmed, sent, or another run amended it
+        // between the read and the write. Rewriting from the stale copy would either
+        // relabel a card that left the draft state or drop a version, so the whole amend
+        // is re-read and redone against the row as it now is.
+        if (!(error instanceof InteractionCardConcurrencyError)) throw error;
+        getLogger().info("interaction.amend_race_retry", {
+          "interaction.id": existing.id,
+          "interaction.intent": input.plan.intent,
+          "interaction.attempt": attempt + 1,
+        });
+        continue;
+      }
     }
     if (existing) {
       // A live row with no message is holding the card key while showing nothing.
@@ -448,7 +486,9 @@ export async function publishOrAmend(
       const published = await publishInteractionSurface(prisma, { ...input, cardKey, expiresAt });
       return { ...published, amended: false };
     } catch (error) {
-      if ((error as { code?: string }).code !== "P2002" || attempt > 0) throw error;
+      if ((error as { code?: string }).code !== "P2002" || attempt >= MAX_PUBLISH_ATTEMPTS - 1) {
+        throw error;
+      }
       getLogger().info("interaction.publish_race_retry", {
         "interaction.card_key": cardKey,
         "interaction.intent": input.plan.intent,
@@ -503,10 +543,25 @@ async function amendPublishedCard(
   });
   const reconciledPlan = compiled.plan ?? input.plan;
   const slots = interactionSlotsFromPlan(reconciledPlan);
-  const nextVersion = existing.draftVersion + 1;
 
   return withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
+      // Serialise every rewrite of this card. Two presents of one intent are
+      // normal (a model that repeats itself, two runs of the same turn), and
+      // without the lock both would read the same revision, write the same
+      // next one, and one of the two field updates would vanish.
+      await tx.$executeRaw`SELECT id FROM "interactions" WHERE id = ${existing.id} FOR UPDATE`;
+      const locked = await tx.interaction.findUnique({
+        where: { id: existing.id },
+        select: { status: true, draftVersion: true },
+      });
+      // The card left the state this amend was built from — the person confirmed
+      // or sent it, or another writer settled it. Rewriting it now would relabel
+      // a card that already moved on, so the caller re-reads and starts over.
+      if (!locked || locked.status !== existing.status) {
+        throw new InteractionCardConcurrencyError(existing.id);
+      }
+      const nextVersion = locked.draftVersion + 1;
       const message = await tx.message.findUnique({
         where: { id: input.messageId },
         select: { blocks: true },
@@ -522,8 +577,14 @@ async function amendPublishedCard(
           throw new InteractionCardOccupiedError(existing.id, input.amendsInteractionId);
         }
       }
-      await tx.interaction.update({
-        where: { id: existing.id },
+      const written = await tx.interaction.updateMany({
+        // Compare-and-set on the revision read under the lock: nothing may
+        // overwrite a version another write already produced.
+        where: {
+          id: existing.id,
+          status: existing.status,
+          draftVersion: locked.draftVersion,
+        },
         data: {
           plan: reconciledPlan as never,
           slots: slots as never,
@@ -535,6 +596,7 @@ async function amendPublishedCard(
           expiresAt: input.expiresAt,
         },
       });
+      if (written.count !== 1) throw new InteractionCardConcurrencyError(existing.id);
       const { documentRef } = await upsertInteractionSurface(tx, {
         interactionId: existing.id,
         surfaceId,
