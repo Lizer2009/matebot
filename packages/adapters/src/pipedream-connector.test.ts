@@ -150,7 +150,7 @@ function keyedOutageFetch() {
 
 async function executePlaceholder(
   connector: PipedreamConnector,
-  tool: { name: string; route?: { connectorId: string; resourceId?: string; toolName?: string } },
+  tool: { name: string; route?: { connectorId: string; toolName: string; resourceId?: string } },
   ctx: AdapterContext,
 ) {
   const events = [];
