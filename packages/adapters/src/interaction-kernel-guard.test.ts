@@ -7,9 +7,10 @@ const ROOT = join(__dirname, "..", "..", "..");
 /**
  * Files still allowed to write `interaction.status` directly.
  *
- * This list may only shrink. Every entry is a card path that batches B~E will
- * move onto `settleInteraction`; adding a name here is how the kernel gets
- * quietly hollowed out, so the test also fails if the list grows.
+ * Every entry is a card path that batches B~E will move onto `settleInteraction`.
+ * This list may only shrink: the test below pins it to `EXPECTED_WRITERS`, so
+ * adding a name fails just as removing one without updating the snapshot does,
+ * and a shrink stays a one-line diff of both blocks.
  */
 const STATUS_WRITE_ALLOWLIST = [
   "packages/adapters/src/interaction-publish.ts",
@@ -23,6 +24,21 @@ const STATUS_WRITE_ALLOWLIST = [
 ].sort();
 
 const KERNEL_STORE = "packages/adapters/src/interaction-kernel-store.ts";
+
+/**
+ * The allowlist as reviewed. Pinned verbatim so any addition fails; shrinking
+ * the kernel means deleting the line here and the line above in one commit.
+ */
+const EXPECTED_WRITERS = [
+  "apps/api/src/interaction-resume.ts",
+  "apps/api/src/interaction-service.ts",
+  "packages/adapters/src/interaction-email-outcome.ts",
+  "packages/adapters/src/interaction-field-writer.ts",
+  "packages/adapters/src/interaction-kernel-store.ts",
+  "packages/adapters/src/interaction-publish.ts",
+  "packages/adapters/src/interaction-result-publish.ts",
+  "packages/db/src/interactions.ts",
+];
 
 const SKIP_DIRS = new Set([
   "node_modules",
@@ -105,7 +121,7 @@ describe("interaction status write guard", () => {
     expect(statusWriteFiles()).toContain(KERNEL_STORE);
   });
 
-  it("keeps the allowlist sorted and free of duplicates, so shrinking it is a diff of one line", () => {
-    expect(STATUS_WRITE_ALLOWLIST).toEqual([...new Set(STATUS_WRITE_ALLOWLIST)].sort());
+  it("keeps the allowlist at the known kernel set, so it can only shrink by editing this list", () => {
+    expect(STATUS_WRITE_ALLOWLIST).toEqual(EXPECTED_WRITERS);
   });
 });
