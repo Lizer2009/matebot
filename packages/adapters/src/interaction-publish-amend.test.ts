@@ -23,7 +23,7 @@ vi.mock("@matebot/db", async () => {
   };
 });
 
-const { publishOrAmend } = await import("./interaction-publish.js");
+const { InteractionCardOccupiedError, publishOrAmend } = await import("./interaction-publish.js");
 
 const plan: InteractionPlan = {
   intent: "email.compose",
@@ -373,7 +373,9 @@ describe("publishOrAmend", () => {
   });
 
   it("turns a second present for one intent into one card with one block", async () => {
-    const { prisma, updateMessage } = amendPrisma(openCard);
+    // The card the first present created names the record it amends; the second
+    // present of the same correction is what must amend it rather than stack.
+    const { prisma, updateMessage } = amendPrisma(openCard, "s1", "executed-1");
     // First present finds nothing and creates; the second finds that card.
     prisma.interaction.findFirst.mockResolvedValueOnce(null);
 
@@ -423,21 +425,44 @@ describe("publishOrAmend", () => {
     expect(blocks[0]?.amendsInteractionId).toBe("executed-1");
   });
 
-  it("lets a caller's amendment link override the one on the block", async () => {
+  it("amends a correction of the same record", async () => {
     const { prisma, updateMessage } = amendPrisma(openCard, "s1", "executed-1");
 
-    await publishOrAmend(prisma as never, {
+    const result = await publishOrAmend(prisma as never, {
       spaceId: "sp1",
       threadId: "t1",
       botId: "b1",
       runId: "r1",
       plan,
-      amendsInteractionId: "executed-2",
+      amendsInteractionId: "executed-1",
     });
 
+    expect(result.amended).toBe(true);
     const blocks = updateMessage.mock.calls[0]![0].data.blocks as Array<{
       amendsInteractionId?: string;
     }>;
-    expect(blocks[0]?.amendsInteractionId).toBe("executed-2");
+    expect(blocks[0]?.amendsInteractionId).toBe("executed-1");
+  });
+
+  // The slot is one card per intent, so it may also be someone else's draft. A
+  // correction is about one named record; taking that slot would discard what the
+  // person typed there and still report the card as a new correction.
+  it("refuses the slot held by an unrelated draft", async () => {
+    const { prisma, updateInteraction, updateMessage } = amendPrisma(openCard);
+
+    await expect(
+      publishOrAmend(prisma as never, {
+        spaceId: "sp1",
+        threadId: "t1",
+        botId: "b1",
+        runId: "r1",
+        plan,
+        amendsInteractionId: "executed-1",
+      }),
+    ).rejects.toBeInstanceOf(InteractionCardOccupiedError);
+
+    expect(updateInteraction).not.toHaveBeenCalled();
+    expect(updateMessage).not.toHaveBeenCalled();
+    expect(upsertInteractionSurface).not.toHaveBeenCalled();
   });
 });

@@ -14,6 +14,7 @@ import {
   appendEventInTransaction,
   getInteraction,
   InteractionNotFoundError,
+  InteractionTerminalError,
   InteractionVersionConflictError,
   upsertInteractionSurface,
   withTransactionRetry,
@@ -159,6 +160,11 @@ export async function updateInteractionFieldService(
         input.expectedDraftVersion,
         current.draftVersion,
       );
+    }
+    if (changed.error === "terminal") {
+      // The card closed between the client listing it and this write. Answering
+      // with a conflict lets the client reload instead of showing a server error.
+      throw new InteractionTerminalError(input.interactionId, current.status);
     }
     throw new Error(changed.message);
   }

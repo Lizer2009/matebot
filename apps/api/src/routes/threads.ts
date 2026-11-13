@@ -25,6 +25,7 @@ import {
   getInteraction,
   getInteractionSurface,
   InteractionNotFoundError,
+  InteractionTerminalError,
   InteractionVersionConflictError,
   IsolationError,
   lockOwnedGroup,
@@ -809,6 +810,11 @@ export function threadsRoutes(ctx: RouterContext) {
                 message: "Interaction draft was updated elsewhere; reload and retry",
               });
             }
+            if (error instanceof InteractionTerminalError) {
+              throw new ORPCError("CONFLICT", {
+                message: "Interaction is closed; reload the thread",
+              });
+            }
             throw error;
           }
         },
@@ -997,16 +1003,27 @@ export function threadsRoutes(ctx: RouterContext) {
             },
             listOpenSurfaces: async () => open,
             applyField: async (fieldInput) => {
-              const written = await updateInteractionFieldService(deps.prisma, {
-                spaceId: fieldInput.spaceId,
-                threadId: fieldInput.threadId,
-                botId: fieldInput.botId || botId || "",
-                interactionId: fieldInput.interactionId,
-                expectedDraftVersion: fieldInput.expectedDraftVersion,
-                name: fieldInput.name,
-                value: fieldInput.value,
-              });
-              return { draftVersion: written.draftVersion };
+              try {
+                const written = await updateInteractionFieldService(deps.prisma, {
+                  spaceId: fieldInput.spaceId,
+                  threadId: fieldInput.threadId,
+                  botId: fieldInput.botId || botId || "",
+                  interactionId: fieldInput.interactionId,
+                  expectedDraftVersion: fieldInput.expectedDraftVersion,
+                  name: fieldInput.name,
+                  value: fieldInput.value,
+                });
+                return { draftVersion: written.draftVersion };
+              } catch (error) {
+                // The same field write the card's own control makes; a card that
+                // closed while the model was editing is a conflict, not a fault.
+                if (error instanceof InteractionTerminalError) {
+                  throw new ORPCError("CONFLICT", {
+                    message: "Interaction is closed; reload the thread",
+                  });
+                }
+                throw error;
+              }
             },
           },
           {

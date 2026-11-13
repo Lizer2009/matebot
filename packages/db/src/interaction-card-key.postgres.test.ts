@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { interactionCardKey } from "@matebot/core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { PrismaClient } from "./client.js";
@@ -120,5 +121,42 @@ describePostgres("interaction card key (PostgreSQL)", () => {
     const key = interactionCardKey(threadId, "email.compose");
     expect(row.cardKey).toBe(key);
     await expect(prisma.interaction.count({ where: { threadId, cardKey: key } })).resolves.toBe(1);
+  });
+
+  // The backfill writes the key in SQL and everything after it writes the key in JS.
+  // If the two ever disagree, old rows and new rows hold different identities for the
+  // same (thread, intent) and the index stops seeing the duplicate it exists to stop.
+  // The expression is read from the migration itself, so editing that file moves this
+  // test with it instead of leaving a hand-copied duplicate passing on its own.
+  it("backfills with the digest the application computes", async () => {
+    const migration = await readFile(
+      new URL(
+        "../prisma/migrations/20261126120000_interaction_card_key/migration.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const expression = /SET "cardKey" = ([\s\S]*?)\nWHERE "cardKey" IS NULL/.exec(migration)?.[1];
+    expect(expression).toBeTruthy();
+
+    const pairs: Array<[string, string]> = [
+      [`card-key-ascii-${suffix}`, "email.compose"],
+      [`card-key-线程-${suffix}`, "邮件.发送"],
+      // Naive concatenation makes these two the same string; the NUL separator
+      // is what keeps them apart.
+      [`card-key-x-${suffix}`, "ab"],
+      [`card-key-x-${suffix}a`, "b"],
+    ];
+    const keys: string[] = [];
+    for (const [thread, intent] of pairs) {
+      const rows = await prisma.$queryRawUnsafe<Array<{ key: string }>>(
+        `SELECT ${expression} AS "key" FROM (VALUES ($1::text, $2::text)) AS t("threadId", "intent")`,
+        thread,
+        intent,
+      );
+      expect(rows[0]?.key).toBe(interactionCardKey(thread, intent));
+      keys.push(rows[0]!.key);
+    }
+    expect(keys[2]).not.toBe(keys[3]);
   });
 });

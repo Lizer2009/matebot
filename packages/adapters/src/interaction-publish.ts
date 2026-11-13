@@ -194,6 +194,25 @@ export function amendsFromBlock(
   return undefined;
 }
 
+/**
+ * A live card already holds this (thread, intent) slot, and it is not the
+ * correction that was about to be written.
+ *
+ * The partial unique index allows one live card per intent, so a correction of a
+ * finished record cannot get a second slot. Refusing is the only non-destructive
+ * answer: rewriting the open card would discard what the person typed there.
+ */
+export class InteractionCardOccupiedError extends Error {
+  readonly code = "INTERACTION_CARD_OCCUPIED" as const;
+  constructor(
+    readonly occupyingInteractionId: string,
+    readonly amendsInteractionId: string,
+  ) {
+    super("Another card already holds this intent");
+    this.name = "InteractionCardOccupiedError";
+  }
+}
+
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
 export async function publishInteractionSurface(
   prisma: PrismaClient,
@@ -488,6 +507,21 @@ async function amendPublishedCard(
 
   return withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
+      const message = await tx.message.findUnique({
+        where: { id: input.messageId },
+        select: { blocks: true },
+      });
+      const previous = Array.isArray(message?.blocks) ? (message.blocks as MessageBlock[]) : [];
+      // The card already holding this intent may be someone else's draft. A
+      // correction is about one named record; rewriting an unrelated draft would
+      // throw away what the person typed and still report itself as new. Only a
+      // correction of the same record may take this slot.
+      if (input.amendsInteractionId) {
+        const occupiedBy = amendsFromBlock(previous, surfaceId);
+        if (occupiedBy !== input.amendsInteractionId) {
+          throw new InteractionCardOccupiedError(existing.id, input.amendsInteractionId);
+        }
+      }
       await tx.interaction.update({
         where: { id: existing.id },
         data: {
@@ -508,11 +542,6 @@ async function amendPublishedCard(
         document: compiled.messages,
         draftVersion: nextVersion,
       });
-      const message = await tx.message.findUnique({
-        where: { id: input.messageId },
-        select: { blocks: true },
-      });
-      const previous = Array.isArray(message?.blocks) ? (message.blocks as MessageBlock[]) : [];
       // The block being replaced is the only place the read-only "sending from"
       // row can come from; a rebuild that trusts only this call's arguments
       // blanks it on every amend.

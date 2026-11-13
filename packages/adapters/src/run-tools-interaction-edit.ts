@@ -15,7 +15,7 @@ import {
 } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { updateInteractionFieldService } from "./interaction-field-writer.js";
-import { publishOrAmend } from "./interaction-publish.js";
+import { InteractionCardOccupiedError, publishOrAmend } from "./interaction-publish.js";
 import type { DraftSender } from "./interaction-readback.js";
 import { readbackFromStored } from "./interaction-readback.js";
 import type { RunContext } from "./run-context.js";
@@ -193,25 +193,40 @@ async function amendExecuted(
       ...(amended.error === "no_change" ? { reply: "这次修改没有改变任何字段。" } : {}),
     };
   }
-  const published = await services.publishAmendment({
-    interactionId: input.record.id,
-    plan: amended.plan,
-    ...(input.capabilityStamp
-      ? {
-          capabilityStamp: {
-            ...(input.capabilityStamp.capability
-              ? { capability: input.capabilityStamp.capability }
-              : {}),
-            ...(input.capabilityStamp.sender?.label
-              ? { senderLabel: input.capabilityStamp.sender.label }
-              : {}),
-            ...(input.capabilityStamp.sender?.address
-              ? { senderAddress: input.capabilityStamp.sender.address }
-              : {}),
-          },
-        }
-      : {}),
-  });
+  let published: Awaited<ReturnType<NonNullable<EditInteractionServices["publishAmendment"]>>>;
+  try {
+    published = await services.publishAmendment({
+      interactionId: input.record.id,
+      plan: amended.plan,
+      ...(input.capabilityStamp
+        ? {
+            capabilityStamp: {
+              ...(input.capabilityStamp.capability
+                ? { capability: input.capabilityStamp.capability }
+                : {}),
+              ...(input.capabilityStamp.sender?.label
+                ? { senderLabel: input.capabilityStamp.sender.label }
+                : {}),
+              ...(input.capabilityStamp.sender?.address
+                ? { senderAddress: input.capabilityStamp.sender.address }
+                : {}),
+            },
+          }
+        : {}),
+    });
+  } catch (error) {
+    if (error instanceof InteractionCardOccupiedError) {
+      // One live card per intent: this thread already has a card the correction
+      // would have to overwrite. Say so and change nothing, rather than discard
+      // the draft the person is looking at.
+      return {
+        ok: false,
+        error: "card_in_progress",
+        reply: "这个线程里还有一张同类卡片没处理完，先处理或取消它，我再改这条已完成的记录。",
+      };
+    }
+    throw error;
+  }
   // The correction is a new draft, and the model is told what that draft holds — not what it
   // asked for — so a correction that leaves a required value out is not described as complete.
   const readback =

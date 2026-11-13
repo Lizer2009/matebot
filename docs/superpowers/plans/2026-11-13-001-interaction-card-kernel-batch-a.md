@@ -1918,7 +1918,9 @@ git commit --allow-empty -m "chore: batch A (card kernel stop-the-bleeding) veri
 - **回填 SQL 用字节拼接 NUL，不用 `chr(0)`。** PostgreSQL 不允许文本里出现 NUL，`chr(0)` 会报 `null character not permitted`；改为 `encode(sha256(convert_to("threadId",'UTF8') || '\x00'::bytea || convert_to("intent",'UTF8')),'hex')`，与 JS 侧的 `sha256(threadId + "\u0000" + intent)` 字节一致。
 - **`decideSettle` 增加第五个拒绝理由 `not_terminal_target`。** 规格 §5 要求 `settleInteraction` 是「唯一终态写入」；只有 `current` 的校验会让 `collecting` 卡被「结算」成 `needs_connection` 或别的开放态。守卫放在纯函数内，`current` 的四条既有判定顺序不变。
 - **`publishAmendment` / `edit_interaction` 的发布路径也走 `publishOrAmend`。** 规格 §5.3 要求所有卡片写入都经过同一个内核；任务清单只覆盖了 `present_interaction`。修正一张已执行记录时，若同一 intent 已有开放卡，直接调用 `publishInteractionSurface` 会撞上新的部分唯一索引；改走 `publishOrAmend` 后原地修订，并保留被替换块上的 `amendsInteractionId`。
-- **`findOpenCard` 会查 `needs_connection`，但它仍不在部分唯一索引里。** 同一 intent 重复呈现时应原地修订而不是叠出第二张连接卡，所以查找集扩展到 `OPEN_STATUSES` 加 `needs_connection`；索引不能表达「按 intent 例外」，故不改索引。不同 intent 的连接卡仍需共存，AC-26（按 provider 的连接卡）留给 C 批。
+- **`findOpenCard` 会查 `needs_connection`，但它仍不在部分唯一索引里。** 同一 intent 重复呈现时应原地修订而不是叠出第二张连接卡，所以查找集扩展到 `OPEN_STATUSES` 加 `needs_connection`；索引不能表达「按 intent 例外」，故不改索引。不同 intent 的连接卡仍需共存，AC-26（按 provider 的连接卡）留给 C 批。迁移的存量去重也把 `needs_connection` 纳入：查找只看最新一张，历史重复的连接卡否则会永远活着。这是一次性清理旧行，不是运行时结算（D1 的豁免不变）。
+- **修正已执行记录时，若同一 intent 的卡位被别的草稿占着，就拒绝而不是覆盖。** 一个 intent 只有一个卡位；`publishOrAmend` 只在被占卡的 `amendsInteractionId` 等于本次修正对象时原地改写，否则抛 `InteractionCardOccupiedError`，工具层返回 `card_in_progress` 并说明先处理那张卡。改写会丢掉用户正在输入的内容，而回包仍会说「已新建」——两者都不能接受。
+- **卡在「列出来」和「写入」之间关闭时，字段写入答 409 而不是 500。** 迁移制造出 `superseded` 行之后，这个竞态变常见了：`updateInteractionFieldService` 现在抛 `InteractionTerminalError`，卡片控件路由与 `edit_interaction` 路由都映射为 `CONFLICT`，前端重载即可。
 - **AC-4 已 DEFERRED（本批未满足）。** `apps/api/src/interaction-service.ts` 的发送路径仍写入词表外的 `executing`，且数据库的 `status` 列还没有 CHECK 约束。把 in-flight 状态收敛到内核词表并补上约束需要一个能安全处理发送中途崩溃的方案：若本批就把 `executing` 拒之门外或直接加 CHECK，崩溃会留下无法结算的行，所以这两件事必须由同一个后续批次完成，届时一并迁移并结算这些卡。因此 AC-4 不由 A 批保证。
 
 ## 本批不做（明确留给后续批次）

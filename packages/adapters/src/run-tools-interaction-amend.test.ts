@@ -25,7 +25,7 @@ const executedPlan = {
   riskLevel: "medium",
 };
 
-function harness() {
+function harness(occupying?: { id: string; status: string }) {
   const written: Array<Record<string, unknown>> = [];
   const original = {
     id: "ix-done",
@@ -48,8 +48,15 @@ function harness() {
     interaction: {
       // The open-card lookup filters by status; a succeeded row can never match it, and a
       // fake that ignores the filter would look like a card the kernel is allowed to amend.
-      findFirst: async ({ where }: { where: { status?: { in?: string[] } } }) =>
-        where.status?.in?.includes(original.status) ? original : null,
+      findFirst: async ({ where }: { where: { status?: { in?: string[]; notIn?: string[] } } }) => {
+        // The newest-card lookup filters with a denylist; there is nothing older here.
+        if (!where.status?.in) return original;
+        if (occupying && where.status.in.includes(occupying.status)) {
+          // Someone else's live draft holds this intent's one card slot.
+          return { ...original, id: occupying.id, messageId: "msg-draft" };
+        }
+        return where.status.in.includes(original.status) ? original : null;
+      },
       findMany: async () => [],
       findUnique: async ({ where }: { where: { id: string } }) =>
         where.id === original.id
@@ -224,6 +231,22 @@ describe("correcting an executed record", () => {
     );
     expect(result).toMatchObject({ ok: false, error: "no_change" });
     expect(h.written).toHaveLength(0);
+  });
+
+  // A live draft for the same intent already owns the one card slot. The correction
+  // cannot have a second card, and it must not quietly take that one over.
+  it("refuses to overwrite an unrelated draft and says why", async () => {
+    const h = harness({ id: "ix-draft", status: "collecting" });
+    const result = await editInteraction(
+      h.ctx,
+      { interactionId: "ix-done", revision: 4, fields: { subject: "Corrected" } },
+      servicesFor(h.ctx),
+    );
+    expect(result).toMatchObject({ ok: false, error: "card_in_progress" });
+    if (result.ok) return;
+    // Nothing was written, and the reply does not claim a new draft exists.
+    expect(h.written).toHaveLength(0);
+    expect(result.reply).not.toContain("已新建");
   });
 });
 

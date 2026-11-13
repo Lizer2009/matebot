@@ -231,6 +231,24 @@ export class InteractionNotFoundError extends Error {
 }
 
 /**
+ * The row reached a status no write may touch before this write landed.
+ *
+ * A card can be superseded between the moment a client lists it and the moment
+ * the person's edit arrives. That is a lost race, not a server fault, so it
+ * carries its own type for the route to answer as a conflict.
+ */
+export class InteractionTerminalError extends Error {
+  readonly code = "INTERACTION_TERMINAL" as const;
+  constructor(
+    readonly interactionId: string,
+    readonly status: string,
+  ) {
+    super(`Interaction is ${status} and cannot be edited`);
+    this.name = "InteractionTerminalError";
+  }
+}
+
+/**
  * Apply slot edits under optimistic concurrency on draftVersion.
  * Increments draftVersion and clears confirmedVersion (unless opted out).
  */

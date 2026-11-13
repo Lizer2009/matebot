@@ -13,8 +13,12 @@ UPDATE "interactions"
 SET "cardKey" = encode(sha256(convert_to("threadId", 'UTF8') || '\x00'::bytea || convert_to("intent", 'UTF8')), 'hex')
 WHERE "cardKey" IS NULL;
 
--- Historical duplicates: keep the newest open card per key and supersede the rest,
--- so the unique index below can be created.
+-- Historical duplicates: keep the newest live card per key and supersede the rest.
+-- `needs_connection` is included even though the index below does not cover it: the
+-- open-card lookup now amends a waiting connection card in place, so it can only see
+-- the newest one — an older duplicate would stay live forever. This is a one-time
+-- cleanup of rows that predate the lookup, not a settlement of cards people are
+-- waiting on (that exemption is runtime behaviour and stays).
 WITH ranked AS (
   SELECT "id",
          ROW_NUMBER() OVER (
@@ -22,7 +26,7 @@ WITH ranked AS (
            ORDER BY "updatedAt" DESC, "id" DESC
          ) AS rn
   FROM "interactions"
-  WHERE "status" IN ('collecting', 'ready_for_review', 'awaiting_approval')
+  WHERE "status" IN ('collecting', 'ready_for_review', 'awaiting_approval', 'needs_connection')
 )
 UPDATE "interactions" AS i
 SET "status" = 'superseded'
