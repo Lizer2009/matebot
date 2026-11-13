@@ -1910,6 +1910,14 @@ git commit --allow-empty -m "chore: batch A (card kernel stop-the-bleeding) veri
 
 ---
 
+## 实施偏差（落地时确认的决定）
+
+这三处是本计划文本在落地时被修正的地方，代码与测试以修正后的行为为准：
+
+- **`cardKey` 在迁移里保持可空，不立即 `SET NOT NULL`。** 生产部署会在迁移后继续运行上一版代码（旧 API 数秒、旧 worker 直到手头任务结束），旧代码发布卡片时不写这一列；立即收紧会让旧 worker 的插入失败。`createInteraction` 在调用方省略时仍派生 `interactionCardKey(threadId, intent)`，部分唯一索引照常覆盖所有带 key 的行；等旧版本退出后，后续批次再用一条迁移收紧。
+- **回填 SQL 用字节拼接 NUL，不用 `chr(0)`。** PostgreSQL 不允许文本里出现 NUL，`chr(0)` 会报 `null character not permitted`；改为 `encode(sha256(convert_to("threadId",'UTF8') || '\x00'::bytea || convert_to("intent",'UTF8')),'hex')`，与 JS 侧的 `sha256(threadId + "\u0000" + intent)` 字节一致。
+- **`decideSettle` 增加第五个拒绝理由 `not_terminal_target`。** 规格 §5 要求 `settleInteraction` 是「唯一终态写入」；只有 `current` 的校验会让 `collecting` 卡被「结算」成 `needs_connection` 或别的开放态。守卫放在纯函数内，`current` 的四条既有判定顺序不变。
+
 ## 本批不做（明确留给后续批次）
 
 - **`cancel_interaction` 不动**。它现有的 `cancelInteractionService` 已有一处**正确的** CAS 写入（`updateMany` + `draftVersion` + 状态守卫），先于内核存在且行为正确。为避免破坏一条能用的路径，本批只在白名单里保留它，等 C 批统一改造。**这是有意保留的技术债，不是遗漏。**
