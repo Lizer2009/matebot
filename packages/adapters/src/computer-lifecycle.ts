@@ -56,7 +56,7 @@ import {
   isSandboxGoneError,
   isSandboxUnsafeStopError,
 } from "./sandbox-errors.js";
-import { describeWuyingSandbox } from "./wuying-sandbox.js";
+import { WUYING_SANDBOX_DESCRIPTOR } from "./wuying-capabilities.js";
 
 type ComputerUpdateProgress = (
   stage: Exclude<ComputerUpdate["stage"], "preparing">,
@@ -1023,7 +1023,7 @@ function sandboxCapabilitiesForKind(kind: string): SandboxCapabilities {
     case "desktop":
       return describeDesktopSandbox().capabilities;
     case "wuying":
-      return describeWuyingSandbox().capabilities;
+      return WUYING_SANDBOX_DESCRIPTOR.capabilities;
     case "none":
       return {
         graphical: false,

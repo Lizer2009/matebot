@@ -202,7 +202,18 @@ describe("calendar resume after authorization", () => {
 describe("post-surface nudge", () => {
   it("asks for confirmation on a plain draft", () => {
     expect(surfaceNudgeFor({ capability: "ready", lifecycle: "draft" })).toBe("presented");
-    expect(A2UI_SURFACE_NUDGE.presented).toBe("请在卡片上确认或编辑。");
+    expect(A2UI_SURFACE_NUDGE.presented).toBe("请审阅后点发送，尚未发出。");
+  });
+
+  it("says the empty card still needs a recipient and subject", () => {
+    expect(
+      surfaceNudgeFor({
+        capability: "ready",
+        lifecycle: "draft",
+        missingRequired: ["to", "subject", "body"],
+      }),
+    ).toBe("incomplete");
+    expect(A2UI_SURFACE_NUDGE.incomplete).toBe("请先补全收件人和主题。");
   });
 
   it("points at authorization instead when the card waits on it", () => {

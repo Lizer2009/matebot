@@ -98,6 +98,8 @@ export type PublishInteractionSurfaceInput = {
   amendsInteractionId?: string;
   /** The connection's own label, shown read-only on the card. Never an address. */
   senderLabel?: string;
+  /** Provider mailbox, only when the server learned it from the account record. */
+  senderAddress?: string;
 };
 
 /**
@@ -116,6 +118,15 @@ function senderLabelForBlock(label: string | undefined): string | undefined {
   return trimmed;
 }
 
+const MAX_SENDER_ADDRESS_LENGTH = 254;
+
+function senderAddressForBlock(address: string | undefined): string | undefined {
+  const trimmed = address?.trim();
+  if (!trimmed || trimmed.length > MAX_SENDER_ADDRESS_LENGTH) return undefined;
+  if (!trimmed.includes("@") || /\s/.test(trimmed)) return undefined;
+  return trimmed;
+}
+
 /**
  * Carry the sender label over when a card is rewritten in place.
  *
@@ -124,17 +135,27 @@ function senderLabelForBlock(label: string | undefined): string | undefined {
  * or a progress update, not just after an edit. The label never changes as a card moves through
  * its lifecycle, so the block being replaced is always the right source.
  */
+export function senderStampFromBlock(
+  blocks: MessageBlock[] | undefined,
+  surfaceId: string | undefined,
+): { senderLabel?: string; senderAddress?: string } {
+  if (!blocks) return {};
+  for (const entry of blocks) {
+    if (entry.kind !== "a2ui_surface") continue;
+    if (surfaceId && entry.surfaceId !== surfaceId) continue;
+    return {
+      ...(entry.senderLabel ? { senderLabel: entry.senderLabel } : {}),
+      ...(entry.senderAddress ? { senderAddress: entry.senderAddress } : {}),
+    };
+  }
+  return {};
+}
+
 export function senderLabelFromBlock(
   blocks: MessageBlock[] | undefined,
   surfaceId: string | undefined,
 ): string | undefined {
-  if (!blocks) return undefined;
-  for (const entry of blocks) {
-    if (entry.kind !== "a2ui_surface") continue;
-    if (surfaceId && entry.surfaceId !== surfaceId) continue;
-    if (entry.senderLabel) return entry.senderLabel;
-  }
-  return undefined;
+  return senderStampFromBlock(blocks, surfaceId).senderLabel;
 }
 
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
@@ -158,6 +179,7 @@ export async function publishInteractionSurface(
   const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
   const senderLabel = senderLabelForBlock(input.senderLabel);
+  const senderAddress = senderAddressForBlock(input.senderAddress);
   const stamps = emailIntent
     ? emailSurfaceBlockFields({
         intent: input.plan.intent,
@@ -212,6 +234,7 @@ export async function publishInteractionSurface(
         // The connection's own label for the card's read-only "sending from" row. Not an
         // address, and never editable: the mailbox is decided by the connection.
         ...(senderLabel ? { senderLabel } : {}),
+        ...(senderAddress ? { senderAddress } : {}),
         ...stamps,
       };
       const message = await createThreadMessageInTransaction(tx, {

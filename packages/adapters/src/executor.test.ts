@@ -34,7 +34,11 @@ import {
 import { createRunWorkspaceCheckpoint } from "./run-lifecycle.js";
 import { isTerminalModelSetupError } from "./run-model.js";
 import { runNotificationsEnabled } from "./run-notifications.js";
-import { REACTION_SILENT_REPLY_GUIDANCE } from "./run-replies.js";
+import {
+  longWorkProgressGuidance,
+  REACTION_SILENT_REPLY_GUIDANCE,
+  SHORT_FINAL_REPLY_GUIDANCE,
+} from "./run-replies.js";
 import {
   followUpsOffered,
   offeredFleetTools,
@@ -1460,8 +1464,7 @@ describe("userTurnInstructions", () => {
   ];
   const archiveBot =
     "archive_bot safely archives another bot in this space. Use it when the user asks to remove that bot or when it is finished and unused. The user can restore it or permanently delete it later. confirm_name must exactly match its name.";
-  const replyGuidance =
-    "Send progress updates only when the work will take minutes — long computer tasks or multi-step jobs — never for quick replies and never to announce that you are starting. The one exception: once you are working in a browser or on a desktop on a task that will take a few minutes, tell the person right away with message_user that it will take a while. Even then send at most a few brief updates (a sentence or two each), not one per tool call, and do not narrate routine steps. Thinking stays private. message_user is capped at 500 characters and will be silently cut off if you exceed it \u2014 never put your final answer, a report, or any long-form deliverable in it. Always put the complete final answer in your normal reply, never split across message_user calls, and never assume a message_user update already delivered your content.";
+  const replyGuidance = longWorkProgressGuidance();
   const stableTail = [
     'For charts and data visualization, use the render_plot tool: it renders bar, line, scatter, histogram, heatmap, faceted and many more chart types from a JSON spec and attaches the PNG to the chat. Call render_plot with {"help": true} before your first chart to read the full guide.',
     'For a dashboard, report, tracker or comparison, build a page with save_page (call it with {"help": true} first for the kit guide). To change a page, pass its pageId with edits or new source instead of making a new page. In your reply, mention the page by its title; never paste its source.',
@@ -1748,7 +1751,7 @@ describe("userTurnInstructions", () => {
     expect(text).toContain("list_secrets");
     expect(text).toContain("web_search");
     expect(text).toContain("destination_write");
-    expect(text).toContain("Always put the complete final answer in your normal reply.");
+    expect(text).toContain(SHORT_FINAL_REPLY_GUIDANCE);
   });
 
   it("keeps the reaction silence rule when message_user is off", () => {

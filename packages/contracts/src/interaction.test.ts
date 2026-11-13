@@ -113,6 +113,19 @@ describe("a2ui_surface MessageBlock", () => {
     expect(A2uiSurfaceBlockSchema.parse(surface).capability).toBeUndefined();
   });
 
+  it("accepts a provider mailbox only when it looks like an address", () => {
+    expect(
+      A2uiSurfaceBlockSchema.parse({
+        ...surface,
+        senderAddress: "lizer@example.test",
+      }).senderAddress,
+    ).toBe("lizer@example.test");
+    expect(A2uiSurfaceBlockSchema.safeParse({ ...surface, senderAddress: "Gmail" }).success).toBe(
+      false,
+    );
+    expect(A2uiSurfaceBlockSchema.parse(surface).senderAddress).toBeUndefined();
+  });
+
   it("accepts lifecycle, template, and providerMessageId stamps", () => {
     expect(
       A2uiSurfaceBlockSchema.parse({

@@ -477,6 +477,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     },
     layout: scroll.layoutJumpRow,
     refresh,
+    manageRules: () => router.push("/approvals"),
   });
 
   const { liveItems, renderMessageRow, renderItem } = useThreadRows({

@@ -2,7 +2,17 @@ import { useLingui } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import type { emailSurfaceTemplateFromBlock } from "@matebot/core";
 import { emailSurfacePhase } from "@matebot/core";
-import { Button, Input, Spinner, Textarea } from "@matebot/ui-web";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Input,
+  Spinner,
+  Textarea,
+} from "@matebot/ui-web";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { SuccessPop } from "../ai/primitives";
 import type { EmailDraftFields, EmailFieldName } from "./email-fields";
@@ -25,27 +35,29 @@ export function EmailComposeEditor({
   capability,
   template,
   lifecycle,
-  providerMessageId,
   error: surfaceError,
   fields,
   senderLabel,
+  senderAddress,
   onFieldChange,
   onConfirm,
   onSend,
   onConnect,
   onCheckStatus,
   onDiscard,
+  onManageRules,
 }: {
   draftVersion: number;
   confirmedVersion?: number;
   capability?: A2uiSurfaceBlock["capability"];
   template?: A2uiSurfaceBlock["template"];
   lifecycle?: A2uiSurfaceBlock["lifecycle"];
-  providerMessageId?: string;
   error?: string;
   fields: EmailDraftFields;
   /** The connection's own label for the read-only "sending from" row. Never an address. */
   senderLabel?: string;
+  /** Provider mailbox, only when the server learned it from the account record. */
+  senderAddress?: string;
   onFieldChange?: (
     name: EmailFieldName,
     value: string,
@@ -56,6 +68,7 @@ export function EmailComposeEditor({
   onConnect?: () => Promise<void>;
   onCheckStatus?: () => Promise<void>;
   onDiscard?: () => void | Promise<void>;
+  onManageRules?: () => void;
 }) {
   const { t } = useLingui();
   const toId = useId();
@@ -259,18 +272,7 @@ export function EmailComposeEditor({
                 data-testid="a2ui-email-sender"
                 className="block truncate text-[15px] text-foreground"
               >
-                {senderLabel ?? t`Connected account`}
-              </span>
-              {/*
-                The address is not known: the connection's name is whatever the client passed
-                when it was created, and the provider's account record does not carry the
-                mailbox. Saying so is better than showing a name where an address belongs.
-              */}
-              <span
-                data-testid="a2ui-email-sender-note"
-                className="block text-[12px] text-muted-foreground"
-              >
-                {t`Email address not provided`}
+                {senderAddress ?? senderLabel ?? t`Connected account`}
               </span>
             </span>
           </div>
@@ -293,7 +295,6 @@ export function EmailComposeEditor({
           label={t`CC`}
           value={values.cc}
           autoComplete="email"
-          placeholder="name@example.com"
           disabled={locked}
           onChange={(value) => typed("cc", value)}
           onBlur={(value) => {
@@ -321,11 +322,7 @@ export function EmailComposeEditor({
         />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <StatusLine
-          phase={phase}
-          providerMessageId={providerMessageId}
-          surfaceError={surfaceError}
-        />
+        <StatusLine phase={phase} surfaceError={surfaceError} onManageRules={onManageRules} />
         <div className="flex items-center gap-3">
           {phase === "action-submitting-card" ||
           phase === "action-progress-card" ||
@@ -461,12 +458,12 @@ export function EmailComposeEditor({
 
 function StatusLine({
   phase,
-  providerMessageId,
   surfaceError,
+  onManageRules,
 }: {
   phase: ReturnType<typeof emailSurfaceTemplateFromBlock>;
-  providerMessageId?: string;
   surfaceError?: string;
+  onManageRules?: () => void;
 }) {
   const { t } = useLingui();
   if (phase === "action-submitting-card" || phase === "action-progress-card") {
@@ -477,7 +474,7 @@ function StatusLine({
         aria-live="polite"
       >
         <Spinner className="size-3.5" aria-hidden />
-        {t`Sending`}
+        {t`Sending email`}
       </div>
     );
   }
@@ -485,11 +482,6 @@ function StatusLine({
     return (
       <div data-testid="a2ui-email-status" className="grid gap-1" aria-live="polite">
         <SuccessPop label={t`Sent`} />
-        {providerMessageId ? (
-          <div data-testid="a2ui-email-provider-id" className="text-[12px] text-muted-foreground">
-            {providerMessageId}
-          </div>
-        ) : null}
       </div>
     );
   }
@@ -528,13 +520,27 @@ function StatusLine({
     );
   }
   return (
-    <div
-      data-testid="a2ui-email-status"
-      className="text-[13px] text-muted-foreground"
-      aria-live="polite"
-    >
-      {t`Needs approval`}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        type="button"
+        data-testid="a2ui-email-status"
+        className="inline-flex items-center gap-1 text-[13px] text-muted-foreground"
+        aria-live="polite"
+      >
+        {t`Needs approval`}
+        <ChevronDown className="size-3.5" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-48">
+        <DropdownMenuItem disabled data-testid="a2ui-email-approval-require">
+          {t`Needs approval`}
+        </DropdownMenuItem>
+        {onManageRules ? (
+          <DropdownMenuItem data-testid="a2ui-email-manage-rules" onClick={onManageRules}>
+            {t`Manage rules`}
+          </DropdownMenuItem>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

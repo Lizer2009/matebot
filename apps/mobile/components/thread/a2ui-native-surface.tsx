@@ -1,7 +1,7 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import { emailSurfacePhase, needsRecovery } from "@matebot/core";
 import { useEffect, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import type { NativeCatalogNode } from "../../lib/a2ui-catalog";
 import {
   emailFieldsFromSurfaceMessages,
@@ -33,6 +33,7 @@ export function A2uiNativeSurface({
   onCheckStatus,
   onAction,
   onDiscard,
+  onManageRules,
 }: {
   block: A2uiSurfaceBlock;
   messages?: unknown[];
@@ -55,6 +56,7 @@ export function A2uiNativeSurface({
     context: Record<string, unknown>;
   }) => void | Promise<void>;
   onDiscard?: () => void | Promise<void>;
+  onManageRules?: () => void;
 }) {
   const { t } = useI18n();
   const [loaded, setLoaded] = useState<unknown[] | undefined>(messages);
@@ -83,6 +85,7 @@ export function A2uiNativeSurface({
   const [localConfirmedVersion, setLocalConfirmedVersion] = useState<number | undefined>(
     block.confirmedVersion,
   );
+  const [approvalMenuOpen, setApprovalMenuOpen] = useState(false);
   const valuesRef = useRef(values);
   const versionRef = useRef(block.draftVersion);
   const committed = useRef(values);
@@ -200,34 +203,40 @@ export function A2uiNativeSurface({
         style={{ gap: 8, width: "100%", minWidth: 0, alignSelf: "stretch" }}
       >
         <Text>{title}</Text>
-        <Text
-          testID={
-            phase === "action-progress-card" || phase === "action-submitting-card"
-              ? "a2ui-email-progress"
-              : phase === "action-result-failed"
-                ? "a2ui-email-failed"
-                : phase === "action-reconcile-card"
-                  ? "a2ui-email-unknown"
-                  : "a2ui-email-status"
-          }
-        >
-          {phase === "action-progress-card" || phase === "action-submitting-card"
-            ? t("Sending")
-            : phase === "action-result-success"
-              ? t("Sent")
-              : phase === "action-result-failed"
-                ? (block.error ?? t("Could not send"))
-                : phase === "action-reconcile-card"
-                  ? t("Don't send again")
-                  : phase === "email-reauth-card"
-                    ? t("Authorization expired")
-                    : phase === "email-connection-card"
-                      ? t("Not connected")
-                      : t("Needs approval")}
-        </Text>
-        {phase === "action-result-success" && block.providerMessageId ? (
-          <Text testID="a2ui-email-provider-id">{block.providerMessageId}</Text>
-        ) : null}
+        {phase === "action-progress-card" || phase === "action-submitting-card" ? (
+          <Text testID="a2ui-email-progress">{t("Sending email")}</Text>
+        ) : phase === "action-result-success" ? (
+          <Text testID="a2ui-email-status">{t("Sent")}</Text>
+        ) : phase === "action-result-failed" ? (
+          <Text testID="a2ui-email-failed">{block.error ?? t("Could not send")}</Text>
+        ) : phase === "action-reconcile-card" ? (
+          <Text testID="a2ui-email-unknown">{t("Don't send again")}</Text>
+        ) : phase === "email-reauth-card" || phase === "email-connection-card" ? (
+          <Text testID="a2ui-email-status">
+            {phase === "email-reauth-card" ? t("Authorization expired") : t("Not connected")}
+          </Text>
+        ) : (
+          <View>
+            <Pressable
+              testID="a2ui-email-status"
+              onPress={() => setApprovalMenuOpen((open) => !open)}
+            >
+              <Text>{t("Needs approval")}</Text>
+            </Pressable>
+            {approvalMenuOpen ? (
+              <View>
+                <Text testID="a2ui-email-approval-require">{t("Needs approval")}</Text>
+                {onManageRules ? (
+                  <A2uiButton
+                    label={t("Manage rules")}
+                    testID="a2ui-email-manage-rules"
+                    onPress={onManageRules}
+                  />
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        )}
         <A2uiSheet label={title}>
           {/*
             The sending mailbox is decided by the connected account, not by this form, so it is
@@ -235,15 +244,10 @@ export function A2uiNativeSurface({
             on a connection card, naming an account would contradict the card asking for one.
           */}
           {mailbox === "ready" ? (
-            <View style={{ gap: 2 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Text style={{ fontSize: 13, opacity: 0.6 }}>{t("From")}</Text>
-                <Text testID="a2ui-email-sender" style={{ fontSize: 15 }}>
-                  {block.senderLabel ?? t("Connected account")}
-                </Text>
-              </View>
-              <Text testID="a2ui-email-sender-note" style={{ fontSize: 12, opacity: 0.6 }}>
-                {t("Email address not provided")}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text style={{ fontSize: 13, opacity: 0.6 }}>{t("From")}</Text>
+              <Text testID="a2ui-email-sender" style={{ fontSize: 15 }}>
+                {block.senderAddress ?? block.senderLabel ?? t("Connected account")}
               </Text>
             </View>
           ) : null}

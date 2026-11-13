@@ -54,6 +54,7 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       openPeerChat: (peer) => rowActionsRef.current.openPeerChat(peer),
       layout: (id, y, index) => rowActionsRef.current.layout(id, y, index),
       refresh: () => rowActionsRef.current.refresh?.(),
+      manageRules: () => rowActionsRef.current.manageRules?.(),
     }),
     [],
   );

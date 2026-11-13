@@ -4313,6 +4313,10 @@ msgstr "OAuth istemci kimliği gerekli"
 msgid "Needs approval"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Manage rules"
+msgstr ""
+
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"
 msgstr "İlgi gerekiyor"
@@ -5850,6 +5854,10 @@ msgstr "Enter ile gönder"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Sending"
+msgstr ""
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Sending email"
 msgstr ""
 
 #: src/components/AskCard.tsx

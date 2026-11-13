@@ -145,6 +145,17 @@ export const A2uiSurfaceBlockSchema = z.object({
    */
   senderLabel: z.string().trim().min(1).max(80).optional(),
   /**
+   * Sending mailbox, only when the server learned it from the provider's account record.
+   * Never copied from the connection's display name.
+   */
+  senderAddress: z
+    .string()
+    .trim()
+    .min(3)
+    .max(254)
+    .refine((value) => value.includes("@") && !/\s/.test(value))
+    .optional(),
+  /**
    * Server-held document or patch pointer for later hydrate; not a client authority.
    * Prefer `a2uiSurfaceDocumentRef({ interactionId, surfaceId })` (PR-4 Option A).
    */

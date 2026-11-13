@@ -1,4 +1,5 @@
 import type { InteractionField, InteractionPlan } from "@matebot/contracts";
+import { readConfirmedCalendarDraft } from "./calendar-draft.js";
 
 /** Server-side Interaction lifecycle (design §7.4). Client cannot claim SUCCEEDED. */
 export type InteractionLifecycleStatus =
@@ -51,8 +52,14 @@ export function requiredFieldsSatisfied(
   plan: InteractionPlan,
   slots: Record<string, unknown>,
 ): boolean {
+  // A calendar batch lives in `events`. The single-event slots stay empty on purpose,
+  // and must not keep the card from being confirmed.
+  const batchCoversSingleSlots =
+    (plan.intent === "calendar.create" || plan.intent === "calendar.compose") &&
+    readConfirmedCalendarDraft(slots).kind === "batch";
   return plan.fields.every((field) => {
     if (!field.required) return true;
+    if (batchCoversSingleSlots && (field.name === "start" || field.name === "end")) return true;
     const value = slots[field.name];
     if (value === undefined || value === null) return false;
     if (typeof value === "string" && value.trim() === "") return false;

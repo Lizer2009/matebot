@@ -2,9 +2,10 @@ import type { InteractionPlan } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
 import {
-  A2UI_SURFACE_NUDGE,
   interactionRequiredApp,
+  readConfirmedCalendarDraft,
   surfaceNudgeFor,
+  surfaceNudgeText,
   timingFields,
   unknownCapabilityNotice,
   validateDecisionForCapability,
@@ -99,9 +100,48 @@ export function normalizeInteractionPlan(plan: InteractionPlan): InteractionPlan
 }
 
 /** The one line the turn should say after publishing; nothing else belongs in prose. */
-function surfaceNudgeReply(capability: EmailSurfaceCapability | undefined): string | undefined {
-  const state = surfaceNudgeFor({ capability, lifecycle: "draft" });
-  return state ? A2UI_SURFACE_NUDGE[state] : undefined;
+function surfaceNudgeReply(
+  capability: EmailSurfaceCapability | undefined,
+  missingRequired: readonly string[] | undefined,
+  intent: string,
+): string | undefined {
+  const state = surfaceNudgeFor({
+    capability,
+    lifecycle: "draft",
+    intent,
+    ...(missingRequired?.length ? { missingRequired } : {}),
+  });
+  return state ? surfaceNudgeText({ state, intent }) : undefined;
+}
+
+const OPEN_DRAFT_STATUSES = [
+  "collecting",
+  "ready_for_review",
+  "needs_connection",
+  "awaiting_approval",
+] as const;
+
+/**
+ * A second present of the same intent must replace the card already on screen.
+ * Publishing another interaction leaves two live buttons for one effect.
+ */
+async function openDraftId(
+  ctx: RunContext,
+  intent: string,
+): Promise<string | undefined> {
+  const findFirst = ctx.deps.prisma.interaction?.findFirst;
+  if (typeof findFirst !== "function") return undefined;
+  const row = await findFirst.call(ctx.deps.prisma.interaction, {
+    where: {
+      spaceId: ctx.run.spaceId,
+      threadId: ctx.run.threadId,
+      intent,
+      status: { in: [...OPEN_DRAFT_STATUSES] },
+    },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true },
+  });
+  return row?.id;
 }
 
 async function presentInteraction(ctx: RunContext, call: ToolCall) {
@@ -150,6 +190,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
 
   try {
     const capabilityStamp = await interactionPublishCapability(ctx, plan);
+    const replacing = await openDraftId(ctx, plan.intent);
     const published = await publishInteractionSurface(deps.prisma, {
       spaceId: run.spaceId,
       threadId: run.threadId,
@@ -157,11 +198,13 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       runId: run.id,
       plan,
       lease: runLeaseFor(deps, run.id),
+      ...(replacing ? { amendsInteractionId: replacing } : {}),
       // The stamp carries the connection's label for the card's read-only row; the publisher
       // only accepts the label, because an address is not something it can vouch for.
       ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),
       ...(capabilityStamp.status ? { status: capabilityStamp.status } : {}),
       ...(capabilityStamp.sender ? { senderLabel: capabilityStamp.sender.label } : {}),
+      ...(capabilityStamp.sender?.address ? { senderAddress: capabilityStamp.sender.address } : {}),
     });
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
@@ -183,7 +226,11 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
     // declared fields, which is what the confirm gate reads; the publisher's own list is only a
     // fallback for a card whose readback could not be built. Two keys of the same name in one
     // result would let the later one silently win.
-    const missingRequired = readback?.missingRequired ?? published.missingRequired ?? [];
+    const storedSlots = published.slots ?? {};
+    const batchReady = readConfirmedCalendarDraft(storedSlots).kind === "batch";
+    const missingRequired = (readback?.missingRequired ?? published.missingRequired ?? []).filter(
+      (name) => !(batchReady && (name === "start" || name === "end")),
+    );
     return {
       interactionId: published.interactionId,
       surfaceId: published.surfaceId,
@@ -214,11 +261,16 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
        */
       ...(missingRequired.length
         ? {
-            notice: `The card is on screen with ${missingRequired.join(", ")} still empty. Tell the user which fields need a value; do not say the draft is complete.`,
+            notice: `The card is on screen with ${missingRequired.join(", ")} still empty. Tell the user which fields need a value; do not say the draft is complete. Do not present another card.`,
           }
-        : {}),
+        : batchReady
+          ? {
+              notice:
+                "The events are on this one card. Wait for the user to confirm it. Do not present another card and do not create the events yourself.",
+            }
+          : {}),
       /** The only words the turn should add; the card holds everything else. */
-      reply: surfaceNudgeReply(published.capability),
+      reply: surfaceNudgeReply(published.capability, missingRequired, plan.intent),
     };
   } catch (error) {
     return {

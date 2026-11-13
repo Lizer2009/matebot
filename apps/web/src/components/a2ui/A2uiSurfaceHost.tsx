@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { guardA2uiCatalogMessages } from "./catalog-guard";
 import type { A2uiActionListener, A2uiRendererModules } from "./load-a2ui";
 import { createA2uiProcessor, loadA2uiRenderer, safePlainMarkdown } from "./load-a2ui";
@@ -36,6 +36,21 @@ export function A2uiSurfaceHost({
   onAction?: A2uiActionListener;
 }) {
   const [state, setState] = useState<HostState>({ kind: "loading" });
+  /**
+   * The listener arrives as an inline arrow from the message row, so its identity changes on
+   * every parent render. Keeping it in a ref gives the processor one stable bridge instead:
+   * when this was an effect dependency, each re-render tore the surface down to the loading
+   * skeleton and rebuilt it, and the card visibly blinked for as long as the thread kept
+   * re-rendering.
+   */
+  const listener = useRef(onAction);
+  listener.current = onAction;
+  const dispatch = useCallback<A2uiActionListener>(
+    (action) => listener.current?.(action),
+    [],
+  );
+  /** A surface already drawn stays on screen while its replacement compiles. */
+  const drawnSurfaceId = useRef<string | null>(null);
 
   useEffect(() => {
     const guard = guardA2uiCatalogMessages(messages);
@@ -45,14 +60,16 @@ export function A2uiSurfaceHost({
     }
 
     let cancelled = false;
-    setState({ kind: "loading" });
+    // Swapping a drawn card for a skeleton on every update is the flash the card showed
+    // after an edit. Only a different surface starts from the loading state.
+    if (drawnSurfaceId.current !== surfaceId) setState({ kind: "loading" });
 
     void (async () => {
       try {
         const mods = await loadA2uiRenderer();
         if (cancelled) return;
         // A surface with no listener would render buttons that go nowhere.
-        const processor = createA2uiProcessor(mods, onAction ?? (() => undefined));
+        const processor = createA2uiProcessor(mods, dispatch);
         processor.processMessages(messages as never[]);
         const surface = processor.model.surfacesMap.get(surfaceId);
         if (!surface) {
@@ -62,6 +79,7 @@ export function A2uiSurfaceHost({
           });
           return;
         }
+        drawnSurfaceId.current = surfaceId;
         setState({ kind: "ready", mods, processor, surface });
       } catch (cause) {
         if (cancelled) return;
@@ -73,7 +91,7 @@ export function A2uiSurfaceHost({
     return () => {
       cancelled = true;
     };
-  }, [messages, surfaceId, onAction]);
+  }, [messages, surfaceId, dispatch]);
 
   if (state.kind === "loading") {
     // The renderer loads in a separate chunk, so there is a moment after the

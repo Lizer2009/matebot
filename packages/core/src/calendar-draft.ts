@@ -23,9 +23,33 @@ function itemFields(value: unknown): CalendarDraftFields | null {
   return normalizeCalendarFields(value as Record<string, unknown>);
 }
 
+/**
+ * The batch list a draft carries, in whichever shape the model sent it.
+ *
+ * A tool argument arrives as JSON text, so a model holding eight events sends one
+ * string far more often than an array. Reading only the array treated that draft as a
+ * single event with no start or end: the card asked for a date and time that the batch
+ * already contained, and the model filled one week-long placeholder event instead of
+ * the eight it had planned. Both shapes are the same batch.
+ */
+export function calendarBatchItems(value: unknown): unknown[] | undefined {
+  const parsed: unknown =
+    typeof value === "string"
+      ? (() => {
+          if (value.trim() === "") return undefined;
+          try {
+            return JSON.parse(value) as unknown;
+          } catch {
+            return undefined;
+          }
+        })()
+      : value;
+  return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined;
+}
+
 export function readConfirmedCalendarDraft(slots: Record<string, unknown>): ConfirmedCalendarDraft {
-  const list = slots.events;
-  if (Array.isArray(list) && list.length > 0) {
+  const list = calendarBatchItems(slots.events);
+  if (list) {
     const events: Array<{ event: CalendarEvent; label: string }> = [];
     for (const [index, entry] of list.entries()) {
       const fields = itemFields(entry);

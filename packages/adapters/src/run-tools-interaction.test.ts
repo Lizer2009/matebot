@@ -33,7 +33,9 @@ function context() {
   const notify = vi.fn(async () => undefined);
   return {
     deps: {
-      prisma: {},
+      prisma: {
+        interaction: { findFirst: vi.fn(async (): Promise<{ id: string } | null> => null) },
+      },
       events: { notify },
     },
     run: {
@@ -197,7 +199,7 @@ describe("present_interaction", () => {
       call({ plan: emailPlan }),
     )) as Record<string, unknown>;
     expect(result).not.toHaveProperty("capability");
-    expect(result.reply).toBe("请在卡片上确认或编辑。");
+    expect(result.reply).toBe("请审阅后点发送，尚未发出。");
   });
 
   it("answers a calendar request with a calendar surface, not prose", async () => {
@@ -239,8 +241,47 @@ describe("present_interaction", () => {
     expect(result).toMatchObject({
       intent: "calendar.create",
       capability: "ready",
-      reply: "请在卡片上确认或编辑。",
+      reply: "请审阅后点创建，尚未写入日历。",
     });
+  });
+
+  it("replaces an open draft of the same intent instead of stacking a second card", async () => {
+    publishInteractionSurface.mockResolvedValueOnce({
+      interactionId: "ix-2",
+      surfaceId: "surface-2",
+      messageId: "msg-2",
+      documentRef: "a2ui:interaction:ix-2:surface:surface-2",
+      draftVersion: 1,
+      eventSeq: 13,
+      capability: "ready",
+      plan: {
+        intent: "calendar.create",
+        title: "Trip",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "medium",
+      },
+      slots: {},
+      missingRequired: [],
+    });
+    const ctx = context();
+    ctx.deps.prisma.interaction.findFirst.mockResolvedValueOnce({ id: "ix-open" });
+    await interactionTools.present_interaction!(
+      ctx as never,
+      call({
+        plan: {
+          intent: "calendar.create",
+          title: "Trip",
+          fields: [{ name: "name", value: "Vegas", required: true, status: "resolved" }],
+          nextStep: "ask",
+          riskLevel: "medium",
+        },
+      }),
+    );
+    expect(publishInteractionSurface).toHaveBeenCalledWith(
+      ctx.deps.prisma,
+      expect.objectContaining({ amendsInteractionId: "ix-open" }),
+    );
   });
 
   it("refuses when FEATURE_A2UI is off", async () => {
@@ -396,6 +437,7 @@ describe("present_interaction describes the card it stored", () => {
     )) as Record<string, unknown>;
 
     expect(result.missingRequired).toEqual(["body"]);
+    expect(result.reply).toBe("请先补全收件人和主题。");
     expect(result.actionable).toBe(false);
     expect(result.blockedBy).toEqual(["body"]);
     expect(result.fields).toEqual([

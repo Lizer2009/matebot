@@ -4313,6 +4313,10 @@ msgstr "Nécessite un ID client OAuth"
 msgid "Needs approval"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Manage rules"
+msgstr ""
+
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"
 msgstr "Requiert votre attention"
@@ -5850,6 +5854,10 @@ msgstr "Envoyer avec Entrée"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Sending"
+msgstr ""
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Sending email"
 msgstr ""
 
 #: src/components/AskCard.tsx

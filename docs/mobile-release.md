@@ -94,6 +94,11 @@ The APK uses the production update channel, so JavaScript changes reach it
 through the over-the-air updates below without a new APK. The rolling release is
 never GitHub's "latest", so a desktop release stays the newest download.
 
+Do not assemble a release APK with local Gradle on a low-memory Linux host: it
+OOMs or hangs in Kotlin compile. Prefer this EAS workflow. If a local Gradle
+attempt is already running, how to stop it and what to delete is in
+[local-test-packaging.md](./local-test-packaging.md).
+
 ## Android push
 
 For Android push notifications, create a Firebase project and register the app's

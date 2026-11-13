@@ -19,7 +19,7 @@ import {
   withTransactionRetry,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
-import { senderLabelFromBlock } from "./interaction-publish.js";
+import { senderStampFromBlock } from "./interaction-publish.js";
 
 /**
  * The single write path for an interaction field.
@@ -244,6 +244,7 @@ export async function updateInteractionFieldService(
         // The connection's label is not part of what an edit changes; a rebuild that dropped it
         // would leave the card's read-only sender row blank after the first keystroke.
         ...(previousBlock?.senderLabel ? { senderLabel: previousBlock.senderLabel } : {}),
+        ...(previousBlock?.senderAddress ? { senderAddress: previousBlock.senderAddress } : {}),
         ...stamps,
       };
       if (current.messageId) {
@@ -474,12 +475,18 @@ export async function cancelInteractionService(
           const existing = Array.isArray(message.blocks) ? (message.blocks as MessageBlock[]) : [];
           // A cancelled card still shows which mailbox it would have used; dropping the label
           // here would blank that row at the moment the person is deciding what to do next.
-          const cancelledLabel = senderLabelFromBlock(existing, surfaceRow.surfaceId);
+          const cancelledSender = senderStampFromBlock(existing, surfaceRow.surfaceId);
           const blocks = existing.map((entry) =>
             entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId
-              ? cancelledLabel
-                ? { ...cancelledBlock, senderLabel: cancelledLabel }
-                : cancelledBlock
+              ? {
+                  ...cancelledBlock,
+                  ...(cancelledSender.senderLabel
+                    ? { senderLabel: cancelledSender.senderLabel }
+                    : {}),
+                  ...(cancelledSender.senderAddress
+                    ? { senderAddress: cancelledSender.senderAddress }
+                    : {}),
+                }
               : entry,
           );
           await tx.message.update({

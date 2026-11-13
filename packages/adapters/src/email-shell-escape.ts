@@ -33,7 +33,7 @@ type ToolOffer = {
   };
 };
 
-export function interactionMailPathAvailable(ctx: ToolOffer, env?: NodeJS.ProcessEnv): boolean {
+export function interactionDraftPathAvailable(ctx: ToolOffer, env?: NodeJS.ProcessEnv): boolean {
   if (!isA2uiFeatureEnabled(env)) return false;
   if (ctx.tools.disabled.has("present_interaction")) return false;
   return Boolean(ctx.tools.builtins?.some((tool) => tool.name === "present_interaction"));
@@ -45,7 +45,7 @@ export function refuseOutboundEmailShell(
   args: Record<string, unknown>,
   env?: NodeJS.ProcessEnv,
 ): { error: string } | undefined {
-  if (!interactionMailPathAvailable(ctx, env)) return undefined;
+  if (!interactionDraftPathAvailable(ctx, env)) return undefined;
   const command = String(args.command ?? args.cmd ?? "");
   const error = outboundEmailScriptRefusal(command);
   return error ? { error } : undefined;

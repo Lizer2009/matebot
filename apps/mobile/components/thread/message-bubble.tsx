@@ -203,6 +203,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   doubleTapSurface = false,
   userBubble,
   onRefresh,
+  onManageRules,
   a2uiEnabled,
 }: {
   onHelperToggle?: MessageRowActions["helperToggle"];
@@ -234,6 +235,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   doubleTapSurface?: boolean;
   userBubble?: UserBubble;
   onRefresh?: () => void | Promise<unknown>;
+  onManageRules?: () => void;
   /**
    * Whether this deployment serves interactive cards, from `/me`. Undefined means the
    * server has not answered yet, so the card is drawn rather than called unavailable.
@@ -832,6 +834,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                   }
                 : undefined
             }
+            onManageRules={onManageRules}
           />
         );
       })}

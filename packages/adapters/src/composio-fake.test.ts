@@ -364,9 +364,11 @@ describe("Composio connected-account lifecycle", () => {
     const { fake, connector } = setup();
     const work = fake.connect(USER, "gmail", "EXPIRED");
 
-    await expect(connector.discoverTools(context([connection("gmail", work)]))).resolves.toEqual(
-      [],
-    );
+    // The discovery answer is the model-facing placeholder, not an empty list: the run still
+    // needs one tool that explains why nothing can be called. No Composio session is opened.
+    await expect(connector.discoverTools(context([connection("gmail", work)]))).resolves.toEqual([
+      expect.objectContaining({ name: "composio__unavailable", readOnly: true }),
+    ]);
     expect(fake.created.filter((entry) => entry.userId === USER)).toEqual([]);
   });
 

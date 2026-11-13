@@ -8,6 +8,7 @@ import type {
   InteractionSurfaceSchema,
 } from "@matebot/contracts";
 import { InteractionPlanSchema, MAX_UNDECLARED_FIELD_BYTES } from "@matebot/contracts";
+import { calendarBatchItems } from "./calendar-batch.js";
 import { compileInteractionSurface } from "./compile-surface.js";
 import { basicCatalogId, DEFAULT_PROTOCOL_FAMILY, protocolWireVersion } from "./protocol.js";
 import { validateA2uiMessages } from "./validate.js";
@@ -463,10 +464,18 @@ export function reconcilePlanToSchema(
   for (const field of reconciled.extra) fields.push({ ...field, required: false });
   const slots: Record<string, unknown> = {};
   const missingRequired: string[] = [];
+  // A calendar batch carries its dates inside `events`; the single-event slots stay empty.
+  // Reporting them as required gaps told the model its complete card was incomplete, and it
+  // filled one week-long placeholder to satisfy them.
+  const batchDraft =
+    (plan.intent === "calendar.create" || plan.intent === "calendar.compose") &&
+    Boolean(calendarBatchItems(fields.find((field) => field.name === "events")?.value));
   for (const field of fields) {
     const empty = isEmptyFieldValue(field.value);
     if (empty) {
-      if (field.required) missingRequired.push(field.name);
+      if (field.required && !(batchDraft && (field.name === "start" || field.name === "end"))) {
+        missingRequired.push(field.name);
+      }
       continue;
     }
     slots[field.name] = field.value;

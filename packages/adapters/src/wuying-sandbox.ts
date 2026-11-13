@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
+import { WUYING_SANDBOX_DESCRIPTOR } from "./wuying-capabilities.js";
 import type {
   AdapterContext,
   CommandRequest,
@@ -111,19 +112,10 @@ export interface WuyingSandboxOptions {
 }
 
 export function describeWuyingSandbox() {
+  // A fresh copy per call: callers historically received their own object.
   return {
-    id: "wuying",
-    contractVersion: "1",
-    adapterVersion: "0.1.0",
-    capabilities: {
-      graphical: true,
-      pty: false,
-      snapshots: false,
-      takeover: true,
-      persistentHome: true,
-      multiScreen: false,
-      inPlaceUpdate: false,
-    },
+    ...WUYING_SANDBOX_DESCRIPTOR,
+    capabilities: { ...WUYING_SANDBOX_DESCRIPTOR.capabilities },
   };
 }
 

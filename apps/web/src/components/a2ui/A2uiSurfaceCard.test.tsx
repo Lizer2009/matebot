@@ -386,13 +386,49 @@ describe("A2uiSurfaceCard", () => {
       ),
     );
     expect(container.querySelector('[data-testid="a2ui-email-sender"]')?.textContent).toBe("Gmail");
-    // The connection's name is whatever the client called it; the record holds no mailbox.
-    expect(container.querySelector('[data-testid="a2ui-email-sender-note"]')?.textContent).toBe(
-      "Email address not provided",
-    );
+    // A missing mailbox is not announced as "not provided"; the connection name is enough.
+    expect(container.querySelector('[data-testid="a2ui-email-sender-note"]')).toBeNull();
+    expect(container.textContent).not.toMatch(/Email address not provided/);
     // Read-only: the sending mailbox is not one of the form's inputs.
     expect(container.querySelector('input[aria-label="From"]')).toBeNull();
     expect(container.querySelector('[data-testid="a2ui-email-from"]')).toBeNull();
+  });
+
+  it("shows the provider mailbox when the block carries one", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+      senderLabel: "Gmail",
+      senderAddress: "lizer@example.test",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={vi.fn()} />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-sender"]')?.textContent).toBe(
+      "lizer@example.test",
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-sender-note"]')).toBeNull();
+  });
+
+  it("falls back to Connected account when neither label nor address is present", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={vi.fn()} />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-sender"]')?.textContent).toBe(
+      "Connected account",
+    );
   });
 
   it("does not name a sending account on a card that is asking for one", () => {
@@ -459,7 +495,7 @@ describe("A2uiSurfaceCard", () => {
     const form = container.querySelector('[data-testid="a2ui-email-compose"]') as HTMLElement;
     expect(form.getAttribute("data-template")).toBe("action-progress-card");
     expect(container.querySelector('[data-testid="a2ui-email-progress"]')?.textContent).toMatch(
-      /Sending/,
+      /Sending email/,
     );
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
     expect(
@@ -467,7 +503,7 @@ describe("A2uiSurfaceCard", () => {
     ).toBe(true);
   });
 
-  it("shows success with the provider message id on the same surface", () => {
+  it("shows success without the provider message id", () => {
     const block = fixtureA2uiSurfaceBlock({
       intent: "email.compose",
       documentRef: undefined,
@@ -479,10 +515,59 @@ describe("A2uiSurfaceCard", () => {
     });
     act(() => root.render(<A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} />));
     expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
-    expect(container.querySelector('[data-testid="a2ui-email-provider-id"]')?.textContent).toBe(
-      "msg-1",
-    );
+    expect(container.querySelector('[data-testid="a2ui-email-provider-id"]')).toBeNull();
+    expect(container.textContent).not.toContain("msg-1");
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+  });
+
+  it("opens Manage rules from the approval menu", async () => {
+    const onManageRules = vi.fn();
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onManageRules={onManageRules}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const status = container.querySelector('[data-testid="a2ui-email-status"]') as HTMLButtonElement;
+    expect(status.textContent).toMatch(/Needs approval/);
+    await act(async () => {
+      status.click();
+    });
+    const manage = document.querySelector('[data-testid="a2ui-email-manage-rules"]') as HTMLElement;
+    expect(manage).toBeTruthy();
+    await act(async () => {
+      manage.click();
+    });
+    expect(onManageRules).toHaveBeenCalledTimes(1);
+    expect(onSend).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeTruthy();
+  });
+
+  it("hides Manage rules when no settings opener is passed", async () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+    });
+    act(() => root.render(<A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} />));
+    const status = container.querySelector('[data-testid="a2ui-email-status"]') as HTMLButtonElement;
+    await act(async () => {
+      status.click();
+    });
+    expect(document.querySelector('[data-testid="a2ui-email-manage-rules"]')).toBeNull();
+    expect(document.querySelector('[data-testid="a2ui-email-approval-require"]')).toBeTruthy();
   });
 
   it("shows a failed card with Retry and no Send", async () => {

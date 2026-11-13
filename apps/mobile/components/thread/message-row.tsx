@@ -60,6 +60,8 @@ export type MessageRowActions = {
   layout: (messageId: string, y: number, index: number) => void;
   /** Reload the thread so UNKNOWN can pick up an E′ reconcile stamp. Resolves when settled. */
   refresh?: () => void | Promise<unknown>;
+  /** Opens the existing Approvals settings. Optional so a row without a host still renders. */
+  manageRules?: () => void;
 };
 
 type MessageRowProps = {
@@ -460,6 +462,7 @@ export const MessageRow = memo(function MessageRow({
                 onHelperToggle={actions.helperToggle}
                 userBubble={userBubble}
                 onRefresh={actions.refresh}
+                onManageRules={actions.manageRules}
               />
             </ThreadReadOnlyContext.Provider>
           </MessageContextMenu>

@@ -5,6 +5,7 @@ import type {
   ResultSurface,
 } from "@matebot/contracts";
 import { InteractionSurfaceSchema as InteractionSurfaceSchemaZ } from "@matebot/contracts";
+import { CALENDAR_SINGLE_EVENT_FIELDS, calendarBatchItems } from "./calendar-batch.js";
 import { basicCatalogId, DEFAULT_PROTOCOL_FAMILY, protocolWireVersion } from "./protocol.js";
 import { validateA2uiMessages } from "./validate.js";
 
@@ -236,6 +237,18 @@ function fieldComponent(field: InteractionFieldSpec): Component {
   }
 }
 
+/** Names on a calendar batch, shown as text. The list is not an editable field. */
+function calendarBatchLines(values: Record<string, unknown>): string | undefined {
+  const list = calendarBatchItems(values.events);
+  if (!list) return undefined;
+  const lines = list.slice(0, 12).flatMap((record, index) => {
+    const name = record.name ?? record.title ?? record.summary;
+    return typeof name === "string" && name.trim() ? [`${index + 1}. ${name.trim()}`] : [];
+  });
+  if (lines.length === 0) return undefined;
+  return list.length > lines.length ? `${lines.join("\n")}\n…` : lines.join("\n");
+}
+
 function buildFormComponents(input: {
   schema: InteractionSurfaceSchema;
   values: Record<string, unknown>;
@@ -255,7 +268,17 @@ function buildFormComponents(input: {
     components.push({ id: SUMMARY_ID, component: "Text", text: input.summary });
   }
 
+  const batch = calendarBatchLines(input.values);
+  if (batch) {
+    children.push("event-list");
+    components.push({ id: "event-list", component: "Text", text: batch });
+  }
+
   for (const field of schema.fields) {
+    // A batch is several events. The single-event controls describe none of them, and an
+    // empty Starts/Ends beside a week of events invited exactly the wrong edit: one
+    // all-day placeholder covering the trip. The list is the draft; the button is the action.
+    if (batch && CALENDAR_SINGLE_EVENT_FIELDS.has(field.name)) continue;
     // Every shipped control renders `label` itself, including the date-time one,
     // whose label markup is not in its declared schema but is in its renderer.
     // Emitting a Text label as well printed every name twice on a real card, so the
@@ -435,6 +458,10 @@ export async function compileInteractionSurface(
 
   const valueError = checkValues(schema, input.values);
   if (valueError.error) return fail(valueError.error);
+  // A batch holds its dates per event; the single-event slots are empty by design, and
+  // reporting them as gaps made a complete eight-event card describe itself as unfinished.
+  const batchDraft = Boolean(calendarBatchItems(input.values.events));
+  const missingRequired = batchDraft ? [] : valueError.missingRequired;
 
   const version = protocolWireVersion(protocolFamily);
   const catalogId = basicCatalogId(protocolFamily);
@@ -483,6 +510,6 @@ export async function compileInteractionSurface(
     surfaceId,
     messages: validated.messages as unknown[],
     dataModel,
-    missingRequired: valueError.missingRequired,
+    missingRequired,
   };
 }

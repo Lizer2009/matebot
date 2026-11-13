@@ -2,7 +2,7 @@ import type { InteractionPlan, MessageBlock, ResultSurface } from "@matebot/cont
 import { a2uiSurfaceDocumentRef, ResultSurfaceSchema } from "@matebot/contracts";
 import type { PrismaClient } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
-import { senderLabelFromBlock } from "./interaction-publish.js";
+import { senderStampFromBlock } from "./interaction-publish.js";
 
 /**
  * Publishing a result surface.
@@ -246,7 +246,7 @@ export async function republishResultSurface(
             | MessageBlock[]
             | undefined)
         : undefined;
-      const keptSenderLabel = senderLabelFromBlock(existingBlocks, surfaceRow.surfaceId);
+      const keptSender = senderStampFromBlock(existingBlocks, surfaceRow.surfaceId);
       const block: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: existing.id,
@@ -262,7 +262,8 @@ export async function republishResultSurface(
         }),
         template: "action-result-success",
         lifecycle: "succeeded",
-        ...(keptSenderLabel ? { senderLabel: keptSenderLabel } : {}),
+        ...(keptSender.senderLabel ? { senderLabel: keptSender.senderLabel } : {}),
+        ...(keptSender.senderAddress ? { senderAddress: keptSender.senderAddress } : {}),
       };
       if (existing.messageId) {
         const message = await tx.message.findUnique({ where: { id: existing.messageId } });

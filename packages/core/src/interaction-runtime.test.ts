@@ -31,6 +31,31 @@ describe("interaction-runtime", () => {
     expect(deriveCollectingStatus(plan, slots, "collecting")).toBe("collecting");
   });
 
+  it("treats a valid calendar batch as ready without the single-event slots", () => {
+    const calendar = {
+      intent: "calendar.create",
+      title: "Week",
+      fields: [
+        { name: "name", value: "Vegas", required: true, status: "resolved" as const },
+        { name: "start", required: true, status: "missing" as const },
+        { name: "end", required: true, status: "missing" as const },
+      ],
+      nextStep: "ask" as const,
+      riskLevel: "medium" as const,
+    };
+    const slots = {
+      name: "Vegas",
+      events: [
+        {
+          title: "回上海",
+          start: "2026-11-23T14:00:00+08:00",
+          end: "2026-11-23T16:00:00+08:00",
+        },
+      ],
+    };
+    expect(requiredFieldsSatisfied(calendar, slots)).toBe(true);
+  });
+
   it("increments draftVersion and clears confirmation on field edit", () => {
     const result = applyInteractionFieldChange(
       {

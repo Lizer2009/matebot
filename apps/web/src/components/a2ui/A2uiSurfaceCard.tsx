@@ -27,6 +27,7 @@ export function A2uiSurfaceCard({
   onCheckStatus,
   onAction,
   onDiscard,
+  onManageRules,
 }: {
   block: A2uiSurfaceBlock;
   /**
@@ -50,6 +51,7 @@ export function A2uiSurfaceCard({
   /** The one bridge for a compiled surface's buttons. */
   onAction?: A2uiActionListener;
   onDiscard?: () => void | Promise<void>;
+  onManageRules?: () => void;
 }) {
   const document = useA2uiSurfaceDocument({
     documentRef: block.documentRef,
@@ -111,16 +113,17 @@ export function A2uiSurfaceCard({
               capability={block.capability}
               template={block.template}
               lifecycle={block.lifecycle}
-              providerMessageId={block.providerMessageId}
               error={block.error}
               fields={emailFieldsFromSurfaceMessages(document.messages)}
               {...(block.senderLabel ? { senderLabel: block.senderLabel } : {})}
+              {...(block.senderAddress ? { senderAddress: block.senderAddress } : {})}
               onFieldChange={onFieldChange}
               onConfirm={onConfirm}
               onSend={onSend}
               onConnect={onConnect}
               onCheckStatus={onCheckStatus}
               onDiscard={onDiscard}
+              onManageRules={onManageRules}
             />
           ) : document.messages ? (
             <>

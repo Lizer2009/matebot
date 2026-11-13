@@ -205,10 +205,17 @@ Cursor 集成说明：[self-host-integrations.md](./self-host-integrations.md#en
 - **Vercel**：fork PR 上若出现「Authorization required to deploy」，为预期行为，可忽略（非 merge 阻塞项，除非 fork 单独配置了 Vercel 必需检查）。
 - **生产 deploy / Tailscale / Expo OTA**：仅 upstream `main` push 且配置了 secrets 时运行；fork 不依赖这些 job。
 
+## 本机热修测试包
+
+未进 `main` 的源码要在测试栈验证时，不要走 GHCR / GitHub Release。Linux 主机上的增量服务端镜像、Wine 交叉打 Windows 测试安装包、以及本机 Gradle APK 为何暂停，见 [local-test-packaging.md](./local-test-packaging.md)。
+
+本机测试用 Windows 安装包不放在 `apps/www/public/downloads/`（那个目录是营销站源码约定）。实际文件在营销站静态根 `/home/lizer05/matebot/www-dist/downloads/`，由 `matebot-cf-proxy` 挂到 `/var/www/matebot/downloads/`，`test.matebot.dev/api/download?platform=windows` 302 到其中当前那一份 `Matebot-Setup-*.exe`。
+
 ## 相关文档
 
 - [MATEBOT_PLAN.md](./MATEBOT_PLAN.md) — 总计划与 backlog  
 - [MATEBOT_CURSOR.md](./MATEBOT_CURSOR.md) — Cursor Cloud Agent 改本仓库  
 - [self-host.md](./self-host.md) — 自托管总览  
+- [local-test-packaging.md](./local-test-packaging.md) — 本机测试栈热修打包（服务端 / Windows；APK 暂停）
 
 P1-1 / P1-2 验收勾选见 [MATEBOT_PLAN.md §6](./MATEBOT_PLAN.md#6-优先级-backlog接下来-12-轮编码)。

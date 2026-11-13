@@ -249,4 +249,35 @@ describe("describeDraftForModel", () => {
     });
     expect(readback.sender).toBeUndefined();
   });
+
+  /**
+   * A batch carries its own dates, one per event. The single-event start/end are empty on
+   * purpose, and counting them as gaps made a complete card describe itself as unfinished —
+   * the model then filled one week-long placeholder event over the eight it had planned.
+   */
+  it("does not call a calendar batch incomplete because the single-event dates are empty", () => {
+    const events = JSON.stringify([
+      { title: "Standup", start: "2026-11-09T09:00:00+08:00", end: "2026-11-09T09:15:00+08:00" },
+      { title: "Review", start: "2026-11-10T09:00:00+08:00", end: "2026-11-10T10:00:00+08:00" },
+    ]);
+    const readback = describeDraftForModel({
+      plan: {
+        intent: "calendar.create",
+        title: "Two events",
+        fields: [
+          { name: "name", value: "Two events", required: true, status: "resolved" },
+          { name: "start", required: true, status: "missing" },
+          { name: "end", required: true, status: "missing" },
+          { name: "events", value: events, required: false, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+      slots: { name: "Two events", events },
+      draftVersion: 2,
+    });
+    expect(readback.missingRequired).toEqual([]);
+    expect(readback.blockedBy).toEqual([]);
+    expect(readback.actionable).toBe(true);
+  });
 });

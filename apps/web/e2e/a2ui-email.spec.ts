@@ -50,17 +50,18 @@ test("expired email card shows reauth and no Send", async ({ page }) => {
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
 });
 
-test("executing email card shows Sending and no Send", async ({ page }, testInfo) => {
+test("executing email card shows Sending email and no Send", async ({ page }, testInfo) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=executing");
-  await expect(page.getByTestId("a2ui-email-progress")).toContainText("Sending");
+  await expect(page.getByTestId("a2ui-email-progress")).toContainText("Sending email");
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
   await captureScreenshot(page, testInfo, "a2ui-email-progress");
 });
 
-test("succeeded email card shows the provider message id", async ({ page }, testInfo) => {
+test("succeeded email card shows Sent without the provider message id", async ({ page }, testInfo) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=succeeded");
   await expect(page.getByTestId("a2ui-email-sent")).toBeVisible();
-  await expect(page.getByTestId("a2ui-email-provider-id")).toHaveText("msg-1");
+  await expect(page.getByTestId("a2ui-email-provider-id")).toHaveCount(0);
+  await expect(page.getByText("msg-1")).toHaveCount(0);
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
   await captureScreenshot(page, testInfo, "a2ui-email-success");
 });

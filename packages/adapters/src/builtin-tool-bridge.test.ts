@@ -62,7 +62,8 @@ describe("built-in tool bridge", () => {
     // `find_tool` indexes every deferred tool by name, so adding one (`present_result`)
     // grows this by its name and group, not by its schema. `cancel_interaction`
     // costs its 20-byte name for the same reason; the budget moves by exactly that.
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_932);
+    // `message_user` also forbids pasting commands and scripts now: +7 bytes net.
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_939);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining(["render_plot", "create_space", "generate_secret", "scratchpad_add"]),
     );

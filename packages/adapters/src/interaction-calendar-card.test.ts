@@ -154,11 +154,46 @@ describe("a calendar draft compiled for the card", () => {
       String((component.value as { path?: string } | undefined)?.path ?? ""),
     );
     expect(bound.some((path) => path.includes("/events"))).toBe(false);
+    // One event's dates describe none of the eight on the card, and an empty Starts/Ends
+    // beside a week of events is what invited a week-long placeholder event.
     for (const field of ["name", "start", "end", "timezone"]) {
-      expect(bound.some((path) => path.endsWith(`/${field}`))).toBe(true);
+      expect(bound.some((path) => path.endsWith(`/${field}`))).toBe(false);
     }
-    // Nothing rendered the array as text either.
-    expect(JSON.stringify(compiledComponents())).not.toContain("Standup");
+    // The list is readable text, not a control the person has to edit.
+    const list = compiledComponents().find((component) => component.id === "event-list");
+    expect(list).toMatchObject({ component: "Text", text: expect.stringContaining("Standup") });
+    // The action stays: the list is the draft, the button is the only way to run it.
+    expect(compiledComponents().some((component) => component.component === "Button")).toBe(true);
+  });
+
+  it("draws the same card when the model sends the list as JSON text", async () => {
+    await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: calendarPlan([
+        resolved("name", "Two events"),
+        resolved("start", ""),
+        resolved("end", ""),
+        resolved(
+          "events",
+          JSON.stringify([
+            { title: "Standup", start: "2026-11-09T09:00:00+08:00", end: "2026-11-09T09:15:00+08:00" },
+            { title: "Review", start: "2026-11-10T09:00:00+08:00", end: "2026-11-10T10:00:00+08:00" },
+          ]),
+        ),
+      ]),
+    });
+
+    const list = compiledComponents().find((component) => component.id === "event-list");
+    expect(list).toMatchObject({ component: "Text", text: expect.stringContaining("Review") });
+    const controls = compiledComponents().filter((component) =>
+      ["TextField", "DateTimeInput", "CheckBox", "ChoicePicker"].includes(
+        String(component.component),
+      ),
+    );
+    // Empty single-event slots do not become empty controls asking for a date the batch has.
+    expect(controls).toHaveLength(0);
   });
 
   /**

@@ -4313,6 +4313,10 @@ msgstr "OAuth क्लाइंट ID चाहिए"
 msgid "Needs approval"
 msgstr ""
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Manage rules"
+msgstr ""
+
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"
 msgstr "ध्यान देने की ज़रूरत"
@@ -5850,6 +5854,10 @@ msgstr "Enter से भेजें"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Sending"
+msgstr ""
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Sending email"
 msgstr ""
 
 #: src/components/AskCard.tsx

@@ -93,6 +93,7 @@ export const Transcript = memo(function Transcript({
   onSpeak,
   onOpenComputer,
   onOpenImportSetup,
+  onManageRules,
   authUi,
   rpc,
 }: {
@@ -144,6 +145,7 @@ export const Transcript = memo(function Transcript({
   onSpeak: (message: ThreadMessage) => void;
   onOpenComputer: (botId?: string) => void;
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
+  onManageRules?: () => void;
   /**
    * What the server says about this deployment. Undefined until `/me` answers, so a
    * card is never called unavailable just because the request has not landed yet.
@@ -663,6 +665,7 @@ export const Transcript = memo(function Transcript({
                       onSpeak={onSpeak}
                       onOpenComputer={onOpenComputer}
                       onOpenImportSetup={onOpenImportSetup}
+                      onManageRules={onManageRules}
                       rpc={rpc}
                       showToolActivity={showToolActivity}
                       onReply={onReply}

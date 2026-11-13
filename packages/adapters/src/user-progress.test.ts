@@ -2,7 +2,7 @@ import type { MessageBlock } from "@matebot/contracts";
 import { isToolActivityBlock } from "@matebot/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { builtinAgentTools } from "./builtin-tools.js";
-import { longWorkProgressGuidance } from "./run-replies.js";
+import { longWorkProgressGuidance, SHORT_FINAL_REPLY_GUIDANCE } from "./run-replies.js";
 import {
   assistantTurnSeparator,
   botMessageOutcomeFromMidTurn,
@@ -59,6 +59,9 @@ describe("messageUserMaxLength", () => {
     expect(messageUserTool().inputSchema.properties.message.maxLength).toBe(500);
     expect(messageUserTool().description).toContain("cut off silently at 500 characters");
     expect(longWorkProgressGuidance()).toContain("message_user is capped at 500 characters");
+    expect(longWorkProgressGuidance()).toContain(SHORT_FINAL_REPLY_GUIDANCE);
+    expect(longWorkProgressGuidance()).toContain("never paste commands, scripts, or tool logs");
+    expect(messageUserTool().description).toContain("commands, scripts");
   });
 
   it("applies MATEBOT_MESSAGE_USER_MAX_CHARS to the schema, description, and guidance", () => {

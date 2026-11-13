@@ -1780,7 +1780,7 @@ msgstr "已連線 {0}。"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Connected account"
-msgstr ""
+msgstr "已連接的帳號"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -4314,6 +4314,10 @@ msgstr "需要 OAuth 用戶端 ID"
 msgid "Needs approval"
 msgstr "需要批准"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Manage rules"
+msgstr "管理規則"
+
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"
 msgstr "需要處理"
@@ -5852,6 +5856,10 @@ msgstr "按 Enter 傳送"
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Sending"
 msgstr ""
+
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Sending email"
+msgstr "正在傳送郵件"
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx

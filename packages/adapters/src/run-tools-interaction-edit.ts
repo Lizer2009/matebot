@@ -130,7 +130,11 @@ export type EditInteractionServices = Pick<
     interactionId: string;
     plan: unknown;
     /** The mailbox stamp for the new draft, so the card it publishes matches its readback. */
-    capabilityStamp?: { capability?: EmailSurfaceCapability; senderLabel?: string };
+    capabilityStamp?: {
+      capability?: EmailSurfaceCapability;
+      senderLabel?: string;
+      senderAddress?: string;
+    };
   }) => Promise<{
     interactionId: string;
     surfaceId: string;
@@ -197,6 +201,9 @@ async function amendExecuted(
               : {}),
             ...(input.capabilityStamp.sender?.label
               ? { senderLabel: input.capabilityStamp.sender.label }
+              : {}),
+            ...(input.capabilityStamp.sender?.address
+              ? { senderAddress: input.capabilityStamp.sender.address }
               : {}),
           },
         }
@@ -497,6 +504,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         // The same mailbox facts the readback reports, so the card and the result agree.
         ...(capabilityStamp?.capability ? { capability: capabilityStamp.capability } : {}),
         ...(capabilityStamp?.senderLabel ? { senderLabel: capabilityStamp.senderLabel } : {}),
+        ...(capabilityStamp?.senderAddress ? { senderAddress: capabilityStamp.senderAddress } : {}),
       });
       await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
         // The card is persisted; a missed wake-up is picked up on the next read.

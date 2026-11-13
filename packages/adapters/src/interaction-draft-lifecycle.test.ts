@@ -580,6 +580,29 @@ describe("the card carries the connection's label, never an address", () => {
     expect(Object.keys(block.blocks[0] ?? {})).not.toContain("from");
   });
 
+  it("writes a provider mailbox only when the publisher was given one", async () => {
+    await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      capability: "ready",
+      senderLabel: "Gmail",
+      senderAddress: "lizer@example.test",
+    });
+    const block = createThreadMessageInTransaction.mock.calls.at(-1)?.[1] as {
+      blocks: Array<Record<string, unknown>>;
+    };
+    expect(block.blocks[0]).toMatchObject({
+      senderLabel: "Gmail",
+      senderAddress: "lizer@example.test",
+    });
+  });
+
   it("omits the label when no connection named one", async () => {
     await publishInteractionSurface(prisma, {
       spaceId: "space-1",
@@ -627,11 +650,25 @@ describe("the sender row survives a rebuild", () => {
     // An edit rebuilds the block. A rebuild that dropped the label would blank the card's
     // read-only sender row after the first keystroke.
     messageFindUnique.mockResolvedValue({
-      blocks: [{ kind: "a2ui_surface", surfaceId: "surface-1", senderLabel: "Gmail" }],
+      blocks: [
+        {
+          kind: "a2ui_surface",
+          surfaceId: "surface-1",
+          senderLabel: "Gmail",
+          senderAddress: "lizer@example.test",
+        },
+      ],
     });
     txMessageFindUnique.mockResolvedValue({
       id: "msg-1",
-      blocks: [{ kind: "a2ui_surface", surfaceId: "surface-1", senderLabel: "Gmail" }],
+      blocks: [
+        {
+          kind: "a2ui_surface",
+          surfaceId: "surface-1",
+          senderLabel: "Gmail",
+          senderAddress: "lizer@example.test",
+        },
+      ],
     });
     getInteraction.mockResolvedValue({
       id: "ix-1",
@@ -664,6 +701,9 @@ describe("the sender row survives a rebuild", () => {
     const update = txMessageUpdate.mock.calls.at(-1)?.[0] as {
       data: { blocks: Array<Record<string, unknown>> };
     };
-    expect(update.data.blocks[0]).toMatchObject({ senderLabel: "Gmail" });
+    expect(update.data.blocks[0]).toMatchObject({
+      senderLabel: "Gmail",
+      senderAddress: "lizer@example.test",
+    });
   });
 });

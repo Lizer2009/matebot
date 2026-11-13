@@ -81,6 +81,7 @@ export const MessageView = memo(function MessageView({
   onSpeak,
   onOpenComputer,
   onOpenImportSetup,
+  onManageRules,
   rpc,
   showToolActivity,
   onReply,
@@ -136,6 +137,7 @@ export const MessageView = memo(function MessageView({
   onOpenComputer: (botId?: string) => void;
   /** Opens where an imported item's setup is finished. */
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
+  onManageRules?: () => void;
   rpc: ReturnType<typeof createSpaceRpc>;
   showToolActivity: boolean;
   onReply: (message: ThreadMessage) => void;
@@ -631,6 +633,7 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
+                  onManageRules={onManageRules}
                 />
               </div>
             );
