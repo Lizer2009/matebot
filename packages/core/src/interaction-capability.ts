@@ -44,6 +44,11 @@ export type InteractionCapability = {
   cardShape: SurfaceCardShape;
   /** The one verb its button may use. Never taken from the model's plan. */
   actionVerb?: SurfaceActionVerb;
+  /**
+   * Slot names a later turn must see in history (spec §6.7.1). Empty means the
+   * projector falls back to title/summary.
+   */
+  historyDigestFields?: readonly string[];
 };
 
 const EMAIL_SCHEMA: InteractionSurfaceSchema = {
@@ -114,6 +119,7 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     implemented: true,
     cardShape: "review",
     actionVerb: "send",
+    historyDigestFields: ["to", "subject"],
   },
   {
     intent: "calendar.create",
@@ -125,6 +131,7 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     implemented: true,
     cardShape: "review",
     actionVerb: "create",
+    historyDigestFields: ["name", "start", "end"],
   },
   {
     intent: "calendar.query",

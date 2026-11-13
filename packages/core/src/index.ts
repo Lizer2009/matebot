@@ -58,6 +58,7 @@ export * from "./interaction-capability.js";
 export * from "./interaction-connection.js";
 export * from "./interaction-decision.js";
 export * from "./interaction-effect.js";
+export * from "./interaction-history.js";
 export * from "./interaction-kernel.js";
 export * from "./interaction-nl-edit.js";
 export * from "./interaction-nudge.js";

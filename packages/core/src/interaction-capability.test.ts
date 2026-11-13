@@ -23,6 +23,7 @@ describe("capability registry", () => {
     });
     expect(email?.schema.action?.id).toBe("send");
     expect(email?.schema.presentation).toBe("form");
+    expect(email?.historyDigestFields).toEqual(["to", "subject"]);
     // A secret must never be collected through a generated form.
     expect(email?.schema.fields.some((field) => /secret|password|token/i.test(field.name))).toBe(
       false,
@@ -47,6 +48,7 @@ describe("capability registry", () => {
       "timezone",
       "allDay",
     ]);
+    expect(calendar?.historyDigestFields).toEqual(["name", "start", "end"]);
     // No attendee field exists, so no create can invite anyone.
     expect(calendar?.schema.fields.some((field) => /attendee|guest|invite/i.test(field.name))).toBe(
       false,

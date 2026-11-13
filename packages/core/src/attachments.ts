@@ -7,6 +7,7 @@ import {
   isAllowedAttachmentMimeType,
   isAttachmentImageMimeType,
 } from "@matebot/contracts";
+import { cardHistoryDigest } from "./interaction-history.js";
 
 export class AttachmentValidationError extends Error {
   constructor(message: string) {
@@ -202,8 +203,12 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
       }
       if (block.kind === "a2ui_surface") {
         const intent = block.intent?.trim() || "a2ui_surface";
-        const state = block.lifecycle ?? "draft";
-        const hint = (block.summary ?? block.title)?.trim();
+        const state = block.status ?? block.lifecycle ?? "draft";
+        const hint = cardHistoryDigest({
+          intent: block.intent,
+          ...(block.historySlots ? { historySlots: block.historySlots } : {}),
+          fallback: block.summary ?? block.title,
+        });
         return hint ? `[card: ${intent} → ${state} (${hint})]` : `[card: ${intent} → ${state}]`;
       }
       if ("text" in block && typeof block.text === "string") return block.text;

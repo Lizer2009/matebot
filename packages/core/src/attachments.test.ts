@@ -311,6 +311,73 @@ describe("a2ui surface history", () => {
       ]),
     ).toBe("[card: test.form → draft (note: hello)]");
   });
+
+  it("projects superseded from status, not lifecycle, with key slots", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          status: "superseded",
+          lifecycle: "draft",
+          historySlots: { to: "example@example.test", subject: "产品发布" },
+        },
+      ]),
+    ).toBe("[card: email.compose → superseded (To example@example.test · Subject 产品发布)]");
+  });
+
+  it("projects expired and unknown from status so a later turn does not treat them as drafts", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          status: "expired",
+          lifecycle: "draft",
+          historySlots: { to: "example@example.test", subject: "产品发布" },
+        },
+      ]),
+    ).toContain("→ expired");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-2",
+          surfaceId: "s-2",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          status: "unknown",
+          lifecycle: "draft",
+        },
+      ]),
+    ).toBe("[card: email.compose → unknown]");
+  });
+
+  it("falls back to lifecycle and summary when status and slots are missing", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          lifecycle: "draft",
+          summary: "to: a@b.com",
+        },
+      ]),
+    ).toBe("[card: email.compose → draft (to: a@b.com)]");
+  });
 });
 
 describe("artifactTypeLabel", () => {

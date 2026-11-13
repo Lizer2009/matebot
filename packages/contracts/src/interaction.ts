@@ -156,6 +156,16 @@ export const A2uiSurfaceBlockSchema = z.object({
    * `lifecycle` + `capability`.
    */
   status: InteractionStatus.optional(),
+  /**
+   * True while a newer user message may have overtaken this still-open card.
+   * Not a status: a stale collecting card stays unconfirmable. Omitted means fresh.
+   */
+  stale: z.boolean().optional(),
+  /**
+   * Key slot values for agent history. Hosts do not render these; the projector
+   * needs them because it only sees the block, not Interaction.slots.
+   */
+  historySlots: z.record(z.string().trim().min(1), z.string()).optional(),
   /** Provider message id after a successful send. D′/E′ consume this. */
   providerMessageId: z.string().trim().min(1).optional(),
   /** Last send error when lifecycle is failed or unknown. */

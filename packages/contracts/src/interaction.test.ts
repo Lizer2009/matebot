@@ -161,6 +161,21 @@ describe("a2ui_surface MessageBlock", () => {
     expect(A2uiSurfaceBlockSchema.safeParse({ ...surface, status: "pending" }).success).toBe(false);
   });
 
+  it("accepts optional history slots and a stale flag, and keeps old blocks valid", () => {
+    expect(
+      A2uiSurfaceBlockSchema.parse({
+        ...surface,
+        stale: true,
+        historySlots: { to: "example@example.test", subject: "产品发布" },
+      }),
+    ).toMatchObject({
+      stale: true,
+      historySlots: { to: "example@example.test", subject: "产品发布" },
+    });
+    expect(A2uiSurfaceBlockSchema.parse(surface).stale).toBeUndefined();
+    expect(A2uiSurfaceBlockSchema.parse(surface).historySlots).toBeUndefined();
+  });
+
   it("requires interactionId, surfaceId, protocolFamily, and draftVersion", () => {
     expect(MessageBlock.safeParse({ kind: "a2ui_surface" }).success).toBe(false);
     expect(
