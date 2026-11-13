@@ -896,6 +896,7 @@ export function threadsRoutes(ctx: RouterContext) {
             draftVersion: input.draftVersion,
             userId: context.actor.userId,
             connector: deps.connectors,
+            jobs: deps.jobs,
           });
           return {
             ok: true as const,
@@ -1107,6 +1108,7 @@ export function threadsRoutes(ctx: RouterContext) {
                       confirmInteractionService(deps.prisma, {
                         ...confirmInput,
                         connector: deps.connectors,
+                        jobs: deps.jobs,
                       }),
                     execute: (executeInput) =>
                       executeConfirmedInteractionService(deps.prisma, {
