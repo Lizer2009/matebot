@@ -22,10 +22,14 @@ scheme `matebot`, iOS bundle id `com.matebot.app` and Android package
 4. Keep store application IDs, team IDs, signing credentials, API keys, and
    review-account credentials out of Git.
 5. Before a native iOS or Android build, run
-   `pnpm --filter @matebot/mobile exec expo install --check`. Attachment pickers
-   and other Expo native modules must match the SDK (SDK 57 needs
-   `expo-image-picker@~57.0.11`, not 17.x). Use `pnpm exec expo install --fix`
-   from `apps/mobile` if that check fails.
+   `pnpm --filter @matebot/mobile check`. It validates the Expo native modules
+   against the catalog shipped with the installed `expo` release, which is the
+   SDK the app is pinned to, rather than the newest patch Expo has published
+   since. Attachment pickers and other Expo native modules must match that SDK
+   (SDK 57 needs `expo-image-picker@~57.0.11`, not 17.x). Use
+   `pnpm exec expo install --fix` from `apps/mobile` if the check fails, and
+   bump the `expo` pin together with the modules when moving to a newer SDK
+   patch.
 
 From `apps/mobile`:
 
