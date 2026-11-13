@@ -774,6 +774,14 @@ Grok：`When one of your Gmail accounts signs out, the Bot names that account`�
 
 每批独立可验证、可上线、可回滚。
 
+**各批的实施计划**（规格只描述设计与验收，逐 Task 的可执行步骤在计划里）：
+
+| 批 | 计划 |
+|---|---|
+| A | `docs/superpowers/plans/2026-11-13-001-interaction-card-kernel-batch-a.md` |
+| B | `docs/superpowers/plans/2026-11-13-002-interaction-card-kernel-batch-b.md` |
+| C~F | 待各自制定（实现细节取决于前一批落地后暴露的真实约束） |
+
 **批内顺序建议**：C 批的「两段式结算」必须早于任何依赖 `superseded` 的功能上线，否则会先制造出「每次编辑换卡」的症状。D 批的 `Bot.draftsDisabled` 风险最高，单独做、最后做。**F 批必须在 A~E 之后**——先修生命周期再修渲染表达力，顺序反了会白干（好看的卡照样重复推）。
 
 ---
