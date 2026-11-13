@@ -162,7 +162,7 @@ export async function restampInteractionSurface(
     if (block.kind !== "a2ui_surface" || block.interactionId !== input.interactionId) {
       return entry;
     }
-    const next = { ...(entry as Record<string, unknown>), ...stamp };
+    const next: Record<string, unknown> = { ...(entry as Record<string, unknown>), ...stamp };
     delete next.stale;
     if (input.stale) next.stale = true;
     if (historySlots) next.historySlots = historySlots;

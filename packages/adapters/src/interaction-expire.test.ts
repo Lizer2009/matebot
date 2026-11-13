@@ -107,11 +107,8 @@ describe("expireDueInteractions", () => {
       status: "expired",
       template: "action-expired-card",
     });
-    expect(findMany.mock.calls[0]![0].where.status.in).toEqual([
-      "collecting",
-      "ready_for_review",
-      "awaiting_approval",
-    ]);
+    const where = findMany.mock.calls[0]![0].where as { status: { in: string[] } };
+    expect(where.status.in).toEqual(["collecting", "ready_for_review", "awaiting_approval"]);
   });
 
   it("leaves a ready_for_review card without expiresAt alone", async () => {
