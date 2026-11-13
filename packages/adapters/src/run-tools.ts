@@ -1,8 +1,8 @@
 import type { AgentToolExecutionObserver } from "@matebot/adapter-kit";
 import { toolResultTaintsRun } from "@matebot/core";
 import { isTerminatingReplyResult } from "./approval-effect.js";
-import { refuseRefusedDestinationShell } from "./egress-fallback-guard.js";
 import { refuseDirectCalendarCreate } from "./calendar-tool-escape.js";
+import { refuseRefusedDestinationShell } from "./egress-fallback-guard.js";
 import { refuseOutboundEmailShell } from "./email-shell-escape.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import { withEgressRefusalLedger } from "./network-address.js";

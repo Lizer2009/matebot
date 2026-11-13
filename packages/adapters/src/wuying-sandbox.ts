@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
-import { WUYING_SANDBOX_DESCRIPTOR } from "./wuying-capabilities.js";
 import type {
   AdapterContext,
   CommandRequest,
@@ -31,6 +30,7 @@ import { boundedComputerActions, computerObservation } from "./computer-support.
 import { normalizeDesktopWorkspacePath } from "./desktop-sandbox-paths.js";
 import { McpSession } from "./mcp-transport.js";
 import { shouldSkipPortableWorkspaceFile } from "./workspace-save-policy.js";
+import { WUYING_SANDBOX_DESCRIPTOR } from "./wuying-capabilities.js";
 import type { WuyingControlPlane } from "./wuying-openapi.js";
 import { WuyingOpenApi } from "./wuying-openapi.js";
 

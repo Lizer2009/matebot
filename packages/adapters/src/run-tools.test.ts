@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DIRECT_CALENDAR_CREATE_REFUSAL } from "./calendar-tool-escape.js";
 import { createApprovedEffectReplayQueue, terminatingToolResult } from "./approval-effect.js";
+import { DIRECT_CALENDAR_CREATE_REFUSAL } from "./calendar-tool-escape.js";
 
 const audited = vi.hoisted(() => [] as { tool: string; outcome: string; metadata: unknown }[]);
 vi.mock("./run-tool-gate.js", async (importOriginal) => ({

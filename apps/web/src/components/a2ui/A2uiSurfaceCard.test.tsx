@@ -539,7 +539,9 @@ describe("A2uiSurfaceCard", () => {
         />,
       ),
     );
-    const status = container.querySelector('[data-testid="a2ui-email-status"]') as HTMLButtonElement;
+    const status = container.querySelector(
+      '[data-testid="a2ui-email-status"]',
+    ) as HTMLButtonElement;
     expect(status.textContent).toMatch(/Needs approval/);
     await act(async () => {
       status.click();
@@ -562,7 +564,9 @@ describe("A2uiSurfaceCard", () => {
       capability: "ready",
     });
     act(() => root.render(<A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} />));
-    const status = container.querySelector('[data-testid="a2ui-email-status"]') as HTMLButtonElement;
+    const status = container.querySelector(
+      '[data-testid="a2ui-email-status"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       status.click();
     });

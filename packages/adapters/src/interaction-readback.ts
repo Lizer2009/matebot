@@ -106,10 +106,7 @@ export function describeDraftForModel(input: {
   const missingRequired = fields
     .filter((field) => field.required && !field.filled)
     .map((field) => field.name)
-    .filter(
-      (name) =>
-        !(batchCoversSingleSlots && (name === "start" || name === "end")),
-    );
+    .filter((name) => !(batchCoversSingleSlots && (name === "start" || name === "end")));
 
   const blockedBy = [...missingRequired];
   // A draft that has already settled cannot be acted on again, whatever its fields say. Saying

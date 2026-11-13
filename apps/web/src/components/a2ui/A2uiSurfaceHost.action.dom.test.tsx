@@ -133,7 +133,9 @@ describe("compiled surface click reaches the action bridge", () => {
 
     const next = vi.fn();
     await act(async () => {
-      root.render(createElement(A2uiSurfaceHost, { surfaceId: "surf-1", messages, onAction: next }));
+      root.render(
+        createElement(A2uiSurfaceHost, { surfaceId: "surf-1", messages, onAction: next }),
+      );
     });
     // No skeleton frame: the drawn card stays while the same surface is handed over.
     expect(host.querySelector("[data-testid='a2ui-surface-loading']")).toBeNull();

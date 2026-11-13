@@ -45,10 +45,7 @@ export function A2uiSurfaceHost({
    */
   const listener = useRef(onAction);
   listener.current = onAction;
-  const dispatch = useCallback<A2uiActionListener>(
-    (action) => listener.current?.(action),
-    [],
-  );
+  const dispatch = useCallback<A2uiActionListener>((action) => listener.current?.(action), []);
   /** A surface already drawn stays on screen while its replacement compiles. */
   const drawnSurfaceId = useRef<string | null>(null);
 

@@ -57,7 +57,9 @@ test("executing email card shows Sending email and no Send", async ({ page }, te
   await captureScreenshot(page, testInfo, "a2ui-email-progress");
 });
 
-test("succeeded email card shows Sent without the provider message id", async ({ page }, testInfo) => {
+test("succeeded email card shows Sent without the provider message id", async ({
+  page,
+}, testInfo) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=succeeded");
   await expect(page.getByTestId("a2ui-email-sent")).toBeVisible();
   await expect(page.getByTestId("a2ui-email-provider-id")).toHaveCount(0);

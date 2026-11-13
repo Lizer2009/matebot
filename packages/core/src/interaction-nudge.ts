@@ -57,7 +57,9 @@ export function surfaceNudgeFor(input: {
   const calendar = input.intent === "calendar.create" || input.intent === "calendar.compose";
   if (
     input.missingRequired?.some((name) =>
-      calendar ? name === "start" || name === "end" || name === "name" : EMAIL_REQUIRED_GAPS.has(name),
+      calendar
+        ? name === "start" || name === "end" || name === "name"
+        : EMAIL_REQUIRED_GAPS.has(name),
     )
   ) {
     return "incomplete";
@@ -66,10 +68,7 @@ export function surfaceNudgeFor(input: {
 }
 
 /** The one line for this intent. Mail and calendar do not share a verb. */
-export function surfaceNudgeText(input: {
-  state: SurfaceNudgeState;
-  intent?: string;
-}): string {
+export function surfaceNudgeText(input: { state: SurfaceNudgeState; intent?: string }): string {
   const calendar = input.intent === "calendar.create" || input.intent === "calendar.compose";
   if (calendar && (input.state === "presented" || input.state === "incomplete")) {
     return CALENDAR_SURFACE_NUDGE[input.state];

@@ -178,8 +178,16 @@ describe("a calendar draft compiled for the card", () => {
         resolved(
           "events",
           JSON.stringify([
-            { title: "Standup", start: "2026-11-09T09:00:00+08:00", end: "2026-11-09T09:15:00+08:00" },
-            { title: "Review", start: "2026-11-10T09:00:00+08:00", end: "2026-11-10T10:00:00+08:00" },
+            {
+              title: "Standup",
+              start: "2026-11-09T09:00:00+08:00",
+              end: "2026-11-09T09:15:00+08:00",
+            },
+            {
+              title: "Review",
+              start: "2026-11-10T09:00:00+08:00",
+              end: "2026-11-10T10:00:00+08:00",
+            },
           ]),
         ),
       ]),

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { agentConnectionTools } from "./builtin-tools.js";
 import {
   CORE_BUILTIN_TOOL_NAMES,
   FIND_TOOL,
@@ -7,6 +6,7 @@ import {
   partitionTools,
   USE_TOOL,
 } from "./builtin-tool-bridge.js";
+import { agentConnectionTools } from "./builtin-tools.js";
 import { NAME_INDEX_MAX_BYTES } from "./lazy-tool-catalog.js";
 import { describeToolActivity } from "./pi-runtime-tools.js";
 import { BUILTIN_AGENT_TOOL_NAMES, selectBuiltinToolsForRun } from "./run-tool-selection.js";
@@ -146,9 +146,7 @@ describe("built-in tool bridge", () => {
     try {
       const { listed } = partitionTools(deferred);
       const description = listed.find((tool) => tool.name === FIND_TOOL)!.description;
-      expect(Buffer.byteLength(description, "utf8")).toBeLessThan(
-        400 + NAME_INDEX_MAX_BYTES + 200,
-      );
+      expect(Buffer.byteLength(description, "utf8")).toBeLessThan(400 + NAME_INDEX_MAX_BYTES + 200);
       expect(description).toMatch(/Sources:/);
       expect(description).not.toContain("scratchpad_extra_000_tool");
     } finally {

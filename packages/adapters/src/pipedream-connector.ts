@@ -243,9 +243,7 @@ export class PipedreamConnector implements ManagedConnectorProvider {
           }
           // An account that listed, even with an empty catalog, means this app is not fully down.
           if (listed.some((entry) => entry.ok)) return [];
-          const failed = listed.find(
-            (entry): entry is { ok: false; reason: string } => !entry.ok,
-          );
+          const failed = listed.find((entry): entry is { ok: false; reason: string } => !entry.ok);
           if (failed) return this.unavailablePlaceholder(context, app, failed.reason);
           return [];
         } catch (error) {

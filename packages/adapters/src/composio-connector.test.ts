@@ -709,9 +709,9 @@ describe("composio tool mapping", () => {
       expect(await executePlaceholder(connector, toolsB[0]!, userB)).toEqual([
         { type: "error", message: reasonShownToTheModel(toolsB[0]!) },
       ]);
-      expect(
-        await executePlaceholder(connector, toolsOtherSpace[0]!, sameUserOtherSpace),
-      ).toEqual([{ type: "error", message: reasonShownToTheModel(toolsOtherSpace[0]!) }]);
+      expect(await executePlaceholder(connector, toolsOtherSpace[0]!, sameUserOtherSpace)).toEqual([
+        { type: "error", message: reasonShownToTheModel(toolsOtherSpace[0]!) },
+      ]);
     } finally {
       composioSdkState.toolsFail = null;
     }
