@@ -148,6 +148,17 @@ describe("a2ui_surface MessageBlock", () => {
     ).toBe("unknown");
   });
 
+  it("accepts an optional kernel status stamp, and keeps old blocks valid", () => {
+    expect(A2uiSurfaceBlockSchema.parse({ ...surface, status: "superseded" }).status).toBe(
+      "superseded",
+    );
+    // A block written before the field existed has no `status`. Hosts fall back to `lifecycle`,
+    // so parsing one must stay valid for as long as history holds them.
+    expect(A2uiSurfaceBlockSchema.parse(surface).status).toBeUndefined();
+    // The status is a closed vocabulary: a value outside it would reach copy that has no line.
+    expect(A2uiSurfaceBlockSchema.safeParse({ ...surface, status: "pending" }).success).toBe(false);
+  });
+
   it("requires interactionId, surfaceId, protocolFamily, and draftVersion", () => {
     expect(MessageBlock.safeParse({ kind: "a2ui_surface" }).success).toBe(false);
     expect(

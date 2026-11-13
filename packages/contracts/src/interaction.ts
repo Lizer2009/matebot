@@ -62,6 +62,30 @@ export type InteractionPlan = z.infer<typeof InteractionPlanSchema>;
 export const A2uiProtocolFamily = z.enum(["v0_9", "v1_0"]);
 export type A2uiProtocolFamily = z.infer<typeof A2uiProtocolFamily>;
 
+/**
+ * The kernel's card lifecycle.
+ *
+ * `@matebot/core` owns the vocabulary, but the dependency points core → contracts, so the values
+ * are repeated here rather than imported. A parity test in core asserts the two lists are equal,
+ * which is what keeps the copies from drifting.
+ */
+export const InteractionStatus = z.enum([
+  "collecting",
+  "ready_for_review",
+  "awaiting_approval",
+  "needs_connection",
+  "unknown",
+  "sent",
+  "executed",
+  "succeeded",
+  "confirmed",
+  "superseded",
+  "expired",
+  "failed",
+  "cancelled",
+]);
+export type InteractionStatus = z.infer<typeof InteractionStatus>;
+
 /** Mailbox preflight stamp on email.compose surfaces. */
 export const EmailSurfaceCapability = z.enum(["not_connected", "requires_reauth", "ready"]);
 export type EmailSurfaceCapability = z.infer<typeof EmailSurfaceCapability>;
@@ -71,11 +95,15 @@ export const EmailSurfaceTemplate = z.enum([
   "email-connection-card",
   "email-reauth-card",
   "email-draft-card",
+  "action-draft-card",
   "action-submitting-card",
   "action-progress-card",
   "action-result-success",
   "action-result-failed",
   "action-reconcile-card",
+  "action-superseded-card",
+  "action-expired-card",
+  "action-cancelled-card",
 ]);
 export type EmailSurfaceTemplate = z.infer<typeof EmailSurfaceTemplate>;
 
@@ -119,6 +147,15 @@ export const A2uiSurfaceBlockSchema = z.object({
   template: EmailSurfaceTemplate.optional(),
   /** Execution lifecycle on the same surface. Omitted means draft. */
   lifecycle: EmailSurfaceLifecycle.optional(),
+  /**
+   * The interaction's own status, copied at write time.
+   *
+   * `lifecycle` keeps six values and cannot tell a superseded card from a live draft; a host
+   * needs the real status to decide what the card may still do. Optional so blocks written
+   * before this field existed keep parsing: a host that finds it missing falls back to
+   * `lifecycle` + `capability`.
+   */
+  status: InteractionStatus.optional(),
   /** Provider message id after a successful send. D′/E′ consume this. */
   providerMessageId: z.string().trim().min(1).optional(),
   /** Last send error when lifecycle is failed or unknown. */
