@@ -6,7 +6,9 @@ import type {
 } from "@matebot/core";
 import {
   emailSurfaceBlockFields,
+  expiresAtFor,
   interactionCapabilityForIntent,
+  interactionCardKey,
   interactionSlotsFromPlan,
   timingFields,
 } from "@matebot/core";
@@ -19,6 +21,8 @@ import {
   withTransactionRetry,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import type { OpenCardRow } from "./interaction-kernel-store.js";
+import { findOpenCard } from "./interaction-kernel-store.js";
 
 /** The registered schema for an intent, when the capability is known. */
 function capabilitySchema(intent: string) {
@@ -104,6 +108,10 @@ export type PublishInteractionSurfaceInput = {
    * a record that already ran; the original row is never rewritten.
    */
   amendsInteractionId?: string;
+  /** sha256(threadId + NUL + intent); see the partial unique index. */
+  cardKey?: string;
+  /** Set only for `awaiting_approval`; see `expiresAtFor`. */
+  expiresAt?: Date | null;
   /** The connection's own label, shown read-only on the card. Never an address. */
   senderLabel?: string;
   /** Provider mailbox, only when the server learned it from the account record. */
@@ -215,6 +223,8 @@ export async function publishInteractionSurface(
         threadId: input.threadId,
         runId: input.runId,
         intent: reconciledPlan.intent,
+        ...(input.cardKey ? { cardKey: input.cardKey } : {}),
+        ...(input.expiresAt ? { expiresAt: input.expiresAt } : {}),
         status: input.status ?? "collecting",
         plan: reconciledPlan,
         slots,
@@ -328,6 +338,193 @@ export async function publishInteractionSurface(
         // the plan it submitted.
         plan: reconciledPlan,
         slots,
+      };
+    }),
+  );
+}
+
+export type PublishOrAmendInput = PublishInteractionSurfaceInput;
+
+export type PublishOrAmendResult = {
+  interactionId: string;
+  surfaceId: string;
+  messageId: string;
+  documentRef: string;
+  draftVersion: number;
+  eventSeq: number;
+  /** True when an existing card was rewritten in place. */
+  amended: boolean;
+  missingRequired: string[];
+  plan: InteractionPlan;
+  slots: Record<string, unknown>;
+  capability?: EmailSurfaceCapability;
+};
+
+/**
+ * Publish, or rewrite the card already on screen.
+ *
+ * `publishInteractionSurface` always creates a row and a message, which is why a
+ * second present of the same intent used to leave two live buttons for one
+ * effect. This wraps it: a live card for the same (thread, intent) is rewritten
+ * in place — row, surface document and the message block that carries it — and
+ * only an absent card creates anything.
+ *
+ * A `P2002` on insert means another run won the race; the retry re-reads and
+ * amends, which is the same outcome the loser wanted.
+ */
+export async function publishOrAmend(
+  prisma: PrismaClient,
+  input: PublishOrAmendInput,
+): Promise<PublishOrAmendResult> {
+  const cardKey = input.cardKey ?? interactionCardKey(input.threadId, input.plan.intent);
+  const status = input.status ?? "collecting";
+  const expiresAt = input.expiresAt ?? expiresAtFor(status);
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const existing = await findOpenCard(prisma, {
+      threadId: input.threadId,
+      intent: input.plan.intent,
+    });
+    if (existing?.messageId) {
+      return amendPublishedCard(prisma, {
+        ...input,
+        status,
+        expiresAt,
+        existing,
+        messageId: existing.messageId,
+      });
+    }
+    try {
+      const published = await publishInteractionSurface(prisma, { ...input, cardKey, expiresAt });
+      return { ...published, amended: false };
+    } catch (error) {
+      if ((error as { code?: string }).code !== "P2002" || attempt > 0) throw error;
+      getLogger().info("interaction.publish_race_retry", {
+        "interaction.card_key": cardKey,
+        "interaction.intent": input.plan.intent,
+      });
+    }
+  }
+  throw new Error("Could not publish or amend the interaction card");
+}
+
+/**
+ * Rewrite the card a person is already looking at.
+ *
+ * The message block is replaced in place. Appending a second message is the
+ * behaviour this function exists to end.
+ */
+async function amendPublishedCard(
+  prisma: PrismaClient,
+  input: PublishOrAmendInput & {
+    existing: OpenCardRow;
+    messageId: string;
+    expiresAt: Date | null;
+  },
+): Promise<PublishOrAmendResult> {
+  const { existing } = input;
+  const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
+  const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
+  const senderLabel = senderLabelForBlock(input.senderLabel);
+  const senderAddress = senderAddressForBlock(input.senderAddress);
+  const stamps = emailIntent
+    ? emailSurfaceBlockFields({
+        intent: input.plan.intent,
+        capability: input.capability,
+        interactionStatus: input.status ?? "collecting",
+      })
+    : {};
+  const compiled = await compilePlanSurface({
+    plan: input.plan,
+    surfaceId,
+    protocolFamily: input.protocolFamily,
+    capability: emailIntent ? input.capability : undefined,
+    status: input.status,
+  });
+  const reconciledPlan = compiled.plan ?? input.plan;
+  const slots = interactionSlotsFromPlan(reconciledPlan);
+  const nextVersion = existing.draftVersion + 1;
+
+  return withTransactionRetry(() =>
+    prisma.$transaction(async (tx) => {
+      await tx.interaction.update({
+        where: { id: existing.id },
+        data: {
+          plan: reconciledPlan as never,
+          slots: slots as never,
+          title: reconciledPlan.title ?? null,
+          summary: reconciledPlan.summary ?? null,
+          status: input.status ?? "collecting",
+          draftVersion: nextVersion,
+          staleAt: null,
+          expiresAt: input.expiresAt,
+        },
+      });
+      const { documentRef } = await upsertInteractionSurface(tx, {
+        interactionId: existing.id,
+        surfaceId,
+        protocolFamily: compiled.protocolFamily,
+        document: compiled.messages,
+        draftVersion: nextVersion,
+      });
+      const message = await tx.message.findUnique({
+        where: { id: input.messageId },
+        select: { blocks: true },
+      });
+      const previous = Array.isArray(message?.blocks) ? (message.blocks as MessageBlock[]) : [];
+      // The block being replaced is the only place the read-only "sending from"
+      // row can come from; a rebuild that trusts only this call's arguments
+      // blanks it on every amend.
+      const carried = senderStampFromBlock(previous, undefined);
+      const blockLabel = senderLabel ?? carried.senderLabel;
+      const blockAddress = senderAddress ?? carried.senderAddress;
+      const block: MessageBlock = {
+        kind: "a2ui_surface",
+        interactionId: existing.id,
+        surfaceId,
+        protocolFamily: compiled.protocolFamily,
+        draftVersion: nextVersion,
+        intent: input.plan.intent,
+        title: input.plan.title,
+        summary: input.plan.summary,
+        documentRef,
+        ...(input.amendsInteractionId ? { amendsInteractionId: input.amendsInteractionId } : {}),
+        ...(blockLabel ? { senderLabel: blockLabel } : {}),
+        ...(blockAddress ? { senderAddress: blockAddress } : {}),
+        ...stamps,
+      };
+      const nextBlocks = previous.some(
+        (entry) => entry.kind === "a2ui_surface" && entry.interactionId === existing.id,
+      )
+        ? previous.map((entry) =>
+            entry.kind === "a2ui_surface" && entry.interactionId === existing.id ? block : entry,
+          )
+        : [...previous, block];
+      await tx.message.update({
+        where: { id: input.messageId },
+        data: { blocks: nextBlocks as never },
+      });
+      const event = await appendEventInTransaction(tx, {
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: input.botId,
+        type: "thread.message.updated",
+        runId: input.runId,
+        lease: input.lease,
+        payload: { messageId: input.messageId, role: "bot", blocks: nextBlocks },
+      });
+      return {
+        interactionId: existing.id,
+        surfaceId,
+        messageId: input.messageId,
+        documentRef,
+        draftVersion: nextVersion,
+        eventSeq: event.seq,
+        amended: true,
+        missingRequired: compiled.missingRequired,
+        plan: reconciledPlan,
+        slots,
+        ...(input.capability ? { capability: input.capability } : {}),
       };
     }),
   );
