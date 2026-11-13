@@ -1415,6 +1415,15 @@ export const JA_MESSAGES: Record<string, string> = {
   "Don't send again": "再送信しないでください",
   "Authorization expired": "認証の有効期限が切れました",
   "Not connected": "未接続",
+  Draft: "下書き",
+  "Replaced by a newer draft": "新しい下書きに置き換えられました",
+  "Expired, nothing was sent": "期限切れです。送信されていません",
+  "Checking whether this was sent": "送信されたか確認しています",
+  "Your rule asks first": "あなたのルールが先に確認を求めます",
+  "This space's rules ask first": "このスペースのルールが先に確認を求めます",
+  "Your settings ask first": "あなたの設定が先に確認を求めます",
+  "This step cannot be undone": "この操作は取り消せません",
+  "There may be a newer version": "新しいバージョンがある可能性があります",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "{peer}とのメッセージ{count}件" };

@@ -130,6 +130,7 @@ export * from "./surface-affordance.js";
 export * from "./surface-affordances.js";
 export * from "./surface-revision.js";
 export * from "./surface-stamp.js";
+export * from "./surface-status-copy.js";
 export * from "./surface-target.js";
 export * from "./teach-playbook.js";
 export * from "./teach-recording.js";

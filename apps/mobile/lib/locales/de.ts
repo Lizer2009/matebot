@@ -1390,6 +1390,15 @@ export const DE_MESSAGES: Record<string, string> = {
   "Don't send again": "Nicht nochmal senden",
   "Authorization expired": "Autorisierung abgelaufen",
   "Not connected": "Nicht verbunden",
+  Draft: "Entwurf",
+  "Replaced by a newer draft": "Durch einen neueren Entwurf ersetzt",
+  "Expired, nothing was sent": "Abgelaufen, es wurde nichts gesendet",
+  "Checking whether this was sent": "Es wird geprüft, ob dies gesendet wurde",
+  "Your rule asks first": "Deine Regel fragt zuerst",
+  "This space's rules ask first": "Die Regeln dieses Bereichs fragen zuerst",
+  "Your settings ask first": "Deine Einstellungen fragen zuerst",
+  "This step cannot be undone": "Dieser Schritt kann nicht rückgängig gemacht werden",
+  "There may be a newer version": "Es gibt möglicherweise eine neuere Version",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

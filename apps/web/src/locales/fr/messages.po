@@ -1354,6 +1354,11 @@ msgstr "Rechercher des mises à jour"
 msgid "Check in."
 msgstr "Faites un point."
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Check status"
+msgstr ""
+
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Check status"
 msgstr ""
@@ -1386,6 +1391,11 @@ msgstr ""
 #: src/components/McpServerHealthLine.tsx
 msgid "Checking connection…"
 msgstr "Vérification de la connexion…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Checking whether this was sent"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -2823,6 +2833,11 @@ msgstr ""
 msgid "Discard recording"
 msgstr "Supprimer l’enregistrement"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Discarded"
+msgstr ""
+
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Discarded"
 msgstr ""
@@ -2910,6 +2925,11 @@ msgstr "Vous n'avez pas de compte ?"
 msgid "Don't send again"
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Done"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/ticket-status.ts
@@ -2949,6 +2969,11 @@ msgstr "Télécharger le PDF"
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "Téléchargement en cours…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Draft"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -3150,6 +3175,11 @@ msgstr "Agrandir le tableau"
 msgid "expired"
 msgstr "expiré"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Expired, nothing was sent"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr ""
@@ -3193,6 +3223,11 @@ msgstr "Très élevé"
 #: src/components/CloudAgentCard.tsx
 msgid "failed"
 msgstr "échoué"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Failed"
+msgstr ""
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
@@ -5397,6 +5432,11 @@ msgstr "Remplacer la clé API"
 msgid "Replace key"
 msgstr "Remplacer la clé"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Replaced by a newer draft"
+msgstr ""
+
 #: src/components/a2ui/A2uiSurfaceCard.tsx
 msgid "Replaced by a newer draft below."
 msgstr ""
@@ -5504,6 +5544,11 @@ msgstr "Restauré"
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"
 msgstr "Restauration de votre espace de travail"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Retry"
+msgstr ""
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
@@ -6474,6 +6519,11 @@ msgstr "La différence non utilisée est créditée sur votre prochaine facture.
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "There may be a newer version"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
 msgstr "Ces fichiers sont trop volumineux pour être importés."
@@ -6662,6 +6712,16 @@ msgstr ""
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This space's rules ask first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This step cannot be undone"
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
@@ -7317,6 +7377,16 @@ msgstr "À la fin de votre essai, votre forfait passe à {annualPrice} / an."
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "Votre forfait passe à {tierTargetLabel} à la fin de votre essai."
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your rule asks first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your settings ask first"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Your skills"

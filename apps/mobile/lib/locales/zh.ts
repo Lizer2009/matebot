@@ -1389,6 +1389,15 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Don't send again": "请勿再次发送",
   "Authorization expired": "授权已失效",
   "Not connected": "未连接",
+  Draft: "草稿",
+  "Replaced by a newer draft": "已被更新的草稿替代",
+  "Expired, nothing was sent": "已过期，没有发出",
+  "Checking whether this was sent": "正在确认是否已经发出",
+  "Your rule asks first": "你的规则要求先确认",
+  "This space's rules ask first": "这个空间的规则要求先确认",
+  "Your settings ask first": "你的设置要求先确认",
+  "This step cannot be undone": "这一步不能撤销",
+  "There may be a newer version": "可能有更新的版本",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

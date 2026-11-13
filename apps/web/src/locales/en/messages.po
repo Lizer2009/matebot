@@ -1354,6 +1354,11 @@ msgstr "Check for updates"
 msgid "Check in."
 msgstr "Check in."
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Check status"
+msgstr "Check status"
+
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Check status"
 msgstr "Check status"
@@ -1386,6 +1391,11 @@ msgstr "Checking computer setup…"
 #: src/components/McpServerHealthLine.tsx
 msgid "Checking connection…"
 msgstr "Checking connection…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Checking whether this was sent"
+msgstr "Checking whether this was sent"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -2823,6 +2833,11 @@ msgstr "Discard"
 msgid "Discard recording"
 msgstr "Discard recording"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Discarded"
+msgstr "Discarded"
+
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Discarded"
 msgstr "Discarded"
@@ -2910,6 +2925,11 @@ msgstr "Don’t have an account?"
 msgid "Don't send again"
 msgstr "Don't send again"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Done"
+msgstr "Done"
+
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/ticket-status.ts
@@ -2949,6 +2969,11 @@ msgstr "Download PDF"
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "Downloading…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Draft"
+msgstr "Draft"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -3150,6 +3175,11 @@ msgstr "Expand table"
 msgid "expired"
 msgstr "expired"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Expired, nothing was sent"
+msgstr "Expired, nothing was sent"
+
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr "Expires"
@@ -3193,6 +3223,11 @@ msgstr "Extra high"
 #: src/components/CloudAgentCard.tsx
 msgid "failed"
 msgstr "failed"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Failed"
+msgstr "Failed"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
@@ -5397,6 +5432,11 @@ msgstr "Replace API key"
 msgid "Replace key"
 msgstr "Replace key"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Replaced by a newer draft"
+msgstr "Replaced by a newer draft"
+
 #: src/components/a2ui/A2uiSurfaceCard.tsx
 msgid "Replaced by a newer draft below."
 msgstr "Replaced by a newer draft below."
@@ -5504,6 +5544,11 @@ msgstr "Restored"
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"
 msgstr "Restoring your workspace"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Retry"
+msgstr "Retry"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
@@ -6474,6 +6519,11 @@ msgstr "The unused difference is credited to your next invoice."
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "Their own model is cleared. You can pick one again in each bot."
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "There may be a newer version"
+msgstr "There may be a newer version"
+
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
 msgstr "These files are too large to import."
@@ -6663,6 +6713,16 @@ msgstr "This server is not responding."
 #: src/lib/run-error.ts
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
 msgstr "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This space's rules ask first"
+msgstr "This space's rules ask first"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This step cannot be undone"
+msgstr "This step cannot be undone"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in Matebot yet. Use a deployment credential or choose another provider."
@@ -7317,6 +7377,16 @@ msgstr "Your plan becomes {annualPrice} / year when your trial ends."
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "Your plan becomes {tierTargetLabel} when your trial ends."
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your rule asks first"
+msgstr "Your rule asks first"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your settings ask first"
+msgstr "Your settings ask first"
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Your skills"

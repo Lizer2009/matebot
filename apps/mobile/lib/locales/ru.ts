@@ -1423,6 +1423,15 @@ export const RU_MESSAGES: Record<string, string> = {
   "Don't send again": "Не отправляйте снова",
   "Authorization expired": "Авторизация истекла",
   "Not connected": "Не подключено",
+  Draft: "Черновик",
+  "Replaced by a newer draft": "Заменён более новым черновиком",
+  "Expired, nothing was sent": "Срок истёк, ничего не отправлено",
+  "Checking whether this was sent": "Проверяем, было ли это отправлено",
+  "Your rule asks first": "Ваше правило сначала спрашивает",
+  "This space's rules ask first": "Правила этого пространства сначала спрашивают",
+  "Your settings ask first": "Ваши настройки сначала спрашивают",
+  "This step cannot be undone": "Этот шаг нельзя отменить",
+  "There may be a newer version": "Может быть более новая версия",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

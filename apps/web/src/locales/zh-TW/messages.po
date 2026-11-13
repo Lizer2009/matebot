@@ -1355,6 +1355,11 @@ msgstr "檢查更新"
 msgid "Check in."
 msgstr "報到。"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Check status"
+msgstr ""
+
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Check status"
 msgstr ""
@@ -1387,6 +1392,11 @@ msgstr "正在檢查電腦設定…"
 #: src/components/McpServerHealthLine.tsx
 msgid "Checking connection…"
 msgstr "正在檢查連線…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Checking whether this was sent"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -2824,6 +2834,11 @@ msgstr "捨棄"
 msgid "Discard recording"
 msgstr "捨棄錄製內容"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Discarded"
+msgstr ""
+
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Discarded"
 msgstr "已捨棄"
@@ -2911,6 +2926,11 @@ msgstr "還沒有帳號？"
 msgid "Don't send again"
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Done"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/ticket-status.ts
@@ -2950,6 +2970,11 @@ msgstr "下載 PDF"
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "下載中…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Draft"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -3151,6 +3176,11 @@ msgstr "展開表格"
 msgid "expired"
 msgstr "已過期"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Expired, nothing was sent"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr ""
@@ -3194,6 +3224,11 @@ msgstr "極高"
 #: src/components/CloudAgentCard.tsx
 msgid "failed"
 msgstr "失敗"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Failed"
+msgstr ""
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
@@ -5398,6 +5433,11 @@ msgstr "替換 API 金鑰"
 msgid "Replace key"
 msgstr "替換金鑰"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Replaced by a newer draft"
+msgstr ""
+
 #: src/components/a2ui/A2uiSurfaceCard.tsx
 msgid "Replaced by a newer draft below."
 msgstr ""
@@ -5505,6 +5545,11 @@ msgstr "已還原"
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"
 msgstr "正在還原工作空間"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Retry"
+msgstr ""
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
@@ -6475,6 +6520,11 @@ msgstr "未使用的差額將抵扣到你的下一張帳單。"
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "已清除機器人的個別模型設定。你可以隨時為各機器人重新選擇模型。"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "There may be a newer version"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
 msgstr "這些檔案太大，無法匯入。"
@@ -6663,6 +6713,16 @@ msgstr ""
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This space's rules ask first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This step cannot be undone"
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
@@ -7318,6 +7378,16 @@ msgstr "試用結束後，你的方案將變為每年 {annualPrice}。"
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "試用結束後，你的方案將變為 {tierTargetLabel}。"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your rule asks first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your settings ask first"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Your skills"

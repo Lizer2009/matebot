@@ -1382,6 +1382,15 @@ export const NL_MESSAGES: Record<string, string> = {
   "Don't send again": "Niet opnieuw verzenden",
   "Authorization expired": "Autorisatie verlopen",
   "Not connected": "Niet verbonden",
+  Draft: "Concept",
+  "Replaced by a newer draft": "Vervangen door een nieuwer concept",
+  "Expired, nothing was sent": "Verlopen, er is niets verzonden",
+  "Checking whether this was sent": "Controleren of dit is verzonden",
+  "Your rule asks first": "Jouw regel vraagt eerst",
+  "This space's rules ask first": "De regels van deze ruimte vragen eerst",
+  "Your settings ask first": "Jouw instellingen vragen eerst",
+  "This step cannot be undone": "Deze stap kan niet ongedaan worden gemaakt",
+  "There may be a newer version": "Er is mogelijk een nieuwere versie",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

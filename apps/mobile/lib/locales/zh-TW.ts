@@ -1387,6 +1387,15 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Don't send again": "請勿再次傳送",
   "Authorization expired": "授權已失效",
   "Not connected": "未連接",
+  Draft: "草稿",
+  "Replaced by a newer draft": "已被更新的草稿取代",
+  "Expired, nothing was sent": "已過期，沒有送出",
+  "Checking whether this was sent": "正在確認是否已經送出",
+  "Your rule asks first": "你的規則要求先確認",
+  "This space's rules ask first": "這個空間的規則要求先確認",
+  "Your settings ask first": "你的設定要求先確認",
+  "This step cannot be undone": "這一步不能撤銷",
+  "There may be a newer version": "可能有較新的版本",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "與{peer}的 {count} 則訊息" };
