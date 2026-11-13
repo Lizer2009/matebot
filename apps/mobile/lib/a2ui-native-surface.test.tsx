@@ -176,7 +176,8 @@ describe("native A2UI surface", () => {
         }}
       />,
     );
-    expect(text("a2ui-email-sent")).toBe("Sent");
+    expect(document.body.textContent).toContain("Done");
+    expect(document.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
   });
 
   it("shows a failed card without Sent when send is an internal error", async () => {
@@ -208,8 +209,8 @@ describe("native A2UI surface", () => {
         onSend={onSend}
       />,
     );
-    expect(text("a2ui-email-failed")).toBe("Internal server error");
-    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(document.body.textContent).toContain("Failed");
+    expect(document.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 
@@ -355,7 +356,8 @@ describe("native A2UI surface", () => {
         }}
       />,
     );
-    expect(text("a2ui-email-sent")).toBe("Sent");
+    expect(document.body.textContent).toContain("Done");
+    expect(document.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
     expect(document.querySelector('[data-testid="a2ui-email-provider-id"]')).toBeNull();
     expect(document.body.textContent).not.toContain("msg-1");
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
@@ -394,26 +396,29 @@ describe("native A2UI surface", () => {
   });
 
   it("shows failed with Retry and no Send", async () => {
+    const onRetry = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);
     render(
       <A2uiNativeSurface
         block={{
           ...block,
+          status: "failed",
           template: "action-result-failed",
           lifecycle: "failed",
           error: "Could not send the email",
         }}
         onSend={onSend}
+        onRetry={onRetry}
       />,
     );
-    expect(text("a2ui-email-failed")).toBe("Could not send the email");
-    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(document.body.textContent).toContain("Failed");
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
     await act(async () => {
-      click("a2ui-email-retry");
+      click("a2ui-surface-retry");
       await Promise.resolve();
     });
-    expect(onSend).toHaveBeenCalled();
+    expect(onRetry).toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
   });
 
   it("shows UNKNOWN with Check status and no Send", async () => {

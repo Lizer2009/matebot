@@ -1,5 +1,5 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import { emailSurfacePhase, needsRecovery } from "@matebot/core";
+import { emailSurfacePhase, needsRecovery, surfacePhase, surfaceStatusCopy } from "@matebot/core";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { NativeCatalogNode } from "../../lib/a2ui-catalog";
@@ -9,6 +9,7 @@ import {
   parseNativeCatalog,
 } from "../../lib/a2ui-catalog";
 import { useI18n } from "../../lib/i18n";
+import { surfaceCopy } from "../../lib/surface-copy";
 import { A2uiButton, A2uiSheet, A2uiTextField } from "./a2ui-native-controls";
 
 type EmailFields = { from: string; to: string; cc: string; subject: string; body: string };
@@ -34,6 +35,7 @@ export function A2uiNativeSurface({
   onAction,
   onDiscard,
   onManageRules,
+  onRetry,
 }: {
   block: A2uiSurfaceBlock;
   messages?: unknown[];
@@ -57,6 +59,7 @@ export function A2uiNativeSurface({
   }) => void | Promise<void>;
   onDiscard?: () => void | Promise<void>;
   onManageRules?: () => void;
+  onRetry?: () => void | Promise<void>;
 }) {
   const { t } = useI18n();
   const [loaded, setLoaded] = useState<unknown[] | undefined>(messages);
@@ -142,6 +145,42 @@ export function A2uiNativeSurface({
     };
   }, [block.documentRef, messages, t, attempt]);
 
+  const { affordance } = surfacePhase({
+    intent: block.intent,
+    ...(block.status ? { status: block.status } : {}),
+    ...(block.template ? { template: block.template } : {}),
+    ...(block.lifecycle ? { lifecycle: block.lifecycle } : {}),
+    ...(mailbox ? { capability: mailbox } : {}),
+  });
+  if (affordance.terminal) {
+    const copy = surfaceStatusCopy({
+      status: block.status ?? block.lifecycle ?? "succeeded",
+    });
+    return (
+      <View testID="a2ui-native-folded" style={{ gap: 8, width: "100%", minWidth: 0 }}>
+        <Text>{surfaceCopy(t, copy.titleKey)}</Text>
+        {block.title ? <Text>{block.title}</Text> : null}
+        {affordance.action === "retry" ? (
+          <A2uiButton
+            label={surfaceCopy(t, copy.actionKey ?? "action.retry")}
+            testID="a2ui-surface-retry"
+            onPress={() => {
+              if (!onRetry || busy) return;
+              setBusy(true);
+              setError(null);
+              void Promise.resolve(onRetry())
+                .catch((err: unknown) =>
+                  setError(err instanceof Error && err.message ? err.message : null),
+                )
+                .finally(() => setBusy(false));
+            }}
+          />
+        ) : null}
+        {error ? <Text testID="a2ui-email-error">{error}</Text> : null}
+      </View>
+    );
+  }
+
   if (isEmailComposeIntent(block.intent)) {
     const setField = (name: EmailFieldName) => (value: string) => {
       const nextValues = { ...valuesRef.current, [name]: value };
@@ -177,8 +216,9 @@ export function A2uiNativeSurface({
     }
     const effectiveConfirmed = localConfirmedVersion ?? block.confirmedVersion;
     const title = block.title ?? t("Send email");
-    // One rule shared with the web card; see emailSurfacePhase in @matebot/core.
-    const { phase } = emailSurfacePhase({
+    // One rule shared with the web card. A finished card already folded above;
+    // `action` is the one control this open sheet may still show.
+    const { phase, affordance: emailAffordance } = emailSurfacePhase({
       template:
         mailbox === "ready" &&
         (block.template === "email-connection-card" || block.template === "email-reauth-card")
@@ -189,7 +229,9 @@ export function A2uiNativeSurface({
       intent: block.intent,
       error: block.error,
       busy,
+      ...(block.status ? { status: block.status } : {}),
     });
+    const action = mailbox !== block.capability ? emailAffordance.action : affordance.action;
     if (discarded) {
       return (
         <View testID="a2ui-native-surface">
@@ -276,9 +318,9 @@ export function A2uiNativeSurface({
             multiline
             onChangeText={setField("body")}
           />
-          {phase === "action-progress-card" ||
-          phase === "action-submitting-card" ||
-          phase === "action-result-success" ? null : (
+          {action === "none" ||
+          phase === "action-progress-card" ||
+          phase === "action-submitting-card" ? null : (
             <A2uiButton
               label={t("Discard")}
               testID="a2ui-email-discard"
@@ -290,9 +332,7 @@ export function A2uiNativeSurface({
               }}
             />
           )}
-          {phase === "action-progress-card" ||
-          phase === "action-submitting-card" ? null : mailboxNeedsConnect(mailbox) &&
-            (phase === "email-connection-card" || phase === "email-reauth-card") ? (
+          {action === "connect" && mailboxNeedsConnect(mailbox) ? (
             <A2uiButton
               label={mailbox === "requires_reauth" ? t("Reconnect") : t("Connect email")}
               testID={mailbox === "requires_reauth" ? "a2ui-email-reauth" : "a2ui-email-connect"}
@@ -304,20 +344,7 @@ export function A2uiNativeSurface({
                   .catch((err: unknown) => setError(messageOf(err)));
               }}
             />
-          ) : phase === "action-result-failed" ? (
-            <A2uiButton
-              label={t("Retry")}
-              testID="a2ui-email-retry"
-              onPress={() => {
-                if (busy) return;
-                setBusy(true);
-                setError(null);
-                void Promise.resolve(onSend?.(versionRef.current))
-                  .catch((err: unknown) => setError(messageOf(err)))
-                  .finally(() => setBusy(false));
-              }}
-            />
-          ) : phase === "action-reconcile-card" ? (
+          ) : action === "check_status" ? (
             <A2uiButton
               label={t("Check status")}
               testID="a2ui-email-check-status"
@@ -330,7 +357,7 @@ export function A2uiNativeSurface({
                   .finally(() => setBusy(false));
               }}
             />
-          ) : phase === "action-result-success" ? null : (
+          ) : action === "submit" ? (
             <A2uiButton
               label={t("Send")}
               testID="a2ui-email-send"
@@ -354,7 +381,7 @@ export function A2uiNativeSurface({
                   .finally(() => setBusy(false));
               }}
             />
-          )}
+          ) : null}
         </A2uiSheet>
         {error ? <Text testID="a2ui-email-error">{error}</Text> : null}
         {phase === "action-result-success" ? (
