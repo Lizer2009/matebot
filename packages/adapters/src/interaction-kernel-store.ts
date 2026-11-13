@@ -1,5 +1,6 @@
+import type { InteractionPlan } from "@matebot/contracts";
 import type { InteractionStatus, SettleRefusal } from "@matebot/core";
-import { decideSettle, OPEN_STATUSES } from "@matebot/core";
+import { canRetryStatus, decideSettle, deriveCollectingStatus, OPEN_STATUSES } from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 
@@ -98,4 +99,45 @@ export async function settleInteraction(
     "interaction.reason": input.reason,
   });
   return { settled: true, previousStatus: current.status };
+}
+
+export type ReviveResult =
+  | { revived: true; status: "collecting" | "ready_for_review"; draftVersion: number }
+  | { revived: false; reason: "not_found" | "not_revivable" | "concurrent" };
+
+/**
+ * Put a card back in the person's hands.
+ *
+ * `decideSettle` refuses every terminal→open move on purpose: a settled card must not come back
+ * to life behind the user's back. A retry is the one case where coming back is the *requested*
+ * outcome, so this is its own path with its own whitelist rather than an exception inside the
+ * settle rule. `superseded` is out because another card already carries its content,
+ * `cancelled` because the person ended it, and `unknown` because the send may already be out.
+ */
+export async function reviveCard(
+  prisma: PrismaClient,
+  input: { interactionId: string },
+): Promise<ReviveResult> {
+  const current = await prisma.interaction.findUnique({
+    where: { id: input.interactionId },
+    select: { id: true, status: true, draftVersion: true, plan: true, slots: true },
+  });
+  if (!current) return { revived: false, reason: "not_found" };
+  if (!canRetryStatus(current.status)) return { revived: false, reason: "not_revivable" };
+
+  const slots = (current.slots ?? {}) as Record<string, unknown>;
+  const derived = deriveCollectingStatus(current.plan as InteractionPlan, slots, "collecting");
+  const status = derived === "ready_for_review" ? "ready_for_review" : "collecting";
+  const draftVersion = current.draftVersion + 1;
+  const written = await prisma.interaction.updateMany({
+    where: { id: current.id, status: current.status, draftVersion: current.draftVersion },
+    data: { status, draftVersion, confirmedVersion: null, expiresAt: null, staleAt: null },
+  });
+  if (written.count !== 1) return { revived: false, reason: "concurrent" };
+  getLogger().info("interaction.revived", {
+    "interaction.id": current.id,
+    "interaction.from": current.status,
+    "interaction.to": status,
+  });
+  return { revived: true, status, draftVersion };
 }
