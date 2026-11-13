@@ -1894,7 +1894,7 @@ Expected: 全绿。适配器包用例多，**必须** `--maxWorkers=1`（本机�
 | AC-1 | 同意图并发两次 publish，开放行数 = 1 | Task 3 索引 + Task 6 `P2002` 重试 |
 | AC-2 | 部分唯一索引在后续迁移后仍存在 | Task 3 postgres 测试 |
 | AC-3 | 存量双开放行迁移后每 `cardKey` 只剩一行 | Task 3 迁移 `ranked` 去重 |
-| AC-4 | 枚举外状态写入被拒 | Task 1 `INTERACTION_STATUSES` + Task 4 `unknown_status` |
+| AC-4 | 枚举外状态写入被拒 | **DEFERRED（A 批不满足，见「实施偏差」）**：Task 1/4 只保证内核拒绝词表外状态，发送路径仍写 `executing`，`status` 列也无 CHECK |
 | AC-5 | `needs_connection` / `unknown` 不被批量结算 | Task 1 豁免表 + Task 4 决策 + Task 5 拒绝写入 |
 | AC-6 | 不存在绕过 `settleInteraction` 的 status 写入 | Task 9 建立**只减不增**的白名单闸门；本批仍留 8 个白名单条目，收敛在 C 批完成 |
 
