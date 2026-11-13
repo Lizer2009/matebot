@@ -165,8 +165,9 @@ describe("resumeInteractionAfterConnection", () => {
     });
     expect(f.messages.get("msg-cal")?.blocks[0]).toMatchObject({
       capability: "ready",
-      template: "email-draft-card",
+      template: "action-draft-card",
       lifecycle: "draft",
+      status: "collecting",
     });
     expect(f.createdRuns).toEqual([]);
   });
