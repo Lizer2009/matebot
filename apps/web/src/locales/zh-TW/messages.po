@@ -1355,12 +1355,12 @@ msgstr "檢查更新"
 msgid "Check in."
 msgstr "報到。"
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
+#: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Check status"
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
 msgid "Check status"
 msgstr ""
 
@@ -2834,14 +2834,14 @@ msgstr "捨棄"
 msgid "Discard recording"
 msgstr "捨棄錄製內容"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Discarded"
+msgstr "已捨棄"
+
 #. js-lingui-explicit-id
 #: src/components/a2ui/surface-copy.ts
 msgid "Discarded"
 msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Discarded"
-msgstr "已捨棄"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -2926,11 +2926,6 @@ msgstr "還沒有帳號？"
 msgid "Don't send again"
 msgstr ""
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
-msgid "Done"
-msgstr ""
-
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/ticket-status.ts
@@ -2940,6 +2935,11 @@ msgstr ""
 #: src/pages/shell/message-view.tsx
 msgid "Done"
 msgstr "完成"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Done"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Downgrade at renewal"
@@ -3011,7 +3011,6 @@ msgstr "編輯名稱"
 msgid "Edit Profile"
 msgstr "編輯資料"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3225,15 +3224,15 @@ msgstr "極高"
 msgid "failed"
 msgstr "失敗"
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
-msgid "Failed"
-msgstr ""
-
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "Failed"
 msgstr "失敗"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Failed"
+msgstr ""
 
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
@@ -5438,10 +5437,6 @@ msgstr "替換金鑰"
 msgid "Replaced by a newer draft"
 msgstr ""
 
-#: src/components/a2ui/A2uiSurfaceCard.tsx
-msgid "Replaced by a newer draft below."
-msgstr ""
-
 #. placeholder {0}: block.replaces.origin
 #. placeholder {0}: initial.replacedSite
 #: src/components/SecretAskCard.tsx
@@ -5546,12 +5541,6 @@ msgstr "已還原"
 msgid "Restoring your workspace"
 msgstr "正在還原工作空間"
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
-msgid "Retry"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5564,6 +5553,11 @@ msgstr ""
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "重試"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Retry"
+msgstr ""
 
 #: src/App.tsx
 #: src/pages/PeerMessagesOverlay.tsx

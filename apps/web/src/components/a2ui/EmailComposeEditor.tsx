@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import type { emailSurfaceTemplateFromBlock } from "@matebot/core";
+import type { emailSurfaceTemplateFromBlock, SurfaceActionKind } from "@matebot/core";
 import { emailSurfacePhase } from "@matebot/core";
 import {
   Button,
@@ -35,6 +35,8 @@ export function EmailComposeEditor({
   capability,
   template,
   lifecycle,
+  status,
+  action: actionProp,
   error: surfaceError,
   fields,
   senderLabel,
@@ -52,6 +54,9 @@ export function EmailComposeEditor({
   capability?: A2uiSurfaceBlock["capability"];
   template?: A2uiSurfaceBlock["template"];
   lifecycle?: A2uiSurfaceBlock["lifecycle"];
+  status?: string;
+  /** The one control this card may still show. The host decides; this editor does not guess. */
+  action?: SurfaceActionKind;
   error?: string;
   fields: EmailDraftFields;
   /** The connection's own label for the read-only "sending from" row. Never an address. */
@@ -137,8 +142,9 @@ export function EmailComposeEditor({
    */
   const draftComplete =
     values.to.trim() !== "" && values.subject.trim() !== "" && values.body.trim() !== "";
-  // One rule shared with the native card; see emailSurfacePhase in @matebot/core.
-  const { phase, locked } = emailSurfacePhase({
+  // One rule shared with the native card. The host already folded a finished card;
+  // what remains here is an open surface, and `action` is the one control it may show.
+  const { phase, locked, affordance } = emailSurfacePhase({
     template:
       mailbox === "ready" &&
       (template === "email-connection-card" || template === "email-reauth-card")
@@ -149,7 +155,11 @@ export function EmailComposeEditor({
     intent: "email.compose",
     error: surfaceError,
     busy,
+    ...(status ? { status } : {}),
   });
+  // A successful Connect updates the mailbox here before the server stamp arrives.
+  // The host's action still says `connect`; the local mailbox is what lets Send appear.
+  const action = mailbox !== capability ? affordance.action : (actionProp ?? affordance.action);
 
   /**
    * Record a keystroke as the person's own text.
@@ -235,9 +245,6 @@ export function EmailComposeEditor({
       className="grid gap-3"
       onSubmit={(event) => event.preventDefault()}
     >
-      <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-muted-foreground">
-        {t`Email`}
-      </div>
       <div className="grid gap-1">
         <label htmlFor={subjectId} className="sr-only">
           {t`Subject`}
@@ -324,9 +331,9 @@ export function EmailComposeEditor({
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <StatusLine phase={phase} surfaceError={surfaceError} onManageRules={onManageRules} />
         <div className="flex items-center gap-3">
-          {phase === "action-submitting-card" ||
-          phase === "action-progress-card" ||
-          phase === "action-result-success" ? null : (
+          {action === "none" ||
+          phase === "action-submitting-card" ||
+          phase === "action-progress-card" ? null : (
             <Button
               type="button"
               variant="ghost"
@@ -345,12 +352,12 @@ export function EmailComposeEditor({
               {t`Discard`}
             </Button>
           )}
-          {phase === "action-submitting-card" ||
-          phase === "action-progress-card" ? null : mailboxNeedsConnect(mailbox) &&
-            phase === "email-connection-card" ? (
+          {action === "connect" && mailboxNeedsConnect(mailbox) ? (
             <Button
               type="button"
-              data-testid="a2ui-email-connect"
+              data-testid={
+                mailbox === "requires_reauth" ? "a2ui-email-reauth" : "a2ui-email-connect"
+              }
               disabled={busy}
               onClick={() => {
                 if (!onConnect) return;
@@ -362,41 +369,11 @@ export function EmailComposeEditor({
                   .finally(() => setBusy(false));
               }}
             >
-              {t`Connect email`}
+              {mailbox === "requires_reauth"
+                ? t({ message: "Reconnect", context: "mailbox" })
+                : t`Connect email`}
             </Button>
-          ) : mailboxNeedsConnect(mailbox) && phase === "email-reauth-card" ? (
-            <Button
-              type="button"
-              data-testid="a2ui-email-reauth"
-              disabled={busy}
-              onClick={() => {
-                if (!onConnect) return;
-                setBusy(true);
-                setError(null);
-                void onConnect()
-                  .then(() => setMailbox("ready"))
-                  .catch((err: unknown) => setError(messageOf(err)))
-                  .finally(() => setBusy(false));
-              }}
-            >
-              {t({ message: "Reconnect", context: "mailbox" })}
-            </Button>
-          ) : phase === "action-result-failed" ? (
-            <Button
-              type="button"
-              data-testid="a2ui-email-retry"
-              disabled={busy}
-              onClick={() => {
-                setBusy(true);
-                setError(null);
-                void Promise.resolve(onSend?.(version))
-                  .catch((err: unknown) => setError(messageOf(err)))
-                  .finally(() => setBusy(false));
-              }}
-            >
-              {t`Retry`}
-            </Button>
-          ) : phase === "action-reconcile-card" ? (
+          ) : action === "check_status" ? (
             <Button
               type="button"
               data-testid="a2ui-email-check-status"
@@ -412,7 +389,7 @@ export function EmailComposeEditor({
             >
               {t`Check status`}
             </Button>
-          ) : phase === "action-result-success" ? null : onSend ? (
+          ) : action === "submit" && onSend ? (
             <Button
               type="button"
               data-testid="a2ui-email-send"

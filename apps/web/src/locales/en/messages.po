@@ -1354,12 +1354,12 @@ msgstr "Check for updates"
 msgid "Check in."
 msgstr "Check in."
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
+#: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Check status"
 msgstr "Check status"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
 msgid "Check status"
 msgstr "Check status"
 
@@ -2833,12 +2833,12 @@ msgstr "Discard"
 msgid "Discard recording"
 msgstr "Discard recording"
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
+#: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Discarded"
 msgstr "Discarded"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
 msgid "Discarded"
 msgstr "Discarded"
 
@@ -2925,11 +2925,6 @@ msgstr "Don’t have an account?"
 msgid "Don't send again"
 msgstr "Don't send again"
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
-msgid "Done"
-msgstr "Done"
-
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/ticket-status.ts
@@ -2937,6 +2932,11 @@ msgstr "Done"
 #: src/pages/shell/avatar-studio-popover.tsx
 #: src/pages/shell/import-setup-card.tsx
 #: src/pages/shell/message-view.tsx
+msgid "Done"
+msgstr "Done"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
 msgid "Done"
 msgstr "Done"
 
@@ -3010,7 +3010,6 @@ msgstr "Edit name"
 msgid "Edit Profile"
 msgstr "Edit Profile"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3224,13 +3223,13 @@ msgstr "Extra high"
 msgid "failed"
 msgstr "failed"
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
+#: src/components/SubagentCard.tsx
+#: src/pages/ActivityList.tsx
 msgid "Failed"
 msgstr "Failed"
 
-#: src/components/SubagentCard.tsx
-#: src/pages/ActivityList.tsx
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
 msgid "Failed"
 msgstr "Failed"
 
@@ -5437,10 +5436,6 @@ msgstr "Replace key"
 msgid "Replaced by a newer draft"
 msgstr "Replaced by a newer draft"
 
-#: src/components/a2ui/A2uiSurfaceCard.tsx
-msgid "Replaced by a newer draft below."
-msgstr "Replaced by a newer draft below."
-
 #. placeholder {0}: block.replaces.origin
 #. placeholder {0}: initial.replacedSite
 #: src/components/SecretAskCard.tsx
@@ -5545,12 +5540,6 @@ msgstr "Restored"
 msgid "Restoring your workspace"
 msgstr "Restoring your workspace"
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
-msgid "Retry"
-msgstr "Retry"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5561,6 +5550,11 @@ msgstr "Retry"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/SpaceSettingOverrides.tsx
+msgid "Retry"
+msgstr "Retry"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
 msgid "Retry"
 msgstr "Retry"
 

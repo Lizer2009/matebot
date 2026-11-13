@@ -9,8 +9,9 @@ test("email review card edits then sends in one gesture", async ({ page }, testI
   await page.getByTestId("a2ui-email-subject").fill("Hello again");
   await page.getByTestId("a2ui-email-subject").blur();
   await page.getByTestId("a2ui-email-send").click();
-  await expect(page.getByTestId("a2ui-email-sent")).toBeVisible();
-  await expect(page.getByTestId("a2ui-email-compose")).toHaveAttribute("data-sent", "true");
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Done");
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
   await captureScreenshot(page, testInfo, "a2ui-email-sent");
 });
 
@@ -61,7 +62,8 @@ test("succeeded email card shows Sent without the provider message id", async ({
   page,
 }, testInfo) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=succeeded");
-  await expect(page.getByTestId("a2ui-email-sent")).toBeVisible();
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Done");
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(0);
   await expect(page.getByTestId("a2ui-email-provider-id")).toHaveCount(0);
   await expect(page.getByText("msg-1")).toHaveCount(0);
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
@@ -70,17 +72,17 @@ test("succeeded email card shows Sent without the provider message id", async ({
 
 test("failed email card shows Retry and no Send", async ({ page }) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?lifecycle=failed");
-  await expect(page.getByTestId("a2ui-email-failed")).toBeVisible();
-  await expect(page.getByTestId("a2ui-email-retry")).toBeVisible();
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Failed");
+  await expect(page.getByTestId("a2ui-surface-retry")).toBeVisible();
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
 });
 
 test("failed send from the card never shows Sent", async ({ page }) => {
   await page.goto("/e2e/fixtures/a2ui-email.html?send=fail");
   await page.getByTestId("a2ui-email-send").click();
-  await expect(page.getByTestId("a2ui-email-failed")).toBeVisible();
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Failed");
   await expect(page.getByTestId("a2ui-email-sent")).toHaveCount(0);
-  await expect(page.getByTestId("a2ui-email-compose")).toHaveAttribute("data-sent", "false");
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(0);
 });
 
 test("unknown email card shows Check status and no Send", async ({ page }) => {

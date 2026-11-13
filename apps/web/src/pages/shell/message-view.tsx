@@ -103,7 +103,7 @@ export const MessageView = memo(function MessageView({
    * Whether a later draft in this thread corrects this card's interaction, so it must not offer
    * to create or send again.
    */
-  isSurfaceSuperseded?: (block: { interactionId: string }) => boolean;
+  isSurfaceSuperseded?: (block: { interactionId: string; status?: string }) => boolean;
   onAnswer: (
     message: ThreadMessage,
     text: string,

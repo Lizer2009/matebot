@@ -1354,12 +1354,12 @@ msgstr ""
 msgid "Check in."
 msgstr "Durum bildir."
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
+#: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Check status"
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
 msgid "Check status"
 msgstr ""
 
@@ -2833,12 +2833,12 @@ msgstr ""
 msgid "Discard recording"
 msgstr ""
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
+#: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Discarded"
 msgstr ""
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
 msgid "Discarded"
 msgstr ""
 
@@ -2925,11 +2925,6 @@ msgstr "Hesabın yok mu?"
 msgid "Don't send again"
 msgstr ""
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
-msgid "Done"
-msgstr ""
-
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/ticket-status.ts
@@ -2939,6 +2934,11 @@ msgstr ""
 #: src/pages/shell/message-view.tsx
 msgid "Done"
 msgstr "Bitti"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Done"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Downgrade at renewal"
@@ -3010,7 +3010,6 @@ msgstr "Adı düzenle"
 msgid "Edit Profile"
 msgstr "Profili Düzenle"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3224,15 +3223,15 @@ msgstr "Çok yüksek"
 msgid "failed"
 msgstr "başarısız"
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
-msgid "Failed"
-msgstr ""
-
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "Failed"
 msgstr "Başarısız"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Failed"
+msgstr ""
 
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
@@ -5437,10 +5436,6 @@ msgstr "Anahtarı değiştir"
 msgid "Replaced by a newer draft"
 msgstr ""
 
-#: src/components/a2ui/A2uiSurfaceCard.tsx
-msgid "Replaced by a newer draft below."
-msgstr ""
-
 #. placeholder {0}: block.replaces.origin
 #. placeholder {0}: initial.replacedSite
 #: src/components/SecretAskCard.tsx
@@ -5545,12 +5540,6 @@ msgstr "Geri yüklendi"
 msgid "Restoring your workspace"
 msgstr ""
 
-#. js-lingui-explicit-id
-#: src/components/a2ui/surface-copy.ts
-msgid "Retry"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5563,6 +5552,11 @@ msgstr ""
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "Yeniden dene"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Retry"
+msgstr ""
 
 #: src/App.tsx
 #: src/pages/PeerMessagesOverlay.tsx
