@@ -59,6 +59,7 @@ export * from "./interaction-card-key.js";
 export * from "./interaction-connection.js";
 export * from "./interaction-decision.js";
 export * from "./interaction-effect.js";
+export * from "./interaction-kernel.js";
 export * from "./interaction-nl-edit.js";
 export * from "./interaction-nudge.js";
 export * from "./interaction-plan-bridge.js";
