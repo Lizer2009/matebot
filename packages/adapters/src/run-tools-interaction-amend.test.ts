@@ -46,7 +46,10 @@ function harness() {
 
   const prisma = {
     interaction: {
-      findFirst: async () => original,
+      // The open-card lookup filters by status; a succeeded row can never match it, and a
+      // fake that ignores the filter would look like a card the kernel is allowed to amend.
+      findFirst: async ({ where }: { where: { status?: { in?: string[] } } }) =>
+        where.status?.in?.includes(original.status) ? original : null,
       findMany: async () => [],
       findUnique: async ({ where }: { where: { id: string } }) =>
         where.id === original.id
