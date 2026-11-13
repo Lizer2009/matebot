@@ -83,6 +83,7 @@ function fixture(options: { status: string; updateCount?: number; missing?: bool
         return message;
       }),
     },
+    interactionEvent: { create: vi.fn(async () => ({ id: "ev-1" })) },
     $transaction: vi.fn(async (fn: (client: unknown) => Promise<unknown>) => fn(prisma)),
   };
   return { prisma, message };
