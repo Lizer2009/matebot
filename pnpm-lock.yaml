@@ -131,6 +131,10 @@ importers:
       koffi:
         specifier: 3.3.4
         version: 3.3.4
+    optionalDependencies:
+      '@koromix/koffi-win32-x64':
+        specifier: 3.3.4
+        version: 3.3.4
     devDependencies:
       '@matebot/adapters':
         specifier: workspace:*
