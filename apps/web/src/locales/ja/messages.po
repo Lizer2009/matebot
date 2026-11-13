@@ -2993,10 +2993,6 @@ msgstr "プロフィールを編集"
 msgid "Email"
 msgstr "メールアドレス"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Email address not provided"
-msgstr ""
-
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "このメールアドレスは登録できません"
@@ -3930,6 +3926,10 @@ msgstr "MCPサーバーを管理"
 msgid "Manage other bots"
 msgstr "他のボットを管理"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Manage rules"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr "手動"
@@ -4311,10 +4311,6 @@ msgstr "OAuth クライアント ID が必要です"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Needs approval"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Manage rules"
 msgstr ""
 
 #: src/pages/ActivityList.tsx
@@ -5851,10 +5847,6 @@ msgstr "リセットリンクを送信"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
 msgstr "Enterで送信"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
-msgstr ""
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Sending email"

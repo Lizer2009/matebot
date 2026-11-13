@@ -2993,10 +2993,6 @@ msgstr "Profili Düzenle"
 msgid "Email"
 msgstr "E-posta"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Email address not provided"
-msgstr ""
-
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "Bu e-posta adresinin kaydolmasına izin verilmiyor"
@@ -3930,6 +3926,10 @@ msgstr "MCP sunucularını yönet"
 msgid "Manage other bots"
 msgstr "Diğer botları yönet"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Manage rules"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr ""
@@ -4311,10 +4311,6 @@ msgstr "OAuth istemci kimliği gerekli"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Needs approval"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Manage rules"
 msgstr ""
 
 #: src/pages/ActivityList.tsx
@@ -5851,10 +5847,6 @@ msgstr "Sıfırlama bağlantısı gönder"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
 msgstr "Enter ile gönder"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
-msgstr ""
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Sending email"

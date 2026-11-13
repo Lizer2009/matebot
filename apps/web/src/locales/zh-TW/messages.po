@@ -2994,10 +2994,6 @@ msgstr "編輯資料"
 msgid "Email"
 msgstr "電子信箱"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Email address not provided"
-msgstr ""
-
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "該電子信箱不允許註冊"
@@ -3931,6 +3927,10 @@ msgstr "管理 MCP 伺服器"
 msgid "Manage other bots"
 msgstr "管理其他機器人"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Manage rules"
+msgstr "管理規則"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr "手動"
@@ -4313,10 +4313,6 @@ msgstr "需要 OAuth 用戶端 ID"
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Needs approval"
 msgstr "需要批准"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Manage rules"
-msgstr "管理規則"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"
@@ -5852,10 +5848,6 @@ msgstr "傳送重設連結"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
 msgstr "按 Enter 傳送"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
-msgstr ""
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Sending email"

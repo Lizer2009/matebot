@@ -2993,10 +2993,6 @@ msgstr "Редактировать профиль"
 msgid "Email"
 msgstr "Электронная почта"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Email address not provided"
-msgstr ""
-
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "Регистрация с этим адресом электронной почты запрещена"
@@ -3930,6 +3926,10 @@ msgstr "Управление серверами MCP"
 msgid "Manage other bots"
 msgstr "Управлять другими ботами"
 
+#: src/components/a2ui/EmailComposeEditor.tsx
+msgid "Manage rules"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr "Вручную"
@@ -4311,10 +4311,6 @@ msgstr "Нужен идентификатор клиента OAuth"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Needs approval"
-msgstr ""
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Manage rules"
 msgstr ""
 
 #: src/pages/ActivityList.tsx
@@ -5851,10 +5847,6 @@ msgstr "Отправить ссылку для сброса"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
 msgstr "Отправлять по Enter"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
-msgstr ""
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Sending email"
