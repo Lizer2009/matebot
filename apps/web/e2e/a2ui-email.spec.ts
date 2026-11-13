@@ -92,3 +92,41 @@ test("unknown email card shows Check status and no Send", async ({ page }) => {
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
   await expect(page.getByTestId("a2ui-email-retry")).toHaveCount(0);
 });
+
+test("superseded card folds with no Send and no Retry", async ({ page }, testInfo) => {
+  await page.goto("/e2e/fixtures/a2ui-email.html?status=superseded");
+  await expect(page.getByTestId("a2ui-surface-superseded")).toContainText(
+    "Replaced by a newer draft",
+  );
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-surface-retry")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-email-superseded");
+});
+
+test("expired card offers only Retry", async ({ page }, testInfo) => {
+  await page.goto("/e2e/fixtures/a2ui-email.html?status=expired");
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Expired, nothing was sent");
+  await expect(page.getByTestId("a2ui-surface-retry")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-email-expired");
+});
+
+test("cancelled card folds as Discarded with no Retry", async ({ page }) => {
+  await page.goto("/e2e/fixtures/a2ui-email.html?status=cancelled");
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Discarded");
+  await expect(page.getByTestId("a2ui-surface-retry")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+});
+
+test("folded card stays one line on a narrow viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/e2e/fixtures/a2ui-email.html?status=superseded");
+  const card = page.getByTestId("a2ui-surface-card");
+  await expect(card).toBeVisible();
+  const box = await card.boundingBox();
+  expect(box).toBeTruthy();
+  expect(box!.width).toBeLessThanOrEqual(390);
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+});

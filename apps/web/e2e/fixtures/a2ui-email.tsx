@@ -36,6 +36,15 @@ const fixtureLifecycle =
   lifecycleParam === "unknown"
     ? lifecycleParam
     : undefined;
+const statusParam = params.get("status");
+const fixtureStatus =
+  statusParam === "superseded" ||
+  statusParam === "expired" ||
+  statusParam === "cancelled" ||
+  statusParam === "failed" ||
+  statusParam === "succeeded"
+    ? statusParam
+    : undefined;
 const fixtureTemplate =
   fixtureLifecycle === "executing"
     ? "action-progress-card"
@@ -113,6 +122,7 @@ function EmailComposeFixture() {
     confirmedVersion,
     ...(fixtureCapability ? { capability: fixtureCapability } : {}),
     ...(lifecycle ? { lifecycle } : {}),
+    ...(fixtureStatus ? { status: fixtureStatus } : {}),
     ...(template ? { template } : {}),
     ...(lifecycle === "succeeded" ? { providerMessageId: "msg-1" } : {}),
     ...(sendError ? { error: sendError } : {}),
@@ -152,6 +162,7 @@ function EmailComposeFixture() {
         }}
         onCheckStatus={async () => undefined}
         onDiscard={() => undefined}
+        onRetry={async () => undefined}
       />
     </div>
   );
