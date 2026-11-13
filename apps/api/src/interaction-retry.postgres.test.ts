@@ -225,7 +225,11 @@ describePostgres("retryInteractionService (PostgreSQL)", () => {
     };
     const realFind = db.prisma.interaction.findUnique.bind(db.prisma.interaction);
     let snapshots = 0;
-    db.prisma.interaction.findUnique = (async (args: { where: { id: string } }) => {
+    // Prisma's findUnique is a thenable client, not a Promise; the wrapper is a test
+    // interceptor only. `as never` matches other store intercepts in this tree.
+    db.prisma.interaction.findUnique = (async (
+      args: Parameters<typeof db.prisma.interaction.findUnique>[0],
+    ) => {
       const row = await realFind(args);
       snapshots += 1;
       // getInteraction reads first; reviveCard's snapshot is the CAS input.
@@ -238,14 +242,14 @@ describePostgres("retryInteractionService (PostgreSQL)", () => {
         );
       }
       return row;
-    }) as typeof db.prisma.interaction.findUnique;
+    }) as never;
     try {
       await expect(retryInteractionService(system, input)).rejects.toMatchObject({
         name: "InteractionRetryRejectedError",
         code: "concurrent",
       });
     } finally {
-      db.prisma.interaction.findUnique = realFind;
+      db.prisma.interaction.findUnique = realFind as never;
     }
     expect(await system.message.count({ where: { threadId } })).toBe(1);
 
