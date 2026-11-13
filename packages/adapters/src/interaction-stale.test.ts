@@ -48,20 +48,24 @@ function fakePrisma(rows: Row[]) {
   const findUnique = vi.fn(async ({ where }: { where: { id: string } }) => {
     return store.find((row) => row.id === where.id) ?? null;
   });
-  const updateMany = vi.fn(async ({ where, data }: { where: Record<string, unknown>; data: Record<string, unknown> }) => {
-    const hits = store.filter((row) => matchRow(row, where));
-    for (const row of hits) Object.assign(row, data);
-    return { count: hits.length };
-  });
+  const updateMany = vi.fn(
+    async ({ where, data }: { where: Record<string, unknown>; data: Record<string, unknown> }) => {
+      const hits = store.filter((row) => matchRow(row, where));
+      for (const row of hits) Object.assign(row, data);
+      return { count: hits.length };
+    },
+  );
   const messageFindUnique = vi.fn(async ({ where }: { where: { id: string } }) => {
     return messages.get(where.id) ?? null;
   });
-  const messageUpdate = vi.fn(async ({ where, data }: { where: { id: string }; data: { blocks: unknown } }) => {
-    const current = messages.get(where.id);
-    if (!current) return null;
-    current.blocks = data.blocks as Record<string, unknown>[];
-    return current;
-  });
+  const messageUpdate = vi.fn(
+    async ({ where, data }: { where: { id: string }; data: { blocks: unknown } }) => {
+      const current = messages.get(where.id);
+      if (!current) return null;
+      current.blocks = data.blocks as Record<string, unknown>[];
+      return current;
+    },
+  );
 
   return {
     store,
@@ -80,15 +84,27 @@ function matchRow(row: Row, where: Record<string, unknown>): boolean {
   if (where.id && row.id !== where.id) return false;
   if (where.threadId && row.threadId !== where.threadId) return false;
   if (typeof where.status === "string" && row.status !== where.status) return false;
-  if (where.status && typeof where.status === "object" && where.status !== null && "in" in where.status) {
+  if (
+    where.status &&
+    typeof where.status === "object" &&
+    where.status !== null &&
+    "in" in where.status
+  ) {
     const allowed = (where.status as { in: string[] }).in;
     if (!allowed.includes(row.status)) return false;
   }
   if ("staleAt" in where) {
     const expected = where.staleAt;
-    if (expected && typeof expected === "object" && !(expected instanceof Date) && "lt" in expected) {
+    if (
+      expected &&
+      typeof expected === "object" &&
+      !(expected instanceof Date) &&
+      "lt" in expected
+    ) {
       if (!row.staleAt || !(row.staleAt < (expected as { lt: Date }).lt)) return false;
-    } else if ((row.staleAt?.getTime() ?? null) !== ((expected as Date | null)?.getTime() ?? null)) {
+    } else if (
+      (row.staleAt?.getTime() ?? null) !== ((expected as Date | null)?.getTime() ?? null)
+    ) {
       return false;
     }
   }
@@ -141,9 +157,7 @@ describe("markOpenCardsStale", () => {
 
 describe("settleStaleCards", () => {
   it("hard-settles cards that still carry the snapshot mark and restamps the block", async () => {
-    const { prisma, store, messages } = fakePrisma([
-      openCard("open", { staleAt: mark }),
-    ]);
+    const { prisma, store, messages } = fakePrisma([openCard("open", { staleAt: mark })]);
     const settled = await settleStaleCards(prisma, {
       threadId: thread,
       staleAtSnapshot: mark,
@@ -159,9 +173,7 @@ describe("settleStaleCards", () => {
   });
 
   it("leaves a card the person already sent", async () => {
-    const { prisma, store } = fakePrisma([
-      openCard("sent", { status: "sent", staleAt: mark }),
-    ]);
+    const { prisma, store } = fakePrisma([openCard("sent", { status: "sent", staleAt: mark })]);
     const settled = await settleStaleCards(prisma, {
       threadId: thread,
       staleAtSnapshot: mark,

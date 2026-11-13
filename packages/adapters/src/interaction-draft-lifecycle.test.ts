@@ -227,10 +227,10 @@ describe("a field edit republishes in the schema's names", () => {
       origin: "user",
     });
 
-    expect(
-      (txInteractionUpdateMany.mock.calls.at(-1)?.[0] as { data: { staleAt?: Date | null } }).data
-        .staleAt,
-    ).toBeNull();
+    const lastUpdate = txInteractionUpdateMany.mock.calls.at(-1)?.[0] as
+      | { data: { staleAt?: Date | null } }
+      | undefined;
+    expect(lastUpdate?.data.staleAt).toBeNull();
   });
 
   it("an edit to a plan stored with two spellings still lands on the schema's name", async () => {

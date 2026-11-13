@@ -10,15 +10,12 @@
  *
  * Usage: node apps/api/e2e-a2ui.mjs [playwright args...]
  */
-import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const apiDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.dirname(path.dirname(apiDir));
-const require = createRequire(import.meta.url);
 
 const apiPort = Number(process.env.API_PORT ?? 3110);
 const webPort = Number(process.env.WEB_PORT ?? 5180);
