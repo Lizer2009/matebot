@@ -14,6 +14,12 @@ import type { InteractionRequiredApp } from "./interaction-connection.js";
  * interaction already stores the intent it was created with.
  */
 
+/** Which heading shape a card of this capability uses (§6.4). */
+export type SurfaceCardShape = "review" | "decision";
+
+/** The one verb a button may use. Never taken from the model's plan. */
+export type SurfaceActionVerb = "send" | "create";
+
 export type InteractionCapability = {
   intent: string;
   /** Short human label, used in prompts and fallbacks. */
@@ -34,6 +40,10 @@ export type InteractionCapability = {
    * registry lists the intent so it is recognized, not so it is executable.
    */
   implemented: boolean;
+  /** Which heading shape a card of this capability uses (§6.4). */
+  cardShape: SurfaceCardShape;
+  /** The one verb its button may use. Never taken from the model's plan. */
+  actionVerb?: SurfaceActionVerb;
 };
 
 const EMAIL_SCHEMA: InteractionSurfaceSchema = {
@@ -102,6 +112,8 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     effectKind: "email.send",
     readOnly: false,
     implemented: true,
+    cardShape: "review",
+    actionVerb: "send",
   },
   {
     intent: "calendar.create",
@@ -111,6 +123,8 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     effectKind: "calendar.create",
     readOnly: false,
     implemented: true,
+    cardShape: "review",
+    actionVerb: "create",
   },
   {
     intent: "calendar.query",
@@ -120,6 +134,7 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     effectKind: null,
     readOnly: true,
     implemented: true,
+    cardShape: "review",
   },
   {
     intent: "interaction.result",
@@ -129,6 +144,7 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     effectKind: null,
     readOnly: true,
     implemented: true,
+    cardShape: "review",
   },
 ] as const;
 
