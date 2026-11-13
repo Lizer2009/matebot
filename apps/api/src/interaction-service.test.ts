@@ -58,6 +58,7 @@ type InteractionRecord = {
   summary: string | null;
   approvalEffectId: string | null;
   messageId: string | null;
+  staleAt: Date | null;
 };
 
 type EffectRecord = {
@@ -248,6 +249,7 @@ function readyInteraction(overrides: Partial<InteractionRecord> = {}): Interacti
     summary: null,
     approvalEffectId: null,
     messageId: null,
+    staleAt: null,
     ...overrides,
   };
 }
@@ -290,6 +292,20 @@ describe("confirmInteractionService", () => {
       status: "awaiting_approval",
       approvalEffectId: "effect-1",
     });
+  });
+
+  it("clears staleAt so run-end settle cannot supersede a confirmed card", async () => {
+    const mark = new Date("2026-11-14T00:00:00.000Z");
+    const db = memoryPrisma(readyInteraction({ staleAt: mark }));
+    await confirmInteractionService(db.prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      draftVersion: 2,
+      ...readyMailbox,
+    });
+    expect(db.interactions.get("ix-1")?.staleAt).toBeNull();
   });
 
   it("reuses the same effect when confirm is repeated for that version", async () => {

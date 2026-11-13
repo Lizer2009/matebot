@@ -488,6 +488,7 @@ export async function confirmInteractionService(
           confirmedVersion: confirmed.confirmedVersion,
           status: confirmed.status,
           approvalEffectId,
+          staleAt: null,
         },
       });
       if (updated.count !== 1) {

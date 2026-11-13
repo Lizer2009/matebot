@@ -205,6 +205,33 @@ describe("a field edit republishes in the schema's names", () => {
     expect(data.data.plan.fields.find((field) => field.name === "body")?.source).toBe("user");
   });
 
+  it("clears staleAt so a later settle does not close the card being edited", async () => {
+    arrangeDraft(
+      emailPlan([
+        { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+        { name: "body", required: true, status: "missing" },
+      ]),
+      { to: "alex@example.test", subject: "冬天的问候" },
+    );
+
+    await updateInteractionFieldService(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      expectedDraftVersion: 1,
+      name: "body",
+      value: "愿这个冬天顺遂。",
+      origin: "user",
+    });
+
+    expect(
+      (txInteractionUpdateMany.mock.calls.at(-1)?.[0] as { data: { staleAt?: Date | null } }).data
+        .staleAt,
+    ).toBeNull();
+  });
+
   it("an edit to a plan stored with two spellings still lands on the schema's name", async () => {
     // Rows written before the fix can still hold both spellings. An edit has to work on them.
     arrangeDraft(

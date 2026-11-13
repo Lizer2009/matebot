@@ -210,6 +210,7 @@ export async function updateInteractionFieldService(
           draftVersion: changed.draftVersion,
           confirmedVersion: null,
           status: changed.status,
+          staleAt: null,
           title: compiled.plan.title,
           summary: compiled.plan.summary,
         },
