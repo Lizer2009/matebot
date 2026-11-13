@@ -132,20 +132,6 @@ describe("publishOrAmend", () => {
     appendEventInTransaction.mockResolvedValue({ id: "e1", seq: 3 });
   });
 
-  it("does not create an open draft when skipDraft is set", async () => {
-    const prisma = publishPrisma();
-    const result = await publishOrAmend(prisma as never, {
-      spaceId: "s1",
-      threadId: "t1",
-      botId: "b1",
-      runId: "r1",
-      plan,
-      skipDraft: true,
-    });
-    expect(result).toEqual({ skipped: true, reason: "drafts_disabled" });
-    expect(createInteraction).not.toHaveBeenCalled();
-  });
-
   it("writes the card key so the unique index can do its job", async () => {
     const prisma = publishPrisma();
 

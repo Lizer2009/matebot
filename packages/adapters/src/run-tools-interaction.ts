@@ -1,4 +1,4 @@
-import type { InteractionPlan } from "@matebot/contracts";
+import type { ActionApprovalRule, InteractionPlan } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
 import type { EmailSurfaceCapability } from "@matebot/core";
 import {
@@ -112,20 +112,28 @@ async function draftApprovalForPlan(
 ): Promise<"allow" | "ask" | "deny"> {
   const userId = ctx.context?.userId ?? ctx.run.userId;
   if (!userId) return "allow";
+  let rules: Awaited<ReturnType<typeof listApprovalRules>>;
   try {
-    const rules = await listApprovalRules(ctx.deps.prisma, {
+    rules = await listApprovalRules(ctx.deps.prisma, {
       userId,
       spaceId: ctx.run.spaceId,
     });
-    const recipient = plan.fields.find((field) => field.name === "to")?.value;
-    return resolveActionApprovalDetail({
-      toolName: isEmailComposeIntent(plan.intent) ? "gmail_send_email" : "calendar_create_event",
-      ...(typeof recipient === "string" ? { recipient } : {}),
-      rules,
-    }).decision;
   } catch {
     return "allow";
   }
+  const recipient = plan.fields.find((field) => field.name === "to")?.value;
+  return resolveActionApprovalDetail({
+    toolName: isEmailComposeIntent(plan.intent) ? "gmail_send_email" : "calendar_create_event",
+    ...(typeof recipient === "string" ? { recipient } : {}),
+    rules: rules.map((rule) => ({
+      id: rule.id,
+      effect: rule.effect as ActionApprovalRule["effect"],
+      matchKind: rule.matchKind as ActionApprovalRule["matchKind"],
+      matchValue: rule.matchValue,
+      createdAt:
+        rule.createdAt instanceof Date ? rule.createdAt.toISOString() : String(rule.createdAt),
+    })),
+  }).decision;
 }
 
 /** The one line the turn should say after publishing; nothing else belongs in prose. */
@@ -200,6 +208,19 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       approval,
       ...(capabilityStamp.status ? { status: capabilityStamp.status } : {}),
     });
+    if (skipDraft) {
+      // Real mailbox send stays paused (t317). Skipping the compose card is the
+      // draftsDisabled effect; execution uses the existing executor only when a
+      // later isolated caller supplies one.
+      return {
+        skippedDraft: true,
+        draftsDisabled: true,
+        executed: false,
+        intent: plan.intent,
+        reply:
+          "Drafts are off for this bot. The action runs under existing approval rules without a compose card.",
+      };
+    }
     const published = await publishOrAmend(deps.prisma, {
       spaceId: run.spaceId,
       threadId: run.threadId,
@@ -207,7 +228,6 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       runId: run.id,
       plan,
       lease: runLeaseFor(deps, run.id),
-      skipDraft,
       // The stamp carries the connection's label for the card's read-only row; the publisher
       // only accepts the label, because an address is not something it can vouch for.
       ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),
@@ -227,19 +247,6 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
           }
         : {}),
     });
-    if (published.skipped) {
-      // Real mailbox send stays paused (t317). Skipping the compose card is the
-      // draftsDisabled effect; execution uses the existing executor only when a
-      // later isolated caller supplies one.
-      return {
-        skippedDraft: true,
-        draftsDisabled: true,
-        executed: false,
-        intent: plan.intent,
-        reply:
-          "Drafts are off for this bot. The action runs under existing approval rules without a compose card.",
-      };
-    }
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
     });

@@ -357,7 +357,7 @@ function ruleMatches(
     case "site":
       return site === value;
     case "recipient":
-      return Boolean(recipient) && recipient.toLowerCase() === value;
+      return recipient !== undefined && recipient !== "" && recipient.toLowerCase() === value;
     case "tool":
       return toolName.toLowerCase() === value;
     case "connector":

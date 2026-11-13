@@ -478,16 +478,18 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     layout: scroll.layoutJumpRow,
     refresh,
     manageRules: () => router.push("/approvals"),
-    allowRecipient: (recipient) =>
-      rpc("approvalRules/set", {
+    allowRecipient: async (recipient) => {
+      await rpc("approvalRules/set", {
         effect: "always_allow",
         matchKind: "recipient",
         matchValue: recipient,
-      }),
-    disableDrafts: (disabled) =>
-      botId
-        ? rpc("bots/update", { botId, draftsDisabled: disabled }).then(() => refresh())
-        : Promise.resolve(),
+      });
+    },
+    disableDrafts: async (disabled) => {
+      if (!botId) return;
+      await rpc("bots/update", { botId, draftsDisabled: disabled });
+      await refresh();
+    },
   });
 
   const { liveItems, renderMessageRow, renderItem } = useThreadRows({

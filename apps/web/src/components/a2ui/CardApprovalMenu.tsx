@@ -1,5 +1,10 @@
 import { useLingui } from "@lingui/react/macro";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@matebot/ui-web";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@matebot/ui-web";
 import { ChevronDown } from "lucide-react";
 
 /**

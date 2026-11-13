@@ -202,15 +202,15 @@ export function cardKindForIntent(intent: string): CardKind | undefined {
 }
 
 export function isActionIntent(intent: string | undefined): boolean {
-  return Boolean(intent) && cardKindForIntent(intent) === "action";
+  return intent !== undefined && cardKindForIntent(intent) === "action";
 }
 
 export function isEmailComposeIntent(intent: string | undefined): boolean {
-  return Boolean(intent) && canonicalIntent(intent) === "email.compose";
+  return intent !== undefined && canonicalIntent(intent) === "email.compose";
 }
 
 export function isCalendarCreateIntent(intent: string | undefined): boolean {
-  return Boolean(intent) && canonicalIntent(intent) === "calendar.create";
+  return intent !== undefined && canonicalIntent(intent) === "calendar.create";
 }
 
 /** Every registered intent, for prompts and docs to stay in sync with code. */

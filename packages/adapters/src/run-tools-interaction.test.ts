@@ -191,10 +191,7 @@ describe("present_interaction", () => {
       ctx as never,
       call({ plan: emailPlan }),
     )) as Record<string, unknown>;
-    expect(publishOrAmend).toHaveBeenCalledWith(
-      ctx.deps.prisma,
-      expect.objectContaining({ skipDraft: true }),
-    );
+    expect(publishOrAmend).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       skippedDraft: true,
       draftsDisabled: true,
@@ -224,7 +221,13 @@ describe("present_interaction", () => {
           spaceSettingOverride: { findUnique: async () => null },
           userActionApprovalRule: {
             findMany: async () => [
-              { effect: "deny", matchKind: "tool", matchValue: "gmail_send_email" },
+              {
+                id: "rule-deny",
+                effect: "deny",
+                matchKind: "tool",
+                matchValue: "gmail_send_email",
+                createdAt: new Date("2026-01-01T00:00:00.000Z"),
+              },
             ],
           },
           actionApprovalRule: { findMany: async () => [] },
