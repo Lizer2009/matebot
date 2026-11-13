@@ -14,6 +14,7 @@ import {
   createCalendarBatch,
   createCalendarEvent,
   deliverInteractionEmail,
+  scheduleInteractionExpiry,
   emailCapabilityFromRows,
   emailDraftSlots,
   emailSendAdapterContext,
@@ -32,6 +33,7 @@ import {
   canExecuteConfirmedInteraction,
   confirmedEffectMatchesDraft,
   confirmInteractionDraftState,
+  expiresAtFor,
   deliveryNeedsReconnect,
   emailCapabilityAllowsSend,
   emailDeliveryOutcome,
@@ -460,6 +462,7 @@ export async function confirmInteractionService(
     slots,
   });
   const kind = interactionEffectKind(plan.intent);
+  const expiresAt = expiresAtFor(confirmed.status);
 
   const effectId = await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
@@ -489,6 +492,7 @@ export async function confirmInteractionService(
           status: confirmed.status,
           approvalEffectId,
           staleAt: null,
+          expiresAt,
         },
       });
       if (updated.count !== 1) {
@@ -527,6 +531,11 @@ export async function confirmInteractionService(
       return approvalEffectId;
     }),
   );
+  if (expiresAt && input.jobs) {
+    await scheduleInteractionExpiry(input.jobs, input.interactionId, expiresAt).catch(
+      () => undefined,
+    );
+  }
 
   return { confirmedVersion: confirmed.confirmedVersion, effectId, idempotencyKey };
 }

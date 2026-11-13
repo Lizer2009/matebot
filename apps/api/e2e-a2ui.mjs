@@ -115,6 +115,9 @@ const handles = await createApp({
 const { seedExpiredSurface, inspectSeededSurface } = await import(
   "./src/e2e-seed-expired-surface.ts"
 );
+const { markAwaitingApprovalExpired, expireDueLiveInteractions } = await import(
+  "./src/e2e-expire-due-interactions.ts"
+);
 
 const server = serve({
   fetch: async (request) => {
@@ -139,6 +142,43 @@ const server = serve({
       } catch (error) {
         return Response.json(
           { error: error instanceof Error ? error.message : "seed failed" },
+          { status: 400 },
+        );
+      }
+    }
+    if (url.pathname === "/__e2e/mark-awaiting-approval-expired" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const interactionId =
+          body && typeof body === "object" && typeof body.interactionId === "string"
+            ? body.interactionId
+            : "";
+        if (!interactionId) {
+          return Response.json({ error: "interactionId required" }, { status: 400 });
+        }
+        return Response.json(await markAwaitingApprovalExpired(handles.prisma, interactionId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "mark failed" },
+          { status: 400 },
+        );
+      }
+    }
+    if (url.pathname === "/__e2e/expire-due-interactions" && request.method === "POST") {
+      try {
+        const body = await request.json().catch(() => ({}));
+        const interactionId =
+          body && typeof body === "object" && typeof body.interactionId === "string"
+            ? body.interactionId
+            : undefined;
+        return Response.json(await expireDueLiveInteractions(handles.prisma, interactionId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "expire failed" },
           { status: 400 },
         );
       }

@@ -59,6 +59,7 @@ type InteractionRecord = {
   approvalEffectId: string | null;
   messageId: string | null;
   staleAt: Date | null;
+  expiresAt?: Date | null;
 };
 
 type EffectRecord = {
@@ -292,6 +293,7 @@ describe("confirmInteractionService", () => {
       status: "awaiting_approval",
       approvalEffectId: "effect-1",
     });
+    expect(db.interactions.get("ix-1")?.expiresAt).toBeInstanceOf(Date);
   });
 
   it("clears staleAt so run-end settle cannot supersede a confirmed card", async () => {

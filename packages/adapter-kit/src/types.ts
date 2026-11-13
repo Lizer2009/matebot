@@ -799,6 +799,8 @@ export interface BackgroundJobPayloads {
   "action.reconcile": { effectId: string };
   /** Read an Expo push receipt; the token is identified by its digest, never stored. */
   "push.receipt": { userId: string; ticketId: string; tokenDigest: string };
+  /** Close one approval card whose window has ended. */
+  "interaction.expire": { interactionId: string };
 }
 
 export type BackgroundJobName = keyof BackgroundJobPayloads;

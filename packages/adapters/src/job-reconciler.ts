@@ -9,6 +9,7 @@ import { getLogger } from "@matebot/logging";
 import type { PoolClient } from "pg";
 import { returnBotMessageOutcome } from "./bot-messages.js";
 import { reconcileCallRequests } from "./call-request.js";
+import { reconcileDueInteractionExpiry } from "./interaction-expire.js";
 import { scheduleComputerControlExpiry } from "./computer-control.js";
 import { findRunRecoveryBlockers } from "./run-recovery.js";
 import { reconcileStuckWork } from "./stuck-work.js";
@@ -154,6 +155,7 @@ export function createJobReconciler(
       const auxiliary = await Promise.allSettled(
         [
           () => reconcileCallRequests(deps),
+          () => reconcileDueInteractionExpiry(deps.prisma, deps.jobs),
           () => reconcileComputerRuns(deps.prisma),
           deps.reconcileCloudAgents,
           deps.reconcilePurchases,

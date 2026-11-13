@@ -36,6 +36,7 @@ const payloadSchemas = {
     ticketId: z.string().min(1),
     tokenDigest: z.string().min(1),
   }),
+  "interaction.expire": z.object({ interactionId: z.string().min(1) }),
 } satisfies { [Name in BackgroundJobName]: z.ZodType<BackgroundJobPayloads[Name]> };
 
 export function parseBackgroundJob(name: string, payload: unknown): BackgroundJob {
@@ -223,5 +224,19 @@ export function actionReconcileJob(effectId: string, availableAt?: Date): Backgr
     payload: { effectId },
     replaceKey: actionReconcileJobKey(effectId),
     ...(availableAt ? { availableAt } : {}),
+  };
+}
+
+export function interactionExpireJobKey(interactionId: string): string {
+  return `interaction.expire:${interactionId}`;
+}
+
+/** One delayed job per card. A lost job is re-queued by the reconciler. */
+export function interactionExpireJob(interactionId: string, availableAt: Date): BackgroundJob {
+  return {
+    name: "interaction.expire",
+    payload: { interactionId },
+    availableAt,
+    replaceKey: interactionExpireJobKey(interactionId),
   };
 }

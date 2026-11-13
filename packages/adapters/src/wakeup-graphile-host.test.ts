@@ -53,6 +53,7 @@ function handlers(): BackgroundJobHandlers {
     "purchase.poll": vi.fn(async () => undefined),
     "action.reconcile": vi.fn(async () => undefined),
     "push.receipt": vi.fn(async () => undefined),
+    "interaction.expire": vi.fn(async () => undefined),
   };
 }
 

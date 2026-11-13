@@ -279,6 +279,40 @@ async function seedExpiredSurface(interactionId: string): Promise<SeededSurface>
   return body;
 }
 
+async function markAwaitingApprovalExpired(interactionId: string): Promise<SeededSurface> {
+  const response = await fetch(`${e2eApi}/__e2e/mark-awaiting-approval-expired`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ interactionId }),
+  });
+  const body = (await response.json()) as SeededSurface & { error?: string };
+  if (!response.ok) {
+    throw new Error(
+      `mark-awaiting-approval-expired ${response.status}: ${body.error ?? "failed"}`,
+    );
+  }
+  return body;
+}
+
+async function expireDueInteractions(
+  interactionId: string,
+): Promise<{ expired: string[]; surface?: SeededSurface }> {
+  const response = await fetch(`${e2eApi}/__e2e/expire-due-interactions`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ interactionId }),
+  });
+  const body = (await response.json()) as {
+    expired: string[];
+    surface?: SeededSurface;
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new Error(`expire-due-interactions ${response.status}: ${body.error ?? "failed"}`);
+  }
+  return body;
+}
+
 async function inspectSurface(interactionId: string): Promise<SeededSurface> {
   const response = await fetch(
     `${e2eApi}/__e2e/inspect-surface?interactionId=${encodeURIComponent(interactionId)}`,
@@ -648,6 +682,54 @@ test("expired card retry revives the same persisted surface", async ({ page }, t
   expect(await cardSurfaceId(page)).toBe(surfaceId);
   await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(1);
   await captureScreenshot(page, testInfo, "a2ui-live-retry-reload");
+});
+
+test("approval window expiry folds the live card through the production closer", async ({
+  page,
+}, testInfo) => {
+  await signIn(page, testInfo);
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "冬天的问候",
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+          { name: "body", value: "正文", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+  await waitForSurface(page, "a2ui-email-compose");
+
+  const interactionId = await cardInteractionId(page);
+  const marked = await markAwaitingApprovalExpired(interactionId);
+  expect(marked.status).toBe("awaiting_approval");
+  expect(marked.block?.status).not.toBe("expired");
+
+  const expired = await expireDueInteractions(interactionId);
+  expect(expired.expired).toEqual([interactionId]);
+  expect(expired.surface).toMatchObject({
+    interactionId,
+    status: "expired",
+    block: {
+      interactionId,
+      status: "expired",
+      template: "action-expired-card",
+    },
+  });
+
+  await page.reload();
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Expired, nothing was sent", {
+    timeout: 45_000,
+  });
+  await expect(page.getByTestId("a2ui-surface-retry")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-live-auto-expired");
 });
 
 test("asking for a schedule produces a result card, never a create draft", async ({

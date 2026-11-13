@@ -29,6 +29,7 @@ import { performComputerUpdate } from "./computer-update.js";
 import type { createRunExecutor } from "./executor.js";
 import type { ExpoPushProvider } from "./expo-push.js";
 import { compactHistory } from "./history-compaction.js";
+import { expireInteraction } from "./interaction-expire.js";
 import { reconcileAmbiguousEmailEffect } from "./interaction-email-reconcile.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
@@ -118,6 +119,13 @@ export function createBackgroundJobHandlers(deps: {
     deps.prisma.cloudAgent.findUnique({ where: { id: agentId }, select: OWNER });
   const purchase = ({ purchaseId }: { purchaseId: string }) =>
     deps.prisma.purchase.findUnique({ where: { id: purchaseId }, select: OWNER });
+  const interactionOwner = async ({ interactionId }: { interactionId: string }) => {
+    const row = await deps.prisma.interaction.findUnique({
+      where: { id: interactionId },
+      select: { spaceId: true, thread: { select: { userId: true } } },
+    });
+    return row ? { spaceId: row.spaceId, userId: row.thread.userId } : null;
+  };
   const effectOwner = async ({ effectId }: { effectId: string }) => {
     const effect = await deps.prisma.externalEffect.findUnique({
       where: { id: effectId },
@@ -206,6 +214,9 @@ export function createBackgroundJobHandlers(deps: {
     }),
     "call.expire": asOwner(thread, async (payload) => {
       await settleCallRequest(deps, { ...payload, from: ["ringing"], status: "missed" });
+    }),
+    "interaction.expire": asOwner(interactionOwner, async (payload) => {
+      await expireInteraction(deps.prisma, payload.interactionId);
     }),
     "cloud_agent.poll": asOwner(cloudAgent, async (payload) => {
       await pollCloudAgent(
