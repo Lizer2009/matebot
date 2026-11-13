@@ -22,7 +22,7 @@ import {
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import type { OpenCardRow } from "./interaction-kernel-store.js";
-import { findOpenCard } from "./interaction-kernel-store.js";
+import { findOpenCard, settleInteraction } from "./interaction-kernel-store.js";
 
 /** The registered schema for an intent, when the capability is known. */
 function capabilitySchema(intent: string) {
@@ -378,7 +378,8 @@ export async function publishOrAmend(
 ): Promise<PublishOrAmendResult> {
   const cardKey = input.cardKey ?? interactionCardKey(input.threadId, input.plan.intent);
   const status = input.status ?? "collecting";
-  const expiresAt = input.expiresAt ?? expiresAtFor(status);
+  // An explicit `null` is a decision (no expiry), not a request to derive one.
+  const expiresAt = input.expiresAt === undefined ? expiresAtFor(status) : input.expiresAt;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const existing = await findOpenCard(prisma, {
@@ -392,6 +393,16 @@ export async function publishOrAmend(
         expiresAt,
         existing,
         messageId: existing.messageId,
+      });
+    }
+    if (existing) {
+      // A live row with no message is holding the card key while showing nothing.
+      // Leaving it in place would make every insert race it forever, so close it
+      // and let the new card create.
+      await settleInteraction(prisma, {
+        interactionId: existing.id,
+        status: "superseded",
+        reason: "card had no message",
       });
     }
     try {
@@ -423,7 +434,17 @@ async function amendPublishedCard(
   },
 ): Promise<PublishOrAmendResult> {
   const { existing } = input;
-  const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
+  // Rewrite the surface the card already points at. A new id here would insert a
+  // second surface row, and the client keys blocks by `interactionId:surfaceId`,
+  // so the person would see the old card and the new one side by side — the very
+  // duplicate this function exists to prevent.
+  const latestSurface = await prisma.interactionSurface.findFirst({
+    where: { interactionId: existing.id },
+    orderBy: { updatedAt: "desc" },
+    select: { surfaceId: true },
+  });
+  const surfaceId =
+    input.surfaceId?.trim() || latestSurface?.surfaceId || `surface-${crypto.randomUUID()}`;
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
   const senderLabel = senderLabelForBlock(input.senderLabel);
   const senderAddress = senderAddressForBlock(input.senderAddress);
@@ -475,7 +496,7 @@ async function amendPublishedCard(
       // The block being replaced is the only place the read-only "sending from"
       // row can come from; a rebuild that trusts only this call's arguments
       // blanks it on every amend.
-      const carried = senderStampFromBlock(previous, undefined);
+      const carried = senderStampFromBlock(previous, surfaceId);
       const blockLabel = senderLabel ?? carried.senderLabel;
       const blockAddress = senderAddress ?? carried.senderAddress;
       const block: MessageBlock = {

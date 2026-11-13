@@ -47,7 +47,14 @@ const openCard: OpenCardRow = {
   staleAt: null,
 };
 
-function amendPrisma(existing: typeof openCard) {
+const APPROVAL_TTL_MS = 30 * 60 * 1000;
+
+const callInput = (index = 0) => {
+  const args = createInteraction.mock.calls[index]![1] as Record<string, unknown>;
+  return args;
+};
+
+function amendPrisma(existing: OpenCardRow, surfaceId = "s1") {
   const updateInteraction = vi.fn().mockResolvedValue({});
   const updateMessage = vi.fn().mockResolvedValue({});
   const tx = {
@@ -55,16 +62,29 @@ function amendPrisma(existing: typeof openCard) {
     message: {
       findUnique: vi.fn().mockResolvedValue({
         id: "m1",
-        blocks: [{ kind: "a2ui_surface", interactionId: "i1", surfaceId: "s1", draftVersion: 1 }],
+        blocks: [{ kind: "a2ui_surface", interactionId: "i1", surfaceId, draftVersion: 1 }],
       }),
       update: updateMessage,
     },
   };
   const prisma = {
     interaction: { findFirst: vi.fn().mockResolvedValue(existing) },
+    interactionSurface: { findFirst: vi.fn().mockResolvedValue({ surfaceId }) },
     $transaction: vi.fn(async (run: (t: typeof tx) => unknown) => run(tx)),
   };
   return { prisma, updateInteraction, updateMessage };
+}
+
+function publishPrisma() {
+  const tx = {
+    interaction: { update: vi.fn().mockResolvedValue({}) },
+    message: { update: vi.fn().mockResolvedValue({}) },
+  };
+  return {
+    interaction: { findFirst: vi.fn().mockResolvedValue(null) },
+    interactionSurface: { findFirst: vi.fn().mockResolvedValue(null) },
+    $transaction: vi.fn(async (run: (t: typeof tx) => unknown) => run(tx)),
+  };
 }
 
 describe("publishOrAmend", () => {
@@ -74,6 +94,13 @@ describe("publishOrAmend", () => {
     createThreadMessageInTransaction.mockReset();
     appendEventInTransaction.mockReset();
 
+    createInteraction.mockResolvedValue({
+      id: "i1",
+      intent: "email.compose",
+      draftVersion: 1,
+      title: "产品发布",
+      summary: null,
+    });
     upsertInteractionSurface.mockResolvedValue({
       documentRef: "a2ui:interaction:i1:surface:s1",
     });
@@ -82,21 +109,7 @@ describe("publishOrAmend", () => {
   });
 
   it("writes the card key so the unique index can do its job", async () => {
-    createInteraction.mockResolvedValue({
-      id: "i1",
-      intent: "email.compose",
-      draftVersion: 1,
-      title: "产品发布",
-      summary: null,
-    });
-    const tx = {
-      interaction: { update: vi.fn().mockResolvedValue({}) },
-      message: { update: vi.fn().mockResolvedValue({}) },
-    };
-    const prisma = {
-      interaction: { findFirst: vi.fn().mockResolvedValue(null) },
-      $transaction: vi.fn(async (run: (t: typeof tx) => unknown) => run(tx)),
-    };
+    const prisma = publishPrisma();
 
     const result = await publishOrAmend(prisma as never, {
       spaceId: "s1",
@@ -139,10 +152,11 @@ describe("publishOrAmend", () => {
     expect(updateInteraction.mock.calls[0]![0].data).toMatchObject({ draftVersion: 2 });
   });
 
-  it("replaces the card's own block rather than adding a second surface", async () => {
+  it("rewrites the surface the card already uses instead of inserting a new one", async () => {
     const { prisma, updateMessage } = amendPrisma(openCard);
+    const surfaceFindFirst = vi.mocked(prisma.interactionSurface.findFirst);
 
-    await publishOrAmend(prisma as never, {
+    const result = await publishOrAmend(prisma as never, {
       spaceId: "sp1",
       threadId: "t1",
       botId: "b1",
@@ -150,15 +164,28 @@ describe("publishOrAmend", () => {
       plan,
     });
 
+    expect(surfaceFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { interactionId: "i1" }, orderBy: { updatedAt: "desc" } }),
+    );
+    // One surface row per card: the client keys blocks by interactionId:surfaceId,
+    // so a fresh id here would render the old card and the new one side by side.
+    expect(result.surfaceId).toBe("s1");
+    expect(upsertInteractionSurface).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ interactionId: "i1", surfaceId: "s1" }),
+    );
+
     const blocks = updateMessage.mock.calls[0]![0].data.blocks as {
       kind: string;
       interactionId: string;
+      surfaceId: string;
       draftVersion: number;
     }[];
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toMatchObject({
       kind: "a2ui_surface",
       interactionId: "i1",
+      surfaceId: "s1",
       draftVersion: 2,
     });
   });
@@ -194,5 +221,104 @@ describe("publishOrAmend", () => {
     expect(result.amended).toBe(true);
     expect(result.interactionId).toBe("i1");
     expect(updateMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it("derives an approval expiry and leaves other statuses without one", async () => {
+    const prisma = publishPrisma();
+
+    await publishOrAmend(prisma as never, {
+      spaceId: "s1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+      status: "awaiting_approval",
+    });
+    const expiresAt = callInput().expiresAt as Date;
+    expect(expiresAt).toBeInstanceOf(Date);
+    expect(expiresAt.getTime() - Date.now()).toBeGreaterThan(APPROVAL_TTL_MS - 5_000);
+    expect(expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(APPROVAL_TTL_MS);
+
+    createInteraction.mockClear();
+    const collecting = publishPrisma();
+    await publishOrAmend(collecting as never, {
+      spaceId: "s1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+    });
+
+    // No expiry is written for a card the user is still editing, so the row keeps its null.
+    expect(callInput().expiresAt).toBeUndefined();
+  });
+
+  it("writes the reused expiry when it amends", async () => {
+    const { prisma, updateInteraction } = amendPrisma(openCard);
+    const expiresAt = new Date("2026-11-13T12:00:00.000Z");
+
+    await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+      status: "awaiting_approval",
+      expiresAt,
+    });
+
+    expect(updateInteraction.mock.calls[0]![0].data).toMatchObject({ expiresAt });
+  });
+
+  it("keeps an explicit null expiry instead of deriving one", async () => {
+    const { prisma, updateInteraction } = amendPrisma(openCard);
+
+    await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+      status: "awaiting_approval",
+      expiresAt: null,
+    });
+
+    expect(updateInteraction.mock.calls[0]![0].data).toMatchObject({ expiresAt: null });
+  });
+
+  it("closes a live card with no message before publishing a new one", async () => {
+    const messageLess: OpenCardRow = { ...openCard, messageId: null };
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const tx = {
+      interaction: { update: vi.fn().mockResolvedValue({}) },
+      message: { update: vi.fn().mockResolvedValue({}) },
+    };
+    const prisma = {
+      interaction: {
+        findFirst: vi.fn().mockResolvedValue(messageLess),
+        findUnique: vi.fn().mockResolvedValue({ id: "i1", status: "collecting", staleAt: null }),
+        updateMany,
+      },
+      interactionSurface: { findFirst: vi.fn().mockResolvedValue(null) },
+      $transaction: vi.fn(async (run: (t: typeof tx) => unknown) => run(tx)),
+    };
+
+    const result = await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+    });
+
+    // A row that shows nothing must not hold the card key forever.
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "i1", status: "collecting" },
+        data: { status: "superseded" },
+      }),
+    );
+    expect(createInteraction).toHaveBeenCalledTimes(1);
+    expect(result.amended).toBe(false);
   });
 });
