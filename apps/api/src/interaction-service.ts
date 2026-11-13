@@ -26,24 +26,20 @@ import {
   projectInteractionEmailSurface,
   reconcileAmbiguousEmailEffect,
 } from "@matebot/adapters";
-import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
-import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
+import type { InteractionPlan } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
 import {
-  applyInteractionFieldChange,
   canExecuteConfirmedInteraction,
   confirmedEffectMatchesDraft,
   confirmInteractionDraftState,
   deliveryNeedsReconnect,
   emailCapabilityAllowsSend,
   emailDeliveryOutcome,
-  emailSurfaceBlockFields,
   interactionCapabilityForIntent,
   interactionConfirmEffectRequest,
   interactionConfirmIdempotencyKey,
   interactionEffectKind,
   interactionRequiredApp,
-  normalizeCalendarFields,
   readConfirmedCalendarDraft,
   timingFields,
 } from "@matebot/core";
@@ -53,69 +49,12 @@ import {
   getInteraction,
   InteractionNotFoundError,
   InteractionVersionConflictError,
-  upsertInteractionSurface,
   withTransactionRetry,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { registerInFlightEffect } from "./interaction-abort.js";
 
 export type { PublishInteractionSurfaceInput } from "@matebot/adapters";
-export { publishInteractionSurface } from "@matebot/adapters";
-
-function isEmailPlan(plan: InteractionPlan): boolean {
-  return plan.intent === "email.compose" || plan.intent === "email.send";
-}
-
-async function compilePlanSurface(input: {
-  plan: InteractionPlan;
-  surfaceId: string;
-  protocolFamily?: A2uiProtocolFamily;
-  capability?: EmailSurfaceCapability;
-  interactionStatus: InteractionLifecycleStatus;
-  effectStatus?: string | null;
-  providerMessageId?: string | null;
-  error?: string | null;
-}): Promise<{ protocolFamily: A2uiProtocolFamily; messages: unknown[] }> {
-  const stamps = isEmailPlan(input.plan)
-    ? emailSurfaceBlockFields({
-        intent: input.plan.intent,
-        capability: input.capability,
-        interactionStatus: input.interactionStatus,
-        effectStatus: input.effectStatus,
-        providerMessageId: input.providerMessageId,
-        error: input.error,
-      })
-    : {};
-  const { compileInteractionPlan } = await import("@matebot/a2ui-adapter");
-  const compiled = await compileInteractionPlan({
-    plan: input.plan,
-    surfaceId: input.surfaceId,
-    protocolFamily: input.protocolFamily ?? "v0_9",
-    ...stamps,
-  });
-  if (!compiled.ok) {
-    throw new Error(compiled.error);
-  }
-  return { protocolFamily: compiled.protocolFamily, messages: compiled.messages };
-}
-
-function capabilityFromBlocks(
-  blocks: MessageBlock[] | undefined,
-  surfaceId?: string,
-): EmailSurfaceCapability | undefined {
-  if (!blocks) return undefined;
-  for (const entry of blocks) {
-    if (entry.kind !== "a2ui_surface") continue;
-    if (surfaceId && entry.surfaceId !== surfaceId) continue;
-    if (entry.capability) return entry.capability;
-  }
-  return undefined;
-}
-
-function protocolFamilyOf(value: string): A2uiProtocolFamily {
-  return value === "v1_0" || value === "v0_9" ? value : "v0_9";
-}
-
 // The write path lives in @matebot/adapters so the model's edit tool and the
 // card's own controls share one implementation. Re-exported here because the
 // route and its tests import it from this module.
@@ -123,6 +62,7 @@ export {
   type CancelInteractionServiceInput,
   cancelInteractionService,
   InteractionCancelRejectedError,
+  publishInteractionSurface,
   type UpdateInteractionFieldServiceInput,
   updateInteractionFieldService,
 } from "@matebot/adapters";
