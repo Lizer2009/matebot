@@ -1,5 +1,6 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
 import type { InteractionRequiredApp } from "./interaction-connection.js";
+import { l0aCardKindForIntent } from "./l0a-capability.js";
 
 /**
  * L1 capability registry: the server's list of what an A2UI surface may do.
@@ -196,9 +197,11 @@ export function interactionCapabilityForIntent(intent: string): InteractionCapab
   return findInteractionCapability(intent);
 }
 
-/** Action vs result for a registered intent or its alias. */
+/** Action vs result for a registered intent, its alias, or an L0-A prefix. */
 export function cardKindForIntent(intent: string): CardKind | undefined {
-  return findInteractionCapability(canonicalIntent(intent))?.cardKind;
+  return (
+    findInteractionCapability(canonicalIntent(intent))?.cardKind ?? l0aCardKindForIntent(intent)
+  );
 }
 
 export function isActionIntent(intent: string | undefined): boolean {
