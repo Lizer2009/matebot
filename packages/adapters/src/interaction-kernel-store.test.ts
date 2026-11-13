@@ -12,32 +12,28 @@ function fakePrisma(
   } | null,
 ) {
   const updateMany = vi.fn().mockResolvedValue({ count: 1 });
-  const findFirst = vi
-    .fn()
-    .mockResolvedValue(
-      row
-        ? {
-            id: row.id,
-            status: row.status,
-            messageId: row.messageId ?? null,
-            draftVersion: row.draftVersion ?? 1,
-            staleAt: row.staleAt ?? null,
-          }
-        : null,
-    );
-  const findUnique = vi
-    .fn()
-    .mockResolvedValue(
-      row
-        ? {
-            id: row.id,
-            status: row.status,
-            messageId: row.messageId ?? null,
-            draftVersion: row.draftVersion ?? 1,
-            staleAt: row.staleAt ?? null,
-          }
-        : null,
-    );
+  const findFirst = vi.fn().mockResolvedValue(
+    row
+      ? {
+          id: row.id,
+          status: row.status,
+          messageId: row.messageId ?? null,
+          draftVersion: row.draftVersion ?? 1,
+          staleAt: row.staleAt ?? null,
+        }
+      : null,
+  );
+  const findUnique = vi.fn().mockResolvedValue(
+    row
+      ? {
+          id: row.id,
+          status: row.status,
+          messageId: row.messageId ?? null,
+          draftVersion: row.draftVersion ?? 1,
+          staleAt: row.staleAt ?? null,
+        }
+      : null,
+  );
   return {
     prisma: { interaction: { findFirst, findUnique, updateMany } } as unknown as PrismaClient,
     updateMany,
@@ -80,6 +76,7 @@ describe("settleInteraction", () => {
       }),
     ).resolves.toEqual({ settled: true, previousStatus: "ready_for_review" });
     expect(updateMany).toHaveBeenCalledTimes(1);
+    expect(updateMany.mock.calls[0]![0].where).toEqual({ id: "i1", status: "ready_for_review" });
   });
 
   // The guard that keeps a card the user just sent from being relabelled.
@@ -89,6 +86,10 @@ describe("settleInteraction", () => {
     await expect(
       settleInteraction(prisma, { interactionId: "i1", status: "superseded", reason: "sweep" }),
     ).resolves.toEqual({ settled: false, reason: "concurrent" });
+    expect(updateMany.mock.calls[0]![0].where).toEqual({
+      id: "i1",
+      status: "ready_for_review",
+    });
   });
 
   it("only settles a row that still carries the staleness mark it read", async () => {
@@ -103,11 +104,23 @@ describe("settleInteraction", () => {
     expect(updateMany.mock.calls[0]![0].where).toMatchObject({ staleAt: mark });
   });
 
+  // An omitted snapshot must leave the filter alone, not filter on `undefined`.
+  it("does not filter on staleness when no snapshot was read", async () => {
+    const { prisma, updateMany } = fakePrisma({ id: "i1", status: "collecting" });
+    await settleInteraction(prisma, {
+      interactionId: "i1",
+      status: "superseded",
+      reason: "sweep",
+    });
+    expect("staleAt" in updateMany.mock.calls[0]![0].where).toBe(false);
+  });
+
   it("reports not_found for an id that vanished", async () => {
-    const { prisma } = fakePrisma(null);
+    const { prisma, updateMany } = fakePrisma(null);
     await expect(
       settleInteraction(prisma, { interactionId: "gone", status: "superseded", reason: "sweep" }),
     ).resolves.toEqual({ settled: false, reason: "not_found" });
+    expect(updateMany).not.toHaveBeenCalled();
   });
 
   it("refuses an exempt card without writing", async () => {
@@ -115,6 +128,18 @@ describe("settleInteraction", () => {
     await expect(
       settleInteraction(prisma, { interactionId: "i1", status: "superseded", reason: "sweep" }),
     ).resolves.toEqual({ settled: false, reason: "exempt_from_settlement" });
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  it("refuses a non-terminal target without writing", async () => {
+    const { prisma, updateMany } = fakePrisma({ id: "i1", status: "collecting" });
+    await expect(
+      settleInteraction(prisma, {
+        interactionId: "i1",
+        status: "ready_for_review",
+        reason: "sweep",
+      }),
+    ).resolves.toEqual({ settled: false, reason: "not_terminal_target" });
     expect(updateMany).not.toHaveBeenCalled();
   });
 });

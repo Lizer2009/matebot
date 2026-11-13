@@ -14,7 +14,8 @@ export type SettleRefusal =
   | "already_terminal"
   | "exempt_from_settlement"
   | "unknown_status"
-  | "same_status";
+  | "same_status"
+  | "not_terminal_target";
 
 export type SettleDecision =
   | { ok: true; status: InteractionStatus }
@@ -35,6 +36,7 @@ export function decideSettle(input: { current: string; next: InteractionStatus }
   if (current === next) return { ok: false, reason: "same_status" };
   if (EXEMPT.has(current)) return { ok: false, reason: "exempt_from_settlement" };
   if (isTerminalStatus(current)) return { ok: false, reason: "already_terminal" };
+  if (!isTerminalStatus(next)) return { ok: false, reason: "not_terminal_target" };
   return { ok: true, status: next };
 }
 

@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { SettleRefusal } from "./interaction-kernel.js";
 import { decideSettle, expiresAtFor } from "./interaction-kernel.js";
-import { INTERACTION_STATUSES, SETTLE_EXEMPT_STATUSES } from "./interaction-status.js";
+import {
+  INTERACTION_STATUSES,
+  isTerminalStatus,
+  SETTLE_EXEMPT_STATUSES,
+} from "./interaction-status.js";
 
 const REFUSALS: readonly SettleRefusal[] = [
   "already_terminal",
   "exempt_from_settlement",
   "unknown_status",
   "same_status",
+  "not_terminal_target",
 ];
 
 describe("decideSettle", () => {
@@ -56,13 +61,26 @@ describe("decideSettle", () => {
     });
   });
 
-  // Exhaustive: every (known) pair either settles to `next` or names one of the four reasons.
+  // Settling closes a card, so the target must leave the workflow for good.
+  it.each(["needs_connection", "ready_for_review"] as const)(
+    "refuses to settle into the non-terminal status %s",
+    (next) => {
+      expect(decideSettle({ current: "collecting", next })).toEqual({
+        ok: false,
+        reason: "not_terminal_target",
+      });
+    },
+  );
+
+  // Exhaustive: every (known) pair either settles to a terminal `next` or names
+  // one of the five reasons.
   it("decides every pair of known statuses without throwing", () => {
     for (const current of INTERACTION_STATUSES) {
       for (const next of INTERACTION_STATUSES) {
         const decision = decideSettle({ current, next });
         if (decision.ok) {
           expect(decision.status).toBe(next);
+          expect(isTerminalStatus(next)).toBe(true);
         } else {
           expect(REFUSALS).toContain(decision.reason);
         }
