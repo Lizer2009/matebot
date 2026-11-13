@@ -107,6 +107,62 @@ test("compose card, model-shaped edit, same card, then a fake send", async ({ pa
   await captureScreenshot(page, testInfo, "a2ui-e2e-02-edited-same-card");
 });
 
+test("approval menu has four items and Allow this recipient leaves Send", async ({
+  page,
+}, testInfo) => {
+  await signIn(page, testInfo);
+  // Fake Composio connects without a live mailbox. Present after the account
+  // exists so the card is the approval surface (Needs approval), not Connect.
+  await rpc(page, "connections/begin", {
+    connectorId: "composio",
+    provider: "gmail",
+    displayName: "Email",
+  });
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "Hello",
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "Hi", required: true, status: "resolved" },
+          { name: "body", value: "Hello there", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+  await waitForSurface(page, "a2ui-email-compose");
+  await expect(page.getByTestId("a2ui-email-send")).toBeVisible({ timeout: 30_000 });
+  const status = page.getByTestId("a2ui-email-status");
+  await expect(status).toContainText("Needs approval");
+  await status.click();
+  await expect(page.getByTestId("a2ui-email-allow-recipient")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-approval-require")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-disable-drafts")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-manage-rules")).toBeVisible();
+  await captureScreenshot(page, testInfo, "a2ui-e2e-d-approval-menu");
+  await page.getByTestId("a2ui-email-allow-recipient").click();
+  await expect(page.getByTestId("a2ui-email-send")).toBeVisible();
+  const rules = await rpc<Array<{ effect: string; matchKind: string; matchValue: string }>>(
+    page,
+    "approvalRules/list",
+    {},
+  );
+  expect(rules).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        effect: "always_allow",
+        matchKind: "recipient",
+        matchValue: "friend@example.test",
+      }),
+    ]),
+  );
+  await captureScreenshot(page, testInfo, "a2ui-e2e-d-allow-recipient-send-stays");
+});
+
 /**
  * A result card built from a file the user uploaded.
  *
