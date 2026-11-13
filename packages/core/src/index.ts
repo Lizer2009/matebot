@@ -64,6 +64,7 @@ export * from "./interaction-nl-edit.js";
 export * from "./interaction-nudge.js";
 export * from "./interaction-plan-bridge.js";
 export * from "./interaction-preflight.js";
+export * from "./interaction-resume-plan.js";
 export * from "./interaction-result.js";
 export * from "./interaction-route.js";
 export * from "./interaction-runtime.js";

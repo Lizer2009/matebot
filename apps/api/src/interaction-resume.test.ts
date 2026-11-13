@@ -22,14 +22,20 @@ const plan = {
   riskLevel: "medium",
 };
 
-type Row = { id: string; intent: string; status: string; draftVersion: number };
+type Row = {
+  id: string;
+  intent: string;
+  status: string;
+  draftVersion: number;
+  plan?: unknown;
+};
 
 function fixture(options: { interactions?: Row[]; busy?: boolean; hasBot?: boolean } = {}) {
   const rows = (options.interactions ?? []).map((row) => ({
     ...row,
     confirmedVersion: null,
-    plan,
-    messageId: row.id === "ix-cal" ? "msg-cal" : null,
+    plan: row.plan ?? plan,
+    messageId: row.id === "ix-cal" || row.id === "ix-mail" ? `msg-${row.id.replace("ix-", "")}` : null,
     title: "Create calendar",
     summary: null,
     runId: "run-1",
@@ -161,7 +167,7 @@ describe("resumeInteractionAfterConnection", () => {
     expect(result).toEqual({ refreshedInteractionIds: ["ix-cal"], queuedRunId: null });
     expect(f.tx.interaction.updateMany).toHaveBeenCalledWith({
       where: { id: "ix-cal", draftVersion: 1 },
-      data: { status: "collecting" },
+      data: expect.objectContaining({ status: "collecting" }),
     });
     expect(f.messages.get("msg-cal")?.blocks[0]).toMatchObject({
       capability: "ready",
@@ -232,6 +238,73 @@ describe("resumeInteractionAfterConnection", () => {
     });
     expect(result.queuedRunId).toBeNull();
     expect(f.createdRuns).toEqual([]);
+  });
+
+  it("restores stored slots and skips a card for a different account", async () => {
+    const f = fixture({
+      interactions: [
+        {
+          id: "ix-mail",
+          intent: "email.compose",
+          status: "needs_connection",
+          draftVersion: 1,
+          plan: {
+            intent: "email.compose",
+            title: "Draft",
+            fields: [],
+            nextStep: "ask",
+            riskLevel: "medium",
+            resumePlan: {
+              provider: "gmail",
+              accountId: "conn-keep",
+              displayEmail: "keep@example.test",
+              intent: "email.compose",
+              slots: { to: "friend@example.test", subject: "冬天的问候" },
+            },
+          },
+        },
+        {
+          id: "ix-other",
+          intent: "email.compose",
+          status: "needs_connection",
+          draftVersion: 1,
+          plan: {
+            intent: "email.compose",
+            title: "Other",
+            fields: [],
+            nextStep: "ask",
+            riskLevel: "medium",
+            resumePlan: {
+              provider: "gmail",
+              accountId: "conn-other",
+              displayEmail: "other@example.test",
+              intent: "email.compose",
+              slots: { to: "other@example.test" },
+            },
+          },
+        },
+      ],
+    });
+    const result = await resumeInteractionAfterConnection(f.deps, {
+      actor,
+      botId: "bot-1",
+      threadId: "thread-1",
+      provider: "gmail",
+      appConnected: true,
+      accountId: "conn-keep",
+    });
+    expect(result.refreshedInteractionIds).toEqual(["ix-mail"]);
+    expect(result.queuedRunId).toBeNull();
+    expect(f.tx.interaction.updateMany).toHaveBeenCalledWith({
+      where: { id: "ix-mail", draftVersion: 1 },
+      data: expect.objectContaining({
+        status: "collecting",
+        slots: { to: "friend@example.test", subject: "冬天的问候" },
+      }),
+    });
+    expect(f.tx.interaction.updateMany).not.toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: "ix-other" }) }),
+    );
   });
 
   it("leaves a waiting email surface alone when the calendar connects", async () => {

@@ -2,13 +2,16 @@ import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot
 import type {
   EmailSurfaceCapability,
   InteractionLifecycleStatus,
+  InteractionResumePlan,
   InteractionStatus,
 } from "@matebot/core";
 import {
   emailSurfaceBlockFields,
   expiresAtFor,
+  historySlotsFromValues,
   interactionCapabilityForIntent,
   interactionSlotsFromPlan,
+  planWithResumePlan,
   timingFields,
 } from "@matebot/core";
 import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
@@ -113,6 +116,8 @@ export type PublishInteractionSurfaceInput = {
   senderLabel?: string;
   /** Provider mailbox, only when the server learned it from the account record. */
   senderAddress?: string;
+  /** Stored on the plan JSON so reconnect can restore this card without a model turn. */
+  resumePlan?: InteractionResumePlan;
 };
 
 /**
@@ -169,6 +174,14 @@ export function senderLabelFromBlock(
   surfaceId: string | undefined,
 ): string | undefined {
   return senderStampFromBlock(blocks, surfaceId).senderLabel;
+}
+
+function historyStamp(
+  intent: string,
+  slots: Record<string, unknown>,
+): { historySlots?: Record<string, string> } {
+  const historySlots = historySlotsFromValues(intent, slots);
+  return historySlots ? { historySlots } : {};
 }
 
 /**
@@ -270,7 +283,7 @@ export async function publishInteractionSurface(
   });
   // Store the reconciled plan and slots: the confirm gate and the card's own controls both read
   // these, so leaving the model's spellings here would compile a card that cannot be confirmed.
-  const reconciledPlan = compiled.plan ?? input.plan;
+  const reconciledPlan = planWithResumePlan(compiled.plan ?? input.plan, input.resumePlan);
   const slots = interactionSlotsFromPlan(reconciledPlan);
 
   const publishedAt = Date.now();
@@ -312,6 +325,7 @@ export async function publishInteractionSurface(
         ...(senderLabel ? { senderLabel } : {}),
         ...(senderAddress ? { senderAddress } : {}),
         ...stamps,
+        ...historyStamp(input.plan.intent, slots),
       };
       const message = await createThreadMessageInTransaction(tx, {
         threadId: input.threadId,
@@ -534,7 +548,7 @@ async function amendPublishedCard(
     capability: emailIntent ? input.capability : undefined,
     status: input.status,
   });
-  const reconciledPlan = compiled.plan ?? input.plan;
+  const reconciledPlan = planWithResumePlan(compiled.plan ?? input.plan, input.resumePlan);
   const slots = interactionSlotsFromPlan(reconciledPlan);
 
   return withTransactionRetry(() =>
@@ -619,6 +633,7 @@ async function amendPublishedCard(
         ...(blockLabel ? { senderLabel: blockLabel } : {}),
         ...(blockAddress ? { senderAddress: blockAddress } : {}),
         ...stamps,
+        ...historyStamp(input.plan.intent, slots),
       };
       const nextBlocks = previous.some(
         (entry) => entry.kind === "a2ui_surface" && entry.interactionId === existing.id,

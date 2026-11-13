@@ -3,7 +3,9 @@ import { InteractionPlanSchema } from "@matebot/contracts";
 import type { EmailSurfaceCapability } from "@matebot/core";
 import {
   interactionRequiredApp,
+  interactionSlotsFromPlan,
   readConfirmedCalendarDraft,
+  resumePlanForNeedsConnection,
   surfaceNudgeFor,
   surfaceNudgeText,
   timingFields,
@@ -173,6 +175,18 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       ...(capabilityStamp.status ? { status: capabilityStamp.status } : {}),
       ...(capabilityStamp.sender ? { senderLabel: capabilityStamp.sender.label } : {}),
       ...(capabilityStamp.sender?.address ? { senderAddress: capabilityStamp.sender.address } : {}),
+      ...(capabilityStamp.status === "needs_connection"
+        ? {
+            resumePlan: resumePlanForNeedsConnection({
+              intent: plan.intent,
+              slots: interactionSlotsFromPlan(plan),
+              ...(capabilityStamp.connection ? { connection: capabilityStamp.connection } : {}),
+              ...(capabilityStamp.sender?.address
+                ? { senderAddress: capabilityStamp.sender.address }
+                : {}),
+            }),
+          }
+        : {}),
     });
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
@@ -260,6 +274,7 @@ export async function interactionPublishCapability(
   capability?: EmailSurfaceCapability;
   status?: "needs_connection";
   sender?: DraftSender;
+  connection?: { id: string; provider: string; displayName: string };
 }> {
   const app = interactionRequiredApp(plan.intent);
   if (!app) return {};
@@ -292,6 +307,15 @@ export async function interactionPublishCapability(
     // whatever the client passed when the connection was created (often the card's title), so
     // an address is only offered when the server actually learned one from the provider.
     ...(snapshot.connection ? { sender: { label: snapshot.connection.displayName } } : {}),
+    ...(snapshot.connection
+      ? {
+          connection: {
+            id: snapshot.connection.id,
+            provider: snapshot.connection.provider,
+            displayName: snapshot.connection.displayName,
+          },
+        }
+      : {}),
   };
 }
 

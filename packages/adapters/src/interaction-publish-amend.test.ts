@@ -342,7 +342,7 @@ describe("publishOrAmend", () => {
     expect(updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "i1", status: "collecting" },
-        data: { status: "superseded" },
+        data: expect.objectContaining({ status: "superseded" }),
       }),
     );
     expect(createInteraction).toHaveBeenCalledTimes(1);

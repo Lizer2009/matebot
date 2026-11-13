@@ -163,8 +163,52 @@ describe("publishInteractionSurface", () => {
             capability: "not_connected",
             template: "email-connection-card",
             lifecycle: "draft",
+            historySlots: { to: "a@example.com", subject: "Hi" },
           }),
         ],
+      }),
+    );
+  });
+
+  it("stores the resume plan on a needs_connection card so reconnect can restore slots", async () => {
+    const interactionUpdate = vi.fn(async () => ({ id: "ix-1" }));
+    const prisma = {
+      $transaction: async (work: (tx: unknown) => Promise<unknown>) =>
+        work({
+          interaction: { update: interactionUpdate },
+        }),
+    };
+
+    await publishInteractionSurface(prisma as never, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan,
+      surfaceId: "surface-1",
+      capability: "not_connected",
+      status: "needs_connection",
+      resumePlan: {
+        provider: "gmail",
+        accountId: "conn-keep",
+        displayEmail: "keep@example.test",
+        intent: "email.compose",
+        slots: { to: "friend@example.test", subject: "冬天的问候" },
+      },
+    });
+
+    expect(createInteraction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        status: "needs_connection",
+        plan: expect.objectContaining({
+          resumePlan: {
+            provider: "gmail",
+            accountId: "conn-keep",
+            displayEmail: "keep@example.test",
+            intent: "email.compose",
+            slots: { to: "friend@example.test", subject: "冬天的问候" },
+          },
+        }),
       }),
     );
   });

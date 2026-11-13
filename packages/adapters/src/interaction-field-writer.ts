@@ -11,6 +11,7 @@ import {
   applyInteractionFieldChange,
   decideCancel,
   emailSurfaceBlockFields,
+  historySlotsFromValues,
   interactionCapabilityForIntent,
   interactionSlotsFromPlan,
 } from "@matebot/core";
@@ -194,6 +195,8 @@ export async function updateInteractionFieldService(
     capability,
     interactionStatus: changed.status,
   });
+  const nextSlots = interactionSlotsFromPlan(compiled.plan);
+  const historySlots = historySlotsFromValues(changed.plan.intent, nextSlots);
 
   await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
@@ -205,7 +208,7 @@ export async function updateInteractionFieldService(
         data: {
           // Both the plan and the slots are stored in the schema's spelling: the confirm gate
           // looks values up by that name on the next turn.
-          slots: interactionSlotsFromPlan(compiled.plan) as Prisma.InputJsonValue,
+          slots: nextSlots as Prisma.InputJsonValue,
           plan: compiled.plan as Prisma.InputJsonValue,
           draftVersion: changed.draftVersion,
           confirmedVersion: null,
@@ -250,6 +253,7 @@ export async function updateInteractionFieldService(
         ...(previousBlock?.senderLabel ? { senderLabel: previousBlock.senderLabel } : {}),
         ...(previousBlock?.senderAddress ? { senderAddress: previousBlock.senderAddress } : {}),
         ...stamps,
+        ...(historySlots ? { historySlots } : {}),
       };
       if (current.messageId) {
         const message = await tx.message.findUnique({ where: { id: current.messageId } });

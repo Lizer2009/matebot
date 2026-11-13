@@ -449,4 +449,30 @@ describe("present_interaction describes the card it stored", () => {
       { name: "body", value: "", required: true, filled: false },
     ]);
   });
+
+  it("stores a resume plan when the card waits on a connection", async () => {
+    publishOrAmend.mockResolvedValueOnce({
+      interactionId: "ix-1",
+      surfaceId: "surface-1",
+      messageId: "msg-1",
+      documentRef: "a2ui:interaction:ix-1:surface:surface-1",
+      draftVersion: 1,
+      eventSeq: 1,
+      capability: "not_connected",
+      missingRequired: ["subject", "body"],
+      plan: emailPlan,
+      slots: { to: "a@example.com" },
+    });
+    await interactionTools.present_interaction!(context() as never, call({ plan: emailPlan }));
+    expect(publishOrAmend).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        status: "needs_connection",
+        resumePlan: expect.objectContaining({
+          intent: "email.compose",
+          slots: expect.objectContaining({ to: "a@example.com" }),
+        }),
+      }),
+    );
+  });
 });
