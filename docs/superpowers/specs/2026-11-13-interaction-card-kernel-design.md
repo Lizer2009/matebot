@@ -141,7 +141,8 @@ export function surfaceCardIsLive(
 - **D1**：`needs_connection` 豁免于「新消息即失效」。理由：等待连接是停机态而非待确认动作；结算会导致授权返回后续跑找不到卡，只能重起模型回合并可能推出**不同的卡**。
 - **D2**：`unknown`（邮件结果存疑）既不参与结算也不参与过期。理由：它可能已经发出去了，任何自动结算都会对用户撒谎。
 - **D3**：不实现 `origin` / `expiresAt` / `actorUserId`。理由：当前无任何代码产出或消费（`apps/worker` 对 `interaction` 零引用），做了就是无人调用的代码 + 一个可能误伤的定时器。
-- **D4**：新消息结算用 **两段式**（`stale` 软标记 → `superseded` 硬结算），不是 Grok 文档描述的「新消息立即关闭旧卡」。理由：Matebot 的 `edit_interaction` 支持用自然语言改现有草稿，一步关闭会让每次编辑都换新卡，与本次目标相反。见 §5.4。
+- **D4**：新消息结算用 **两段式**（写 `staleAt` 软标记 → 回合结束 `superseded` 硬结算），不是 Grok 文档描述的「新消息立即关闭旧卡」。理由：Matebot 的 `edit_interaction` 支持用自然语言改现有草稿，一步关闭会让每次编辑都换新卡，与本次目标相反。软标记用 `Interaction.staleAt` 列而非新增 `status` 值——后者会让 `collecting` 卡误变为可确认、并让唯一索引失效。见 §5.4。
+- **D5**：无关新消息也会结算掉草稿（E6）。刻意对齐 Grok；代价是「随口问一句」会关掉草稿，缓解手段是内容保留在历史投影里可恢复。
 
 ---
 
@@ -204,30 +205,37 @@ CREATE UNIQUE INDEX interactions_one_open_card_per_intent
 
 ### 4.3 状态机
 
-DB `status` 固定为 14 值枚举：
+DB `status` 固定为 13 值枚举：
 
-| 状态 | 性质 | 可确认 | 可编辑 | 被新消息结算 | 自动过期 |
-|---|---|---|---|---|---|
-| `collecting` | 开放 | 否（缺字段） | 是 | 是 | — |
-| `ready_for_review` | 开放 | 是 | 是 | 是 | — |
-| `awaiting_approval` | 开放 | 是 | 是 | 是 | — |
-| `stale` | **新增软状态** | 是 | **是** | 待定（见 §5.4） | — |
-| `needs_connection` | 停机 | 否 | 否 | **否**（D1） | — |
-| `unknown` | 存疑 | 否 | 否 | **否**（D2） | **否**（D2） |
-| `sent` | 成功终态 | 否 | 否 | 否 | — |
-| `executed` | 成功终态 | 否 | 否 | 否 | — |
-| `succeeded` | 成功终态（邮件） | 否 | 否 | 否 | — |
-| `confirmed` | 终态 | 否 | 否 | 否 | — |
-| `superseded` | 新增终态 | 否 | 否 | — | — |
-| `expired` | 终态 | 否 | 否 | 否 | — |
-| `failed` | 失败终态 | 否 | 否 | 否 | — |
-| `cancelled` | 终态 | 否 | 否 | 否 | — |
+| 状态 | 性质 | 可确认 | 被新消息结算 | 自动过期 |
+|---|---|---|---|---|
+| `collecting` | 开放 | 否（缺字段） | 是 | — |
+| `ready_for_review` | 开放 | 是 | 是 | — |
+| `awaiting_approval` | 开放 | 是 | 是 | — |
+| `needs_connection` | 停机 | 否 | **否**（D1） | — |
+| `unknown` | 存疑 | 否 | **否**（D2） | **否**（D2） |
+| `sent` | 成功终态 | 否 | 否 | — |
+| `executed` | 成功终态 | 否 | 否 | — |
+| `succeeded` | 成功终态（邮件） | 否 | 否 | — |
+| `confirmed` | 终态 | 否 | 否 | — |
+| `superseded` | 新增终态 | 否 | — | — |
+| `expired` | 终态 | 否 | 否 | — |
+| `failed` | 失败终态 | 否 | 否 | — |
+| `cancelled` | 终态 | 否 | 否 | — |
 
-**`stale` 是本次修正新增的软状态**：新用户消息到达时先把开放卡标为 `stale`（仍可编辑、仍可点，显示「可能有更新」），回合结束或推出替代卡时才转 `superseded`。原因见 §5.4——直接用 `superseded` 会打断 `edit_interaction`。
+**「有没有更新」不是状态，是列。** 新增 `Interaction.staleAt DateTime?`，不占用 `status` 取值。
+
+初版曾打算加一个 `stale` 状态值，评审时否决，理由是它把**工作流阶段**和**新鲜度**两个正交维度压进一个字段，会引入真实 bug：
+
+| 用 `stale` 当状态会坏什么 | 后果 |
+|---|---|
+| 丢失原阶段（`collecting` 变 `stale`） | `collecting` 本不可确认（字段没填完），变 `stale` 后按 §6.1 变成可确认 → **用户能确认一张残缺的卡** |
+| 卡离开开放态集合 | §4.2 部分唯一索引失效 → 推替代卡时走「创建」而非「更新」→ **两张活卡并存** |
+| 丢失 `awaiting_approval` | 审批语义与审计事件跟着丢 |
+
+用 `staleAt` 列则：状态机不动、索引不动、affordance 不动，`publishOrAmend` 照常原地更新并清空 `staleAt`。
 
 **`unknown` 单独成行是本设计的重点**：`interaction-email-reconcile.ts` 用它表示「不确定邮件是否已发出」，此时禁止重发、转轮询。任何批量结算把它推成 `expired`，用户会看到「已过期」而邮件其实已发出。
-
-**`stale` 不在部分唯一索引的开放态列表里**：它只是标记「可能有更新」，不是新的开放态，索引不能因此放宽。
 
 ### 4.4 三套状态词表的关系
 
@@ -235,7 +243,7 @@ DB `status` 固定为 14 值枚举：
 
 | 层 | 取值 | 位置 | 本规格处理 |
 |---|---|---|---|
-| DB `status` | 14 值 | `schema.prisma` | **唯一真相**，枚举化 |
+| DB `status` | 13 值 | `schema.prisma` | **唯一真相**，枚举化 |
 | Block `lifecycle` | `draft`/`submitting`/`executing`/`succeeded`/`failed`/`unknown` | `contracts/interaction.ts:83` | 保留为**发布时快照**，由 `status` 派生 |
 | 读侧 `SurfaceStatus` | `draft`/`approved`/`executed` | `core/surface-revision.ts:12` | 保留为**读侧视图**，由内核单向映射 |
 
@@ -304,9 +312,7 @@ supersedeOpenCards(tx, threadId, { exempt })
 
 `openDraftId` 的手工查找**降级为快路径**，正确性由 §4.2 的索引保证。
 
-**与 `stale` 的配合（实现必须注意）**：`stale` 不在索引的开放态列表里，因此当旧卡已 `stale` 而模型推出替代卡时，`resolveOpenCard` 找不到它，会走「创建」分支。此时**必须显式把同 intent 的 `stale` 卡结算为 `superseded`**，否则会出现一张 `stale` 卡 + 一张新卡同时可交互——正是本规格要消灭的现象。
-
-顺序固定为：创建/更新 → 结算同 intent 的 `stale` 卡 → 追加时间线说明行（同一事务内）。
+**与 `staleAt` 的配合**：`staleAt` 是列不是状态，所以 `resolveOpenCard` 照常命中「有更新未处理」的卡，`publishOrAmend` **原地更新并清空 `staleAt`**（同一事务）。不需要额外的结算步骤，也不会出现两张活卡。
 
 ### 5.3 四个入口统一
 
@@ -316,7 +322,7 @@ supersedeOpenCards(tx, threadId, { exempt })
 - 不再自己 `findMany` / `findFirst` 找开放卡
 - 不再自己算 `amendsInteractionId`
 
-**编辑目标集合必须含 `stale`**：`edit_interaction` 可编辑的状态为 `collecting` / `ready_for_review` / `awaiting_approval` / **`stale`**。`threads.ts` 当前用 `status notIn ["cancelled","failed","unknown"]` 的宽查询，改窄时若漏掉 `stale`，编辑路径会在用户刚好发了新消息时失效（AC-8b）。
+**编辑目标集合不受 `staleAt` 影响**：`edit_interaction` 可编辑的是状态为 `collecting` / `ready_for_review` / `awaiting_approval` 的卡，**是否带 `staleAt` 都可编辑**。`threads.ts` 当前用 `status notIn ["cancelled","failed","unknown"]` 的宽查询；改窄时不要按 `staleAt` 过滤，否则编辑会在用户刚好发了新消息时失效（AC-8b）。
 
 ### 5.4 新消息结算（两段式，保护 `edit_interaction`）
 
@@ -326,12 +332,24 @@ supersedeOpenCards(tx, threadId, { exempt })
 
 | 阶段 | 触发 | 动作 |
 |---|---|---|
-| 第一段：软标记 | 用户新消息进入线程 | 本线程开放卡（`collecting` / `ready_for_review` / `awaiting_approval`）标为 **`stale`**，时间线不追加行 |
-| 第二段：硬结算 | 回合**推出替代卡**，或回合**结束时未触碰**该卡 | `stale` 卡转 `superseded`，时间线追加一行「已由更新的草稿替代」 |
+| 第一段：软标记 | 用户新消息进入线程 | 本线程开放卡写 `staleAt = now()`，`status` 不变，时间线不追加行 |
+| 第二段：硬结算 | 回合结束时，本回合快照内仍带同一 `staleAt` 的卡 | 转 `superseded`，时间线追加「已由更新的草稿替代」 |
 
-**`stale` 期间卡仍可编辑、仍可确认**——只显示一条轻提示「可能有更新」。若本回合 `edit_interaction` 命中该卡，**清除 `stale`，原地更新**，不产生 `superseded`。
+**`staleAt` 期间卡仍可编辑、仍可确认**——只显示一条轻提示「可能有更新」。三种操作会清空 `staleAt`（视作用户仍在用这张卡）：`edit_interaction` 命中、卡内字段修改、卡片确认。被清空的卡在第二段自然不匹配，不产生 `superseded`。
 
-**豁免项**（不进入任何一段）：
+**边界规则（评审补充，实现必须逐条满足）**：
+
+| # | 情形 | 正确处理 |
+|---|---|---|
+| E1 | 用户在回合运行中点「发送」 | 结算用 CAS：`WHERE status IN (开放态) AND staleAt = :snapshot`。卡已 `sent` → 不匹配 → **不会把已发的卡改成 `superseded`** |
+| E2 | 回合 A 很慢，期间用户发了消息并跑完回合 B | 第二段**只结算回合开始时快照里的 ID**，不是「此刻所有开放卡」，否则慢回合会误杀回合 B 新建的卡 |
+| E3 | 进程崩溃，`staleAt` 残留 | 下回合开始时先做 GC：`staleAt < 本回合开始时间` 的开放卡直接结算为 `superseded` |
+| E4 | 多张卡同时 stale（邮件 + 日历），模型只改了邮件 | 邮件清空 `staleAt`；日历回合结束结算为 `superseded`。内容不丢，历史投影含槽位（§6.7.1），用户说「恢复刚才那个日程」模型能重建 |
+| E5 | 同线程多张 stale 卡，模型调 `edit_interaction` 未指定 id | 沿用现有 `open.length === 1` 判定 → 多卡时要求显式 id，**不能靠猜** |
+| E6 | 用户问一句无关的话（「今天天气怎样」） | 草稿照样被结算为 `superseded`。这是**刻意对齐 Grok**（D4），不是 bug；内容保留在历史投影里可恢复 |
+| E7 | `needs_connection` / `unknown` | 不写 `staleAt`（D1/D2） |
+
+**豁免项**（不写 `staleAt`）：
 
 - `needs_connection`（D1）——等待连接是停机态
 - `unknown`（D2）——可能已发出，禁止自动结算
@@ -404,6 +422,8 @@ surfaceAffordanceFor(status): {
 }
 ```
 
+**`staleAt` 不进这个函数**。它只影响两处：卡头和状态行加一条轻提示「可能有更新」（`surfaceStaleHint`），以及时间的显示。可交互性、可编辑性、按钮文案**完全不变**——`collecting` 卡带着 `staleAt` 仍然不可确认（这正是把新鲜度做成列而不是状态的原因，见 §4.3）。
+
 | 状态 | interactive | 展示 |
 |---|---|---|
 | `collecting` / `ready_for_review` / `awaiting_approval` | 是 | 正常卡 |
@@ -436,6 +456,7 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 - `superseded`：「这张草稿已由更新的版本替代」
 - `expired`：「已过期，Bot 没有执行」
 - `unknown`：「正在确认是否已经发出，请不要重发」
+- `staleAt` 提示（非状态）：「可能有更新」
 
 ### 6.4 动作动词与按钮标签（缺口 2、3 修复）
 
@@ -585,7 +606,7 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 
 | 批 | 内容 | 目标 |
 |---|---|---|
-| **A 止血** | `cardKey` + 部分唯一索引 + 状态枚举（含 `stale`）+ 内核 + `publishOrAmend` + 四入口统一 | 重复推卡闭环 |
+| **A 止血** | `cardKey` + 部分唯一索引 + 状态枚举 + `staleAt` 列 + 内核 + `publishOrAmend` + 四入口统一 | 重复推卡闭环 |
 | **B 兑现** | `surfaceAffordanceFor` + `surfacePhase` + 文案/词表收敛 + 终态展示 + 按钮标签 + 类别小标签 + 标题形态 | 用户真看到一张卡 |
 | **C 加固** | 两段式新消息结算 + 连接卡续跑 + 事件表 + 历史投影（含关键槽位） | 结算、编辑、记忆、可追溯 |
 | **D 收敛** | 注册表 `cardKind` + 46 处 intent 判断收敛 + 批准菜单四项 + `Bot.draftsDisabled` | 加一种卡 ≤3 文件；对标 Grok 菜单 |
@@ -607,8 +628,11 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 | AC-5 | L1 | `needs_connection` / `unknown` 不被批量结算 | 表驱动测试 |
 | AC-6 | L2 | 不存在绕过 `settleInteraction` 的 status 写入 | 源码扫描测试 |
 | AC-7 | L2 | 连点两次确认，外部效果只有一次 | 幂等测试 |
-| AC-8 | L2 | 新消息后旧卡先为 `stale`，回合结束才 `superseded` | 集成测试 |
+| AC-8 | L2 | 新消息后旧卡带 `staleAt`，回合结束才 `superseded` | 集成测试 |
 | AC-8b | L2 | 「把主题改成 XX」后原卡被原地更新，**不产生新卡** | 集成测试（本轮最关键） |
+| AC-8c | L2 | 回合运行中确认已 stale 的卡，结算不把它改成 `superseded` | CAS 竞态测试 |
+| AC-8d | L2 | 慢回合不误杀后续回合新建的卡 | 快照 ID 测试 |
+| AC-8e | L2 | 残留 `staleAt` 在下一回合被 GC | 崩溃恢复测试 |
 | AC-9 | L2 | 连接完成后按存下的计划续跑，不重问模型 | 集成测试 |
 | AC-10 | L2 | 同线程两张结果卡并存（因结果卡终态入场，不受部分索引约束） | 回归测试 |
 | AC-11 | L2 | 新增一种卡种改动 ≤3 文件 | 以 `interaction.result` 为参照的清单检查 |
