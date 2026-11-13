@@ -141,6 +141,7 @@ export function surfaceCardIsLive(
 - **D1**：`needs_connection` 豁免于「新消息即失效」。理由：等待连接是停机态而非待确认动作；结算会导致授权返回后续跑找不到卡，只能重起模型回合并可能推出**不同的卡**。
 - **D2**：`unknown`（邮件结果存疑）既不参与结算也不参与过期。理由：它可能已经发出去了，任何自动结算都会对用户撒谎。
 - **D3**：不实现 `origin` / `expiresAt` / `actorUserId`。理由：当前无任何代码产出或消费（`apps/worker` 对 `interaction` 零引用），做了就是无人调用的代码 + 一个可能误伤的定时器。
+- **D4**：新消息结算用 **两段式**（`stale` 软标记 → `superseded` 硬结算），不是 Grok 文档描述的「新消息立即关闭旧卡」。理由：Matebot 的 `edit_interaction` 支持用自然语言改现有草稿，一步关闭会让每次编辑都换新卡，与本次目标相反。见 §5.4。
 
 ---
 
@@ -156,6 +157,8 @@ export function surfaceCardIsLive(
 - **G6** 邮件与日历共用同一套阶段/锁定/终态推导，各端只负责画。
 - **G7** 连接完成后**按存下的计划续跑**，不重新询问模型。
 - **G8** 按钮文案能表达「动词 + 对象」，且对象受控、动词白名单化。
+- **G9** 卡片批准菜单达到四项能力（允许收件人 / 需要批准 / 为此 Bot 关闭草稿 / 管理规则）。
+- **G10** 卡片历史投影含关键槽位，用户下一轮说「再发一封给同一个人」时模型能正确回应。
 
 ### 3.2 非目标
 
@@ -201,25 +204,30 @@ CREATE UNIQUE INDEX interactions_one_open_card_per_intent
 
 ### 4.3 状态机
 
-DB `status` 固定为 12 值枚举：
+DB `status` 固定为 14 值枚举：
 
-| 状态 | 性质 | 可确认 | 被新消息结算 | 自动过期 |
-|---|---|---|---|---|
-| `collecting` | 开放 | 否（缺字段） | 是 | — |
-| `ready_for_review` | 开放 | 是 | 是 | — |
-| `awaiting_approval` | 开放 | 是 | 是 | — |
-| `needs_connection` | 停机 | 否 | **否**（D1） | — |
-| `unknown` | 存疑 | 否 | **否**（D2） | **否**（D2） |
-| `sent` | 成功终态 | 否 | 否 | — |
-| `executed` | 成功终态 | 否 | 否 | — |
-| `succeeded` | 成功终态（邮件） | 否 | 否 | — |
-| `confirmed` | 终态 | 否 | 否 | — |
-| `superseded` | 新增终态 | 否 | — | — |
-| `expired` | 终态 | 否 | 否 | — |
-| `failed` | 失败终态 | 否 | 否 | — |
-| `cancelled` | 终态 | 否 | 否 | — |
+| 状态 | 性质 | 可确认 | 可编辑 | 被新消息结算 | 自动过期 |
+|---|---|---|---|---|---|
+| `collecting` | 开放 | 否（缺字段） | 是 | 是 | — |
+| `ready_for_review` | 开放 | 是 | 是 | 是 | — |
+| `awaiting_approval` | 开放 | 是 | 是 | 是 | — |
+| `stale` | **新增软状态** | 是 | **是** | 待定（见 §5.4） | — |
+| `needs_connection` | 停机 | 否 | 否 | **否**（D1） | — |
+| `unknown` | 存疑 | 否 | 否 | **否**（D2） | **否**（D2） |
+| `sent` | 成功终态 | 否 | 否 | 否 | — |
+| `executed` | 成功终态 | 否 | 否 | 否 | — |
+| `succeeded` | 成功终态（邮件） | 否 | 否 | 否 | — |
+| `confirmed` | 终态 | 否 | 否 | 否 | — |
+| `superseded` | 新增终态 | 否 | 否 | — | — |
+| `expired` | 终态 | 否 | 否 | 否 | — |
+| `failed` | 失败终态 | 否 | 否 | 否 | — |
+| `cancelled` | 终态 | 否 | 否 | 否 | — |
+
+**`stale` 是本次修正新增的软状态**：新用户消息到达时先把开放卡标为 `stale`（仍可编辑、仍可点，显示「可能有更新」），回合结束或推出替代卡时才转 `superseded`。原因见 §5.4——直接用 `superseded` 会打断 `edit_interaction`。
 
 **`unknown` 单独成行是本设计的重点**：`interaction-email-reconcile.ts` 用它表示「不确定邮件是否已发出」，此时禁止重发、转轮询。任何批量结算把它推成 `expired`，用户会看到「已过期」而邮件其实已发出。
+
+**`stale` 不在部分唯一索引的开放态列表里**：它只是标记「可能有更新」，不是新的开放态，索引不能因此放宽。
 
 ### 4.4 三套状态词表的关系
 
@@ -227,7 +235,7 @@ DB `status` 固定为 12 值枚举：
 
 | 层 | 取值 | 位置 | 本规格处理 |
 |---|---|---|---|
-| DB `status` | 12 值 | `schema.prisma` | **唯一真相**，枚举化 |
+| DB `status` | 14 值 | `schema.prisma` | **唯一真相**，枚举化 |
 | Block `lifecycle` | `draft`/`submitting`/`executing`/`succeeded`/`failed`/`unknown` | `contracts/interaction.ts:83` | 保留为**发布时快照**，由 `status` 派生 |
 | 读侧 `SurfaceStatus` | `draft`/`approved`/`executed` | `core/surface-revision.ts:12` | 保留为**读侧视图**，由内核单向映射 |
 
@@ -296,6 +304,10 @@ supersedeOpenCards(tx, threadId, { exempt })
 
 `openDraftId` 的手工查找**降级为快路径**，正确性由 §4.2 的索引保证。
 
+**与 `stale` 的配合（实现必须注意）**：`stale` 不在索引的开放态列表里，因此当旧卡已 `stale` 而模型推出替代卡时，`resolveOpenCard` 找不到它，会走「创建」分支。此时**必须显式把同 intent 的 `stale` 卡结算为 `superseded`**，否则会出现一张 `stale` 卡 + 一张新卡同时可交互——正是本规格要消灭的现象。
+
+顺序固定为：创建/更新 → 结算同 intent 的 `stale` 卡 → 追加时间线说明行（同一事务内）。
+
 ### 5.3 四个入口统一
 
 `present_interaction` / `edit_interaction` / `cancel_interaction` / dispatch 全部改走内核：
@@ -304,11 +316,45 @@ supersedeOpenCards(tx, threadId, { exempt })
 - 不再自己 `findMany` / `findFirst` 找开放卡
 - 不再自己算 `amendsInteractionId`
 
-### 5.4 新消息结算
+**编辑目标集合必须含 `stale`**：`edit_interaction` 可编辑的状态为 `collecting` / `ready_for_review` / `awaiting_approval` / **`stale`**。`threads.ts` 当前用 `status notIn ["cancelled","failed","unknown"]` 的宽查询，改窄时若漏掉 `stale`，编辑路径会在用户刚好发了新消息时失效（AC-8b）。
 
-用户新消息进入线程 → 内核把本线程可结算的开放卡（`collecting` / `ready_for_review` / `awaiting_approval`）转 `superseded` → 时间线追加一行说明。
+### 5.4 新消息结算（两段式，保护 `edit_interaction`）
 
-`needs_connection`（D1）与 `unknown`（D2）跳过。
+**为什么不能一步到位**：如果用户新消息一到就把开放卡转 `superseded`，那么「把主题改成 XX」这类自然语言编辑会先失去目标卡——内核找不到开放卡，只能新建一张。**每次编辑都换一张卡**，正是本规格要消灭的现象。`threads.ts` 当前用 `status notIn ["cancelled","failed","unknown"]` 查编辑目标，实施时若顺手把 `superseded` 加进去，编辑路径会彻底断掉。
+
+**两段式**：
+
+| 阶段 | 触发 | 动作 |
+|---|---|---|
+| 第一段：软标记 | 用户新消息进入线程 | 本线程开放卡（`collecting` / `ready_for_review` / `awaiting_approval`）标为 **`stale`**，时间线不追加行 |
+| 第二段：硬结算 | 回合**推出替代卡**，或回合**结束时未触碰**该卡 | `stale` 卡转 `superseded`，时间线追加一行「已由更新的草稿替代」 |
+
+**`stale` 期间卡仍可编辑、仍可确认**——只显示一条轻提示「可能有更新」。若本回合 `edit_interaction` 命中该卡，**清除 `stale`，原地更新**，不产生 `superseded`。
+
+**豁免项**（不进入任何一段）：
+
+- `needs_connection`（D1）——等待连接是停机态
+- `unknown`（D2）——可能已发出，禁止自动结算
+
+**已核实的安全项（必须写成不变量）**：卡片上的批准规则操作（允许收件人 / 管理规则 / 关闭草稿）走 `apps/api/src/routes/account.ts:272` 的账户设置 RPC，**不产生线程消息**，因此不进入本结算路径。任何将来把它改成走消息通道的改动都会让卡片在点击后消失——**禁止**。
+
+### 5.4.1 Bot 级关闭草稿（新能力）
+
+截图菜单里的「为此 Bot 关闭草稿」在 Matebot **没有底层开关**：`Bot` 表无相关字段，`ActionAutoReviewPreference.skipApprovals` 是「用户+空间」级而非 Bot 级。
+
+需要新增：
+
+- `Bot.draftsDisabled Boolean @default(false)`
+- `publishOrAmend` 前检查：若为 true 且 intent 是动作型，**跳过草稿卡**，走既有审批规则后直接执行
+- 卡片菜单提供「恢复草稿」反向操作
+
+**安全约束**：
+
+- 关闭草稿**不放宽批准规则**——仍需通过 `ActionApprovalRule` 判定
+- 只影响该 Bot，不影响同空间其他 Bot
+- `draftsDisabled` 变更写审计（沿用 `approval.policy.changed` 同类事件）
+
+这是四项补充里**唯一需要新数据列与执行路径变更**的，风险最高，建议最后一批做。
 
 ### 5.5 连接卡续跑（缺口 1 修复）
 
@@ -404,7 +450,20 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 
 **安全约束（必须写进实现）**：绝不允许模型直接提供按钮文案。审批按钮上的文字是钓鱼面——一个能写「点击领取」的按钮就是漏洞。对象只能取自已校验的标题字段。
 
-**标题形态**：动作型卡标题为问句（「要添加 Firecrawl 吗？」），结果型卡为名词短语。由 `cardKind` + 注册表模板生成，不由模型自由填。
+**标题形态：按「有没有内容要审阅」分，不是按 action/result 分。**
+
+这是对初版规则的修正。对比三张截图的真实形态：
+
+| 卡的形态 | 判定依据 | 标题 | 例子 | 按钮 |
+|---|---|---|---|---|
+| **审阅型** | 卡片承载具体内容供人判断 | 类别小标签 + 内容标题 | 邮件 / 产品发布；日历 / 11-23 周行程 | 动作动词（发送、创建） |
+| **决策型** | 卡片问「要不要做一个系统变更」 | 问句 | 要添加 Firecrawl 吗？ | 动词 + 对象（添加 Firecrawl） |
+
+初版写成「动作型 → 问句」，与截图不符：邮件卡是动作型却不是问句。正确判据是**卡上有没有可审阅内容**——有就是审阅型（名词短语），没有就是决策型（问句）。
+
+由注册表 `presentation` 派生，不由模型自由填。
+
+**类别小标签（截图里的「邮件」）**：卡片左上角显示意图的中文类别名（邮件 / 日历 / 任务结果），取自注册表 `label` 字段。当前 `InteractionCapability.label` 已有该字段（`"Email"` / `"Calendar"`），只是没渲染到卡上。
 
 ### 6.5 内容直出
 
@@ -414,19 +473,74 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 - 邮件：收件人、主题、正文、附件列表
 - 真实发件人邮箱：`senderAddress`（已实现，保留）
 
-### 6.6 终态卡展示
+### 6.6 卡片批准菜单（对标截图 3）
+
+现状只有两项，且「需要批准」是 disabled：
+
+```527:541:apps/web/src/components/a2ui/EmailComposeEditor.tsx
+      <DropdownMenuContent align="start" className="w-48">
+        <DropdownMenuItem disabled data-testid="a2ui-email-approval-require">
+          {t`Needs approval`}
+        </DropdownMenuItem>
+        {onManageRules ? (
+          <DropdownMenuItem data-testid="a2ui-email-manage-rules" onClick={onManageRules}>
+            {t`Manage rules`}
+```
+
+目标形态（四项，含当前项勾选）：
+
+| 菜单项 | 行为 | 底层 |
+|---|---|---|
+| 允许收件人 | 下次给该收件人免批 | `approvalRules.set`（已存在） |
+| 需要批准 ✓ | 当前态，disabled | — |
+| 为此 Bot 关闭草稿 | 该 Bot 以后直接发 | 新增 `Bot.draftsDisabled`（§5.4.1） |
+| 管理规则 | 打开设置页 Approvals | 已有 `onManageRules` |
+
+**约束**：
+
+- 菜单项是**账户设置操作**，不产生线程消息，不进入 §5.4 结算（已核实走 `account.ts:272` RPC）
+- 「允许收件人」只对**后续**的发信生效，**不跳过本张卡**——本卡仍需点发送
+- 手机端同一套四项，文案走本端 locale
+
+### 6.7 终态卡展示
 
 - 保留在时间线，灰显、无按钮
 - 折叠为一行：「[草稿已失效] 11/23 周 · 拉斯维加斯行程」
 - 服务端历史投影 `blocksToAgentHistoryText` 补终态，让模型知道旧卡已失效
 
-### 6.7 进度与结果是文字行，不是新卡
+### 6.7.1 历史投影必须带关键槽位
+
+现状投影行只有标题，模型看不见卡里的关键信息：
+
+```204:207:packages/core/src/attachments.ts
+      if (block.kind === "a2ui_surface") {
+        const intent = block.intent?.trim() || "a2ui_surface";
+        const state = block.lifecycle ?? "draft";
+        const hint = (block.summary ?? block.title)?.trim();
+        return hint ? `[card: ${intent} → ${state} (${hint})]` : `[card: ${intent} → ${state}]`;
+```
+
+实际进模型历史的是 `[card: email.compose → succeeded (产品发布)]`——**没有收件人 `418452732@qq.com`**。所以下一轮说「再发一封给同一个人」，模型只能猜。
+
+**修复**：动作型卡的投影行追加关键槽位摘要（来自 `slots`，脱敏、长度受控）：
+
+| 意图 | 必须出现的槽位 |
+|---|---|
+| `email.compose` | 收件人、主题 |
+| `calendar.create` | 事件数、时间范围 |
+| 其他动作型 | 注册表声明 `historyDigestFields` |
+
+格式示例：`[card: email.compose → succeeded (收件人 418452732@qq.com · 主题 产品发布)]`
+
+这是把 D1 的修复补完整：**有摘要不够，摘要必须含模型下一轮真正需要的东西**。
+
+### 6.8 进度与结果是文字行，不是新卡
 
 截图 2 的「我来添加 Firecrawl。」→「Firecrawl 已添加。」对应 Matebot 的 `message_user` 短意图 + 最终回复。
 
 **已满足，不要回退**：`interaction-email-outcome.ts` 用 `tx.interaction.updateMany` 原地更新卡状态，不新推结果卡。动作型卡执行后**只更新原卡 + 追加一句结果行**。
 
-### 6.8 三端一致
+### 6.9 三端一致
 
 | 端 | 改动 |
 |---|---|
@@ -471,12 +585,14 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 
 | 批 | 内容 | 目标 |
 |---|---|---|
-| **A 止血** | `cardKey` + 部分唯一索引 + 状态枚举 + 内核 + `publishOrAmend` + 四入口统一 | 重复推卡闭环 |
-| **B 兑现** | `surfaceAffordanceFor` + `surfacePhase` + 文案/词表收敛 + 终态展示 + 按钮标签 | 用户真看到一张卡 |
-| **C 加固** | 新消息结算 + 连接卡续跑 + 事件表 + 历史投影 | 结算、续跑、可追溯 |
-| **D 收敛** | 注册表 `cardKind` + 46 处 intent 判断收敛 | 加一种卡 ≤3 文件 |
+| **A 止血** | `cardKey` + 部分唯一索引 + 状态枚举（含 `stale`）+ 内核 + `publishOrAmend` + 四入口统一 | 重复推卡闭环 |
+| **B 兑现** | `surfaceAffordanceFor` + `surfacePhase` + 文案/词表收敛 + 终态展示 + 按钮标签 + 类别小标签 + 标题形态 | 用户真看到一张卡 |
+| **C 加固** | 两段式新消息结算 + 连接卡续跑 + 事件表 + 历史投影（含关键槽位） | 结算、编辑、记忆、可追溯 |
+| **D 收敛** | 注册表 `cardKind` + 46 处 intent 判断收敛 + 批准菜单四项 + `Bot.draftsDisabled` | 加一种卡 ≤3 文件；对标 Grok 菜单 |
 
 每批独立可验证、可上线、可回滚。
+
+**批内顺序建议**：C 批的「两段式结算」必须早于任何依赖 `superseded` 的功能上线，否则会先制造出「每次编辑换卡」的症状。D 批的 `Bot.draftsDisabled` 风险最高，单独做、最后做。
 
 ---
 
@@ -491,7 +607,8 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 | AC-5 | L1 | `needs_connection` / `unknown` 不被批量结算 | 表驱动测试 |
 | AC-6 | L2 | 不存在绕过 `settleInteraction` 的 status 写入 | 源码扫描测试 |
 | AC-7 | L2 | 连点两次确认，外部效果只有一次 | 幂等测试 |
-| AC-8 | L2 | 新消息后旧卡为 `superseded` | 集成测试 |
+| AC-8 | L2 | 新消息后旧卡先为 `stale`，回合结束才 `superseded` | 集成测试 |
+| AC-8b | L2 | 「把主题改成 XX」后原卡被原地更新，**不产生新卡** | 集成测试（本轮最关键） |
 | AC-9 | L2 | 连接完成后按存下的计划续跑，不重问模型 | 集成测试 |
 | AC-10 | L2 | 同线程两张结果卡并存（因结果卡终态入场，不受部分索引约束） | 回归测试 |
 | AC-11 | L2 | 新增一种卡种改动 ≤3 文件 | 以 `interaction.result` 为参照的清单检查 |
@@ -500,7 +617,10 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 | AC-14 | L3 | 状态文案只从 `surfaceStatusCopy` 取值 | 源码扫描 |
 | AC-15 | L3 | 按钮对象不可由模型自由提供 | 恶意输入测试 |
 | AC-16 | L3 | 历史投影含终态 | 单测 |
-| AC-17 | 全 | 全量测试通过 | CI |
+| AC-16b | L3 | 历史投影含收件人/主题等关键槽位 | 单测：断言 `418452732@qq.com` 出现在投影文本 |
+| AC-17 | L3 | 批准菜单四项齐全，且「允许收件人」不跳过本卡发送 | DOM 测试 |
+| AC-18 | L3 | 审阅型卡用「类别 + 内容」标题，决策型卡用问句 | 快照测试 |
+| AC-19 | 全 | 全量测试通过 | CI |
 
 ---
 
@@ -515,6 +635,8 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 | `surfaceCardIsLive` 被外部依赖 | 行为变化 | 转发实现，观察一轮再删 |
 | 按钮文案被滥用 | 钓鱼面 | 动词白名单 + 对象受控（AC-15） |
 | 三端渲染能力不一致 | 手机端显示缺失 | AC-12 三端快照 |
+| 两段式结算实现不完整，退化成「每次编辑换卡」 | 回到当前症状 | AC-8b 作为硬闸门 |
+| `Bot.draftsDisabled` 让 Bot 绕过草稿 | 误发风险 | 仍受批准规则约束；审计事件；只影响本 Bot |
 
 ---
 
