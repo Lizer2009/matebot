@@ -97,7 +97,7 @@ function buildDialogueScenario() {
 
   // 1. Email to a fixed address, subject and body supplied by the assistant.
   //    Tonight's mailbox was revoked while the local row still said connected.
-  const emailRequest = "帮我发邮件:给 418452732@qq.com 主题: 秋后问候，内容: 自理";
+  const emailRequest = "帮我发邮件:给 example@example.test 主题: 秋后问候，内容: 自理";
   const staleDraft = simulateEmailSurface({
     connection: "stale_local_connected",
     interactionStatus: "needs_connection",

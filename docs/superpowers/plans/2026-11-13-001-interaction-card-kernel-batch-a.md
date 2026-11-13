@@ -1172,7 +1172,7 @@ const plan = {
   intent: "email.compose",
   title: "产品发布",
   fields: [
-    { name: "to", value: "418452732@qq.com", required: true, status: "filled" as const },
+    { name: "to", value: "example@example.test", required: true, status: "filled" as const },
     { name: "subject", value: "产品发布", required: true, status: "filled" as const },
     { name: "body", value: "内容", required: true, status: "filled" as const },
   ],
@@ -1524,7 +1524,7 @@ const plan = {
   intent: "email.compose",
   title: "产品发布",
   fields: [
-    { name: "to", value: "418452732@qq.com", required: true, status: "filled" as const },
+    { name: "to", value: "example@example.test", required: true, status: "filled" as const },
     { name: "subject", value: "产品发布", required: true, status: "filled" as const },
     { name: "body", value: "内容", required: true, status: "filled" as const },
   ],
@@ -1545,7 +1545,7 @@ describe("present_interaction", () => {
       amended: true,
       missingRequired: [],
       plan,
-      slots: { to: "418452732@qq.com", subject: "产品发布", body: "内容" },
+      slots: { to: "example@example.test", subject: "产品发布", body: "内容" },
     });
     vi.doMock("./interaction-publish.js", async () => {
       const actual = await vi.importActual<typeof import("./interaction-publish.js")>(

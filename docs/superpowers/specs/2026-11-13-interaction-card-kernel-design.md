@@ -649,7 +649,7 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
         return hint ? `[card: ${intent} → ${state} (${hint})]` : `[card: ${intent} → ${state}]`;
 ```
 
-实际进模型历史的是 `[card: email.compose → succeeded (产品发布)]`——**没有收件人 `418452732@qq.com`**。所以下一轮说「再发一封给同一个人」，模型只能猜。
+实际进模型历史的是 `[card: email.compose → succeeded (产品发布)]`——**没有收件人 `example@example.test`**。所以下一轮说「再发一封给同一个人」，模型只能猜。
 
 **修复**：动作型卡的投影行追加关键槽位摘要（来自 `slots`，脱敏、长度受控）：
 
@@ -659,7 +659,7 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 | `calendar.create` | 事件数、时间范围 |
 | 其他动作型 | 注册表声明 `historyDigestFields` |
 
-格式示例：`[card: email.compose → succeeded (收件人 418452732@qq.com · 主题 产品发布)]`
+格式示例：`[card: email.compose → succeeded (收件人 example@example.test · 主题 产品发布)]`
 
 这是把 D1 的修复补完整：**有摘要不够，摘要必须含模型下一轮真正需要的东西**。
 
@@ -802,7 +802,7 @@ Grok：`When one of your Gmail accounts signs out, the Bot names that account`�
 | AC-14 | L3 | 状态文案只从 `surfaceStatusCopy` 取值 | 源码扫描 |
 | AC-15 | L3 | 按钮对象不可由模型自由提供 | 恶意输入测试 |
 | AC-16 | L3 | 历史投影含终态 | 单测 |
-| AC-16b | L3 | 历史投影含收件人/主题等关键槽位 | 单测：断言 `418452732@qq.com` 出现在投影文本 |
+| AC-16b | L3 | 历史投影含收件人/主题等关键槽位 | 单测：断言 `example@example.test` 出现在投影文本 |
 | AC-17 | L3 | 批准菜单四项齐全，且「允许收件人」不跳过本卡发送 | DOM 测试 |
 | AC-18 | L3 | 审阅型卡用「类别 + 内容」标题，决策型卡用问句 | 快照测试 |
 | AC-19 | L1 | 审批卡 30 分钟后被 worker 扫描为 `expired` | 时间推进测试 |
