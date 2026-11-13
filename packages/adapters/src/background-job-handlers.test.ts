@@ -16,6 +16,7 @@ import type * as ComputerControl from "./computer-control.js";
 import { expireComputerControl } from "./computer-control.js";
 import { createRunExecutor } from "./executor.js";
 import { compactHistory } from "./history-compaction.js";
+import { expireDueInteractions, expireInteraction } from "./interaction-expire.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
 import type { EncryptedSecretStore } from "./secrets.js";
 
@@ -27,6 +28,11 @@ vi.mock("./computer-control.js", async (importOriginal) => ({
 vi.mock("./messaging-delivery.js", () => ({
   deliverMessagingOutbound: vi.fn(async () => undefined),
   mirrorMessagingOutbound: vi.fn(async () => undefined),
+}));
+vi.mock("./interaction-expire.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./interaction-expire.js")>()),
+  expireInteraction: vi.fn(async () => ({ expired: true })),
+  expireDueInteractions: vi.fn(async () => ({ expired: [] })),
 }));
 
 const owner = { spaceId: "space-1", userId: "user-1" };
@@ -147,6 +153,39 @@ describe("createBackgroundJobHandlers", () => {
       expect(runtime.run).not.toHaveBeenCalled();
     },
   );
+
+  it("expires a due card through the interaction.expire job handler, not the sweep closer", async () => {
+    vi.mocked(expireInteraction).mockClear();
+    vi.mocked(expireDueInteractions).mockClear();
+    const prisma = {
+      interaction: {
+        findUnique: vi.fn(async () => ({
+          spaceId: owner.spaceId,
+          thread: { userId: owner.userId },
+        })),
+      },
+    } as unknown as PrismaClient;
+    const handlers = createBackgroundJobHandlers({
+      executor: { continueRun: vi.fn(async () => undefined) } as unknown as ReturnType<
+        typeof createRunExecutor
+      >,
+      prisma,
+      sandbox: {} as unknown as SandboxProvider,
+      home: {} as unknown as AgentHomeStore,
+      artifacts: {} as unknown as ArtifactStore,
+      jobs: {} as unknown as JobPublisher,
+      events: {} as unknown as ThreadEvents,
+      workerId: "worker-1",
+      runtime: {} as unknown as AgentRuntime,
+      secretStore: {} as unknown as EncryptedSecretStore,
+      memoryProviders: { resolve: vi.fn(async () => null) },
+    });
+
+    await handlers["interaction.expire"]({ interactionId: "ix-due" });
+
+    expect(expireInteraction).toHaveBeenCalledWith(prisma, "ix-due");
+    expect(expireDueInteractions).not.toHaveBeenCalled();
+  });
 
   it("runs a job as the tenant of the row it acts for, and skips one whose row is gone", async () => {
     const seen: unknown[] = [];
