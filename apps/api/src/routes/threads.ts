@@ -7,8 +7,10 @@ import {
   applyNaturalLanguageEdit,
   CALL_CLIENT_NONCE_PREFIX,
   callClientNonce,
+  EDITABLE_STATUSES,
   expandSkillReferencesInPrompt,
   interactionCapabilityForIntent,
+  isTerminalStatus,
   MODEL_REQUIRED_SEND_ERROR,
   QUEUE_HOLDING_RUN_STATUSES,
   timingFields,
@@ -82,6 +84,19 @@ import {
   SESSION_RECHECK_MS,
   THREAD_MESSAGE_PAGE_SIZE,
 } from "./shared.js";
+
+/**
+ * The read-side status of a card in the edit chooser.
+ *
+ * A status the kernel calls terminal can never be `draft`; deciding by "is this
+ * one of the two success states" left every unrecognised value (superseded,
+ * expired) looking editable.
+ */
+function surfaceStatusFor(status: string): "draft" | "approved" | "executed" {
+  if (status === "awaiting_approval") return "approved";
+  if (isTerminalStatus(status)) return "executed";
+  return "draft";
+}
 
 /** Deterministic nonce for a call's marker message. The unique (threadId, clientNonce)
  * index makes it the hang-up idempotency key, and the "call:" prefix lets clients derive
@@ -942,7 +957,10 @@ export function threadsRoutes(ctx: RouterContext) {
         const interactions = await deps.prisma.interaction.findMany({
           where: {
             threadId: target.threadId,
-            status: { notIn: ["cancelled", "failed", "unknown"] },
+            // Only a card the kernel still lets a person edit. The old query was a
+            // denylist, so `superseded` and `expired` stayed editable — and were
+            // then mapped to "draft" below.
+            status: { in: [...EDITABLE_STATUSES] },
           },
           orderBy: { updatedAt: "desc" },
           select: {
@@ -962,12 +980,7 @@ export function threadsRoutes(ctx: RouterContext) {
             surfaceId: row.surfaces[0]!.surfaceId,
             intent: row.intent,
             label: row.title ?? row.summary ?? row.intent,
-            status:
-              row.status === "succeeded"
-                ? ("executed" as const)
-                : row.status === "awaiting_approval"
-                  ? ("approved" as const)
-                  : ("draft" as const),
+            status: surfaceStatusFor(row.status),
           }));
         // The schema comes from the registry for the card being edited, so a
         // model cannot widen the fields by proposing them.
