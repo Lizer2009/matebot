@@ -11,6 +11,7 @@ import {
   historySlotsFromValues,
   interactionCapabilityForIntent,
   interactionSlotsFromPlan,
+  isEmailComposeIntent,
   planWithResumePlan,
   timingFields,
 } from "@matebot/core";
@@ -267,7 +268,7 @@ export async function publishInteractionSurface(
   slots: Record<string, unknown>;
 }> {
   const surfaceId = input.surfaceId?.trim() || `surface-${crypto.randomUUID()}`;
-  const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
+  const emailIntent = isEmailComposeIntent(input.plan.intent);
   const senderLabel = senderLabelForBlock(input.senderLabel);
   const senderAddress = senderAddressForBlock(input.senderAddress);
   const stamps = emailSurfaceBlockFields({
@@ -541,7 +542,7 @@ async function amendPublishedCard(
   });
   const surfaceId =
     input.surfaceId?.trim() || latestSurface?.surfaceId || `surface-${crypto.randomUUID()}`;
-  const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
+  const emailIntent = isEmailComposeIntent(input.plan.intent);
   const senderLabel = senderLabelForBlock(input.senderLabel);
   const senderAddress = senderAddressForBlock(input.senderAddress);
   const stamps = emailSurfaceBlockFields({

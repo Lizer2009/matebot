@@ -1,3 +1,4 @@
+import { isEmailComposeIntent } from "./interaction-capability.js";
 import type { InteractionStatus } from "./interaction-status.js";
 import { INTERACTION_STATUSES } from "./interaction-status.js";
 import type { EmailSurfaceLifecycle } from "./interaction-template.js";
@@ -37,9 +38,6 @@ export function isSurfaceTemplate(value: string): value is SurfaceTemplate {
 
 const KERNEL_STATUSES: ReadonlySet<string> = new Set(INTERACTION_STATUSES);
 
-function isEmailIntent(intent: string | undefined): boolean {
-  return intent === "email.compose" || intent === "email.send";
-}
 
 /**
  * The interaction's status onto the two fields a rendered block carries.
@@ -60,7 +58,7 @@ export function surfaceStampFor(input: { status: string; intent?: string }): {
   template: SurfaceTemplate;
 } {
   const { status } = input;
-  const email = isEmailIntent(input.intent);
+  const email = isEmailComposeIntent(input.intent);
 
   if (status === "submitting" || status === "executing") {
     return {

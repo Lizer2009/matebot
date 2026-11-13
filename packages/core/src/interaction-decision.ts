@@ -1,7 +1,7 @@
 import type { InteractionDecision } from "@matebot/contracts";
 import { InteractionDecisionSchema } from "@matebot/contracts";
 import type { InteractionCapability } from "./interaction-capability.js";
-import { findInteractionCapability } from "./interaction-capability.js";
+import { cardKindForIntent, findInteractionCapability } from "./interaction-capability.js";
 
 /**
  * Spec §6.3 — the structured decision the model proposes before a surface exists.
@@ -52,7 +52,7 @@ export function decidePresentation(input: {
   sourceAvailable: boolean;
   connectionReady: boolean;
 }): PresentationDecision {
-  if (!input.sourceAvailable && input.capabilityIntent === "interaction.result") {
+  if (!input.sourceAvailable && cardKindForIntent(input.capabilityIntent) === "result") {
     return { presentation: "text", reason: "source_unavailable" };
   }
   if (!input.connectionReady) {

@@ -18,9 +18,7 @@ export const EMPTY_EMAIL_DRAFT: EmailDraftFields = {
   body: "",
 };
 
-export function isEmailComposeIntent(intent: string | undefined): boolean {
-  return intent === "email.compose" || intent === "email.send";
-}
+export { isEmailComposeIntent } from "@matebot/core";
 
 /** Read compose slots from a compiled surface data model. Missing fields stay empty. */
 export function emailFieldsFromSurfaceMessages(messages: unknown[] | undefined): EmailDraftFields {

@@ -87,7 +87,9 @@ describe("when a card needs recovery", () => {
 
   it("says so for a draft that stored no controls", () => {
     expect(needsRecovery(legacy, { intent: "calendar.create" })).toBe(true);
+    expect(needsRecovery(legacy, { intent: "calendar.compose" })).toBe(true);
     expect(needsRecovery(legacy, { intent: "email.compose" })).toBe(true);
+    expect(needsRecovery(legacy, { intent: "email.send" })).toBe(true);
   });
 
   it("never says so for a result, which is read-only by design", () => {

@@ -1,3 +1,6 @@
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   canonicalIntent,
@@ -160,4 +163,51 @@ describe("capability registry", () => {
       }
     }
   });
+
+  it("does not special-case product intents outside the registry module", () => {
+    const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
+    const roots = [
+      "packages/core/src",
+      "packages/adapters/src",
+      "packages/a2ui-adapter/src",
+      "apps/api/src",
+      "apps/web/src",
+      "apps/mobile",
+    ];
+    const allow = new Set([
+      "packages/core/src/interaction-capability.ts",
+      "packages/core/src/interaction-capability.test.ts",
+    ]);
+    const classify = /(?<!\.kind\s*)(?<!\.kind\?)(?:===|!==)\s*"(?:email\.(?:compose|send)|calendar\.(?:create|compose|query)|interaction\.result)"/;
+    const localSet =
+      /(?:new\s+Set\([^)]*(?:email\.(?:compose|send)|calendar\.(?:create|compose))|FORM_INTENTS|EMAIL_NATIVE_INTENTS|CALENDAR_INTENTS)/;
+    const hits: string[] = [];
+    for (const root of roots) {
+      for (const file of listSourceFiles(join(repoRoot, root))) {
+        const rel = relative(repoRoot, file);
+        if (allow.has(rel) || /\.test\.(ts|tsx)$/.test(rel) || /\/e2e\//.test(rel)) continue;
+        const source = readFileSync(file, "utf8");
+        for (const [index, line] of source.split("\n").entries()) {
+          if (classify.test(line) || localSet.test(line)) {
+            hits.push(`${rel}:${index + 1}:${line.trim()}`);
+          }
+        }
+      }
+    }
+    expect(hits).toEqual([]);
+  });
 });
+
+function listSourceFiles(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir)) {
+    if (entry === "node_modules" || entry === "dist" || entry === "generated") continue;
+    const path = join(dir, entry);
+    if (statSync(path).isDirectory()) {
+      out.push(...listSourceFiles(path));
+      continue;
+    }
+    if (/\.(ts|tsx)$/.test(entry)) out.push(path);
+  }
+  return out;
+}

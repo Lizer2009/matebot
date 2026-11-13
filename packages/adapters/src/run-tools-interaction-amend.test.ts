@@ -129,6 +129,7 @@ function harness(occupying?: { id: string; status: string }) {
       ],
     },
     event: { create: async () => ({ id: "e", seq: 1 }) },
+    interactionEvent: { create: async () => ({ id: "ev-1" }) },
     $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),
     $executeRaw: async () => undefined,
   };

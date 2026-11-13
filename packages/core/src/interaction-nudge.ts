@@ -1,3 +1,5 @@
+import { isCalendarCreateIntent } from "./interaction-capability.js";
+
 /**
  * Copy shown while an A2UI surface is on screen. The card holds the fields and
  * the state, so the chat carries one line that points at it and nothing else:
@@ -54,7 +56,7 @@ export function surfaceNudgeFor(input: {
   }
   if (input.capability === "requires_reauth") return "reconnect";
   if (input.capability === "not_connected") return "awaiting_connection";
-  const calendar = input.intent === "calendar.create" || input.intent === "calendar.compose";
+  const calendar = isCalendarCreateIntent(input.intent);
   if (
     input.missingRequired?.some((name) =>
       calendar
@@ -69,7 +71,7 @@ export function surfaceNudgeFor(input: {
 
 /** The one line for this intent. Mail and calendar do not share a verb. */
 export function surfaceNudgeText(input: { state: SurfaceNudgeState; intent?: string }): string {
-  const calendar = input.intent === "calendar.create" || input.intent === "calendar.compose";
+  const calendar = isCalendarCreateIntent(input.intent);
   if (calendar && (input.state === "presented" || input.state === "incomplete")) {
     return CALENDAR_SURFACE_NUDGE[input.state];
   }

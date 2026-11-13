@@ -3,7 +3,7 @@ import {
   FLEET_TOOL_NAMES,
   FLEET_WRITE_TOOL_NAMES,
 } from "@matebot/contracts";
-import { isBackgroundRunTrigger, isOwnerStartedRun } from "@matebot/core";
+import { isBackgroundRunTrigger, isEmailComposeIntent, isOwnerStartedRun } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
@@ -208,7 +208,6 @@ export function followUpsOffered(
   );
 }
 
-const EMAIL_NATIVE_INTENTS = new Set(["email.compose", "email.send"]);
 const EMAIL_SHELL_ESCAPE_TOOLS = new Set(["shell", "user_computer_shell"]);
 
 /**
@@ -219,7 +218,7 @@ export function preferredToolForEmailIntent(
   intent: string,
   offeredToolNames: readonly string[],
 ): "present_interaction" | undefined {
-  if (!EMAIL_NATIVE_INTENTS.has(intent)) return undefined;
+  if (!isEmailComposeIntent(intent)) return undefined;
   return offeredToolNames.includes("present_interaction") ? "present_interaction" : undefined;
 }
 

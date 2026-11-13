@@ -1,3 +1,5 @@
+import { isActionIntent } from "./interaction-capability.js";
+
 /**
  * What a stored surface document can actually do.
  *
@@ -83,15 +85,7 @@ export function needsRecovery(
 ): boolean {
   if (!messages || messages.length === 0) return false;
   // A result is read-only on purpose; only a draft promises something to confirm.
-  if (options.intent && !FORM_INTENTS.has(options.intent)) return false;
+  if (options.intent && !isActionIntent(options.intent)) return false;
   const { editable, actionable } = surfaceAffordances(messages);
   return !editable && !actionable;
 }
-
-/** Intents whose card is a draft the reader is expected to fill in and confirm. */
-const FORM_INTENTS = new Set([
-  "calendar.create",
-  "calendar.compose",
-  "email.compose",
-  "email.send",
-]);

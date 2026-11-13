@@ -4,6 +4,8 @@ import type { EmailSurfaceCapability } from "@matebot/core";
 import {
   interactionRequiredApp,
   interactionSlotsFromPlan,
+  isCalendarCreateIntent,
+  isEmailComposeIntent,
   readConfirmedCalendarDraft,
   resumePlanForNeedsConnection,
   surfaceNudgeFor,
@@ -57,7 +59,7 @@ const CALENDAR_FIELDS: { name: string; required: boolean }[] = [
 
 /** Fill missing email.compose slots so the surface always has the draft fields. */
 export function normalizeEmailComposePlan(plan: InteractionPlan): InteractionPlan {
-  if (plan.intent !== "email.compose" && plan.intent !== "email.send") return plan;
+  if (!isEmailComposeIntent(plan.intent)) return plan;
   const byName = new Map(plan.fields.map((field) => [field.name, field]));
   const fields = [
     ...EMAIL_OPTIONAL_FIELDS.map((name) => {
@@ -80,7 +82,7 @@ export function normalizeEmailComposePlan(plan: InteractionPlan): InteractionPla
 
 /** Fill the calendar slots so the resumed surface always has the schema's fields. */
 export function normalizeCalendarPlan(plan: InteractionPlan): InteractionPlan {
-  if (plan.intent !== "calendar.create" && plan.intent !== "calendar.compose") return plan;
+  if (!isCalendarCreateIntent(plan.intent)) return plan;
   const byName = new Map(plan.fields.map((field) => [field.name, field]));
   const fields = CALENDAR_FIELDS.map((field) => {
     const existing = byName.get(field.name);

@@ -1,3 +1,4 @@
+import { isEmailComposeIntent } from "./interaction-capability.js";
 import { deliveryNeedsReconnect } from "./interaction-connection.js";
 import type { EmailSurfaceCapability } from "./interaction-preflight.js";
 import type { InteractionLifecycleStatus } from "./interaction-runtime.js";
@@ -55,7 +56,7 @@ export type EmailSurfaceTemplateInput = {
 };
 
 export function isEmailSurfaceIntent(intent: string | undefined): boolean {
-  return intent === "email.compose" || intent === "email.send";
+  return isEmailComposeIntent(intent);
 }
 
 const EXECUTION_STATUSES: ReadonlySet<InteractionLifecycleStatus> = new Set([

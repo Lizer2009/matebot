@@ -1,4 +1,4 @@
-import { findInteractionCapability } from "./interaction-capability.js";
+import { canonicalIntent, findInteractionCapability } from "./interaction-capability.js";
 import type { EmailConnectionSnapshot } from "./interaction-preflight.js";
 import {
   emailCapabilityAllowsSend,
@@ -276,9 +276,7 @@ export function simulateSendGate(input: { connection: SimulatedConnectionState }
 export type SimulatedApp = "email" | "calendar" | "none";
 
 export function simulatedApp(intent: string): SimulatedApp {
-  if (intent === "email.compose" || intent === "email.send") return "email";
-  if (intent.startsWith("calendar.")) return "calendar";
-  return "none";
+  return findInteractionCapability(canonicalIntent(intent))?.requiresConnection ?? "none";
 }
 
 /**

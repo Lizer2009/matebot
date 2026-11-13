@@ -467,9 +467,9 @@ export function reconcilePlanToSchema(
   // A calendar batch carries its dates inside `events`; the single-event slots stay empty.
   // Reporting them as required gaps told the model its complete card was incomplete, and it
   // filled one week-long placeholder to satisfy them.
-  const batchDraft =
-    (plan.intent === "calendar.create" || plan.intent === "calendar.compose") &&
-    Boolean(calendarBatchItems(fields.find((field) => field.name === "events")?.value));
+  const batchDraft = Boolean(
+    calendarBatchItems(fields.find((field) => field.name === "events")?.value),
+  );
   for (const field of fields) {
     const empty = isEmptyFieldValue(field.value);
     if (empty) {

@@ -1,5 +1,5 @@
 import type { ResultSourceRead } from "@matebot/core";
-import { queryResultSource, windowDecision } from "@matebot/core";
+import { cardKindForIntent, queryResultSource, windowDecision } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import type { publishResultSurface } from "./interaction-result-publish.js";
 import { calendarResultReader } from "./result-source-calendar.js";
@@ -241,7 +241,7 @@ export function refreshResultServices(ctx: RunContext): RefreshResultServices {
         select: { id: true, title: true, intent: true },
       });
       return rows
-        .filter((row) => row.intent === "interaction.result")
+        .filter((row) => cardKindForIntent(row.intent) === "result")
         .map((row) => ({ taskId: row.id, label: row.title ?? row.id }));
     },
     read: async (input) => {
