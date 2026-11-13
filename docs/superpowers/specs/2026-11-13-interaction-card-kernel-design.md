@@ -133,16 +133,21 @@ export function surfaceCardIsLive(
 | 动作动词 | 按动作换词 | 对齐 |
 | 内容直出 | 是 | 对齐 |
 | 执行旁路 | 待审阅时禁止直连 | 对齐 |
-| 卡片过期 | 对话起源不计时；后台起源 30 分钟 | **本轮不做**（无后台出卡路径） |
+| 卡片过期 | 对话起源不计时；后台起源 30 分钟 | **对齐**（审批卡 30 分钟，见 §4.3.1） |
+| 过期卡可重试 | 是（`Check price again`） | 对齐（见 §6.7） |
+| 同信息不重复呈现 | 卡已显示则隐藏横幅 | 对齐（见 §6.10） |
+| 连接卡指名账号 | 是（多 Gmail 分别命名） | 对齐（见 §5.5） |
 | 卡协议字段 | 建议 envelope | 只取被现有代码证明需要的部分 |
 
 **有意偏离清单（必须显式记录）**
 
 - **D1**：`needs_connection` 豁免于「新消息即失效」。理由：等待连接是停机态而非待确认动作；结算会导致授权返回后续跑找不到卡，只能重起模型回合并可能推出**不同的卡**。
 - **D2**：`unknown`（邮件结果存疑）既不参与结算也不参与过期。理由：它可能已经发出去了，任何自动结算都会对用户撒谎。
-- **D3**：不实现 `origin` / `expiresAt` / `actorUserId`。理由：当前无任何代码产出或消费（`apps/worker` 对 `interaction` 零引用），做了就是无人调用的代码 + 一个可能误伤的定时器。
+- **D3**（**已修订**）：最初打算连 `expiresAt` 一起裁掉，理由是「无生产者、无消费者」。**该判断被官方更新日志推翻**——Grok 把审批卡有效期做成产品级参数（`Auto-review approval cards stay open for 30 minutes instead of 10`），说明这是真实产品行为而非可省略的字段。现只裁 `origin` / `actorUserId`（这两项确实零生产者零消费者），**保留并启用 `expiresAt`**，见 §4.3.1。
 - **D4**：新消息结算用 **两段式**（写 `staleAt` 软标记 → 回合结束 `superseded` 硬结算），不是 Grok 文档描述的「新消息立即关闭旧卡」。理由：Matebot 的 `edit_interaction` 支持用自然语言改现有草稿，一步关闭会让每次编辑都换新卡，与本次目标相反。软标记用 `Interaction.staleAt` 列而非新增 `status` 值——后者会让 `collecting` 卡误变为可确认、并让唯一索引失效。见 §5.4。
 - **D5**：无关新消息也会结算掉草稿（E6）。刻意对齐 Grok；代价是「随口问一句」会关掉草稿，缓解手段是内容保留在历史投影里可恢复。
+- **D6**：卡片过期**必须由 worker 定时任务驱动**，用 `expiresAt` 列 + 扫描实现，不用内存定时器。理由：进程重启会丢内存定时器，而卡状态是持久的，两者不可混用。
+- **D7**：过期卡**仍可重试**，不视为「完全终态」。Grok 用 `Check price again` 的做法证明：过期只表示「内容可能陈旧」，不表示「这个需求作废」。这与 `superseded`（被替代，不再重试）必须区分。
 
 ---
 
@@ -160,16 +165,72 @@ export function surfaceCardIsLive(
 - **G8** 按钮文案能表达「动词 + 对象」，且对象受控、动词白名单化。
 - **G9** 卡片批准菜单达到四项能力（允许收件人 / 需要批准 / 为此 Bot 关闭草稿 / 管理规则）。
 - **G10** 卡片历史投影含关键槽位，用户下一轮说「再发一封给同一个人」时模型能正确回应。
+- **G11** 所有**带确认/执行生命周期**的卡片共用同一个内核，不再按渲染技术分家。
+- **G12** 同一场景只有**一条**出卡路径（连接、审批、问答各自唯一）。
+- **G13** 审批卡有明确有效期，过期后可重试而非报废。
+- **G14** 同一信息不会同时以文字和卡片出现两次。
+- **G15** 卡片拿不到数据时降级为纯文本，不显示坏卡。
+- **G16** 多账号场景下，连接卡指名具体账号。
 
 ### 3.2 非目标
 
 - 不改发信、确认、执行的协议与授权模型。
-- 不重做 A2UI 协议或渲染技术栈。
-- 不引入 Grok 的 11 类卡片分类法。
+- 不重做 A2UI 协议或渲染技术栈——但**非 A2UI 卡片的状态判定要接入本内核**（见 §3.3）。
+- 不引入 Grok 的采购/会议/Vault 等**业务卡种**（这些需要 Matebot 没有的商业能力）。
 - 不做 Firecracker / 云电脑 / Vault 相关。
 - 不引入 LLM judge 或第二次模型调用。
 - 不新增团队协作、采购、会议卡种。
 - 不修本文 §12 列出的既有缺陷。
+
+### 3.3 L0 卡片分类学（覆盖范围）
+
+初版规格只治理 A2UI 的 4 种交互卡，而 Matebot 实际渲染 **25 种消息块**。只治理 4 种等于承认另外 21 种各自为政——而**恰恰是这 21 种里带生命周期的那些，构成了重复推卡的另一半战场**（Grok 更新日志里 `one reconnect card instead of several` 就是同一个病）。
+
+本节定义**哪些卡归内核管、哪些不归**。
+
+**分类依据**：不是渲染技术（A2UI / RN / Web），而是**有没有「等用户决定 → 执行 → 落终态」的生命周期**。
+
+| 分组 | 含义 | 归内核管 | 块类型 |
+|---|---|---|---|
+| **L0-A 交互型** | 有确认/执行生命周期，状态会变，需要结算 | **是** | `a2ui_surface`（4 intent）、`choice`、`ask`（含 `approvalEffectId`）、`app_connect`、`connect`、`mcp_approval` |
+| **L0-B 过程型** | 只表达进行中，无用户决定 | 否（只读展示） | `progress`、`steps`、`subagent`、`child_bot`、`cloud_agent`、`handoff`、`skill_draft`、`import_setup` |
+| **L0-C 内容型** | 只承载内容，无状态机 | 否 | `text`、`card`、`image`、`file`、`page`、`chart`、`meta`、`channel_message`、`bot_message_sent`、`bot_message_received` |
+| **L0-D 设备/通话型** | 有状态但由设备侧驱动 | **部分**（见 §3.3.2） | `computer`、`voice_call`、`call_request` |
+
+#### 3.3.1 归内核管意味着什么
+
+L0-A 的每种块都必须满足四条，否则不算接入：
+
+1. **有 `cardKey`**：同线程同场景只能有一张活的（复用 §4.1 的 `sha256(threadId + "\0" + intent)`，`intent` 取块的语义名如 `connect.gmail`、`approval.effect`、`question.clarify`）。
+2. **状态落在 §4.3 的 13 值枚举**：不得自造 `pending` / `connected` 之类的私有状态词。
+3. **终态经 `settleInteraction`**：不得直接改块的 `status` 字段。
+4. **可交互性由 `surfaceAffordanceFor` 决定**：不得由各端自己判断。
+
+#### 3.3.2 现状：三套机制重复覆盖同一场景（必须收口）
+
+这是本次扩围要解决的核心缺陷。三个场景各有 2–3 套并行机制：
+
+| 场景 | 机制 A | 机制 B | 机制 C | 收口方向 |
+|---|---|---|---|---|
+| 需要连接账号 | `connect` 块<br>`status: pending \| connected` | `app_connect` 块<br>`status: connected \| pending` | A2UI 卡 `needs_connection` | **统一为 `needs_connection` 状态**，两类连接块降级为「该状态的渲染形态」 |
+| 需要批准 | `ask` 块 + `approvalEffectId` | `mcp_approval` 块 | A2UI 卡 `awaiting_approval` | **统一为 `awaiting_approval` 状态**，块只提供渲染差异 |
+| 需要回答 | `ask` 块（自由文本） | `choice` 块（选项） | — | 两者合并为 `question` 语义，由 `choice.options` 是否存在决定形态 |
+
+**收口方式（重要）**：不是把三种块删掉重写，而是**让它们成为同一内核状态的三种视图**。即：
+
+```
+内核 Interaction 行（唯一真相：status / cardKey / expiresAt）
+        ↓ 派生
+渲染块（connect / app_connect / ask / choice / mcp_approval / a2ui_surface）
+```
+
+块的 `status` 字段改为**由内核状态派生的只读快照**（与 §4.4 对 block `lifecycle` 的处理一致），不再独立可变。
+
+#### 3.3.3 明确不做的部分
+
+- L0-B/C 不接入内核：它们没有「等用户决定」的语义，硬套状态机是过度设计。
+- `computer` / `voice_call` / `call_request` 只接入**终态投影**（通话结束、机器休眠），不接入确认生命周期——它们的「进行中」由设备通道驱动，不是卡状态。
+- L0-A 接入**不新增业务卡种**：Grok 的采购、订单、会议卡需要 Matebot 没有的商业能力，不在讨论范围。
 
 ---
 
@@ -236,6 +297,22 @@ DB `status` 固定为 13 值枚举：
 用 `staleAt` 列则：状态机不动、索引不动、affordance 不动，`publishOrAmend` 照常原地更新并清空 `staleAt`。
 
 **`unknown` 单独成行是本设计的重点**：`interaction-email-reconcile.ts` 用它表示「不确定邮件是否已发出」，此时禁止重发、转轮询。任何批量结算把它推成 `expired`，用户会看到「已过期」而邮件其实已发出。
+
+### 4.3.1 有效期（`expiresAt`）
+
+Grok 的更新日志把审批卡有效期当产品参数调（`stay open for 30 minutes instead of 10`），说明「卡会过期」是真实需求。新增 `Interaction.expiresAt DateTime?`：
+
+| 状态 | 默认有效期 | 依据 |
+|---|---|---|
+| `awaiting_approval` | **30 分钟** | 对齐 Grok 当前值；短于此用户来不及处理，长于此批准失去时效意义 |
+| `ready_for_review` | 无 | 用户在编辑自己的草稿，不该被夺走 |
+| `collecting` | 无 | 同上 |
+| `needs_connection` | 无（用 `Still signing in?` 文案替代，见 §6.11） | 登录耗时不可控，强制过期会打断授权 |
+| `unknown` | 无（D2） | 可能已发出 |
+
+**过期由 worker 定时扫描驱动**（D6）：`expiresAt < now()` 且仍在开放态 → `settleInteraction` 转 `expired`。不用内存定时器。
+
+**过期 ≠ 作废**（D7）：`expired` 卡展示**重试入口**，点击重新发起同一意图（复用 `cardKey`，原地复活或新建一张），见 §6.7。
 
 ### 4.4 三套状态词表的关系
 
@@ -387,6 +464,8 @@ Call present_interaction once for the ${subject} ...
 
 **修复**：发布 `needs_connection` 卡时把续跑计划存到卡上（`plan.nextStepPayload` 或独立列 `resumePlan`）。连接完成后按存下的计划原地恢复该卡，**不再询问模型**。
 
+**`resumePlan` 必须含账号身份**（§6.13）：`{ provider, accountId, displayEmail, intent, slots }`。多 Gmail 场景下只存 `provider` 会导致续跑连错账号——这是比多出一张卡更严重的问题。
+
 模型「重新推卡」的路径降级为兜底：仅当卡上没有存计划时才走。
 
 ### 5.6 注册表扩展：动作型 / 内容型
@@ -431,7 +510,21 @@ surfaceAffordanceFor(status): {
 | `unknown` | 否 | 「结果不确定，正在确认」 |
 | `sent` / `executed` / `succeeded` / `confirmed` | 否 | 结果态 |
 | `superseded` | 否 | 折叠灰显 |
-| `expired` / `failed` / `cancelled` | 否 | 折叠灰显，带原因 |
+| `expired` | **仅重试动作**（D7） | 折叠灰显 + 「重新发起」 |
+| `failed` | **仅重试动作** | 折叠灰显 + 「重试」 |
+| `cancelled` | 否 | 折叠灰显，带原因 |
+
+**`reasonKey` 不是占位符——必须有明确分类。** Grok 的规则是 `Auto-review cards say what paused an action: your Ask first rule, your team's Ask first rule, or your Needs approval setting`。用户必须知道**是谁**让这张卡停在这里，否则无法判断该改什么。
+
+| `reasonKey` | 触发来源 | 展示文案 |
+|---|---|---|
+| `rule.user` | 用户自己的 Ask first 规则 | 「你的规则要求先确认」 |
+| `rule.team` | 团队空间的强制规则 | 「团队的规则要求先确认」 |
+| `setting.approval` | 用户设置里的「需要批准」 | 「你的设置要求先确认」 |
+| `effect.irreversible` | 不可撤销动作的硬性要求 | 「这一步不能撤销，需要你确认」 |
+| `effect.amount` | 涉及金额/额度阈值 | 「涉及金额，需要你确认」 |
+
+`reasonKey` 由内核在发布时算定并随卡存储，**不由前端猜、不由模型填**。文案走本端 locale。
 
 `surfaceCardIsLive` **保留函数名**，内部转发到新判定，观察一轮后删除。
 
@@ -529,6 +622,17 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 - 折叠为一行：「[草稿已失效] 11/23 周 · 拉斯维加斯行程」
 - 服务端历史投影 `blocksToAgentHistoryText` 补终态，让模型知道旧卡已失效
 
+**`expired` 例外——必须给重试入口**（D7，对标 Grok 的 `Check price again`）：
+
+| 状态 | 按钮 | 点击行为 |
+|---|---|---|
+| `superseded` | 无 | 内容已被替代，重试只会制造重复卡 |
+| `expired` | **重新发起**（动词受控，见 §6.4） | 复用原 `cardKey`，以原 `plan` + `slots` 重新发起，不询问模型 |
+| `failed` | **重试** | 重跑同一计划 |
+| `cancelled` | 无 | 用户主动放弃 |
+
+`expired` 的重试**不新建卡**：原卡原地从 `expired` 回到开放态（`expiresAt` 重置）。这是 `cardKey` 设计的直接收益——**同一个 key 让它能「复活」而不是「繁殖」**。
+
 ### 6.7.1 历史投影必须带关键槽位
 
 现状投影行只有标题，模型看不见卡里的关键信息：
@@ -561,13 +665,64 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 
 **已满足，不要回退**：`interaction-email-outcome.ts` 用 `tx.interaction.updateMany` 原地更新卡状态，不新推结果卡。动作型卡执行后**只更新原卡 + 追加一句结果行**。
 
-### 6.9 三端一致
+### 6.10 同一信息不得重复呈现
+
+Grok 的规则：`The usage warning banner hides when the open chat already shows a usage-limit card`。
+
+推广为通用规则：**同一条信息只允许一种主要呈现形态。**
+
+| 场景 | 错误做法 | 正确做法 |
+|---|---|---|
+| 有卡在手 | 卡 + 额外横幅/提示条 | 只留卡 |
+| 卡已终态 | 终态卡 + 「已完成」气泡 | 终态卡折叠成一行，不再追加气泡 |
+| 待确认 | 卡 + 「请点击发送」独立消息 | 卡内页脚一句（`surfaceNudgeText`） |
+| 用量超限 | 横幅 + 用量卡 | 只留卡 |
+
+**判定**：同一次回合内，若某信息已由卡片承载，则 `message_user` 不得再输出同义文本。§6.8 是这条规则在「结果」上的特例（结果是文字行而非新卡），本规则是它的**反向约束**（已有卡时不要再补文字）。
+
+### 6.11 卡片等待中的文案阶段
+
+Grok 用文案而非新卡表达等待：`After 10 minutes, a connect card asks Still signing in?`
+
+| 卡种 | 等待阶段文案 | 依据 |
+|---|---|---|
+| 连接卡 | < 10 分钟：正常等待<br>≥ 10 分钟：「还在登录吗？」+ 重新登录入口 | 对齐 Grok 的 10 分钟阈值 |
+| 审批卡 | 剩余时间 > 5 分钟：正常<br>≤ 5 分钟：「还剩 N 分钟」 | 与 30 分钟有效期配套（§4.3.1） |
+| 执行中卡 | 超过 30 秒：「仍在处理」 | 防止用户以为卡死 |
+
+**全部是卡内文案变化，不推新卡**——与 §6.10 的去重规则同源。
+
+### 6.12 卡加载失败降级为纯文本
+
+Grok：`A pull request chip whose status can't load stays plain in the sentence, and its hover card offers Try again`。
+
+规则：
+
+- 卡的数据请求失败 → **不渲染残缺卡**，降级为一句纯文本
+- 文本必须仍然可读、不丢关键槽位（与 §6.7.1 同源）
+- 提供轻量重试入口（悬浮「重试」而非重新拉整张卡）
+- **不允许**渲染空壳卡、骨架屏无限转圈、或显示内部错误码
+
+### 6.13 多账号必须指名
+
+Grok：`When one of your Gmail accounts signs out, the Bot names that account`。
+
+| 要求 | 说明 |
+|---|---|
+| 连接卡标题含账号邮箱 | 「重新连接 searcheasyhub@gmail.com」而非「重新连接 Gmail」 |
+| 卡片槽位存 `accountId` + `displayEmail` | 续跑时按账号恢复，不能笼统恢复 |
+| 两个同名 provider 同时断开 | 出两张卡各指名一个账号，**不得合并成一张**「重新连接 Gmail」 |
+
+这条同时修正 §5.5 的续跑计划：`resumePlan` 必须含账号身份，见下。
+
+### 6.14 三端一致
 
 | 端 | 改动 |
 |---|---|
 | Web / 桌面 | 调用 core 的 affordance + phase + copy，删本地判定 |
 | Mobile | 同上，补 `event-list` 与日历阶段渲染 |
 | 服务端投影 | `blocksToAgentHistoryText` 补 `superseded`/`expired`/`unknown` |
+| Web / Mobile 共同 | 卡加载失败降级纯文本（§6.12）；同信息去重（§6.10）；`expired` 重试入口（§6.7） |
 
 ---
 
@@ -578,7 +733,7 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 | 功能 | 依据 |
 |---|---|
 | Slack / Telegram / WhatsApp / Discord 等渠道 | 对 `a2ui_surface` / `present_interaction` **零引用**，不走卡片体系 |
-| 定时任务 / 例行 / worker | `apps/worker` 对 `interaction` **零引用**，无定时出卡路径 |
+| 定时任务 / 例行 / worker | 现状对 `interaction` **零引用**；本规格**新增**一个只扫 `expiresAt` 的过期任务（§4.3.1），不触及例行/记忆/文件逻辑 |
 | Bot 记忆、文件、Pages、语音、通话 | 不在 `interaction` 表路径上 |
 | A2UI 协议 | 不改 `protocolFamily` 与 `document` 结构 |
 | 客户端渲染契约 | 客户端不读 DB `status`，只读 `block.lifecycle` |
@@ -606,10 +761,11 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 
 | 批 | 内容 | 目标 |
 |---|---|---|
-| **A 止血** | `cardKey` + 部分唯一索引 + 状态枚举 + `staleAt` 列 + 内核 + `publishOrAmend` + 四入口统一 | 重复推卡闭环 |
+| **A 止血** | `cardKey` + 部分唯一索引 + 状态枚举 + `staleAt` 列 + `expiresAt` 列 + 内核 + `publishOrAmend` + 四入口统一 | 重复推卡闭环 |
 | **B 兑现** | `surfaceAffordanceFor` + `surfacePhase` + 文案/词表收敛 + 终态展示 + 按钮标签 + 类别小标签 + 标题形态 | 用户真看到一张卡 |
 | **C 加固** | 两段式新消息结算 + 连接卡续跑 + 事件表 + 历史投影（含关键槽位） | 结算、编辑、记忆、可追溯 |
 | **D 收敛** | 注册表 `cardKind` + 46 处 intent 判断收敛 + 批准菜单四项 + `Bot.draftsDisabled` | 加一种卡 ≤3 文件；对标 Grok 菜单 |
+| **E 全场景** | L0-A 收口：`choice` / `ask` / `app_connect` / `connect` / `mcp_approval` 接入内核；三套连接机制合一（§3.3.2） | 25 种块一套规则 |
 
 每批独立可验证、可上线、可回滚。
 
@@ -636,7 +792,7 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 | AC-9 | L2 | 连接完成后按存下的计划续跑，不重问模型 | 集成测试 |
 | AC-10 | L2 | 同线程两张结果卡并存（因结果卡终态入场，不受部分索引约束） | 回归测试 |
 | AC-11 | L2 | 新增一种卡种改动 ≤3 文件 | 以 `interaction.result` 为参照的清单检查 |
-| AC-12 | L3 | `superseded`/`expired` 三端均不可交互 | 三端快照测试 |
+| AC-12 | L3 | `superseded` 三端不可交互；`expired`/`failed` 有且仅有重试入口 | 三端快照测试 |
 | AC-13 | L3 | 日历与邮件走同一 `surfacePhase` | 表驱动测试 |
 | AC-14 | L3 | 状态文案只从 `surfaceStatusCopy` 取值 | 源码扫描 |
 | AC-15 | L3 | 按钮对象不可由模型自由提供 | 恶意输入测试 |
@@ -644,7 +800,15 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 | AC-16b | L3 | 历史投影含收件人/主题等关键槽位 | 单测：断言 `418452732@qq.com` 出现在投影文本 |
 | AC-17 | L3 | 批准菜单四项齐全，且「允许收件人」不跳过本卡发送 | DOM 测试 |
 | AC-18 | L3 | 审阅型卡用「类别 + 内容」标题，决策型卡用问句 | 快照测试 |
-| AC-19 | 全 | 全量测试通过 | CI |
+| AC-19 | L1 | 审批卡 30 分钟后被 worker 扫描为 `expired` | 时间推进测试 |
+| AC-20 | L3 | `expired` 卡重试复用原 `cardKey`，不产生第二张卡 | 集成测试 |
+| AC-21 | L3 | 同信息不同时以文字与卡呈现 | 回合级断言测试 |
+| AC-22 | L3 | 卡数据加载失败降级为纯文本，不含内部错误码 | 故障注入测试 |
+| AC-23 | L3 | 多账号断开时各出一张指名账号的卡，不合并 | 快照测试 |
+| AC-24 | L2 | `reasonKey` 由内核算定，前端与模型均不可覆盖 | 源码扫描 + 恶意输入测试 |
+| AC-25 | L0 | L0-A 的 6 种块全部经 `settleInteraction` 落终态 | 源码扫描（按块类型枚举） |
+| AC-26 | L0 | 连接场景只有一条出卡路径（`needs_connection`） | 集成测试：同一需求只产生一张连接卡 |
+| AC-27 | 全 | 全量测试通过 | CI |
 
 ---
 
@@ -661,6 +825,10 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 | 三端渲染能力不一致 | 手机端显示缺失 | AC-12 三端快照 |
 | 两段式结算实现不完整，退化成「每次编辑换卡」 | 回到当前症状 | AC-8b 作为硬闸门 |
 | `Bot.draftsDisabled` 让 Bot 绕过草稿 | 误发风险 | 仍受批准规则约束；审计事件；只影响本 Bot |
+| L0-A 收口触碰 25 种块中的 6 种 | 影响面大、回归广 | E 批单独立项；每块先加「派生式 status」再切读路径 |
+| 审批卡过期误伤正在处理的用户 | 用户操作中断 | 30 分钟对齐 Grok；卡内倒计时提示（§6.11）；过期可重试（D7） |
+| worker 定时扫描把所有开放卡误结算 | 大面积失效 | 只扫 `expiresAt IS NOT NULL`；`unknown`/`needs_connection` 恒为 NULL |
+| 降级为纯文本后信息丢失 | 用户看不到内容 | 降级文本必须含关键槽位（AC-22） |
 
 ---
 
@@ -687,3 +855,25 @@ surfaceStatusCopy(status, intent): { titleKey, bodyKey?, actionKey? }
 - 部分唯一索引的 migration 是否需要在 `prisma migrate` 之后追加一步校验脚本（当前倾向：CI 里跑索引存在性测试，不改迁移流程）。
 - 按钮对象字段的长度与字符过滤规则具体取值。
 - `interaction_events` 的保留期与审计导出的关系（当前倾向：先不设保留期，与 `audit_events` 分开）。
+
+---
+
+## 14. 对标来源与逐条处置（`x.ai/changelog/bot`）
+
+本规格第二轮评审逐条核对了 Grok Bot 官方更新日志，共发现 11 条与卡片表现层相关、初版规格未覆盖的行为。处置如下，便于后续核对不再遗漏：
+
+| # | 更新日志行为 | 初版规格 | 处置 | 落点 |
+|---|---|---|---|---|
+| 1 | 审批卡 30 分钟有效期 | 裁掉 `expiresAt`（D3） | **推翻裁剪**，恢复并启用 | §4.3.1 |
+| 2 | 过期卡给 `Check price again` | 定性为完全终态、不可交互 | **改为可重试** | §6.7、D7 |
+| 3 | `one reconnect card instead of several` | 未覆盖连接卡 | 收口三套连接机制 | §3.3.2、AC-26 |
+| 4 | 横幅在卡已显示时隐藏 | 未覆盖 | 新增去重规则 | §6.10、AC-21 |
+| 5 | 卡说明**为何**暂停（你的规则/团队规则/设置） | 只有裸 `reasonKey` | 补齐原因分类表 | §6.1、AC-24 |
+| 6 | 连接卡指名账号 | `resumePlan` 无账号 | 补账号身份 | §6.13、§5.5 |
+| 7 | `Still signing in?`（10 分钟） | 未覆盖 | 新增等待阶段文案 | §6.11 |
+| 8 | `Something else` / 多问步进 | 未覆盖 | `choice` + `ask` 合并为 question 语义 | §3.3.2 |
+| 9 | 卡加载失败降级为纯文本 | 未覆盖 | 新增降级规则 | §6.12、AC-22 |
+| 10 | 草稿卡列出附件 | 只提正文 | 附件进卡片内容清单 | §6.5 |
+| 11 | Slack 审批卡 `Allow once` / `Skip` | 只有三端一致一句 | 归入 E 批渲染差异 | §8 E 批 |
+
+**未采纳的 3 类**（需要 Matebot 没有的商业能力，明确排除）：购物/订单卡、Vault 支付卡、会议卡。它们的**表现层规则**（照片、价格、徽章、支付确认）对本规格无借鉴价值，但它们的**生命周期模式**（提交中 → 完成 / 过期可重试）已被吸收进 §4.3.1 与 §6.7。
