@@ -8,10 +8,10 @@ import {
   emailSurfaceBlockFields,
   expiresAtFor,
   interactionCapabilityForIntent,
-  interactionCardKey,
   interactionSlotsFromPlan,
   timingFields,
 } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient, RunLease } from "@matebot/db";
 import {
   appendEventInTransaction,

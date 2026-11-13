@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { interactionCardKey } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";

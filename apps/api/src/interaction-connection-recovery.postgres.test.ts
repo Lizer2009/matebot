@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { ManagedConnectorProvider } from "@matebot/adapter-kit";
 import { ConnectorRegistry } from "@matebot/adapters";
 import type { Actor } from "@matebot/contracts";
-import { interactionCardKey } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
 import { RPCHandler } from "@orpc/server/fetch";

@@ -7,6 +7,10 @@ import { createHash } from "node:crypto";
  * partial unique index is a plain single-column index. `node:crypto` is already
  * used in this package (`approval-effect-key.ts`).
  *
+ * Reached through `@matebot/core/node/interaction-card-key`, never the barrel:
+ * `node:crypto` is externalized for the browser, and a barrel re-export put it on
+ * the web bundle's import path, where the whole app failed to start.
+ *
  * The separator is a NUL byte, which no intent may contain, so
  * `(thread "a", intent "bc")` and `(thread "ab", intent "c")` cannot collide.
  *

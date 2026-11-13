@@ -1,5 +1,5 @@
 import type { InteractionPlan } from "@matebot/contracts";
-import { interactionCardKey } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenCardRow } from "./interaction-kernel-store.js";
 

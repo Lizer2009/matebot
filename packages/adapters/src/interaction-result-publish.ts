@@ -1,6 +1,6 @@
 import type { InteractionPlan, MessageBlock, ResultSurface } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef, ResultSurfaceSchema } from "@matebot/contracts";
-import { interactionCardKey } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { senderStampFromBlock } from "./interaction-publish.js";

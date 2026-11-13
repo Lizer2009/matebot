@@ -1,10 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { InteractionPlan } from "@matebot/contracts";
-import {
-  confirmInteractionDraftState,
-  interactionCardKey,
-  userEditedFieldNames,
-} from "@matebot/core";
+import { confirmInteractionDraftState, userEditedFieldNames } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";

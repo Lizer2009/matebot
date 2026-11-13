@@ -5,7 +5,7 @@ import {
   parseA2uiSurfaceDocumentRef,
 } from "@matebot/contracts";
 import type { InteractionStatus } from "@matebot/core";
-import { interactionCardKey } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { Prisma, PrismaClient } from "./client.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 

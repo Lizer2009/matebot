@@ -3,9 +3,9 @@ import type { InteractionPlan } from "@matebot/contracts";
 import {
   applyNaturalLanguageEdit,
   interactionCapabilityForIntent,
-  interactionCardKey,
   userEditedFieldNames,
 } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
