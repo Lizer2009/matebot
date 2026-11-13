@@ -241,6 +241,55 @@ async function cardInteractionId(page: import("@playwright/test").Page): Promise
   return value;
 }
 
+async function cardSurfaceId(page: import("@playwright/test").Page): Promise<string> {
+  const value = await page.getByTestId("a2ui-surface-card").first().getAttribute("data-surface-id");
+  if (!value) throw new Error("the card on screen exposed no surface id");
+  return value;
+}
+
+const e2eApi = process.env.API_URL ?? "http://127.0.0.1:3110";
+
+type SeededSurface = {
+  interactionId: string;
+  cardKey: string | null;
+  messageId: string | null;
+  status: string;
+  draftVersion: number;
+  surfaceId: string | null;
+  block: {
+    interactionId: string;
+    surfaceId: string;
+    status: string | null;
+    template: string | null;
+    lifecycle: string | null;
+    draftVersion: number;
+  } | null;
+};
+
+async function seedExpiredSurface(interactionId: string): Promise<SeededSurface> {
+  const response = await fetch(`${e2eApi}/__e2e/seed-expired-surface`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ interactionId }),
+  });
+  const body = (await response.json()) as SeededSurface & { error?: string };
+  if (!response.ok) {
+    throw new Error(`seed-expired-surface ${response.status}: ${body.error ?? "failed"}`);
+  }
+  return body;
+}
+
+async function inspectSurface(interactionId: string): Promise<SeededSurface> {
+  const response = await fetch(
+    `${e2eApi}/__e2e/inspect-surface?interactionId=${encodeURIComponent(interactionId)}`,
+  );
+  const body = (await response.json()) as SeededSurface & { error?: string };
+  if (!response.ok) {
+    throw new Error(`inspect-surface ${response.status}: ${body.error ?? "failed"}`);
+  }
+  return body;
+}
+
 /**
  * A calendar card is a real card, at both widths.
  *
@@ -493,6 +542,112 @@ test("a draft can be cancelled from the card and offers nothing to send", async 
   // The card reports the cancelled state and no Send remains.
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0, { timeout: 30_000 });
   await captureScreenshot(page, testInfo, "a2ui-e2e-06-cancelled");
+});
+
+/**
+ * Browser → production retryInteraction → isolated Postgres.
+ *
+ * The expired stamp is an isolated seed (`/__e2e/seed-expired-surface`):
+ * `settleInteraction` then `surfaceStampFor` on the same message block. Live
+ * e2e has no mailbox, so the card is often `needs_connection` (kernel-exempt);
+ * the seed then does a labeled open-status fixture write and settles. That is
+ * not the C-batch expiry scanner, does not write `staleAt`, and is not a
+ * status-only SQL update (which would still look like a draft).
+ */
+test("expired card retry revives the same persisted surface", async ({ page }, testInfo) => {
+  await signIn(page, testInfo);
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "冬天的问候",
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+          { name: "body", value: "正文", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+  await waitForSurface(page, "a2ui-email-compose");
+
+  const interactionId = await cardInteractionId(page);
+  const surfaceId = await cardSurfaceId(page);
+  const before = await inspectSurface(interactionId);
+  expect(before.cardKey).toBeTruthy();
+  expect(before.messageId).toBeTruthy();
+  expect(before.surfaceId).toBe(surfaceId);
+
+  const seeded = await seedExpiredSurface(interactionId);
+  expect(seeded).toMatchObject({
+    interactionId,
+    cardKey: before.cardKey,
+    messageId: before.messageId,
+    surfaceId,
+    status: "expired",
+    block: {
+      interactionId,
+      surfaceId,
+      status: "expired",
+      template: "action-expired-card",
+    },
+  });
+
+  await page.reload();
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Expired, nothing was sent", {
+    timeout: 45_000,
+  });
+  await expect(page.getByTestId("a2ui-surface-retry")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(0);
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  expect(await cardSurfaceId(page)).toBe(surfaceId);
+  await captureScreenshot(page, testInfo, "a2ui-live-expired-retry");
+
+  await page.getByTestId("a2ui-surface-retry").click();
+  await expect(page.getByTestId("a2ui-email-compose")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("a2ui-surface-retry")).toHaveCount(0);
+  await expect(
+    page.getByTestId("a2ui-email-send").or(page.getByTestId("a2ui-email-connect")),
+  ).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-to")).toHaveValue("friend@example.test", {
+    timeout: 30_000,
+  });
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("冬天的问候");
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  expect(await cardSurfaceId(page)).toBe(surfaceId);
+  await captureScreenshot(page, testInfo, "a2ui-live-retry-draft");
+
+  const revived = await inspectSurface(interactionId);
+  expect(revived).toMatchObject({
+    interactionId,
+    cardKey: before.cardKey,
+    messageId: before.messageId,
+    surfaceId,
+    block: {
+      interactionId,
+      surfaceId,
+      template: "email-draft-card",
+    },
+  });
+  expect(["collecting", "ready_for_review"]).toContain(revived.status);
+  expect(revived.draftVersion).toBeGreaterThan(seeded.draftVersion);
+  expect(revived.block?.status).toBe(revived.status);
+
+  await page.reload();
+  await expect(page.getByTestId("a2ui-email-compose")).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-surface-retry")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-to")).toHaveValue("friend@example.test", {
+    timeout: 30_000,
+  });
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("冬天的问候");
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  expect(await cardSurfaceId(page)).toBe(surfaceId);
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(1);
+  await captureScreenshot(page, testInfo, "a2ui-live-retry-reload");
 });
 
 test("asking for a schedule produces a result card, never a create draft", async ({

@@ -112,10 +112,52 @@ const handles = await createApp({
   userDevices: new adapters.UserDeviceEmulator(),
 });
 
+const { seedExpiredSurface, inspectSeededSurface } = await import(
+  "./src/e2e-seed-expired-surface.ts"
+);
+
 const server = serve({
   fetch: async (request) => {
-    if (new URL(request.url).pathname === "/__e2e/emails") {
+    const url = new URL(request.url);
+    if (url.pathname === "/__e2e/emails") {
       return Response.json(email.sent, { headers: { "cache-control": "no-store" } });
+    }
+    // Isolated Batch B seed only. Not mounted on the production app.
+    if (url.pathname === "/__e2e/seed-expired-surface" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const interactionId =
+          body && typeof body === "object" && typeof body.interactionId === "string"
+            ? body.interactionId
+            : "";
+        if (!interactionId) {
+          return Response.json({ error: "interactionId required" }, { status: 400 });
+        }
+        return Response.json(await seedExpiredSurface(handles.prisma, interactionId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "seed failed" },
+          { status: 400 },
+        );
+      }
+    }
+    if (url.pathname === "/__e2e/inspect-surface" && request.method === "GET") {
+      try {
+        const interactionId = url.searchParams.get("interactionId") ?? "";
+        if (!interactionId) {
+          return Response.json({ error: "interactionId required" }, { status: 400 });
+        }
+        return Response.json(await inspectSeededSurface(handles.prisma, interactionId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "inspect failed" },
+          { status: 400 },
+        );
+      }
     }
     return handles.app.fetch(request);
   },
