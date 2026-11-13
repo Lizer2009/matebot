@@ -988,3 +988,44 @@ describe("repeatsDeniedAction", () => {
     expect(repeatsDeniedAction({ toolName: WRAPPER, args: {}, denied: [sent] })).toBe(false);
   });
 });
+
+describe("recipient approval rules", () => {
+  const allowAlex: ActionApprovalRule = {
+    effect: "always_allow",
+    matchKind: "recipient",
+    matchValue: "alex@example.test",
+  };
+
+  it("always-allow recipient matches that mailbox only", () => {
+    expect(
+      resolveActionApprovalDetail({
+        toolName: "gmail_send_email",
+        recipient: "Alex@example.test",
+        rules: [allowAlex],
+      }).decision,
+    ).toBe("allow");
+    expect(
+      resolveActionApprovalDetail({
+        toolName: "gmail_send_email",
+        recipient: "Alex@example.test",
+        rules: [allowAlex],
+      }).source,
+    ).toBe("always_allow");
+    expect(
+      resolveActionApprovalDetail({
+        toolName: "gmail_send_email",
+        recipient: "other@example.test",
+        rules: [allowAlex],
+      }).source,
+    ).not.toBe("always_allow");
+  });
+
+  it("does not match a recipient rule when no recipient is in the call", () => {
+    expect(
+      resolveActionApprovalDetail({
+        toolName: "gmail_send_email",
+        rules: [allowAlex],
+      }).source,
+    ).toBe("default");
+  });
+});

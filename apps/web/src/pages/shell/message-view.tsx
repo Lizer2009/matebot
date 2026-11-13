@@ -594,6 +594,15 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
+                  onAllowRecipient={
+                    async (recipient) => {
+                      await rpc.approvalRules.set({
+                        effect: "always_allow",
+                        matchKind: "recipient",
+                        matchValue: recipient,
+                      });
+                    }
+                  }
                   onRetry={
                     botId || groupId
                       ? async () => {

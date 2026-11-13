@@ -55,6 +55,8 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       layout: (id, y, index) => rowActionsRef.current.layout(id, y, index),
       refresh: () => rowActionsRef.current.refresh?.(),
       manageRules: () => rowActionsRef.current.manageRules?.(),
+      allowRecipient: (recipient) => rowActionsRef.current.allowRecipient?.(recipient),
+      disableDrafts: (disabled) => rowActionsRef.current.disableDrafts?.(disabled),
     }),
     [],
   );

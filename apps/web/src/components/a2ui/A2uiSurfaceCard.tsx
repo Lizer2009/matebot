@@ -2,6 +2,7 @@ import { Trans } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import {
   interactionCapabilityForIntent,
+  isActionIntent,
   needsRecovery,
   surfaceCardTitle,
   surfacePhase,
@@ -11,6 +12,7 @@ import {
 import { Button } from "@matebot/ui-web";
 import { useState } from "react";
 import { A2uiSurfaceHost } from "./A2uiSurfaceHost";
+import { CardApprovalMenu } from "./CardApprovalMenu";
 import { EmailComposeEditor } from "./EmailComposeEditor";
 import type { EmailFieldName } from "./email-fields";
 import { emailFieldsFromSurfaceMessages, isEmailComposeIntent } from "./email-fields";
@@ -37,6 +39,9 @@ export function A2uiSurfaceCard({
   onAction,
   onDiscard,
   onManageRules,
+  onAllowRecipient,
+  onDisableDrafts,
+  draftsDisabled,
   onRetry,
 }: {
   block: A2uiSurfaceBlock;
@@ -63,6 +68,9 @@ export function A2uiSurfaceCard({
   onAction?: A2uiActionListener;
   onDiscard?: () => void | Promise<void>;
   onManageRules?: () => void;
+  onAllowRecipient?: (recipient: string) => void | Promise<void>;
+  onDisableDrafts?: (disabled: boolean) => void | Promise<void>;
+  draftsDisabled?: boolean;
   onRetry?: () => Promise<void>;
 }) {
   const document = useA2uiSurfaceDocument({
@@ -204,6 +212,9 @@ export function A2uiSurfaceCard({
             onCheckStatus={onCheckStatus}
             onDiscard={onDiscard}
             onManageRules={onManageRules}
+            onAllowRecipient={onAllowRecipient}
+            onDisableDrafts={onDisableDrafts}
+            draftsDisabled={draftsDisabled}
           />
         ) : document.messages ? (
           <>
@@ -232,6 +243,18 @@ export function A2uiSurfaceCard({
                 <span>
                   <Trans>Ask for the draft again to get an editable card.</Trans>
                 </span>
+              </div>
+            ) : null}
+            {isActionIntent(block.intent) &&
+            !affordance.terminal &&
+            affordance.action !== "connect" &&
+            affordance.action !== "retry" ? (
+              <div className="mt-3">
+                <CardApprovalMenu
+                  draftsDisabled={draftsDisabled}
+                  onDisableDrafts={onDisableDrafts}
+                  onManageRules={onManageRules}
+                />
               </div>
             ) : null}
           </>

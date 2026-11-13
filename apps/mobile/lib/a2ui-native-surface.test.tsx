@@ -401,6 +401,48 @@ describe("native A2UI surface", () => {
     expect(text("a2ui-email-approval-require")).toBe("Needs approval");
   });
 
+  it("shows four approval items and Allow this recipient does not send", async () => {
+    const onAllowRecipient = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const onDisableDrafts = vi.fn(async () => undefined);
+    const onManageRules = vi.fn();
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, capability: "ready" }}
+        messages={[
+          {
+            updateDataModel: {
+              value: {
+                fields: [
+                  { name: "to", value: "alex@example.test" },
+                  { name: "subject", value: "Hi" },
+                  { name: "body", value: "Hello" },
+                ],
+              },
+            },
+          },
+        ]}
+        onAllowRecipient={onAllowRecipient}
+        onDisableDrafts={onDisableDrafts}
+        onManageRules={onManageRules}
+        onSend={onSend}
+      />,
+    );
+    await act(async () => {
+      click("a2ui-email-status");
+    });
+    expect(text("a2ui-email-allow-recipient")).toBe("Allow this recipient");
+    expect(text("a2ui-email-approval-require")).toBe("Needs approval");
+    expect(text("a2ui-email-disable-drafts")).toBe("Turn off drafts for this bot");
+    expect(text("a2ui-email-manage-rules")).toBe("Manage rules");
+    await act(async () => {
+      click("a2ui-email-allow-recipient");
+    });
+    expect(onAllowRecipient).toHaveBeenCalledWith("alex@example.test");
+    expect(onSend).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
+  });
+
   it("shows failed with Retry and no Send", async () => {
     const onRetry = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);

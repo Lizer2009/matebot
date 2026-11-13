@@ -1305,7 +1305,7 @@ export const appContract = {
       .input(
         settingsScopeInput.extend({
           effect: z.enum(["always_allow", "require_approval", "deny"]),
-          matchKind: z.enum(["tool", "connector", "site"]),
+          matchKind: z.enum(["tool", "connector", "site", "recipient"]),
           matchValue: z.string().trim().min(1),
         }),
       )

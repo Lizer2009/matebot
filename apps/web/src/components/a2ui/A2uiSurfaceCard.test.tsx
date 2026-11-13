@@ -629,6 +629,54 @@ describe("A2uiSurfaceCard", () => {
     expect(document.querySelector('[data-testid="a2ui-email-approval-require"]')).toBeTruthy();
   });
 
+  it("shows four approval items and Allow this recipient does not send", async () => {
+    const onAllowRecipient = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const onDisableDrafts = vi.fn(async () => undefined);
+    const onManageRules = vi.fn();
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onAllowRecipient={onAllowRecipient}
+          onDisableDrafts={onDisableDrafts}
+          onManageRules={onManageRules}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const status = container.querySelector(
+      '[data-testid="a2ui-email-status"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      status.click();
+    });
+    expect(document.querySelector('[data-testid="a2ui-email-allow-recipient"]')?.textContent).toMatch(
+      /Allow this recipient/,
+    );
+    expect(document.querySelector('[data-testid="a2ui-email-approval-require"]')).toBeTruthy();
+    expect(document.querySelector('[data-testid="a2ui-email-disable-drafts"]')?.textContent).toMatch(
+      /Turn off drafts for this bot/,
+    );
+    expect(document.querySelector('[data-testid="a2ui-email-manage-rules"]')).toBeTruthy();
+    const allow = document.querySelector(
+      '[data-testid="a2ui-email-allow-recipient"]',
+    ) as HTMLElement;
+    await act(async () => {
+      allow.click();
+    });
+    expect(onAllowRecipient).toHaveBeenCalledWith("a@example.com");
+    expect(onSend).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeTruthy();
+  });
+
   it("shows a failed card with Retry and no Send", async () => {
     const onRetry = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);

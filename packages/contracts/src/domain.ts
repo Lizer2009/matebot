@@ -831,7 +831,7 @@ export type ConnectionCatalogItem = z.infer<typeof ConnectionCatalogItemSchema>;
 export const ActionApprovalRuleSchema = z.object({
   id: Id,
   effect: z.enum(["always_allow", "require_approval", "deny"]),
-  matchKind: z.enum(["tool", "connector", "category", "site"]),
+  matchKind: z.enum(["tool", "connector", "category", "site", "recipient"]),
   matchValue: z.string(),
   createdAt: z.string(),
 });

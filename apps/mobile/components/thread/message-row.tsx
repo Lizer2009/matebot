@@ -62,6 +62,8 @@ export type MessageRowActions = {
   refresh?: () => void | Promise<unknown>;
   /** Opens the existing Approvals settings. Optional so a row without a host still renders. */
   manageRules?: () => void;
+  allowRecipient?: (recipient: string) => void | Promise<void>;
+  disableDrafts?: (disabled: boolean) => void | Promise<void>;
 };
 
 type MessageRowProps = {
@@ -463,6 +465,8 @@ export const MessageRow = memo(function MessageRow({
                 userBubble={userBubble}
                 onRefresh={actions.refresh}
                 onManageRules={actions.manageRules}
+                onAllowRecipient={actions.allowRecipient}
+                onDisableDrafts={actions.disableDrafts}
               />
             </ThreadReadOnlyContext.Provider>
           </MessageContextMenu>

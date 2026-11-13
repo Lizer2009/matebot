@@ -342,10 +342,12 @@ function ruleMatches(
   connectorKind: string,
   readOnly: boolean | undefined,
   site: string | undefined,
+  recipient: string | undefined,
 ): boolean {
   if (
     rule.effect === "deny" &&
     rule.matchKind !== "site" &&
+    rule.matchKind !== "recipient" &&
     COMPOSIO_CODE_TOOLS.has(toolName.toLowerCase())
   ) {
     return true;
@@ -354,6 +356,8 @@ function ruleMatches(
   switch (rule.matchKind) {
     case "site":
       return site === value;
+    case "recipient":
+      return Boolean(recipient) && recipient.toLowerCase() === value;
     case "tool":
       return toolName.toLowerCase() === value;
     case "connector":
@@ -367,6 +371,8 @@ function ruleMatches(
 
 function ruleSpecificity(rule: ActionApprovalRule): number {
   switch (rule.matchKind) {
+    case "recipient":
+      return 5;
     case "site":
       return 4;
     case "tool":
@@ -412,12 +418,20 @@ export function resolveActionApprovalDetail(input: {
   connectorKind?: string;
   readOnly?: boolean;
   site?: string;
+  recipient?: string;
   rules: ActionApprovalRule[];
 }): ActionApprovalResolved {
   const connectorKind = input.connectorKind ?? connectorKindFromToolName(input.toolName);
   const matchingRules = input.rules.filter(
     (rule) =>
-      ruleMatches(rule, input.toolName, connectorKind, input.readOnly, input.site) ||
+      ruleMatches(
+        rule,
+        input.toolName,
+        connectorKind,
+        input.readOnly,
+        input.site,
+        input.recipient,
+      ) ||
       (rule.matchKind === "tool" &&
         input.toolAliases?.some((alias) => alias.toLowerCase() === rule.matchValue.toLowerCase())),
   );

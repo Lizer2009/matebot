@@ -204,6 +204,8 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   userBubble,
   onRefresh,
   onManageRules,
+  onAllowRecipient,
+  onDisableDrafts,
   a2uiEnabled,
 }: {
   onHelperToggle?: MessageRowActions["helperToggle"];
@@ -236,6 +238,8 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   userBubble?: UserBubble;
   onRefresh?: () => void | Promise<unknown>;
   onManageRules?: () => void;
+  onAllowRecipient?: (recipient: string) => void | Promise<void>;
+  onDisableDrafts?: (disabled: boolean) => void | Promise<void>;
   /**
    * Whether this deployment serves interactive cards, from `/me`. Undefined means the
    * server has not answered yet, so the card is drawn rather than called unavailable.
@@ -849,6 +853,8 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                 : undefined
             }
             onManageRules={onManageRules}
+            onAllowRecipient={onAllowRecipient}
+            onDisableDrafts={onDisableDrafts}
           />
         );
       })}

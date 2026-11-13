@@ -41,6 +41,9 @@ export function A2uiNativeSurface({
   onAction,
   onDiscard,
   onManageRules,
+  onAllowRecipient,
+  onDisableDrafts,
+  draftsDisabled,
   onRetry,
 }: {
   block: A2uiSurfaceBlock;
@@ -65,6 +68,9 @@ export function A2uiNativeSurface({
   }) => void | Promise<void>;
   onDiscard?: () => void | Promise<void>;
   onManageRules?: () => void;
+  onAllowRecipient?: (recipient: string) => void | Promise<void>;
+  onDisableDrafts?: (disabled: boolean) => void | Promise<void>;
+  draftsDisabled?: boolean;
   onRetry?: () => void | Promise<void>;
 }) {
   const { t } = useI18n();
@@ -276,7 +282,23 @@ export function A2uiNativeSurface({
             </Pressable>
             {approvalMenuOpen ? (
               <View>
+                {values.to.trim() ? (
+                  <A2uiButton
+                    label={t("Allow this recipient")}
+                    testID="a2ui-email-allow-recipient"
+                    onPress={() => void onAllowRecipient?.(values.to.trim())}
+                  />
+                ) : null}
                 <Text testID="a2ui-email-approval-require">{t("Needs approval")}</Text>
+                <A2uiButton
+                  label={
+                    draftsDisabled
+                      ? t("Restore drafts")
+                      : t("Turn off drafts for this bot")
+                  }
+                  testID="a2ui-email-disable-drafts"
+                  onPress={() => void onDisableDrafts?.(!draftsDisabled)}
+                />
                 {onManageRules ? (
                   <A2uiButton
                     label={t("Manage rules")}

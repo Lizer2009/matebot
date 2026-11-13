@@ -2,19 +2,10 @@ import { useLingui } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import type { emailSurfaceTemplateFromBlock, SurfaceActionKind } from "@matebot/core";
 import { emailSurfacePhase } from "@matebot/core";
-import {
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  Input,
-  Spinner,
-  Textarea,
-} from "@matebot/ui-web";
-import { ChevronDown } from "lucide-react";
+import { Button, Input, Spinner, Textarea } from "@matebot/ui-web";
 import { useEffect, useId, useRef, useState } from "react";
 import { SuccessPop } from "../ai/primitives";
+import { CardApprovalMenu } from "./CardApprovalMenu";
 import type { EmailDraftFields, EmailFieldName } from "./email-fields";
 import { EMAIL_DRAFT_FIELD_NAMES } from "./email-fields";
 
@@ -48,6 +39,9 @@ export function EmailComposeEditor({
   onCheckStatus,
   onDiscard,
   onManageRules,
+  onAllowRecipient,
+  onDisableDrafts,
+  draftsDisabled,
 }: {
   draftVersion: number;
   confirmedVersion?: number;
@@ -74,6 +68,9 @@ export function EmailComposeEditor({
   onCheckStatus?: () => Promise<void>;
   onDiscard?: () => void | Promise<void>;
   onManageRules?: () => void;
+  onAllowRecipient?: (recipient: string) => void | Promise<void>;
+  onDisableDrafts?: (disabled: boolean) => void | Promise<void>;
+  draftsDisabled?: boolean;
 }) {
   const { t } = useLingui();
   const toId = useId();
@@ -329,7 +326,15 @@ export function EmailComposeEditor({
         />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <StatusLine phase={phase} surfaceError={surfaceError} onManageRules={onManageRules} />
+        <StatusLine
+          phase={phase}
+          surfaceError={surfaceError}
+          recipient={fields.to}
+          draftsDisabled={draftsDisabled}
+          onAllowRecipient={onAllowRecipient}
+          onDisableDrafts={onDisableDrafts}
+          onManageRules={onManageRules}
+        />
         <div className="flex items-center gap-3">
           {action === "none" ||
           phase === "action-submitting-card" ||
@@ -436,10 +441,18 @@ export function EmailComposeEditor({
 function StatusLine({
   phase,
   surfaceError,
+  recipient,
+  draftsDisabled,
+  onAllowRecipient,
+  onDisableDrafts,
   onManageRules,
 }: {
   phase: ReturnType<typeof emailSurfaceTemplateFromBlock>;
   surfaceError?: string;
+  recipient?: string;
+  draftsDisabled?: boolean;
+  onAllowRecipient?: (recipient: string) => void | Promise<void>;
+  onDisableDrafts?: (disabled: boolean) => void | Promise<void>;
   onManageRules?: () => void;
 }) {
   const { t } = useLingui();
@@ -497,27 +510,13 @@ function StatusLine({
     );
   }
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        type="button"
-        data-testid="a2ui-email-status"
-        className="inline-flex items-center gap-1 text-[13px] text-muted-foreground"
-        aria-live="polite"
-      >
-        {t`Needs approval`}
-        <ChevronDown className="size-3.5" aria-hidden />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48">
-        <DropdownMenuItem disabled data-testid="a2ui-email-approval-require">
-          {t`Needs approval`}
-        </DropdownMenuItem>
-        {onManageRules ? (
-          <DropdownMenuItem data-testid="a2ui-email-manage-rules" onClick={onManageRules}>
-            {t`Manage rules`}
-          </DropdownMenuItem>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <CardApprovalMenu
+      recipient={recipient}
+      draftsDisabled={draftsDisabled}
+      onAllowRecipient={onAllowRecipient}
+      onDisableDrafts={onDisableDrafts}
+      onManageRules={onManageRules}
+    />
   );
 }
 

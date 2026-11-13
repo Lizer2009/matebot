@@ -478,6 +478,12 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     layout: scroll.layoutJumpRow,
     refresh,
     manageRules: () => router.push("/approvals"),
+    allowRecipient: (recipient) =>
+      rpc("approvalRules/set", {
+        effect: "always_allow",
+        matchKind: "recipient",
+        matchValue: recipient,
+      }),
   });
 
   const { liveItems, renderMessageRow, renderItem } = useThreadRows({
