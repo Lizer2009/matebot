@@ -66,6 +66,7 @@ export * from "./interaction-result.js";
 export * from "./interaction-route.js";
 export * from "./interaction-runtime.js";
 export * from "./interaction-simulation.js";
+export * from "./interaction-status.js";
 export * from "./interaction-template.js";
 export * from "./list-search.js";
 export * from "./logo-avatar-activity.js";
