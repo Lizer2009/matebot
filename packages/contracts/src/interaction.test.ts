@@ -19,6 +19,8 @@ import {
   ThreadsGetA2uiSurfaceOutput,
   ThreadsReconcileInteractionInput,
   ThreadsReconcileInteractionOutput,
+  ThreadsRetryInteractionInput,
+  ThreadsRetryInteractionOutput,
   ThreadsUpdateInteractionFieldInput,
   ThreadsUpdateInteractionFieldOutput,
 } from "./interaction.js";
@@ -287,6 +289,19 @@ describe("threads interaction RPC draft schemas", () => {
         executed: false,
       }).executed,
     ).toBe(false);
+  });
+
+  it("rejects a retry call that omits the thread target", () => {
+    expect(ThreadsRetryInteractionInput.safeParse({ interactionId: "ix-1" }).success).toBe(false);
+    expect(
+      ThreadsRetryInteractionOutput.parse({
+        ok: true,
+        interactionId: "ix-1",
+        surfaceId: "surf-1",
+        draftVersion: 4,
+        status: "collecting",
+      }).status,
+    ).toBe("collecting");
   });
 
   it("rejects a reconcile call that omits the thread target", () => {

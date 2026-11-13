@@ -594,6 +594,20 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
+                  onRetry={
+                    botId || groupId
+                      ? async () => {
+                          try {
+                            await rpc.threads.retryInteraction({
+                              ...(botId ? { botId } : { groupId: groupId! }),
+                              interactionId: block.interactionId,
+                            });
+                          } finally {
+                            await onRefresh();
+                          }
+                        }
+                      : undefined
+                  }
                   onAction={
                     botId || groupId
                       ? async (action) => {

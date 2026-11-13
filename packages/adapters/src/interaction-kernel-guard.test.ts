@@ -136,6 +136,7 @@ describe("interaction status write guard", () => {
       "packages/adapters/src/interaction-field-writer.ts",
       "packages/adapters/src/interaction-email-outcome.ts",
       "packages/adapters/src/interaction-result-publish.ts",
+      "apps/api/src/interaction-retry.ts",
     ];
     for (const file of writers) {
       const source = readFileSync(join(ROOT, file), "utf8");

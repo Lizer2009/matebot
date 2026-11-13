@@ -795,6 +795,20 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                   }
                 : undefined
             }
+            onRetry={
+              onRefresh
+                ? async () => {
+                    try {
+                      await rpc("threads/retryInteraction", {
+                        ...target,
+                        interactionId: block.interactionId,
+                      });
+                    } finally {
+                      await onRefresh();
+                    }
+                  }
+                : undefined
+            }
             onAction={async (action) => {
               // Same contract as the web card: the compiled button carries the
               // interaction and revision it was rendered from.

@@ -174,6 +174,8 @@ import {
   ThreadsGetA2uiSurfaceOutput,
   ThreadsReconcileInteractionInput,
   ThreadsReconcileInteractionOutput,
+  ThreadsRetryInteractionInput,
+  ThreadsRetryInteractionOutput,
   ThreadsUpdateInteractionFieldInput,
   ThreadsUpdateInteractionFieldOutput,
   ThreadTargetSchema,
@@ -784,6 +786,11 @@ export const appContract = {
     dispatchInteractionAction: oc
       .input(ThreadsDispatchInteractionActionInput)
       .output(ThreadsDispatchInteractionActionOutput),
+    /**
+     * Revive an expired or failed card in place. Reuses the same card key; never
+     * publishes a second card. Refuses superseded, cancelled, and in-flight rows.
+     */
+    retryInteraction: oc.input(ThreadsRetryInteractionInput).output(ThreadsRetryInteractionOutput),
     /**
      * Inspect an UNKNOWN email send. Never re-invokes send. Rejects when A2UI
      * is not enabled or the interaction is not waiting on reconcile.

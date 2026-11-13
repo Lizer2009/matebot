@@ -366,6 +366,21 @@ export const ThreadsExecuteInteractionOutput = z.object({
 });
 export type ThreadsExecuteInteractionOutput = z.infer<typeof ThreadsExecuteInteractionOutput>;
 
+/** Revive an expired or failed card in place. Never publishes a second card. */
+export const ThreadsRetryInteractionInput = ThreadTargetSchema.safeExtend({
+  interactionId: Id,
+});
+export type ThreadsRetryInteractionInput = z.infer<typeof ThreadsRetryInteractionInput>;
+
+export const ThreadsRetryInteractionOutput = z.object({
+  ok: z.literal(true),
+  interactionId: Id,
+  surfaceId: z.string().trim().min(1),
+  draftVersion: z.number().int().positive(),
+  status: InteractionStatus,
+});
+export type ThreadsRetryInteractionOutput = z.infer<typeof ThreadsRetryInteractionOutput>;
+
 /** Inspect an UNKNOWN send. Does not deliver. */
 export const ThreadsReconcileInteractionInput = ThreadsExecuteInteractionInput;
 export type ThreadsReconcileInteractionInput = z.infer<typeof ThreadsReconcileInteractionInput>;

@@ -36,6 +36,7 @@ import { ORPCError } from "@orpc/server";
 import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
 import { requestEffectAbort } from "../interaction-abort.js";
 import { dispatchInteractionActionService } from "../interaction-dispatch.js";
+import { InteractionRetryRejectedError, retryInteractionService } from "../interaction-retry.js";
 import { confirmThenExecute } from "../interaction-run-action.js";
 import {
   cancelInteractionService,
@@ -1136,6 +1137,28 @@ export function threadsRoutes(ctx: RouterContext) {
           };
         },
       ),
+      retryInteraction: authed.threads.retryInteraction.handler(async ({ context, input }) => {
+        assertA2uiEnabled();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
+        try {
+          const result = await retryInteractionService(deps.prisma, {
+            spaceId: context.actor.spaceId,
+            threadId: target.threadId,
+            botId,
+            interactionId: input.interactionId,
+          });
+          return { ok: true as const, ...result };
+        } catch (error) {
+          if (error instanceof InteractionNotFoundError) {
+            throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+          }
+          if (error instanceof InteractionRetryRejectedError) {
+            throw new ORPCError("CONFLICT", { message: error.message });
+          }
+          throw error;
+        }
+      }),
       reconcileInteraction: authed.threads.reconcileInteraction.handler(
         async ({ context, input }) => {
           assertA2uiEnabled();
