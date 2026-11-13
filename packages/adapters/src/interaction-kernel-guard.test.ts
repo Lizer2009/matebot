@@ -124,4 +124,28 @@ describe("interaction status write guard", () => {
   it("keeps the allowlist at the known kernel set, so it can only shrink by editing this list", () => {
     expect(STATUS_WRITE_ALLOWLIST).toEqual(EXPECTED_WRITERS);
   });
+
+  /**
+   * A block written without a status is a card the hosts cannot judge: they fall back to
+   * `lifecycle`, which still says `draft` for superseded, expired and cancelled (§4.4 keeps six
+   * values there). Every writer must stamp it, so the truth travels with the block.
+   */
+  it("stamps a status on every a2ui_surface block it writes", () => {
+    const writers = [
+      "packages/adapters/src/interaction-publish.ts",
+      "packages/adapters/src/interaction-field-writer.ts",
+      "packages/adapters/src/interaction-email-outcome.ts",
+      "packages/adapters/src/interaction-result-publish.ts",
+    ];
+    for (const file of writers) {
+      const source = readFileSync(join(ROOT, file), "utf8");
+      const blocks = source.split('kind: "a2ui_surface"').slice(1);
+      expect(blocks.length, `${file} should build at least one card block`).toBeGreaterThan(0);
+      for (const block of blocks) {
+        expect(block.slice(0, 1600), `${file}: a card block carries no status`).toMatch(
+          /\.\.\.(stamp|stamps)|\bstatus:/,
+        );
+      }
+    }
+  });
 });

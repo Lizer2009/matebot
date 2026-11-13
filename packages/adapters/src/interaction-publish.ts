@@ -42,7 +42,6 @@ async function compilePlanSurface(input: {
   /** The plan reconciled onto the registered schema, which is what the row must store. */
   plan: InteractionPlan;
 }> {
-  const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
   const schema = capabilitySchema(input.plan.intent);
   const { compileInteractionPlan, reconcilePlanToSchema } = await import("@matebot/a2ui-adapter");
   const reconciled = reconcilePlanToSchema(input.plan, schema);
@@ -60,13 +59,11 @@ async function compilePlanSurface(input: {
     throw new Error(`field "${reconciled.oversizedField}" carries more data than a draft may hold`);
   }
   const plan = reconciled.plan;
-  const stamps = emailIntent
-    ? emailSurfaceBlockFields({
-        intent: plan.intent,
-        capability: input.capability,
-        interactionStatus: input.status ?? "collecting",
-      })
-    : {};
+  const stamps = emailSurfaceBlockFields({
+    intent: plan.intent,
+    capability: input.capability,
+    interactionStatus: input.status ?? "collecting",
+  });
   const compiled = await compileInteractionPlan({
     plan,
     surfaceId: input.surfaceId,
@@ -259,13 +256,11 @@ export async function publishInteractionSurface(
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
   const senderLabel = senderLabelForBlock(input.senderLabel);
   const senderAddress = senderAddressForBlock(input.senderAddress);
-  const stamps = emailIntent
-    ? emailSurfaceBlockFields({
-        intent: input.plan.intent,
-        capability: input.capability,
-        interactionStatus: input.status ?? "collecting",
-      })
-    : {};
+  const stamps = emailSurfaceBlockFields({
+    intent: input.plan.intent,
+    capability: input.capability,
+    interactionStatus: input.status ?? "collecting",
+  });
   const compiled = await compilePlanSurface({
     plan: input.plan,
     surfaceId,
@@ -527,13 +522,11 @@ async function amendPublishedCard(
   const emailIntent = input.plan.intent === "email.compose" || input.plan.intent === "email.send";
   const senderLabel = senderLabelForBlock(input.senderLabel);
   const senderAddress = senderAddressForBlock(input.senderAddress);
-  const stamps = emailIntent
-    ? emailSurfaceBlockFields({
-        intent: input.plan.intent,
-        capability: input.capability,
-        interactionStatus: input.status ?? "collecting",
-      })
-    : {};
+  const stamps = emailSurfaceBlockFields({
+    intent: input.plan.intent,
+    capability: input.capability,
+    interactionStatus: input.status ?? "collecting",
+  });
   const compiled = await compilePlanSurface({
     plan: input.plan,
     surfaceId,

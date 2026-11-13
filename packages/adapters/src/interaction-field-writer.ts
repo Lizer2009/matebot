@@ -1,5 +1,10 @@
 import { reconcilePlanToSchema } from "@matebot/a2ui-adapter";
-import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
+import type {
+  A2uiProtocolFamily,
+  A2uiSurfaceBlock,
+  InteractionPlan,
+  MessageBlock,
+} from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
 import {
@@ -30,10 +35,6 @@ import { senderStampFromBlock } from "./interaction-publish.js";
  * the surface, and republishes it; two implementations eventually disagree.
  * Neither sends — that stays the card's own Send gesture.
  */
-
-function isEmailPlan(plan: InteractionPlan): boolean {
-  return plan.intent === "email.compose" || plan.intent === "email.send";
-}
 
 function protocolFamilyOf(value: string): A2uiProtocolFamily {
   return value === "v1_0" || value === "v0_9" ? value : "v0_9";
@@ -86,16 +87,14 @@ async function compilePlanSurface(input: {
     throw new Error(`field "${reconciled.oversizedField}" carries more data than a draft may hold`);
   }
   const plan = reconciled.plan;
-  const stamps = isEmailPlan(plan)
-    ? emailSurfaceBlockFields({
-        intent: plan.intent,
-        capability: input.capability,
-        interactionStatus: input.interactionStatus,
-        effectStatus: input.effectStatus,
-        providerMessageId: input.providerMessageId,
-        error: input.error,
-      })
-    : {};
+  const stamps = emailSurfaceBlockFields({
+    intent: plan.intent,
+    capability: input.capability,
+    interactionStatus: input.interactionStatus,
+    effectStatus: input.effectStatus,
+    providerMessageId: input.providerMessageId,
+    error: input.error,
+  });
   const { compileInteractionPlan } = await import("@matebot/a2ui-adapter");
   const compiled = await compileInteractionPlan({
     plan,
@@ -190,13 +189,11 @@ export async function updateInteractionFieldService(
     interactionStatus: changed.status,
     changedField: input.name,
   });
-  const stamps = isEmailPlan(changed.plan)
-    ? emailSurfaceBlockFields({
-        intent: changed.plan.intent,
-        capability,
-        interactionStatus: changed.status,
-      })
-    : {};
+  const stamps = emailSurfaceBlockFields({
+    intent: changed.plan.intent,
+    capability,
+    interactionStatus: changed.status,
+  });
 
   await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
@@ -234,7 +231,7 @@ export async function updateInteractionFieldService(
       // What the card already says about itself, so a rebuild keeps the parts this write does
       // not own.
       const previousBlock = (Array.isArray(currentBlocks) ? currentBlocks : []).find(
-        (entry): entry is Extract<MessageBlock, { kind: "a2ui_surface" }> =>
+        (entry): entry is A2uiSurfaceBlock =>
           entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId,
       );
       const block: MessageBlock = {
@@ -457,6 +454,11 @@ export async function cancelInteractionService(
             })
           ).documentRef
         : (current as { documentRef?: string }).documentRef;
+      const stamps = emailSurfaceBlockFields({
+        intent: plan.intent,
+        capability,
+        interactionStatus: "cancelled",
+      });
       const cancelledBlock: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: input.interactionId,
@@ -467,13 +469,7 @@ export async function cancelInteractionService(
         title: plan.title,
         summary: plan.summary,
         ...(documentRef ? { documentRef } : {}),
-        ...(isEmailPlan(plan)
-          ? emailSurfaceBlockFields({
-              intent: plan.intent,
-              capability,
-              interactionStatus: "cancelled",
-            })
-          : {}),
+        ...stamps,
       };
       if (current.messageId) {
         const message = await tx.message.findUnique({ where: { id: current.messageId } });
