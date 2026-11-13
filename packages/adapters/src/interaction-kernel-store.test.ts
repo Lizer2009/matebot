@@ -34,10 +34,15 @@ function fakePrisma(
         }
       : null,
   );
+  const createEvent = vi.fn().mockResolvedValue({ id: "ev-1" });
   return {
-    prisma: { interaction: { findFirst, findUnique, updateMany } } as unknown as PrismaClient,
+    prisma: {
+      interaction: { findFirst, findUnique, updateMany },
+      interactionEvent: { create: createEvent },
+    } as unknown as PrismaClient,
     updateMany,
     findFirst,
+    createEvent,
   };
 }
 
@@ -78,7 +83,10 @@ describe("findOpenCard", () => {
 
 describe("settleInteraction", () => {
   it("settles an open card", async () => {
-    const { prisma, updateMany } = fakePrisma({ id: "i1", status: "ready_for_review" });
+    const { prisma, updateMany, createEvent } = fakePrisma({
+      id: "i1",
+      status: "ready_for_review",
+    });
     await expect(
       settleInteraction(prisma, {
         interactionId: "i1",
@@ -88,6 +96,15 @@ describe("settleInteraction", () => {
     ).resolves.toEqual({ settled: true, previousStatus: "ready_for_review" });
     expect(updateMany).toHaveBeenCalledTimes(1);
     expect(updateMany.mock.calls[0]![0].where).toEqual({ id: "i1", status: "ready_for_review" });
+    expect(createEvent).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        interactionId: "i1",
+        kind: "settled",
+        fromStatus: "ready_for_review",
+        toStatus: "superseded",
+        reason: "new message",
+      }),
+    });
   });
 
   // The guard that keeps a card the user just sent from being relabelled.

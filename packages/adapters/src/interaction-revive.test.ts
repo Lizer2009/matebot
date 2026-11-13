@@ -23,15 +23,20 @@ function fake(row: { status: string; draftVersion: number } | null) {
         }
       : null,
   );
+  const createEvent = vi.fn().mockResolvedValue({ id: "ev-1" });
   return {
-    prisma: { interaction: { findUnique, updateMany } } as unknown as PrismaClient,
+    prisma: {
+      interaction: { findUnique, updateMany },
+      interactionEvent: { create: createEvent },
+    } as unknown as PrismaClient,
     updateMany,
+    createEvent,
   };
 }
 
 describe("reviveCard", () => {
   it("revives an expired card with a compare-and-set on the row it read", async () => {
-    const { prisma, updateMany } = fake({ status: "expired", draftVersion: 3 });
+    const { prisma, updateMany, createEvent } = fake({ status: "expired", draftVersion: 3 });
     await expect(reviveCard(prisma, { interactionId: "i1" })).resolves.toMatchObject({
       revived: true,
       draftVersion: 4,
@@ -40,6 +45,14 @@ describe("reviveCard", () => {
       id: "i1",
       status: "expired",
       draftVersion: 3,
+    });
+    expect(createEvent).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        interactionId: "i1",
+        kind: "revived",
+        fromStatus: "expired",
+        reason: "retry",
+      }),
     });
   });
 

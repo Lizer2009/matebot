@@ -18,6 +18,7 @@ import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient, RunLease } from "@matebot/db";
 import {
   appendEventInTransaction,
+  appendInteractionEvent,
   createInteraction,
   createThreadMessageInTransaction,
   upsertInteractionSurface,
@@ -339,6 +340,13 @@ export async function publishInteractionSurface(
         where: { id: interaction.id },
         data: { messageId: message.id },
       });
+      await appendInteractionEvent(tx, {
+        interactionId: interaction.id,
+        kind: "published",
+        toStatus: input.status ?? "collecting",
+        reason: "present",
+        runId: input.runId,
+      });
       await appendEventInTransaction(tx, {
         spaceId: input.spaceId,
         threadId: input.threadId,
@@ -604,6 +612,14 @@ async function amendPublishedCard(
         },
       });
       if (written.count !== 1) throw new InteractionCardConcurrencyError(existing.id);
+      await appendInteractionEvent(tx, {
+        interactionId: existing.id,
+        kind: "amended",
+        fromStatus: existing.status,
+        toStatus: input.status ?? "collecting",
+        reason: "present",
+        runId: input.runId,
+      });
       const { documentRef } = await upsertInteractionSurface(tx, {
         interactionId: existing.id,
         surfaceId,

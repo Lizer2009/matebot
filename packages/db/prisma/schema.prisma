@@ -1076,6 +1076,7 @@ model Interaction {
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   surfaces         InteractionSurface[]
+  events           InteractionEvent[]
 
   @@index([threadId, cardKey])
   @@index([threadId, updatedAt])
@@ -1098,6 +1099,22 @@ model InteractionSurface {
 
   @@unique([interactionId, surfaceId])
   @@map("interaction_surfaces")
+}
+
+/// Append-only log of one card's state changes (spec §4.5). No UPDATE path.
+model InteractionEvent {
+  id             String      @id @default(cuid())
+  interactionId  String
+  interaction    Interaction @relation(fields: [interactionId], references: [id], onDelete: Cascade)
+  at             DateTime    @default(now())
+  kind           String
+  fromStatus     String?
+  toStatus       String?
+  reason         String?
+  runId          String?
+
+  @@index([interactionId, at])
+  @@map("interaction_events")
 }
 
 model SteeringMessage {

@@ -71,6 +71,7 @@ function fakePrisma(rows: Row[]) {
     prisma: {
       interaction: { findMany, findUnique, updateMany },
       message: { findUnique: messageFindUnique, update: messageUpdate },
+      interactionEvent: { create: vi.fn().mockResolvedValue({ id: "ev-1" }) },
     } as unknown as PrismaClient,
   };
 }

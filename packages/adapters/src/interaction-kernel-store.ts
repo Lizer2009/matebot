@@ -9,6 +9,7 @@ import {
   surfaceStampFor,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
+import { appendInteractionEvent } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 
 export type OpenCardRow = {
@@ -113,6 +114,13 @@ export async function settleInteraction(
     status: decision.status,
     slots: (current.slots ?? {}) as Record<string, unknown>,
   });
+  await appendInteractionEvent(prisma, {
+    interactionId: current.id,
+    kind: "settled",
+    fromStatus: current.status,
+    toStatus: decision.status,
+    reason: input.reason,
+  });
 
   getLogger().info("interaction.settled", {
     "interaction.id": input.interactionId,
@@ -199,6 +207,13 @@ export async function reviveCard(
     data: { status, draftVersion, confirmedVersion: null, expiresAt: null, staleAt: null },
   });
   if (written.count !== 1) return { revived: false, reason: "concurrent" };
+  await appendInteractionEvent(prisma, {
+    interactionId: current.id,
+    kind: "revived",
+    fromStatus: current.status,
+    toStatus: status,
+    reason: "retry",
+  });
   getLogger().info("interaction.revived", {
     "interaction.id": current.id,
     "interaction.from": current.status,

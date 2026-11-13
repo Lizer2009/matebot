@@ -16,6 +16,7 @@ const createInteraction = vi.fn();
 const upsertInteractionSurface = vi.fn();
 const createThreadMessageInTransaction = vi.fn();
 const appendEventInTransaction = vi.fn();
+const appendInteractionEvent = vi.fn();
 vi.mock("@matebot/db", async () => {
   const actual = await vi.importActual<typeof import("@matebot/db")>("@matebot/db");
   return {
@@ -25,6 +26,7 @@ vi.mock("@matebot/db", async () => {
     createThreadMessageInTransaction: (...args: unknown[]) =>
       createThreadMessageInTransaction(...args),
     appendEventInTransaction: (...args: unknown[]) => appendEventInTransaction(...args),
+    appendInteractionEvent: (...args: unknown[]) => appendInteractionEvent(...args),
     withTransactionRetry: async (work: () => Promise<unknown>) => work(),
   };
 });
@@ -50,6 +52,7 @@ describe("publishInteractionSurface", () => {
     upsertInteractionSurface.mockReset();
     createThreadMessageInTransaction.mockReset();
     appendEventInTransaction.mockReset();
+    appendInteractionEvent.mockReset();
 
     compileInteractionPlan.mockResolvedValue({
       ok: true,
@@ -123,6 +126,14 @@ describe("publishInteractionSurface", () => {
       }),
     );
     expect(appendEventInTransaction).toHaveBeenCalledTimes(3);
+    expect(appendInteractionEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        interactionId: "ix-1",
+        kind: "published",
+        toStatus: "collecting",
+      }),
+    );
     expect(result).toMatchObject({
       interactionId: "ix-1",
       surfaceId: "surface-1",

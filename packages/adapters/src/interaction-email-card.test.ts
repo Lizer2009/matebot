@@ -28,6 +28,7 @@ vi.mock("@matebot/db", async () => {
     createThreadMessageInTransaction: (...args: unknown[]) =>
       createThreadMessageInTransaction(...args),
     appendEventInTransaction: (...args: unknown[]) => appendEventInTransaction(...args),
+    appendInteractionEvent: vi.fn(async () => undefined),
     withTransactionRetry: async (work: () => Promise<unknown>) => work(),
   };
 });
