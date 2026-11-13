@@ -222,6 +222,27 @@ describe("correcting an executed record", () => {
     expect(result.reply).not.toContain("已发送");
   });
 
+  // A second correction of the same record rewrites the card already on screen.
+  // Saying "new" there would be a claim the timeline contradicts.
+  it("says it updated the card when the correction rewrote it", async () => {
+    const h = harness();
+    const services = servicesFor(h.ctx);
+    const result = await editInteraction(
+      h.ctx,
+      { interactionId: "ix-done", revision: 4, fields: { subject: "Corrected" } },
+      {
+        ...services,
+        publishAmendment: async (input) => {
+          const published = await services.publishAmendment!(input);
+          return { ...published, amended: true };
+        },
+      },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.reply).toContain("已更新");
+  });
+
   it("protects a field the person typed even in a correction", async () => {
     const h = harness();
     const result = await editInteraction(

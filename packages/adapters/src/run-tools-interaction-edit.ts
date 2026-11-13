@@ -142,6 +142,8 @@ export type EditInteractionServices = Pick<
     interactionId: string;
     surfaceId: string;
     draftVersion: number;
+    /** True when the correction rewrote the card already on screen. */
+    amended?: boolean;
     plan?: unknown;
     slots?: Record<string, unknown>;
     missingRequired?: string[];
@@ -258,7 +260,11 @@ async function amendExecuted(
           ...(readback.sender ? { sender: readback.sender } : {}),
         }
       : {}),
-    reply: "已新建一张关联草稿，请在卡片上确认后再执行。",
+    // A second correction of the same record rewrites the card already on screen;
+    // saying "new" there would be a claim the timeline contradicts.
+    reply: published.amended
+      ? "已更新这张关联草稿，请在卡片上确认后再执行。"
+      : "已新建一张关联草稿，请在卡片上确认后再执行。",
   };
 }
 
@@ -529,6 +535,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         interactionId: published.interactionId,
         surfaceId: published.surfaceId,
         draftVersion: published.draftVersion,
+        amended: published.amended,
         // What was stored, so the caller can describe the draft it created rather than the plan
         // it asked for.
         plan: published.plan,
