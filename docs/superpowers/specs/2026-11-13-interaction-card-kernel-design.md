@@ -148,6 +148,8 @@ export function surfaceCardIsLive(
 - **D5**：无关新消息也会结算掉草稿（E6）。刻意对齐 Grok；代价是「随口问一句」会关掉草稿，缓解手段是内容保留在历史投影里可恢复。
 - **D6**：卡片过期**必须由 worker 定时任务驱动**，用 `expiresAt` 列 + 扫描实现，不用内存定时器。理由：进程重启会丢内存定时器，而卡状态是持久的，两者不可混用。
 - **D7**：过期卡**仍可重试**，不视为「完全终态」。Grok 用 `Check price again` 的做法证明：过期只表示「内容可能陈旧」，不表示「这个需求作废」。这与 `superseded`（被替代，不再重试）必须区分。
+- **D8**：协议族收敛到 `v0_9`，删除 `v1_0` 分支。理由：双轨无功能收益，只增加维护与分叉风险；`web_core@0.15.0` 的 v0.9 线完整可用。收敛时钉死 patch 版本，防 `v0.9.1` 悄悄进入。见 §15.6。
+- **D9**：**不替换 A2UI**。Grok 的体验优势九成在生命周期与数据层，A2UI 不负责那部分；其 schema 校验与组件白名单是安全资产。只做定向增强（自定义 catalog），见 §15.2、§15.4。
 
 ---
 
@@ -171,11 +173,13 @@ export function surfaceCardIsLive(
 - **G14** 同一信息不会同时以文字和卡片出现两次。
 - **G15** 卡片拿不到数据时降级为纯文本，不显示坏卡。
 - **G16** 多账号场景下，连接卡指名具体账号。
+- **G17** A2UI 自定义 catalog 可用，领域卡片声明化，不再每张卡三端手写（F 批，见 §15）。
+- **G18** 协议族收敛为单一版本，消除双轨维护成本（D8）。
 
 ### 3.2 非目标
 
 - 不改发信、确认、执行的协议与授权模型。
-- 不重做 A2UI 协议或渲染技术栈——但**非 A2UI 卡片的状态判定要接入本内核**（见 §3.3）。
+- 不重做 A2UI 协议或渲染技术栈——但**非 A2UI 卡片的状态判定要接入本内核**（见 §3.3），且**新增自定义 catalog 属于 F 批范围**（见 §15.4）。
 - 不引入 Grok 的采购/会议/Vault 等**业务卡种**（这些需要 Matebot 没有的商业能力）。
 - 不做 Firecracker / 云电脑 / Vault 相关。
 - 不引入 LLM judge 或第二次模型调用。
@@ -766,10 +770,11 @@ Grok：`When one of your Gmail accounts signs out, the Bot names that account`�
 | **C 加固** | 两段式新消息结算 + 连接卡续跑 + 事件表 + 历史投影（含关键槽位） | 结算、编辑、记忆、可追溯 |
 | **D 收敛** | 注册表 `cardKind` + 46 处 intent 判断收敛 + 批准菜单四项 + `Bot.draftsDisabled` | 加一种卡 ≤3 文件；对标 Grok 菜单 |
 | **E 全场景** | L0-A 收口：`choice` / `ask` / `app_connect` / `connect` / `mcp_approval` 接入内核；三套连接机制合一（§3.3.2） | 25 种块一套规则 |
+| **F 渲染表达力**（可选，最后） | 自定义 Matebot catalog（`EventList`/`AttachmentList`/`StatusChip`/`DecisionMenu`/`NudgeFooter`）+ 协议族收敛到 `v0_9` | 领域卡声明化，三端同源（§15） |
 
 每批独立可验证、可上线、可回滚。
 
-**批内顺序建议**：C 批的「两段式结算」必须早于任何依赖 `superseded` 的功能上线，否则会先制造出「每次编辑换卡」的症状。D 批的 `Bot.draftsDisabled` 风险最高，单独做、最后做。
+**批内顺序建议**：C 批的「两段式结算」必须早于任何依赖 `superseded` 的功能上线，否则会先制造出「每次编辑换卡」的症状。D 批的 `Bot.draftsDisabled` 风险最高，单独做、最后做。**F 批必须在 A~E 之后**——先修生命周期再修渲染表达力，顺序反了会白干（好看的卡照样重复推）。
 
 ---
 
@@ -809,6 +814,10 @@ Grok：`When one of your Gmail accounts signs out, the Bot names that account`�
 | AC-25 | L0 | L0-A 的 6 种块全部经 `settleInteraction` 落终态 | 源码扫描（按块类型枚举） |
 | AC-26 | L0 | 连接场景只有一条出卡路径（`needs_connection`） | 集成测试：同一需求只产生一张连接卡 |
 | AC-27 | 全 | 全量测试通过 | CI |
+| AC-28 | F | 自定义 catalog 组件经 schema 校验后渲染，未知组件仍被拒 | 恶意 payload 测试 |
+| AC-29 | F | 新增 catalog 组件三端实现同日上线，缺一不进白名单 | 白名单交叉检查 |
+| AC-30 | F | 领域卡（行程/附件/状态标签）不再出现「一堵 Text 墙」 | 快照对比 |
+| AC-31 | F | 代码只保留单一协议族，`v1_0` 分支删除且无存量数据 | 源码扫描 + `protocolFamily` 分布查询 |
 
 ---
 
@@ -829,6 +838,8 @@ Grok：`When one of your Gmail accounts signs out, the Bot names that account`�
 | 审批卡过期误伤正在处理的用户 | 用户操作中断 | 30 分钟对齐 Grok；卡内倒计时提示（§6.11）；过期可重试（D7） |
 | worker 定时扫描把所有开放卡误结算 | 大面积失效 | 只扫 `expiresAt IS NOT NULL`；`unknown`/`needs_connection` 恒为 NULL |
 | 降级为纯文本后信息丢失 | 用户看不到内容 | 降级文本必须含关键槽位（AC-22） |
+| F 批白名单扩大，攻击面随之扩大 | 模型可构造新组件 payload | 新组件只接受 props；逐组件 review；AC-28 恶意 payload 测试 |
+| F 批被误当作「修重复推卡」的手段 | 顺序错乱，白干 | §15.7 顺序约束：F 批必须在 A~E 之后 |
 
 ---
 
@@ -877,3 +888,136 @@ Grok：`When one of your Gmail accounts signs out, the Bot names that account`�
 | 11 | Slack 审批卡 `Allow once` / `Skip` | 只有三端一致一句 | 归入 E 批渲染差异 | §8 E 批 |
 
 **未采纳的 3 类**（需要 Matebot 没有的商业能力，明确排除）：购物/订单卡、Vault 支付卡、会议卡。它们的**表现层规则**（照片、价格、徽章、支付确认）对本规格无借鉴价值，但它们的**生命周期模式**（提交中 → 完成 / 过期可重试）已被吸收进 §4.3.1 与 §6.7。
+
+---
+
+## 15. A2UI 架构评估（F 批）
+
+本节回答一个问题：**现有基于 Google A2UI 的前端架构，能否承载 Grok Bot 级别的表现层体验？需要替换吗？**
+
+### 15.1 现状事实（已核实）
+
+| 项 | 实际 |
+|---|---|
+| 依赖 | `@a2ui/web_core@0.15.0`、`@a2ui/react@0.15.0`（官方包，非同名自研） |
+| 协议族 | `v0_9` / `v1_0` 双轨并存 |
+| Catalog | **只用 basic catalog**，`compile.ts` 硬编码 `basicCatalogId(protocolFamily)` |
+| 组件白名单 | `catalog-guard.ts` 钉死 18 个 basic 组件，未知组件挂载前拒绝 |
+| Web 渲染 | `A2uiSurfaceHost` 走 `@a2ui/react`；email intent 改走手写 `EmailComposeEditor` |
+| Mobile 渲染 | **完全手写 RN 渲染器**（`a2ui-native-surface.tsx` 518 行 + `a2ui-catalog.ts` 277 行），不用 `@a2ui/react` |
+
+**basic catalog 表达力不足的实证**：日历批量在编译时被压成一个 `Text`——
+
+```274:274:packages/a2ui-adapter/src/compile.ts
+    components.push({ id: "event-list", component: "Text", text: batch });
+```
+
+源码自述：`the basic catalog has no Table or`。同理没有 Dropdown / Badge / AttachmentList，所以批准菜单只能手写 Radix 组件。
+
+### 15.2 结论：优化，不重写
+
+把 Grok 的体验优势按层拆开：
+
+| 优势 | 层 | 换渲染框架有效吗 |
+|---|---|---|
+| 同动作一张卡、串行、新消息关闭、过期可重试 | 生命周期 | 否 |
+| 动词+对象、暂停原因、账号身份、槽位摘要 | 数据 | 否 |
+| 同信息不重复呈现 | 编排 | 否 |
+| 加载失败降级纯文本 | 渲染容错 | 部分 |
+| 类别小标签、间距、页脚、表格化行程 | **渲染** | 是 |
+
+**九成以上在生命周期与数据层，A2UI 不负责那部分。** 本规格 G1–G16 全部落在生命周期/数据层，因此**与渲染器无关**——保留或替换 A2UI 都不影响其有效性；反之，只换 A2UI 而不动规格，用户体验不会有任何变化。
+
+A2UI 提供的是**声明式渲染 + schema 校验 + 组件白名单**（模型无法输出任意 JSX）。这是安全资产，替换等于自建一遍且更易出漏洞。
+
+### 15.3 已核实：0.15.0 官方支持自定义 catalog
+
+这是 F 批成立的技术前提，已从 npm 包类型定义直接确认（非推测）：
+
+**`@a2ui/react@0.15.0` 导出自定义组件工厂**
+
+```typescript
+// @a2ui/react 0.15.0 index.d.ts
+declare function createComponentImplementation<Api extends ComponentApi>(
+  api: Api,
+  RenderComponent: react__default.FC<ReactA2uiComponentProps<ResolveA2uiProps<InferredComponentApiSchemaType<Api>>>>,
+): ReactComponentImplementation;
+
+declare function createBinderlessComponentImplementation(
+  api: ComponentApi,
+  RenderComponent: react__default.FC<ReactRenderProps>,
+): ReactComponentImplementation;
+```
+
+**`@a2ui/web_core@0.15.0` 的 surface 支持多 catalog**
+
+```typescript
+// src/state/surface-model.d.ts
+readonly availableCatalogs: ReadonlyMap<string, Catalog<T, F>>;
+constructor(
+  id: string,
+  defaultCatalog: Catalog<T, F> | undefined,
+  availableCatalogs?: ReadonlyMap<string, Catalog<T, F>> | null,
+  ...
+);
+```
+
+**catalog 可按 id 解析，且可在代码中定义**
+
+- `resolveSurfaceCatalog(surface, catalogId, subject)` 按条目自带的 `catalogId` 选 catalog
+- `Catalog.fromJson` / `toJson`；文档明示「A catalog defined in code may leave them all out」
+
+**结论：自定义 catalog 是官方支持的扩展点，不是 hack。** 当前代码没用它（`compile.ts:84` 硬编码 basic），这是**未使用的能力**，不是架构限制。
+
+### 15.4 F 批范围：增加 Matebot 领域 catalog
+
+目标不是「更好看」，而是**把「每张卡手写三遍」变成「声明一次、三端映射」**。
+
+| 新增 catalog 组件 | 替代现在的 | 解决的问题 |
+|---|---|---|
+| `EventList` / `EventRow` | 日历批量压成一个 `Text` | 行程可扫读；免手写 |
+| `AttachmentList` | 无 | 附件进卡（§14 第 10 条） |
+| `StatusChip` | 手写 | 类别小标签、状态标签统一（§6.4） |
+| `DecisionMenu` | 手写 Radix 菜单 | 四项批准菜单声明化、三端同源（§6.6） |
+| `NudgeFooter` | 手写 | 「点击发送即可发出」统一（§6.10） |
+
+**必须保留手写**：`EmailComposeEditor`（真实文本编辑、光标、IME）。强行塞进 catalog 是过度设计，会牺牲体验换「纯粹」。
+
+**配套改动**：
+
+1. `compile.ts` 的 `catalogId` 从 `basicCatalogId()` 改为按 intent 选择 catalog（basic / matebot）
+2. `catalog-guard.ts` 白名单扩展为「basic ∪ matebot」，且**每个新组件必须是无副作用纯展示组件**——安全面随白名单扩大
+3. Mobile 的 `a2ui-catalog.ts` 增加新组件映射（工作量主要在这里）
+4. 新增组件必须同时有 Zod schema（服务端校验）与三端实现，缺一不得进白名单
+
+### 15.5 明确不做
+
+- **不替换 A2UI**：九成问题不在它；替换成本极高且收益不对应。
+- **不用 A2UI 表达所有卡**：L0-B/C（进度、图片、文件）无需声明化。
+- **不为了「统一」而牺牲复杂卡体验**：`EmailComposeEditor` 继续手写。
+- **不新增业务卡种**（购物、订单、支付）——无对应能力。
+
+### 15.6 协议族收敛到 `v0_9`（D8）
+
+当前 `v0_9` / `v1_0` 双轨并存，两套 schema 模块（`WebCoreV09Module` / `WebCoreV10Module`）都要维护。
+
+**决定：收敛到 `v0_9`，删除 `v1_0` 分支。**
+
+依据：
+
+- 双轨没有功能收益，只是维护成本与分叉风险
+- `@a2ui/web_core@0.15.0` 导出 `./v0_9/basic_catalog`，v0.9 线完整可用
+- `SpecVersion` 枚举含 `v0.8` / `v0.9` / `v0.9.1` / `1.0`——**收敛时要把 patch 版本也钉死**，避免 `v0.9.1` 悄悄进入
+
+保留 `A2uiProtocolFamily` 类型本身（未来升级时改一处），删除 `v1_0` 的编译分支与测试。
+
+### 15.7 F 批风险
+
+| 风险 | 影响 | 缓解 |
+|---|---|---|
+| 白名单扩大 | 模型可通过新组件扩大攻击面 | 新组件只接受 props，不接受 action 之外的副作用；review 逐组件过 |
+| Mobile 映射工作量被低估 | F 批拖期 | F 批单独立项、独立验收，不阻塞 A~E |
+| 自定义 catalog 与 basic 混用导致渲染分叉 | 同一卡在不同端长相不同 | 每个新组件必须三端同日上线，否则不进白名单 |
+| 协议收敛删 `v1_0` 时漏改存量数据 | 老 surface 渲染失败 | 先查存量 `protocolFamily` 分布，为零才删分支 |
+
+**顺序约束**：F 批必须在 A~E 跑通之后。**先修生命周期，再修渲染表达力**——顺序反了会白干（好看的卡照样重复推）。
