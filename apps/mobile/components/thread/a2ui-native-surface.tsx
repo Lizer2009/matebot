@@ -291,11 +291,7 @@ export function A2uiNativeSurface({
                 ) : null}
                 <Text testID="a2ui-email-approval-require">{t("Needs approval")}</Text>
                 <A2uiButton
-                  label={
-                    draftsDisabled
-                      ? t("Restore drafts")
-                      : t("Turn off drafts for this bot")
-                  }
+                  label={draftsDisabled ? t("Restore drafts") : t("Turn off drafts for this bot")}
                   testID="a2ui-email-disable-drafts"
                   onPress={() => void onDisableDrafts?.(!draftsDisabled)}
                 />

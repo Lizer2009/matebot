@@ -722,6 +722,10 @@ msgstr ""
 msgid "Allow once"
 msgstr "允許一次"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Allow this recipient"
+msgstr ""
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "允許寫入"
@@ -3961,7 +3965,7 @@ msgstr "管理 MCP 伺服器"
 msgid "Manage other bots"
 msgstr "管理其他機器人"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Manage rules"
 msgstr "管理規則"
 
@@ -4344,7 +4348,7 @@ msgstr "需要回覆"
 msgid "Needs an OAuth client ID"
 msgstr "需要 OAuth 用戶端 ID"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Needs approval"
 msgstr "需要批准"
 
@@ -5524,6 +5528,10 @@ msgstr "重新啟動以更新"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "還原"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Restore drafts"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -6857,6 +6865,10 @@ msgstr "請重試測試。"
 #: src/lib/cron.ts
 msgid "Tuesday"
 msgstr "週二"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Turn off drafts for this bot"
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx

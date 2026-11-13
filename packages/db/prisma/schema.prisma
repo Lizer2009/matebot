@@ -769,6 +769,8 @@ model Bot {
   teamChatRules          String  @default("")
   crossSpaceCommunication Boolean @default(true)
   dailyCheckIns Boolean @default(true)
+  /// When true, action intents skip the compose card and run under existing approval rules.
+  draftsDisabled Boolean @default(false)
   fleetManagement        Boolean @default(true)
   routines          Routine[]
   scratchpadItems   ScratchpadItem[]

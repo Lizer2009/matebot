@@ -721,6 +721,10 @@ msgstr ""
 msgid "Allow once"
 msgstr "Een keer toestaan"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Allow this recipient"
+msgstr ""
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "Schrijven toestaan"
@@ -3960,7 +3964,7 @@ msgstr "MCP-servers beheren"
 msgid "Manage other bots"
 msgstr "Andere bots beheren"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Manage rules"
 msgstr ""
 
@@ -4343,7 +4347,7 @@ msgstr "Heeft een antwoord nodig"
 msgid "Needs an OAuth client ID"
 msgstr "OAuth-client-ID nodig"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Needs approval"
 msgstr ""
 
@@ -5523,6 +5527,10 @@ msgstr "Herstarten om bij te werken"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Herstellen"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Restore drafts"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -6856,6 +6864,10 @@ msgstr "Probeer de test opnieuw."
 #: src/lib/cron.ts
 msgid "Tuesday"
 msgstr "dinsdag"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Turn off drafts for this bot"
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx

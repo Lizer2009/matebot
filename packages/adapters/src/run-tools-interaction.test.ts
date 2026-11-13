@@ -150,6 +150,107 @@ describe("present_interaction", () => {
     vi.unstubAllEnvs();
   });
 
+  it("skips the compose card when this bot has drafts off and approval allows", async () => {
+    publishOrAmend.mockResolvedValueOnce({ skipped: true, reason: "drafts_disabled" });
+    const notify = vi.fn(async () => undefined);
+    const ctx = {
+      deps: {
+        prisma: {
+          interaction: { findFirst: vi.fn(async () => null) },
+          connection: {
+            findMany: async () => [
+              {
+                id: "conn-1",
+                connectorId: "composio",
+                provider: "gmail",
+                displayName: "Gmail",
+                status: "connected",
+                providerRef: "acct-1",
+              },
+            ],
+          },
+          spaceSettingOverride: { findUnique: async () => null },
+          userActionApprovalRule: { findMany: async () => [] },
+          actionApprovalRule: { findMany: async () => [] },
+        },
+        events: { notify },
+      },
+      run: {
+        id: "run-1",
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        trigger: "user",
+        userId: "user-1",
+      },
+      bot: { draftsDisabled: true },
+      context: { userId: "user-1", signal: new AbortController().signal },
+      notify,
+    };
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).toHaveBeenCalledWith(
+      ctx.deps.prisma,
+      expect.objectContaining({ skipDraft: true }),
+    );
+    expect(result).toMatchObject({
+      skippedDraft: true,
+      draftsDisabled: true,
+      executed: false,
+      intent: "email.compose",
+    });
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it("refuses the action when drafts are off and a rule denies it", async () => {
+    const ctx = {
+      deps: {
+        prisma: {
+          interaction: { findFirst: vi.fn(async () => null) },
+          connection: {
+            findMany: async () => [
+              {
+                id: "conn-1",
+                connectorId: "composio",
+                provider: "gmail",
+                displayName: "Gmail",
+                status: "connected",
+                providerRef: "acct-1",
+              },
+            ],
+          },
+          spaceSettingOverride: { findUnique: async () => null },
+          userActionApprovalRule: {
+            findMany: async () => [
+              { effect: "deny", matchKind: "tool", matchValue: "gmail_send_email" },
+            ],
+          },
+          actionApprovalRule: { findMany: async () => [] },
+        },
+        events: { notify: vi.fn(async () => undefined) },
+      },
+      run: {
+        id: "run-1",
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        trigger: "user",
+        userId: "user-1",
+      },
+      bot: { draftsDisabled: true },
+      context: { userId: "user-1", signal: new AbortController().signal },
+      notify: vi.fn(async () => undefined),
+    };
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(result.error).toMatch(/blocked by an approval rule/);
+    expect(publishOrAmend).not.toHaveBeenCalled();
+  });
+
   it("publishes an email.compose surface when FEATURE_A2UI is on", async () => {
     publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-1",

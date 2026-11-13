@@ -120,6 +120,11 @@ export type PublishInteractionSurfaceInput = {
   senderAddress?: string;
   /** Stored on the plan JSON so reconnect can restore this card without a model turn. */
   resumePlan?: InteractionResumePlan;
+  /**
+   * When true, do not create or amend a draft card (spec §5.4.1). Callers must
+   * have already decided the bot's drafts are off and approval still allows.
+   */
+  skipDraft?: boolean;
 };
 
 /**
@@ -427,6 +432,7 @@ export async function publishInteractionSurface(
 export type PublishOrAmendInput = PublishInteractionSurfaceInput;
 
 export type PublishOrAmendResult = {
+  skipped?: false;
   interactionId: string;
   surfaceId: string;
   messageId: string;
@@ -439,6 +445,11 @@ export type PublishOrAmendResult = {
   plan: InteractionPlan;
   slots: Record<string, unknown>;
   capability?: EmailSurfaceCapability;
+};
+
+export type SkippedDraftPublish = {
+  skipped: true;
+  reason: "drafts_disabled";
 };
 
 /**
@@ -456,7 +467,8 @@ export type PublishOrAmendResult = {
 export async function publishOrAmend(
   prisma: PrismaClient,
   input: PublishOrAmendInput,
-): Promise<PublishOrAmendResult> {
+): Promise<PublishOrAmendResult | SkippedDraftPublish> {
+  if (input.skipDraft) return { skipped: true, reason: "drafts_disabled" };
   const cardKey = input.cardKey ?? interactionCardKey(input.threadId, input.plan.intent);
   const status = input.status ?? "collecting";
   // An explicit `null` is a decision (no expiry), not a request to derive one.

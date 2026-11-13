@@ -484,6 +484,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         matchKind: "recipient",
         matchValue: recipient,
       }),
+    disableDrafts: (disabled) =>
+      botId
+        ? rpc("bots/update", { botId, draftsDisabled: disabled }).then(() => refresh())
+        : Promise.resolve(),
   });
 
   const { liveItems, renderMessageRow, renderItem } = useThreadRows({

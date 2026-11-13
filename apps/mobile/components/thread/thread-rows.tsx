@@ -153,6 +153,7 @@ export function useThreadRows({
           key={message.id}
           message={message}
           actions={rowActions}
+          draftsDisabled={currentBot?.draftsDisabled}
           botId={botId}
           bubbleBotId={botId ?? snap?.members?.[0]?.botId ?? ""}
           groupId={groupId}

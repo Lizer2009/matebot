@@ -721,6 +721,10 @@ msgstr "Permite que Matebot use el reconocimiento de voz y el micrófono en Ajus
 msgid "Allow once"
 msgstr "Permitir una vez"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Allow this recipient"
+msgstr ""
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "Permitir escritura"
@@ -3960,7 +3964,7 @@ msgstr "Gestionar servidores MCP"
 msgid "Manage other bots"
 msgstr "Gestionar otros bots"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Manage rules"
 msgstr ""
 
@@ -4343,7 +4347,7 @@ msgstr "Necesita una respuesta"
 msgid "Needs an OAuth client ID"
 msgstr "Necesita un ID de cliente OAuth"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Needs approval"
 msgstr ""
 
@@ -5523,6 +5527,10 @@ msgstr "Reiniciar para actualizar"
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Restaurar"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Restore drafts"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -6856,6 +6864,10 @@ msgstr "Vuelve a intentar la prueba."
 #: src/lib/cron.ts
 msgid "Tuesday"
 msgstr "martes"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Turn off drafts for this bot"
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx

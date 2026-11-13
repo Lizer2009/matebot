@@ -441,6 +441,11 @@ describe("native A2UI surface", () => {
     expect(onAllowRecipient).toHaveBeenCalledWith("alex@example.test");
     expect(onSend).not.toHaveBeenCalled();
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
+    await act(async () => {
+      click("a2ui-email-disable-drafts");
+    });
+    expect(onDisableDrafts).toHaveBeenCalledWith(true);
+    expect(onSend).not.toHaveBeenCalled();
   });
 
   it("shows failed with Retry and no Send", async () => {

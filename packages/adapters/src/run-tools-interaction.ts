@@ -7,6 +7,7 @@ import {
   isCalendarCreateIntent,
   isEmailComposeIntent,
   readConfirmedCalendarDraft,
+  resolveActionApprovalDetail,
   resumePlanForNeedsConnection,
   surfaceNudgeFor,
   surfaceNudgeText,
@@ -14,8 +15,10 @@ import {
   unknownCapabilityNotice,
   validateDecisionForCapability,
 } from "@matebot/core";
+import { listApprovalRules } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
+import { shouldSkipDraftCard } from "./interaction-draft-policy.js";
 import {
   interactionCapabilityFromRows,
   loadEmailReconnectRefs,
@@ -103,6 +106,28 @@ export function normalizeInteractionPlan(plan: InteractionPlan): InteractionPlan
   return normalizeCalendarPlan(normalizeEmailComposePlan(plan));
 }
 
+async function draftApprovalForPlan(
+  ctx: RunContext,
+  plan: InteractionPlan,
+): Promise<"allow" | "ask" | "deny"> {
+  const userId = ctx.context?.userId ?? ctx.run.userId;
+  if (!userId) return "allow";
+  try {
+    const rules = await listApprovalRules(ctx.deps.prisma, {
+      userId,
+      spaceId: ctx.run.spaceId,
+    });
+    const recipient = plan.fields.find((field) => field.name === "to")?.value;
+    return resolveActionApprovalDetail({
+      toolName: isEmailComposeIntent(plan.intent) ? "gmail_send_email" : "calendar_create_event",
+      ...(typeof recipient === "string" ? { recipient } : {}),
+      rules,
+    }).decision;
+  } catch {
+    return "allow";
+  }
+}
+
 /** The one line the turn should say after publishing; nothing else belongs in prose. */
 function surfaceNudgeReply(
   capability: EmailSurfaceCapability | undefined,
@@ -164,6 +189,17 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
 
   try {
     const capabilityStamp = await interactionPublishCapability(ctx, plan);
+    const draftsDisabled = Boolean(ctx.bot?.draftsDisabled);
+    const approval = draftsDisabled ? await draftApprovalForPlan(ctx, plan) : "allow";
+    if (approval === "deny") {
+      return { error: "This action is blocked by an approval rule." };
+    }
+    const skipDraft = shouldSkipDraftCard({
+      draftsDisabled,
+      intent: plan.intent,
+      approval,
+      ...(capabilityStamp.status ? { status: capabilityStamp.status } : {}),
+    });
     const published = await publishOrAmend(deps.prisma, {
       spaceId: run.spaceId,
       threadId: run.threadId,
@@ -171,6 +207,7 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       runId: run.id,
       plan,
       lease: runLeaseFor(deps, run.id),
+      skipDraft,
       // The stamp carries the connection's label for the card's read-only row; the publisher
       // only accepts the label, because an address is not something it can vouch for.
       ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),
@@ -190,6 +227,19 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
           }
         : {}),
     });
+    if (published.skipped) {
+      // Real mailbox send stays paused (t317). Skipping the compose card is the
+      // draftsDisabled effect; execution uses the existing executor only when a
+      // later isolated caller supplies one.
+      return {
+        skippedDraft: true,
+        draftsDisabled: true,
+        executed: false,
+        intent: plan.intent,
+        reply:
+          "Drafts are off for this bot. The action runs under existing approval rules without a compose card.",
+      };
+    }
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
     });

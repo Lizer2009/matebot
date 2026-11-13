@@ -721,6 +721,10 @@ msgstr ""
 msgid "Allow once"
 msgstr "한 번 허용"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Allow this recipient"
+msgstr ""
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr ""
@@ -3960,7 +3964,7 @@ msgstr "MCP 서버 관리"
 msgid "Manage other bots"
 msgstr "다른 봇 관리"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Manage rules"
 msgstr ""
 
@@ -4343,7 +4347,7 @@ msgstr ""
 msgid "Needs an OAuth client ID"
 msgstr "OAuth 클라이언트 ID가 필요합니다"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Needs approval"
 msgstr ""
 
@@ -5523,6 +5527,10 @@ msgstr ""
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "복원"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Restore drafts"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -6856,6 +6864,10 @@ msgstr "테스트를 다시 시도하세요."
 #: src/lib/cron.ts
 msgid "Tuesday"
 msgstr "화요일"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Turn off drafts for this bot"
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx

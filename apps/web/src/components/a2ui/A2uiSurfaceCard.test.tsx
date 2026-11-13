@@ -658,13 +658,13 @@ describe("A2uiSurfaceCard", () => {
     await act(async () => {
       status.click();
     });
-    expect(document.querySelector('[data-testid="a2ui-email-allow-recipient"]')?.textContent).toMatch(
-      /Allow this recipient/,
-    );
+    expect(
+      document.querySelector('[data-testid="a2ui-email-allow-recipient"]')?.textContent,
+    ).toMatch(/Allow this recipient/);
     expect(document.querySelector('[data-testid="a2ui-email-approval-require"]')).toBeTruthy();
-    expect(document.querySelector('[data-testid="a2ui-email-disable-drafts"]')?.textContent).toMatch(
-      /Turn off drafts for this bot/,
-    );
+    expect(
+      document.querySelector('[data-testid="a2ui-email-disable-drafts"]')?.textContent,
+    ).toMatch(/Turn off drafts for this bot/);
     expect(document.querySelector('[data-testid="a2ui-email-manage-rules"]')).toBeTruthy();
     const allow = document.querySelector(
       '[data-testid="a2ui-email-allow-recipient"]',
@@ -675,6 +675,17 @@ describe("A2uiSurfaceCard", () => {
     expect(onAllowRecipient).toHaveBeenCalledWith("a@example.com");
     expect(onSend).not.toHaveBeenCalled();
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeTruthy();
+    await act(async () => {
+      status.click();
+    });
+    const disable = document.querySelector(
+      '[data-testid="a2ui-email-disable-drafts"]',
+    ) as HTMLElement;
+    await act(async () => {
+      disable.click();
+    });
+    expect(onDisableDrafts).toHaveBeenCalledWith(true);
+    expect(onSend).not.toHaveBeenCalled();
   });
 
   it("shows a failed card with Retry and no Send", async () => {

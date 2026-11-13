@@ -7026,6 +7026,15 @@ describe("bot model auth on save", () => {
     );
   });
 
+  it("persists draftsDisabled through the bot update route", async () => {
+    const { botUpdate, handler } = saveDeps({ modelId: spark, preferences: () => null });
+    const response = await call(handler, "bots/update", { botId: "bot-1", draftsDisabled: true });
+    expect(response.status).toBe(200);
+    expect(botUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ draftsDisabled: true }) }),
+    );
+  });
+
   it("saves a rename while resending an existing Spark override", async () => {
     const { preferenceFindFirst, secretFindFirst, botUpdate, handler } = saveDeps({
       modelId: spark,

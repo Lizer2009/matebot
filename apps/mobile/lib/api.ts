@@ -1192,6 +1192,7 @@ export type MobileBot = Pick<
   | "fleetManagement"
   | "crossSpaceCommunication"
   | "dailyCheckIns"
+  | "draftsDisabled"
 > &
   Partial<Pick<Bot, "parentBotId" | "spaceId" | "instructions">>;
 

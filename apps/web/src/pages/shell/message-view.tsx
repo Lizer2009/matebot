@@ -123,9 +123,15 @@ export const MessageView = memo(function MessageView({
    */
   a2uiEnabled?: boolean;
   memberName?: (botId: string | undefined) => string | undefined;
-  peerBot: (
-    botId: string,
-  ) => { name?: string; color: string; status?: string; avatarSet?: BotAvatarSet } | undefined;
+  peerBot: (botId: string) =>
+    | {
+        name?: string;
+        color: string;
+        status?: string;
+        avatarSet?: BotAvatarSet;
+        draftsDisabled?: boolean;
+      }
+    | undefined;
   replyParent?: ThreadMessage;
   onJumpToMessage?: (messageId: string) => void;
   onRefresh: () => Promise<void>;
@@ -594,15 +600,13 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
-                  onAllowRecipient={
-                    async (recipient) => {
-                      await rpc.approvalRules.set({
-                        effect: "always_allow",
-                        matchKind: "recipient",
-                        matchValue: recipient,
-                      });
-                    }
-                  }
+                  onAllowRecipient={async (recipient) => {
+                    await rpc.approvalRules.set({
+                      effect: "always_allow",
+                      matchKind: "recipient",
+                      matchValue: recipient,
+                    });
+                  }}
                   onRetry={
                     botId || groupId
                       ? async () => {
@@ -657,6 +661,15 @@ export const MessageView = memo(function MessageView({
                       : undefined
                   }
                   onManageRules={onManageRules}
+                  draftsDisabled={botId ? peerBot(botId)?.draftsDisabled : undefined}
+                  onDisableDrafts={
+                    botId
+                      ? async (disabled) => {
+                          await rpc.bots.update({ botId, draftsDisabled: disabled });
+                          await onBotChanged();
+                        }
+                      : undefined
+                  }
                 />
               </div>
             );

@@ -99,6 +99,7 @@ type MessageRowProps = {
   userBubble?: UserBubble;
   /** Whether this deployment serves interactive cards, from `/me`. */
   a2uiEnabled?: boolean;
+  draftsDisabled?: boolean;
   inGroup: boolean;
   columnWidth: number;
   enableJump: boolean;
@@ -136,6 +137,7 @@ export const MessageRow = memo(function MessageRow({
   activityStatus,
   userBubble,
   a2uiEnabled,
+  draftsDisabled,
   inGroup,
   columnWidth,
   enableJump,
@@ -467,6 +469,7 @@ export const MessageRow = memo(function MessageRow({
                 onManageRules={actions.manageRules}
                 onAllowRecipient={actions.allowRecipient}
                 onDisableDrafts={actions.disableDrafts}
+                draftsDisabled={draftsDisabled}
               />
             </ThreadReadOnlyContext.Provider>
           </MessageContextMenu>
