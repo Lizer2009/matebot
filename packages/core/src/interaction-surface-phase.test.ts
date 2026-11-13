@@ -39,13 +39,27 @@ describe("emailSurfacePhase", () => {
     expect(emailSurfacePhase({ capability: "ready" }).settled).toBe(false);
   });
 
-  it("marks success, failure, and UNKNOWN as settled", () => {
+  it("marks success and failure as settled", () => {
     // Blocks carry `lifecycle`, not the interaction status, so that is the input.
-    for (const lifecycle of ["succeeded", "failed", "unknown"] as const) {
+    for (const lifecycle of ["succeeded", "failed"] as const) {
       expect(
         emailSurfacePhase({ intent: "email.compose", capability: "ready", lifecycle }).settled,
       ).toBe(true);
     }
+  });
+
+  // In doubt is not a finished card: the person may still check status. It is also not a
+  // draft — Send must not come back. That pair used to be approximated by `settled: true`.
+  it("keeps an in-doubt send locked with a status check", () => {
+    const result = emailSurfacePhase({
+      intent: "email.compose",
+      capability: "ready",
+      lifecycle: "unknown",
+    });
+    expect(result.phase).toBe("action-reconcile-card");
+    expect(result.locked).toBe(true);
+    expect(result.settled).toBe(false);
+    expect(result.affordance.action).toBe("check_status");
   });
 
   // A snapshot written before templates existed carries no stamp at all.
@@ -57,6 +71,10 @@ describe("emailSurfacePhase", () => {
   it("keeps a legacy connection stamp working", () => {
     const result = emailSurfacePhase({ intent: "email.compose", capability: "not_connected" });
     expect(result.phase).toBe("email-connection-card");
-    expect(result.locked).toBe(false);
+    // `locked` now means the form is not editable, not merely "not in flight". A connection
+    // card has nothing to fill in; Connect is the affordance.
+    expect(result.locked).toBe(true);
+    expect(result.settled).toBe(false);
+    expect(result.affordance.action).toBe("connect");
   });
 });

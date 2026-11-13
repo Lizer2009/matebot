@@ -2,6 +2,7 @@ import { deliveryNeedsReconnect } from "./interaction-connection.js";
 import type { EmailSurfaceCapability } from "./interaction-preflight.js";
 import type { InteractionLifecycleStatus } from "./interaction-runtime.js";
 import type { InteractionStatus } from "./interaction-status.js";
+import { surfacePhase } from "./surface-phase.js";
 import type { SurfaceTemplate } from "./surface-stamp.js";
 import { SURFACE_TEMPLATES, surfaceStampFor } from "./surface-stamp.js";
 
@@ -242,10 +243,10 @@ export function emailDeliveryOutcome(input: {
 /**
  * The card's visible phase and whether its controls are locked.
  *
- * Both hosts derived this with the same copy-pasted expression, which is exactly
- * the duplicated domain state matrix the spec forbids: two hosts drifting on
- * "is the Send button live" is a correctness bug, not a styling one. The rule is
- * one function; each host only decides what to render for the phase.
+ * Mail used to own this; calendar had none. Both now go through `surfacePhase`. This wrapper
+ * keeps the email callers compiling and fills the email-derived template only when the caller
+ * has not already given a status or template — otherwise a replaced card would be stamped a
+ * draft again.
  */
 export function emailSurfacePhase(input: {
   template?: EmailSurfaceTemplate;
@@ -255,36 +256,15 @@ export function emailSurfacePhase(input: {
   error?: string | null;
   /** A submit is in flight from this client. */
   busy?: boolean;
-}): {
-  template: EmailSurfaceTemplate;
-  phase: EmailSurfaceTemplate;
-  locked: boolean;
-  /** Whether this phase is a terminal execution state. */
-  settled: boolean;
-} {
-  const template = emailSurfaceTemplateFromBlock(input);
-  // While a submit is in flight from this client, the card shows progress even
-  // if the server stamp has not arrived yet.
-  const phase: EmailSurfaceTemplate =
-    input.busy &&
-    (template === "email-draft-card" ||
-      template === "action-submitting-card" ||
-      template === "action-result-failed")
-      ? "action-progress-card"
-      : template;
-  const locked =
-    phase === "action-submitting-card" ||
-    phase === "action-progress-card" ||
-    phase === "action-result-success" ||
-    phase === "action-result-failed" ||
-    phase === "action-reconcile-card";
-  return {
-    template,
-    phase,
-    locked,
-    settled:
-      phase === "action-result-success" ||
-      phase === "action-result-failed" ||
-      phase === "action-reconcile-card",
-  };
+  status?: string;
+}): ReturnType<typeof surfacePhase> {
+  const intent = input.intent ?? "email.compose";
+  if (input.status || input.template) {
+    return surfacePhase({ ...input, intent });
+  }
+  return surfacePhase({
+    ...input,
+    intent,
+    template: emailSurfaceTemplateFromBlock({ ...input, intent }),
+  });
 }

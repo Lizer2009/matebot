@@ -128,6 +128,7 @@ export * from "./speech-text.js";
 export * from "./stuck-work.js";
 export * from "./surface-affordance.js";
 export * from "./surface-affordances.js";
+export * from "./surface-phase.js";
 export * from "./surface-revision.js";
 export * from "./surface-stamp.js";
 export * from "./surface-status-copy.js";
