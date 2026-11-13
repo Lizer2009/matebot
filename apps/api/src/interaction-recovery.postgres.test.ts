@@ -3,6 +3,7 @@ import type { InteractionPlan } from "@matebot/contracts";
 import {
   applyNaturalLanguageEdit,
   interactionCapabilityForIntent,
+  interactionCardKey,
   userEditedFieldNames,
 } from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
@@ -111,6 +112,7 @@ describePostgres("connection recovery (PostgreSQL)", () => {
         threadId,
         messageId,
         intent: "email.compose",
+        cardKey: interactionCardKey(threadId, "email.compose"),
         status: "needs_connection",
         draftVersion: 1,
         plan: plan([
@@ -265,6 +267,7 @@ describePostgres("connection recovery (PostgreSQL)", () => {
         spaceId,
         threadId: otherThread,
         intent: "calendar.create",
+        cardKey: interactionCardKey(otherThread, "calendar.create"),
         status: "needs_connection",
         draftVersion: 1,
         plan: {

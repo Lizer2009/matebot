@@ -1,5 +1,9 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
-import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
+import type {
+  EmailSurfaceCapability,
+  InteractionLifecycleStatus,
+  InteractionStatus,
+} from "@matebot/core";
 import {
   emailSurfaceBlockFields,
   interactionCapabilityForIntent,
@@ -90,7 +94,11 @@ export type PublishInteractionSurfaceInput = {
   lease?: RunLease;
   /** Mailbox preflight stamp; omitted on non-email surfaces. */
   capability?: EmailSurfaceCapability;
-  status?: InteractionLifecycleStatus;
+  /**
+   * A row can only be created in a status both vocabularies know: the older runtime lifecycle
+   * still says `executing`, which the canonical card vocabulary does not contain.
+   */
+  status?: Extract<InteractionLifecycleStatus, InteractionStatus>;
   /**
    * The executed record this surface corrects. Set only when a new draft amends
    * a record that already ran; the original row is never rewritten.

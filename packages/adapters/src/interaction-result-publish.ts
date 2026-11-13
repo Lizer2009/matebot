@@ -1,5 +1,6 @@
 import type { InteractionPlan, MessageBlock, ResultSurface } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef, ResultSurfaceSchema } from "@matebot/contracts";
+import { interactionCardKey } from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { senderStampFromBlock } from "./interaction-publish.js";
@@ -80,6 +81,7 @@ export async function publishResultSurface(
           threadId: input.threadId,
           runId: input.runId ?? null,
           intent: input.intent,
+          cardKey: interactionCardKey(input.threadId, input.intent),
           // A result is terminal on arrival: it has nothing to confirm.
           status: "succeeded",
           plan: plan as never,

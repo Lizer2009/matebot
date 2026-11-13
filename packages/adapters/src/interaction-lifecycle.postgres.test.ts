@@ -1,9 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { InteractionPlan } from "@matebot/contracts";
-import { confirmInteractionDraftState, interactionSlotsFromPlan } from "@matebot/core";
+import {
+  confirmInteractionDraftState,
+  interactionCardKey,
+  interactionSlotsFromPlan,
+  OPEN_STATUSES,
+} from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   cancelInteractionService,
   updateInteractionFieldService,
@@ -76,6 +81,17 @@ describePostgres("draft lifecycle (PostgreSQL)", () => {
       await db.prisma.$disconnect();
       await db.pool.end();
     }
+  });
+
+  // Each case publishes its own card on the one thread this suite owns, and publishing does not
+  // supersede what came before. The card key is derived from (thread, intent), so leaving an open
+  // row behind would make the next publish collide with the partial unique index.
+  beforeEach(async () => {
+    if (!threadId) return;
+    await system.interaction.updateMany({
+      where: { threadId, status: { in: [...OPEN_STATUSES] } },
+      data: { status: "superseded" },
+    });
   });
 
   async function publish(fields: InteractionPlan["fields"]) {
@@ -249,6 +265,7 @@ describePostgres("draft lifecycle (PostgreSQL)", () => {
         spaceId,
         threadId,
         intent: "email.compose",
+        cardKey: interactionCardKey(threadId, "email.compose"),
         status: "ready_for_review",
         draftVersion: 1,
         plan: EMAIL_PLAN([

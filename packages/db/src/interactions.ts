@@ -4,19 +4,12 @@ import {
   InteractionPlanSchema,
   parseA2uiSurfaceDocumentRef,
 } from "@matebot/contracts";
+import type { InteractionStatus } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core";
 import type { Prisma, PrismaClient } from "./client.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
-export type InteractionStatus =
-  | "collecting"
-  | "ready_for_review"
-  | "awaiting_approval"
-  | "executing"
-  | "succeeded"
-  | "failed"
-  | "unknown"
-  | "needs_connection"
-  | "cancelled";
+export type { InteractionStatus };
 
 export type CreateInteractionInput = {
   spaceId: string;
@@ -29,6 +22,14 @@ export type CreateInteractionInput = {
   title?: string;
   summary?: string;
   messageId?: string;
+  /**
+   * sha256(threadId + NUL + intent). Optional: omitted means `createInteraction` derives it from
+   * this row's own thread and intent, so a new row never lacks one. The column is nullable only
+   * until the previous release, which never writes it, has drained.
+   */
+  cardKey?: string;
+  /** Set only for `awaiting_approval`. */
+  expiresAt?: Date | null;
 };
 
 export type UpsertInteractionSurfaceInput = {
@@ -46,6 +47,9 @@ export type InteractionRow = {
   runId: string | null;
   intent: string;
   status: string;
+  cardKey: string | null;
+  staleAt: Date | null;
+  expiresAt: Date | null;
   draftVersion: number;
   confirmedVersion: number | null;
   plan: unknown;
@@ -93,6 +97,11 @@ export async function createInteraction(
       threadId: input.threadId,
       runId: input.runId,
       intent: input.intent,
+      // Derive the key when the caller does not pass one, so every row written now is covered by
+      // the partial unique index. The column stays nullable only until the previous release, which
+      // never writes a key, has drained.
+      cardKey: input.cardKey ?? interactionCardKey(input.threadId, input.intent),
+      ...(input.expiresAt ? { expiresAt: input.expiresAt } : {}),
       status: input.status ?? "collecting",
       draftVersion: 1,
       plan: plan as Prisma.InputJsonValue,

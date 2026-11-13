@@ -1,6 +1,6 @@
 import type { InteractionPlan } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
-import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
+import type { EmailSurfaceCapability } from "@matebot/core";
 import {
   interactionRequiredApp,
   readConfirmedCalendarDraft,
@@ -290,7 +290,7 @@ export async function interactionPublishCapability(
   plan: { intent: string },
 ): Promise<{
   capability?: EmailSurfaceCapability;
-  status?: InteractionLifecycleStatus;
+  status?: "needs_connection";
   sender?: DraftSender;
 }> {
   const app = interactionRequiredApp(plan.intent);

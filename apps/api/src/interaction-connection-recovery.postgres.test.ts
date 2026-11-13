@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { ManagedConnectorProvider } from "@matebot/adapter-kit";
 import { ConnectorRegistry } from "@matebot/adapters";
 import type { Actor } from "@matebot/contracts";
+import { interactionCardKey } from "@matebot/core";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
 import { RPCHandler } from "@orpc/server/fetch";
@@ -242,6 +243,7 @@ describePostgres("card recovery through the real connection routes", () => {
         threadId,
         messageId,
         intent: "email.compose",
+        cardKey: interactionCardKey(threadId, "email.compose"),
         status: "needs_connection",
         draftVersion: 2,
         plan: {
@@ -624,6 +626,7 @@ describePostgres("card recovery through the real connection routes", () => {
         threadId: otherThreadId,
         messageId: otherMessageId,
         intent: "email.compose",
+        cardKey: interactionCardKey(otherThreadId, "email.compose"),
         status: "needs_connection",
         draftVersion: 1,
         plan: {
@@ -785,6 +788,7 @@ describePostgres("card recovery through the real connection routes", () => {
         spaceId: otherSpaceId,
         threadId: otherThreadId,
         intent: "email.compose",
+        cardKey: interactionCardKey(otherThreadId, "email.compose"),
         status: "needs_connection",
         draftVersion: 1,
         plan: {
