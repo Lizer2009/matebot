@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  canonicalIntent,
+  cardKindForIntent,
   findInteractionCapability,
   INTERACTION_CAPABILITIES,
   interactionCapabilityForIntent,
   interactionIntents,
+  isActionIntent,
+  isCalendarCreateIntent,
+  isEmailComposeIntent,
 } from "./interaction-capability.js";
 
 /**
@@ -116,6 +121,43 @@ describe("capability registry", () => {
     const local = INTERACTION_CAPABILITIES.filter((capability) => capability.readOnly);
     for (const capability of local) {
       expect(capability.requiresConnection === null || capability.readOnly).toBe(true);
+    }
+  });
+
+  it("classifies action vs result card kinds", () => {
+    expect(cardKindForIntent("email.compose")).toBe("action");
+    expect(cardKindForIntent("email.send")).toBe("action");
+    expect(cardKindForIntent("calendar.create")).toBe("action");
+    expect(cardKindForIntent("calendar.compose")).toBe("action");
+    expect(cardKindForIntent("interaction.result")).toBe("result");
+    expect(cardKindForIntent("calendar.query")).toBe("result");
+    expect(cardKindForIntent("github.clone")).toBeUndefined();
+    expect(isActionIntent("email.compose")).toBe(true);
+    expect(isActionIntent("interaction.result")).toBe(false);
+    expect(isActionIntent(undefined)).toBe(false);
+  });
+
+  it("canonicalizes aliases onto registered intents", () => {
+    expect(canonicalIntent("email.send")).toBe("email.compose");
+    expect(canonicalIntent("calendar.compose")).toBe("calendar.create");
+    expect(canonicalIntent("email.compose")).toBe("email.compose");
+    expect(findInteractionCapability(canonicalIntent("email.send"))?.intent).toBe("email.compose");
+    expect(isEmailComposeIntent("email.send")).toBe(true);
+    expect(isEmailComposeIntent("calendar.create")).toBe(false);
+    expect(isCalendarCreateIntent("calendar.compose")).toBe(true);
+    expect(isCalendarCreateIntent("email.compose")).toBe(false);
+  });
+
+  it("keeps cardKind aligned with the schema presentation", () => {
+    for (const capability of INTERACTION_CAPABILITIES) {
+      if (capability.cardKind === "action") {
+        expect(capability.schema.presentation).toBe("form");
+        expect(capability.schema.action).not.toBeNull();
+      } else {
+        expect(capability.cardKind).toBe("result");
+        expect(capability.schema.presentation).toBe("result");
+        expect(capability.schema.action).toBeNull();
+      }
     }
   });
 });

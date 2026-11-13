@@ -20,6 +20,15 @@ export type SurfaceCardShape = "review" | "decision";
 /** The one verb a button may use. Never taken from the model's plan. */
 export type SurfaceActionVerb = "send" | "create";
 
+/**
+ * Whether a capability occupies the one-open-card unique index.
+ *
+ * `action` cards are drafts the kernel publishes; only one may be open per
+ * thread+intent. `result` cards enter already terminal, so the index does not
+ * apply (spec §5.6).
+ */
+export type CardKind = "action" | "result";
+
 export type InteractionCapability = {
   intent: string;
   /** Short human label, used in prompts and fallbacks. */
@@ -49,6 +58,8 @@ export type InteractionCapability = {
    * projector falls back to title/summary.
    */
   historyDigestFields?: readonly string[];
+  /** Action drafts vs terminal result cards (spec §5.6). */
+  cardKind: CardKind;
 };
 
 const EMAIL_SCHEMA: InteractionSurfaceSchema = {
@@ -120,6 +131,7 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     cardShape: "review",
     actionVerb: "send",
     historyDigestFields: ["to", "subject"],
+    cardKind: "action",
   },
   {
     intent: "calendar.create",
@@ -132,6 +144,7 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     cardShape: "review",
     actionVerb: "create",
     historyDigestFields: ["name", "start", "end"],
+    cardKind: "action",
   },
   {
     intent: "calendar.query",
@@ -142,6 +155,7 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     readOnly: true,
     implemented: true,
     cardShape: "review",
+    cardKind: "result",
   },
   {
     intent: "interaction.result",
@@ -152,10 +166,26 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     readOnly: true,
     implemented: true,
     cardShape: "review",
+    cardKind: "result",
   },
 ] as const;
 
 const BY_INTENT = new Map(INTERACTION_CAPABILITIES.map((entry) => [entry.intent, entry]));
+
+/**
+ * Older spellings that mean a registered intent. Lookups stay keyed by the
+ * registered name; callers canonicalize first so `email.send` is not a second
+ * card kind.
+ */
+export const INTENT_ALIASES: Readonly<Record<string, string>> = {
+  "email.send": "email.compose",
+  "calendar.compose": "calendar.create",
+};
+
+/** Map an alias or registered intent onto the registry key. */
+export function canonicalIntent(intent: string): string {
+  return INTENT_ALIASES[intent] ?? intent;
+}
 
 /** The capability for an intent, or undefined when nothing is registered. */
 export function findInteractionCapability(intent: string): InteractionCapability | undefined {
@@ -164,6 +194,23 @@ export function findInteractionCapability(intent: string): InteractionCapability
 
 export function interactionCapabilityForIntent(intent: string): InteractionCapability | undefined {
   return findInteractionCapability(intent);
+}
+
+/** Action vs result for a registered intent or its alias. */
+export function cardKindForIntent(intent: string): CardKind | undefined {
+  return findInteractionCapability(canonicalIntent(intent))?.cardKind;
+}
+
+export function isActionIntent(intent: string | undefined): boolean {
+  return Boolean(intent) && cardKindForIntent(intent) === "action";
+}
+
+export function isEmailComposeIntent(intent: string | undefined): boolean {
+  return Boolean(intent) && canonicalIntent(intent) === "email.compose";
+}
+
+export function isCalendarCreateIntent(intent: string | undefined): boolean {
+  return Boolean(intent) && canonicalIntent(intent) === "calendar.create";
 }
 
 /** Every registered intent, for prompts and docs to stay in sync with code. */

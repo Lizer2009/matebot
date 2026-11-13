@@ -1,19 +1,16 @@
 import { featuredConnectorProvidersMatch } from "./featured-connectors.js";
+import { canonicalIntent, findInteractionCapability } from "./interaction-capability.js";
 import { isEmailMailboxProvider } from "./interaction-preflight.js";
 
 /** External app an interaction cannot act without. Provider-neutral ids. */
 export type InteractionRequiredApp = "email" | "calendar";
-
-const CALENDAR_INTENTS: ReadonlySet<string> = new Set(["calendar.create", "calendar.compose"]);
 
 /** Which app an intent acts through. Undefined intents need no connection. */
 export function interactionRequiredApp(
   intent: string | undefined,
 ): InteractionRequiredApp | undefined {
   if (!intent) return undefined;
-  if (intent === "email.compose" || intent === "email.send") return "email";
-  if (CALENDAR_INTENTS.has(intent)) return "calendar";
-  return undefined;
+  return findInteractionCapability(canonicalIntent(intent))?.requiresConnection ?? undefined;
 }
 
 /** Whether a connected row's provider is the app, however the connector names it. */

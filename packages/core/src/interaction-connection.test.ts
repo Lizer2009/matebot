@@ -18,6 +18,9 @@ describe("interactionRequiredApp", () => {
     expect(interactionRequiredApp("email.compose")).toBe("email");
     expect(interactionRequiredApp("email.send")).toBe("email");
     expect(interactionRequiredApp("calendar.create")).toBe("calendar");
+    expect(interactionRequiredApp("calendar.compose")).toBe("calendar");
+    expect(interactionRequiredApp("calendar.query")).toBe("calendar");
+    expect(interactionRequiredApp("interaction.result")).toBeUndefined();
   });
 
   it("needs no app for intents that act on nothing external", () => {
