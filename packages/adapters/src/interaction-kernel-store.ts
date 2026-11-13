@@ -29,6 +29,18 @@ export type SettleResult =
   | { settled: false; reason: SettleRefusal | "not_found" | "concurrent" };
 
 /**
+ * Statuses whose live card a new present should amend.
+ *
+ * `needs_connection` is looked up but deliberately absent from the partial
+ * unique index: a mail connection card and a calendar connection card must be
+ * able to coexist for different intents, while the same intent re-presented
+ * must still amend in place rather than stack a second connection card. The
+ * index cannot express that per-intent exception, so the lookup carries it.
+ * `executing` is excluded on purpose: amending a card mid-send is unsafe.
+ */
+const OPEN_LOOKUP_STATUSES = [...OPEN_STATUSES, "needs_connection"] as const;
+
+/**
  * The live card for one intent in one thread, as the partial unique index
  * guarantees there is at most one.
  */
@@ -40,7 +52,7 @@ export async function findOpenCard(
     where: {
       threadId: input.threadId,
       intent: input.intent,
-      status: { in: [...OPEN_STATUSES] },
+      status: { in: [...OPEN_LOOKUP_STATUSES] },
     },
     orderBy: { updatedAt: "desc" },
     select: { id: true, status: true, messageId: true, draftVersion: true, staleAt: true },

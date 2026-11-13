@@ -174,6 +174,26 @@ export function senderLabelFromBlock(
   return senderStampFromBlock(blocks, surfaceId).senderLabel;
 }
 
+/**
+ * The executed record the card being replaced corrects.
+ *
+ * The link lives on the a2ui_surface block, not the interaction row. A rebuild
+ * that only trusts this call's arguments would drop it, so an in-place
+ * amendment of a correction would stop naming the record it amends.
+ */
+export function amendsFromBlock(
+  blocks: MessageBlock[] | undefined,
+  surfaceId: string | undefined,
+): string | undefined {
+  if (!blocks) return undefined;
+  for (const entry of blocks) {
+    if (entry.kind !== "a2ui_surface") continue;
+    if (surfaceId && entry.surfaceId !== surfaceId) continue;
+    return entry.amendsInteractionId;
+  }
+  return undefined;
+}
+
 /** Create Interaction + Surface, post a2ui_surface MessageBlock, emit ProductEvents. */
 export async function publishInteractionSurface(
   prisma: PrismaClient,
@@ -499,6 +519,8 @@ async function amendPublishedCard(
       const carried = senderStampFromBlock(previous, surfaceId);
       const blockLabel = senderLabel ?? carried.senderLabel;
       const blockAddress = senderAddress ?? carried.senderAddress;
+      // Keep the amendment link the caller did not restate.
+      const amendsInteractionId = input.amendsInteractionId ?? amendsFromBlock(previous, surfaceId);
       const block: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: existing.id,
@@ -509,7 +531,7 @@ async function amendPublishedCard(
         title: input.plan.title,
         summary: input.plan.summary,
         documentRef,
-        ...(input.amendsInteractionId ? { amendsInteractionId: input.amendsInteractionId } : {}),
+        ...(amendsInteractionId ? { amendsInteractionId } : {}),
         ...(blockLabel ? { senderLabel: blockLabel } : {}),
         ...(blockAddress ? { senderAddress: blockAddress } : {}),
         ...stamps,

@@ -25,7 +25,7 @@ const plan = {
   fields: [
     // `resolved` is the plan vocabulary's word for a field with a value; the brief's
     // `filled` is not in `InteractionFieldStatus`.
-    { name: "to", value: "418452732@qq.com", required: true, status: "resolved" as const },
+    { name: "to", value: "example@example.test", required: true, status: "resolved" as const },
     { name: "subject", value: "产品发布", required: true, status: "resolved" as const },
     { name: "body", value: "内容", required: true, status: "resolved" as const },
   ],
@@ -51,7 +51,7 @@ describe("present_interaction", () => {
       amended: true,
       missingRequired: [],
       plan,
-      slots: { to: "418452732@qq.com", subject: "产品发布", body: "内容" },
+      slots: { to: "example@example.test", subject: "产品发布", body: "内容" },
     });
     const { interactionTools: tools } = await import("./run-tools-interaction.js");
 

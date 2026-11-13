@@ -1,11 +1,7 @@
-import type {
-  InteractionField,
-  InteractionPlan,
-  InteractionSurfaceSchema,
-} from "@matebot/contracts";
+import type { InteractionPlan, InteractionSurfaceSchema } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
 import { withFieldValue } from "./interaction-runtime.js";
-import type { SurfaceStatus } from "./surface-revision.js";
+import { surfaceStatusFor } from "./interaction-status.js";
 import { canSubmitSurface } from "./surface-revision.js";
 import type { OpenSurface } from "./surface-target.js";
 import { resolveSurfaceTarget } from "./surface-target.js";
@@ -91,16 +87,6 @@ export type NaturalLanguageEditResult =
     }
   | { ok: false; error: string };
 
-function statusOf(row: {
-  status: string;
-  confirmedVersion: number | null;
-  draftVersion: number;
-}): SurfaceStatus {
-  if (row.status === "succeeded") return "executed";
-  if (row.confirmedVersion !== null && row.confirmedVersion === row.draftVersion) return "approved";
-  return "draft";
-}
-
 /**
  * Fields the person typed, read from the persisted draft.
  *
@@ -147,7 +133,7 @@ export async function applyNaturalLanguageEdit(
     return { ok: false, error: "forbidden" };
   }
 
-  const status = statusOf(row);
+  const status = surfaceStatusFor(row.status);
   if (status === "executed") {
     // Corrections are a new linked draft, not an in-place edit of the record.
     return { ok: false, error: "already_executed" };

@@ -8,11 +8,14 @@ import type {
 import {
   applyNaturalLanguageEdit,
   buildAmendment,
+  EDITABLE_STATUSES,
   interactionCapabilityForIntent,
+  surfaceStatusFor,
   userEditedFieldNames,
 } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { updateInteractionFieldService } from "./interaction-field-writer.js";
+import { publishOrAmend } from "./interaction-publish.js";
 import type { DraftSender } from "./interaction-readback.js";
 import { readbackFromStored } from "./interaction-readback.js";
 import type { RunContext } from "./run-context.js";
@@ -421,15 +424,15 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         where: {
           spaceId,
           threadId,
-          status: { notIn: ["cancelled", "failed", "unknown"] },
+          // The same set the kernel lets `edit_interaction` rewrite. A denylist
+          // here would offer a superseded or expired card as a live draft.
+          status: { in: [...EDITABLE_STATUSES] },
         },
         orderBy: { updatedAt: "desc" },
         select: {
           id: true,
           intent: true,
           status: true,
-          confirmedVersion: true,
-          draftVersion: true,
           title: true,
           summary: true,
           surfaces: { select: { surfaceId: true }, orderBy: { updatedAt: "desc" }, take: 1 },
@@ -442,12 +445,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
           surfaceId: row.surfaces[0]!.surfaceId,
           intent: row.intent,
           label: row.title ?? row.summary ?? row.intent,
-          status:
-            row.status === "succeeded"
-              ? ("executed" as const)
-              : row.confirmedVersion !== null && row.confirmedVersion === row.draftVersion
-                ? ("approved" as const)
-                : ("draft" as const),
+          status: surfaceStatusFor(row.status),
         }));
     },
     loadExecutedCandidate: async ({ interactionId, allowNewest }) => {
@@ -487,9 +485,11 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
       return load(newest?.id);
     },
     publishAmendment: async ({ interactionId, plan, capabilityStamp }) => {
-      const { publishInteractionSurface } = await import("./interaction-publish.js");
       const parsed = InteractionPlanSchema.parse(plan);
-      const published = await publishInteractionSurface(prisma, {
+      // One kernel path decides create-or-amend. The open-card lookup may find a
+      // card for this intent already (the first correction), and inserting then
+      // would collide with the partial unique index.
+      const published = await publishOrAmend(prisma, {
         spaceId: run.spaceId,
         threadId: run.threadId,
         botId: run.botId,

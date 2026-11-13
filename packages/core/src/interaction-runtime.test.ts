@@ -206,4 +206,43 @@ describe("interaction-runtime", () => {
       ).toMatchObject({ error: "terminal" });
     }
   });
+
+  // `superseded`, `expired`, `sent`, `executed` and `confirmed` are terminal in
+  // the kernel vocabulary even though the lifecycle type does not name them.
+  // Treating only succeeded/cancelled as final is what let a dead card be
+  // confirmed or revived.
+  it("treats every kernel-terminal status as terminal for edits and confirmation", () => {
+    const slots = { to: "a@example.com", subject: "Hi", body: "Hello" };
+    for (const status of ["superseded", "expired", "sent", "executed", "confirmed"] as const) {
+      const state = {
+        status: status as never,
+        draftVersion: 4,
+        confirmedVersion: 4,
+        plan,
+        slots,
+      };
+      expect(
+        applyInteractionFieldChange(state, {
+          expectedDraftVersion: 4,
+          name: "subject",
+          value: "Nope",
+        }),
+      ).toMatchObject({ ok: false, error: "terminal" });
+      expect(confirmInteractionDraftState(state, 4)).toMatchObject({
+        ok: false,
+        error: "terminal",
+      });
+      // A refused write leaves the version it was handed untouched.
+      expect(state.draftVersion).toBe(4);
+      expect(
+        canExecuteConfirmedInteraction({
+          draftVersion: 4,
+          confirmedVersion: 4,
+          status: status as never,
+        }),
+      ).toMatchObject({ ok: false, error: "terminal" });
+      // A terminal row keeps the status it was read with.
+      expect(deriveCollectingStatus(plan, slots, status as never)).toBe(status);
+    }
+  });
 });

@@ -1,5 +1,6 @@
 import type { InteractionField, InteractionPlan } from "@matebot/contracts";
 import { readConfirmedCalendarDraft } from "./calendar-draft.js";
+import { isTerminalStatus } from "./interaction-status.js";
 
 /** Server-side Interaction lifecycle (design §7.4). Client cannot claim SUCCEEDED. */
 export type InteractionLifecycleStatus =
@@ -32,13 +33,17 @@ export type FieldChangeResult =
     }
   | { ok: false; error: "version_conflict" | "terminal" | "unknown_field"; message: string };
 
-const TERMINAL: ReadonlySet<InteractionLifecycleStatus> = new Set(["succeeded", "cancelled"]);
-const LOCKED: ReadonlySet<InteractionLifecycleStatus> = new Set([
-  "executing",
-  "failed",
-  "unknown",
-  ...TERMINAL,
-]);
+const IN_FLIGHT_STATUSES: ReadonlySet<string> = new Set(["executing", "failed", "unknown"]);
+
+/**
+ * A card no write may touch: terminal per the kernel vocabulary, or mid-send /
+ * in an outcome we do not know yet. Using the kernel predicate rather than a
+ * local pair is what keeps a `superseded`, `expired`, `sent`, `executed` or
+ * `confirmed` row from being confirmed or edited back to life.
+ */
+function isLockedStatus(status: string): boolean {
+  return isTerminalStatus(status) || IN_FLIGHT_STATUSES.has(status);
+}
 
 export function interactionSlotsFromPlan(plan: InteractionPlan): Record<string, unknown> {
   const slots: Record<string, unknown> = {};
@@ -73,7 +78,7 @@ export function deriveCollectingStatus(
   slots: Record<string, unknown>,
   current: InteractionLifecycleStatus,
 ): InteractionLifecycleStatus {
-  if (current === "needs_connection" || LOCKED.has(current)) {
+  if (current === "needs_connection" || isLockedStatus(current)) {
     return current;
   }
   if (current === "awaiting_approval") {
@@ -97,7 +102,7 @@ export function applyInteractionFieldChange(
     origin?: "user" | "model";
   },
 ): FieldChangeResult {
-  if (LOCKED.has(state.status)) {
+  if (isLockedStatus(state.status)) {
     return {
       ok: false,
       error: "terminal",
@@ -156,7 +161,7 @@ export function confirmInteractionDraftState(
   state: InteractionDraftState,
   draftVersion: number,
 ): ConfirmDraftResult {
-  if (LOCKED.has(state.status)) {
+  if (isLockedStatus(state.status)) {
     return {
       ok: false,
       error: "terminal",
@@ -200,7 +205,8 @@ export function canExecuteConfirmedInteraction(state: {
       message: "Send is already in progress",
     };
   }
-  if (TERMINAL.has(state.status)) {
+  // A failed send stays retryable; every other terminal status is final.
+  if (isTerminalStatus(state.status) && state.status !== "failed") {
     return { ok: false, error: "terminal", message: `Interaction is ${state.status}` };
   }
   if (state.confirmedVersion === null || state.confirmedVersion !== state.draftVersion) {

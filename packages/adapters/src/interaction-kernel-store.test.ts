@@ -55,8 +55,19 @@ describe("findOpenCard", () => {
     expect(findFirst.mock.calls[0]![0].where).toMatchObject({
       threadId: "t1",
       intent: "email.compose",
-      status: { in: ["collecting", "ready_for_review", "awaiting_approval"] },
+      status: { in: ["collecting", "ready_for_review", "awaiting_approval", "needs_connection"] },
     });
+  });
+
+  // A waiting connection is looked up so a repeat present amends it, but it
+  // stays out of the partial index so different intents can each wait.
+  it("looks up a waiting connection card but not a card mid-send", async () => {
+    const { prisma, findFirst } = fakePrisma({ id: "i1", status: "needs_connection" });
+    const row = await findOpenCard(prisma, { threadId: "t1", intent: "email.compose" });
+    expect(row).toMatchObject({ id: "i1", status: "needs_connection" });
+    const statuses = findFirst.mock.calls[0]![0].where.status.in as string[];
+    expect(statuses).toContain("needs_connection");
+    expect(statuses).not.toContain("executing");
   });
 
   it("returns undefined when the thread has no open card for the intent", async () => {

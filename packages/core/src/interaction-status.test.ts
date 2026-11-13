@@ -7,6 +7,7 @@ import {
   isTerminalStatus,
   OPEN_STATUSES,
   SETTLE_EXEMPT_STATUSES,
+  surfaceStatusFor,
   TERMINAL_STATUSES,
 } from "./interaction-status.js";
 
@@ -73,5 +74,17 @@ describe("interaction status vocabulary", () => {
   it("rejects a status the vocabulary does not know", () => {
     expect(isOpenStatus("stale")).toBe(false);
     expect(isTerminalStatus("draft")).toBe(false);
+  });
+
+  // The one read-side mapping. Every terminal status is executed, so a
+  // superseded or expired card can never reach the edit chooser as a draft.
+  it("maps terminal statuses to executed and only awaiting_approval to approved", () => {
+    expect(surfaceStatusFor("awaiting_approval")).toBe("approved");
+    for (const status of TERMINAL_STATUSES) expect(surfaceStatusFor(status)).toBe("executed");
+    for (const status of OPEN_STATUSES.filter((value) => value !== "awaiting_approval")) {
+      expect(surfaceStatusFor(status)).toBe("draft");
+    }
+    expect(surfaceStatusFor("needs_connection")).toBe("draft");
+    expect(surfaceStatusFor("unknown")).toBe("draft");
   });
 });

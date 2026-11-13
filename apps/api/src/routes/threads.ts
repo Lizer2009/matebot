@@ -10,9 +10,9 @@ import {
   EDITABLE_STATUSES,
   expandSkillReferencesInPrompt,
   interactionCapabilityForIntent,
-  isTerminalStatus,
   MODEL_REQUIRED_SEND_ERROR,
   QUEUE_HOLDING_RUN_STATUSES,
+  surfaceStatusFor,
   timingFields,
   userEditedFieldNames,
 } from "@matebot/core";
@@ -86,19 +86,7 @@ import {
 } from "./shared.js";
 
 /**
- * The read-side status of a card in the edit chooser.
- *
- * A status the kernel calls terminal can never be `draft`; deciding by "is this
- * one of the two success states" left every unrecognised value (superseded,
- * expired) looking editable.
- */
-function surfaceStatusFor(status: string): "draft" | "approved" | "executed" {
-  if (status === "awaiting_approval") return "approved";
-  if (isTerminalStatus(status)) return "executed";
-  return "draft";
-}
-
-/** Deterministic nonce for a call's marker message. The unique (threadId, clientNonce)
+ * Deterministic nonce for a call's marker message. The unique (threadId, clientNonce)
  * index makes it the hang-up idempotency key, and the "call:" prefix lets clients derive
  * the marker's callId. User turns carry a uuid suffix, so they never collide. */
 export function callMarkerClientNonce(callId: string): string {
@@ -1074,12 +1062,7 @@ export function threadsRoutes(ctx: RouterContext) {
                   threadId: row.threadId,
                   intent: row.intent,
                   // The surface's own status carries the executed record.
-                  status:
-                    row.status === "succeeded"
-                      ? ("executed" as const)
-                      : row.confirmedVersion !== null && row.confirmedVersion === row.draftVersion
-                        ? ("approved" as const)
-                        : ("draft" as const),
+                  status: surfaceStatusFor(row.status),
                   draftVersion: row.draftVersion,
                   confirmedVersion: row.confirmedVersion,
                   schema: capability.schema,

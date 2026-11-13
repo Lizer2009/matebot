@@ -91,3 +91,15 @@ export function isEditableStatus(status: string): boolean {
 export function isTerminalStatus(status: string): boolean {
   return TERMINAL_SET.has(status);
 }
+
+/**
+ * How a card's row status reads to the edit chooser and dispatch gate.
+ *
+ * One mapping for every caller. A terminal status is never `draft`, which is
+ * what once left a superseded card with a live Send button.
+ */
+export function surfaceStatusFor(status: string): "draft" | "approved" | "executed" {
+  if (status === "awaiting_approval") return "approved";
+  if (isTerminalStatus(status)) return "executed";
+  return "draft";
+}

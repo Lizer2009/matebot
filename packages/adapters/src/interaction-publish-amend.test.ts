@@ -54,7 +54,7 @@ const callInput = (index = 0) => {
   return args;
 };
 
-function amendPrisma(existing: OpenCardRow, surfaceId = "s1") {
+function amendPrisma(existing: OpenCardRow, surfaceId = "s1", amendsInteractionId?: string) {
   const updateInteraction = vi.fn().mockResolvedValue({});
   const updateMessage = vi.fn().mockResolvedValue({});
   const tx = {
@@ -62,13 +62,25 @@ function amendPrisma(existing: OpenCardRow, surfaceId = "s1") {
     message: {
       findUnique: vi.fn().mockResolvedValue({
         id: "m1",
-        blocks: [{ kind: "a2ui_surface", interactionId: "i1", surfaceId, draftVersion: 1 }],
+        blocks: [
+          {
+            kind: "a2ui_surface",
+            interactionId: "i1",
+            surfaceId,
+            draftVersion: 1,
+            ...(amendsInteractionId ? { amendsInteractionId } : {}),
+          },
+        ],
       }),
       update: updateMessage,
     },
   };
   const prisma = {
-    interaction: { findFirst: vi.fn().mockResolvedValue(existing) },
+    interaction: {
+      findFirst: vi.fn(async ({ where }: { where: { status?: { in?: string[] } } }) =>
+        where.status?.in?.includes(existing.status) ? existing : null,
+      ),
+    },
     interactionSurface: { findFirst: vi.fn().mockResolvedValue({ surfaceId }) },
     $transaction: vi.fn(async (run: (t: typeof tx) => unknown) => run(tx)),
   };
@@ -320,5 +332,112 @@ describe("publishOrAmend", () => {
     );
     expect(createInteraction).toHaveBeenCalledTimes(1);
     expect(result.amended).toBe(false);
+  });
+
+  // A waiting connection card is looked up (so a repeat present amends it) but
+  // is not in the partial index: different intents may each be waiting.
+  it("amends a waiting connection card instead of stacking a second one", async () => {
+    const { prisma } = amendPrisma({ ...openCard, status: "needs_connection" });
+
+    const result = await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+    });
+
+    expect(result.amended).toBe(true);
+    expect(result.interactionId).toBe("i1");
+    expect(result.draftVersion).toBe(2);
+    expect(createInteraction).not.toHaveBeenCalled();
+  });
+
+  // Amending a card mid-send is unsafe, so the lookup must not see it.
+  it("does not amend a card that is already executing", async () => {
+    const { prisma } = amendPrisma({ ...openCard, status: "executing" });
+
+    const result = await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+    });
+
+    expect(prisma.interaction.findFirst.mock.calls[0]![0].where.status?.in ?? []).not.toContain(
+      "executing",
+    );
+    expect(result.amended).toBe(false);
+    expect(createInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it("turns a second present for one intent into one card with one block", async () => {
+    const { prisma, updateMessage } = amendPrisma(openCard);
+    // First present finds nothing and creates; the second finds that card.
+    prisma.interaction.findFirst.mockResolvedValueOnce(null);
+
+    const first = await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+      amendsInteractionId: "executed-1",
+    });
+    const second = await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+      amendsInteractionId: "executed-1",
+    });
+
+    expect(first.amended).toBe(false);
+    expect(second.amended).toBe(true);
+    expect(second.interactionId).toBe(first.interactionId);
+    expect(second.draftVersion).toBe(first.draftVersion + 1);
+    // One row created, one timeline message rewritten: no second card.
+    expect(createInteraction).toHaveBeenCalledTimes(1);
+    expect(createThreadMessageInTransaction).toHaveBeenCalledTimes(1);
+    expect(updateMessage).toHaveBeenCalledTimes(1);
+    const blocks = updateMessage.mock.calls[0]![0].data.blocks as unknown[];
+    expect(blocks).toHaveLength(1);
+  });
+
+  it("keeps the amendment link when the caller does not restate it", async () => {
+    const { prisma, updateMessage } = amendPrisma(openCard, "s1", "executed-1");
+
+    await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+    });
+
+    const blocks = updateMessage.mock.calls[0]![0].data.blocks as Array<{
+      amendsInteractionId?: string;
+    }>;
+    expect(blocks[0]?.amendsInteractionId).toBe("executed-1");
+  });
+
+  it("lets a caller's amendment link override the one on the block", async () => {
+    const { prisma, updateMessage } = amendPrisma(openCard, "s1", "executed-1");
+
+    await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+      amendsInteractionId: "executed-2",
+    });
+
+    const blocks = updateMessage.mock.calls[0]![0].data.blocks as Array<{
+      amendsInteractionId?: string;
+    }>;
+    expect(blocks[0]?.amendsInteractionId).toBe("executed-2");
   });
 });
