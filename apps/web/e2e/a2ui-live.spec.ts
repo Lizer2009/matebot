@@ -925,17 +925,18 @@ test("two open cards make an unqualified edit ask which one", async ({ page }, t
     `call present_interaction with ${emailPlan} then call present_interaction with ${calendarPlan}`,
   );
   await waitForSurface(page, "a2ui-email-compose");
-  await expect(page.getByRole("button", { name: /^Create$/i })).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(2);
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(2, { timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("Hello", { timeout: 30_000 });
+  // Different intent, so the calendar draft is a second open card — not shell chrome.
+  await expect(page.getByTestId("a2ui-surface-card").nth(1)).toContainText("Team sync");
 
-  const beforeSubject = await page.getByTestId("a2ui-email-subject").inputValue();
   const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
   const ambiguous = await page.request.post("/rpc/threads/editInteraction", {
     data: { json: { botId: bots[0]!.id, revision: 1, fields: { subject: "changed" } } },
   });
   expect(ambiguous.status()).toBeGreaterThanOrEqual(400);
   expect(await ambiguous.text()).toContain("ambiguous_target");
-  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue(beforeSubject);
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("Hello");
   await captureScreenshot(page, testInfo, "a2ui-e2e-08-ambiguous");
 });
 
