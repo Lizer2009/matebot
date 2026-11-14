@@ -750,20 +750,23 @@ export function threadsRoutes(ctx: RouterContext) {
             message: "This prompt is no longer awaiting an answer",
           });
         }
-        const answeredMessage = await deps.prisma.message.findUnique({
-          where: { id: input.messageId },
-          select: { blocks: true },
-        });
-        const answeredBlocks = Array.isArray(answeredMessage?.blocks)
-          ? (answeredMessage.blocks as MessageBlock[])
-          : [];
-        const l0a = answeredBlocks.find(isL0aBlock);
-        if (l0a?.interactionId) {
-          await settleInteraction(deps.prisma, {
-            interactionId: l0a.interactionId,
-            status: input.dismiss ? "cancelled" : "succeeded",
-            reason: input.dismiss ? "ask dismissed" : "ask answered",
-          }).catch(() => undefined);
+        const findMessage = deps.prisma.message?.findUnique;
+        if (typeof findMessage === "function") {
+          const answeredMessage = await findMessage({
+            where: { id: input.messageId },
+            select: { blocks: true },
+          });
+          const answeredBlocks = Array.isArray(answeredMessage?.blocks)
+            ? (answeredMessage.blocks as MessageBlock[])
+            : [];
+          const l0a = answeredBlocks.find(isL0aBlock);
+          if (l0a?.interactionId) {
+            await settleInteraction(deps.prisma, {
+              interactionId: l0a.interactionId,
+              status: input.dismiss ? "cancelled" : "succeeded",
+              reason: input.dismiss ? "ask dismissed" : "ask answered",
+            }).catch(() => undefined);
+          }
         }
         await deps.jobs.enqueue(runContinueJob(input.runId)).catch((error) => {
           // The answer and queued run are durable; the reconciler repairs a missed immediate wake.

@@ -246,9 +246,9 @@ export function A2uiSurfaceCard({
               </div>
             ) : null}
             {isActionIntent(block.intent) &&
+            affordance.action === "submit" &&
             !affordance.terminal &&
-            affordance.action !== "connect" &&
-            affordance.action !== "retry" ? (
+            !needsRecovery(document.messages, { intent: block.intent }) ? (
               <div className="mt-3">
                 <CardApprovalMenu
                   draftsDisabled={draftsDisabled}
