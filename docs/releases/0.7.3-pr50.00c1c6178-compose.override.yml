@@ -1,0 +1,25 @@
+# Parent-ops overlay for matebottest. Not applied by this agent.
+# Stop old api/web/worker first, migrate, then start new writers. Do not migrate
+# while old writers are still serving.
+# Record the running supervisor digest with docker inspect BEFORE switching, then:
+#   SUPERVISOR_IMAGE='ghcr.io/lizer2009/matebot/app@sha256:<inspected>' \
+#     docker compose -f docker-compose.images.yml -f 0.7.3-pr50.00c1c6178-compose.override.yml up -d
+# Pin SUPERVISOR_IMAGE to the current field app digest (inspect), never the new app image.
+# This file does not change supervisor env MATEBOT_COMPUTER_IMAGE (field still sha-027c9e81).
+# The computer service is a pull-only stub, not the live sandbox runtime.
+# Do not add an updater service. Do not retarget postgres, volumes, or nginx.
+# Do not apply the withdrawn 0.7.2 overlay.
+
+services:
+  migrate:
+    image: ghcr.io/lizer2009/matebot/app@sha256:0b8c5a3dc99516aa1f7faea5b9a41e5442369cc348f711e8128a71810621a91a
+  api:
+    image: ghcr.io/lizer2009/matebot/app@sha256:0b8c5a3dc99516aa1f7faea5b9a41e5442369cc348f711e8128a71810621a91a
+  web:
+    image: ghcr.io/lizer2009/matebot/app@sha256:0b8c5a3dc99516aa1f7faea5b9a41e5442369cc348f711e8128a71810621a91a
+  worker:
+    image: ghcr.io/lizer2009/matebot/app@sha256:0b8c5a3dc99516aa1f7faea5b9a41e5442369cc348f711e8128a71810621a91a
+  computer:
+    image: ghcr.io/lizer2009/matebot/computer@sha256:96c08f2861dbe17575803a3f258dd2440979d9bef9dbdc37b3f76e2cd3bce5e5
+  supervisor:
+    image: ${SUPERVISOR_IMAGE:?inspect the running supervisor digest first; do not default this to the new app image}
