@@ -7,6 +7,7 @@ import {
   normalizeOneTimeCode,
   vaultKind,
 } from "@matebot/contracts";
+import { l0aHostInteractive } from "@matebot/core";
 import { Button, Input } from "@matebot/ui-web";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -36,6 +37,7 @@ function CardEditor(props: Parameters<typeof VaultItemEditor>[0]) {
  * only in this card's state and is cleared as soon as it is sent.
  */
 export function SecretAskCard({ block, canAnswer, canDismiss, onAnswer, onDismiss }: AskCardProps) {
+  canAnswer = canAnswer && l0aHostInteractive(block);
   const { t } = useLingui();
   const [answer, setAnswer] = useState("");
   const [accepted, setAccepted] = useState(false);

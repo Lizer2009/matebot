@@ -1,8 +1,10 @@
 import type { InteractionPlan, MessageBlock, ResultSurface } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef, ResultSurfaceSchema } from "@matebot/contracts";
+import { emailSurfaceBlockFields } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
-import { senderLabelFromBlock } from "./interaction-publish.js";
+import { senderStampFromBlock } from "./interaction-publish.js";
 
 /**
  * Publishing a result surface.
@@ -80,6 +82,7 @@ export async function publishResultSurface(
           threadId: input.threadId,
           runId: input.runId ?? null,
           intent: input.intent,
+          cardKey: interactionCardKey(input.threadId, input.intent),
           // A result is terminal on arrival: it has nothing to confirm.
           status: "succeeded",
           plan: plan as never,
@@ -104,6 +107,10 @@ export async function publishResultSurface(
           draftVersion: interaction.draftVersion,
         },
       });
+      const stamps = emailSurfaceBlockFields({
+        intent: input.intent,
+        interactionStatus: "succeeded",
+      });
       const block: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: interaction.id,
@@ -114,8 +121,7 @@ export async function publishResultSurface(
         title: surface.title,
         summary: surface.provenance.source,
         documentRef: ref,
-        template: "action-result-success",
-        lifecycle: "succeeded",
+        ...stamps,
       };
       // The repo's own helper keeps message sequence and unread state correct.
       const { createThreadMessageInTransaction } = await import("@matebot/db");
@@ -246,7 +252,11 @@ export async function republishResultSurface(
             | MessageBlock[]
             | undefined)
         : undefined;
-      const keptSenderLabel = senderLabelFromBlock(existingBlocks, surfaceRow.surfaceId);
+      const keptSender = senderStampFromBlock(existingBlocks, surfaceRow.surfaceId);
+      const stamps = emailSurfaceBlockFields({
+        intent: "interaction.result",
+        interactionStatus: "succeeded",
+      });
       const block: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: existing.id,
@@ -260,9 +270,9 @@ export async function republishResultSurface(
           interactionId: existing.id,
           surfaceId: surfaceRow.surfaceId,
         }),
-        template: "action-result-success",
-        lifecycle: "succeeded",
-        ...(keptSenderLabel ? { senderLabel: keptSenderLabel } : {}),
+        ...stamps,
+        ...(keptSender.senderLabel ? { senderLabel: keptSender.senderLabel } : {}),
+        ...(keptSender.senderAddress ? { senderAddress: keptSender.senderAddress } : {}),
       };
       if (existing.messageId) {
         const message = await tx.message.findUnique({ where: { id: existing.messageId } });

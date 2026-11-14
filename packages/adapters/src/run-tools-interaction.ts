@@ -1,23 +1,34 @@
-import type { InteractionPlan } from "@matebot/contracts";
+import type { ActionApprovalRule, InteractionPlan } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
-import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
+import type { EmailSurfaceCapability } from "@matebot/core";
 import {
-  A2UI_SURFACE_NUDGE,
+  cardKindForIntent,
   interactionRequiredApp,
+  interactionSlotsFromPlan,
+  isCalendarCreateIntent,
+  isEmailComposeIntent,
+  pickMatchingConnectionCard,
+  readConfirmedCalendarDraft,
+  resolveActionApprovalDetail,
+  resumePlanForNeedsConnection,
   surfaceNudgeFor,
+  surfaceNudgeText,
   timingFields,
   unknownCapabilityNotice,
   validateDecisionForCapability,
 } from "@matebot/core";
+import { listApprovalRules } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
+import { shouldSkipDraftCard } from "./interaction-draft-policy.js";
 import {
   interactionCapabilityFromRows,
   loadEmailReconnectRefs,
   loadOwnerEmailConnections,
   loadProviderReadiness,
 } from "./interaction-email-capability.js";
-import { publishInteractionSurface } from "./interaction-publish.js";
+import { findWaitingConnectionCards } from "./interaction-kernel-store.js";
+import { publishOrAmend } from "./interaction-publish.js";
 import type { DraftSender } from "./interaction-readback.js";
 import { describeDraftForModel } from "./interaction-readback.js";
 import type { RunContext } from "./run-context.js";
@@ -54,7 +65,7 @@ const CALENDAR_FIELDS: { name: string; required: boolean }[] = [
 
 /** Fill missing email.compose slots so the surface always has the draft fields. */
 export function normalizeEmailComposePlan(plan: InteractionPlan): InteractionPlan {
-  if (plan.intent !== "email.compose" && plan.intent !== "email.send") return plan;
+  if (!isEmailComposeIntent(plan.intent)) return plan;
   const byName = new Map(plan.fields.map((field) => [field.name, field]));
   const fields = [
     ...EMAIL_OPTIONAL_FIELDS.map((name) => {
@@ -77,7 +88,7 @@ export function normalizeEmailComposePlan(plan: InteractionPlan): InteractionPla
 
 /** Fill the calendar slots so the resumed surface always has the schema's fields. */
 export function normalizeCalendarPlan(plan: InteractionPlan): InteractionPlan {
-  if (plan.intent !== "calendar.create" && plan.intent !== "calendar.compose") return plan;
+  if (!isCalendarCreateIntent(plan.intent)) return plan;
   const byName = new Map(plan.fields.map((field) => [field.name, field]));
   const fields = CALENDAR_FIELDS.map((field) => {
     const existing = byName.get(field.name);
@@ -98,10 +109,63 @@ export function normalizeInteractionPlan(plan: InteractionPlan): InteractionPlan
   return normalizeCalendarPlan(normalizeEmailComposePlan(plan));
 }
 
+async function draftApprovalForPlan(
+  ctx: RunContext,
+  plan: InteractionPlan,
+): Promise<"allow" | "ask" | "deny"> {
+  const userId = ctx.context?.userId ?? ctx.run.userId;
+  if (!userId) return "allow";
+  let rules: Awaited<ReturnType<typeof listApprovalRules>>;
+  try {
+    rules = await listApprovalRules(ctx.deps.prisma, {
+      userId,
+      spaceId: ctx.run.spaceId,
+    });
+  } catch {
+    return "allow";
+  }
+  const recipient = plan.fields.find((field) => field.name === "to")?.value;
+  return resolveActionApprovalDetail({
+    toolName: isEmailComposeIntent(plan.intent) ? "gmail_send_email" : "calendar_create_event",
+    ...(typeof recipient === "string" ? { recipient } : {}),
+    rules: rules.map((rule) => ({
+      id: rule.id,
+      effect: rule.effect as ActionApprovalRule["effect"],
+      matchKind: rule.matchKind as ActionApprovalRule["matchKind"],
+      matchValue: rule.matchValue,
+      createdAt:
+        rule.createdAt instanceof Date ? rule.createdAt.toISOString() : String(rule.createdAt),
+    })),
+  }).decision;
+}
+
 /** The one line the turn should say after publishing; nothing else belongs in prose. */
-function surfaceNudgeReply(capability: EmailSurfaceCapability | undefined): string | undefined {
-  const state = surfaceNudgeFor({ capability, lifecycle: "draft" });
-  return state ? A2UI_SURFACE_NUDGE[state] : undefined;
+function surfaceNudgeReply(
+  capability: EmailSurfaceCapability | undefined,
+  missingRequired: readonly string[] | undefined,
+  intent: string,
+): string | undefined {
+  const state = surfaceNudgeFor({
+    capability,
+    lifecycle: "draft",
+    intent,
+    ...(missingRequired?.length ? { missingRequired } : {}),
+  });
+  return state ? surfaceNudgeText({ state, intent }) : undefined;
+}
+
+/**
+ * AC-26 reverse: a live `connect.{provider}` card already is the connection view
+ * for this app, so compose must not stamp a second `needs_connection` surface.
+ */
+async function existingConnectView(
+  prisma: RunContext["deps"]["prisma"],
+  input: { threadId: string; intent: string },
+): Promise<{ id: string; intent: string } | undefined> {
+  const app = interactionRequiredApp(input.intent);
+  if (!app || typeof prisma.interaction?.findMany !== "function") return undefined;
+  const rows = await findWaitingConnectionCards(prisma as never, input.threadId);
+  return pickMatchingConnectionCard(rows, { app });
 }
 
 async function presentInteraction(ctx: RunContext, call: ToolCall) {
@@ -136,6 +200,14 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       reply: unknownCapabilityNotice(),
     };
   }
+  // Action drafts only. Result intents are `cardKind: "result"` and have their
+  // own tool (`present_result`). Publishing them here produced no surface.
+  if (cardKindForIntent(plan.intent) === "result") {
+    return {
+      error: "result_intent",
+      reply: "Result intents use present_result, not present_interaction.",
+    };
+  }
   // §9.6: the server now knows which surface to build, before it builds it.
   getLogger().info("a2ui.plan_ready", {
     ...timingFields({
@@ -150,7 +222,46 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
 
   try {
     const capabilityStamp = await interactionPublishCapability(ctx, plan);
-    const published = await publishInteractionSurface(deps.prisma, {
+    const draftsDisabled = Boolean(ctx.bot?.draftsDisabled);
+    const approval = draftsDisabled ? await draftApprovalForPlan(ctx, plan) : "allow";
+    if (approval === "deny") {
+      return { error: "This action is blocked by an approval rule." };
+    }
+    const skipDraft = shouldSkipDraftCard({
+      draftsDisabled,
+      intent: plan.intent,
+      approval,
+      ...(capabilityStamp.status ? { status: capabilityStamp.status } : {}),
+    });
+    if (skipDraft) {
+      // Real mailbox send stays paused (t317). Skipping the compose card is the
+      // draftsDisabled effect; execution uses the existing executor only when a
+      // later isolated caller supplies one.
+      return {
+        skippedDraft: true,
+        draftsDisabled: true,
+        executed: false,
+        intent: plan.intent,
+        reply:
+          "Drafts are off for this bot. The action runs under existing approval rules without a compose card.",
+      };
+    }
+    if (capabilityStamp.status === "needs_connection") {
+      const existing = await existingConnectView(deps.prisma, {
+        threadId: run.threadId,
+        intent: plan.intent,
+      });
+      if (existing) {
+        return {
+          interactionId: existing.id,
+          status: "needs_connection" as const,
+          skippedDuplicateConnection: true,
+          intent: plan.intent,
+          reply: surfaceNudgeReply("not_connected", undefined, plan.intent),
+        };
+      }
+    }
+    const published = await publishOrAmend(deps.prisma, {
       spaceId: run.spaceId,
       threadId: run.threadId,
       botId: run.botId,
@@ -162,6 +273,19 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
       ...(capabilityStamp.capability ? { capability: capabilityStamp.capability } : {}),
       ...(capabilityStamp.status ? { status: capabilityStamp.status } : {}),
       ...(capabilityStamp.sender ? { senderLabel: capabilityStamp.sender.label } : {}),
+      ...(capabilityStamp.sender?.address ? { senderAddress: capabilityStamp.sender.address } : {}),
+      ...(capabilityStamp.status === "needs_connection"
+        ? {
+            resumePlan: resumePlanForNeedsConnection({
+              intent: plan.intent,
+              slots: interactionSlotsFromPlan(plan),
+              ...(capabilityStamp.connection ? { connection: capabilityStamp.connection } : {}),
+              ...(capabilityStamp.sender?.address
+                ? { senderAddress: capabilityStamp.sender.address }
+                : {}),
+            }),
+          }
+        : {}),
     });
     await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
       getLogger().error("interaction surface realtime notification", error);
@@ -183,7 +307,11 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
     // declared fields, which is what the confirm gate reads; the publisher's own list is only a
     // fallback for a card whose readback could not be built. Two keys of the same name in one
     // result would let the later one silently win.
-    const missingRequired = readback?.missingRequired ?? published.missingRequired ?? [];
+    const storedSlots = published.slots ?? {};
+    const batchReady = readConfirmedCalendarDraft(storedSlots).kind === "batch";
+    const missingRequired = (readback?.missingRequired ?? published.missingRequired ?? []).filter(
+      (name) => !(batchReady && (name === "start" || name === "end")),
+    );
     return {
       interactionId: published.interactionId,
       surfaceId: published.surfaceId,
@@ -214,11 +342,16 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
        */
       ...(missingRequired.length
         ? {
-            notice: `The card is on screen with ${missingRequired.join(", ")} still empty. Tell the user which fields need a value; do not say the draft is complete.`,
+            notice: `The card is on screen with ${missingRequired.join(", ")} still empty. Tell the user which fields need a value; do not say the draft is complete. Do not present another card.`,
           }
-        : {}),
+        : batchReady
+          ? {
+              notice:
+                "The events are on this one card. Wait for the user to confirm it. Do not present another card and do not create the events yourself.",
+            }
+          : {}),
       /** The only words the turn should add; the card holds everything else. */
-      reply: surfaceNudgeReply(published.capability),
+      reply: surfaceNudgeReply(published.capability, missingRequired, plan.intent),
     };
   } catch (error) {
     return {
@@ -238,8 +371,9 @@ export async function interactionPublishCapability(
   plan: { intent: string },
 ): Promise<{
   capability?: EmailSurfaceCapability;
-  status?: InteractionLifecycleStatus;
+  status?: "needs_connection";
   sender?: DraftSender;
+  connection?: { id: string; provider: string; displayName: string };
 }> {
   const app = interactionRequiredApp(plan.intent);
   if (!app) return {};
@@ -272,6 +406,15 @@ export async function interactionPublishCapability(
     // whatever the client passed when the connection was created (often the card's title), so
     // an address is only offered when the server actually learned one from the provider.
     ...(snapshot.connection ? { sender: { label: snapshot.connection.displayName } } : {}),
+    ...(snapshot.connection
+      ? {
+          connection: {
+            id: snapshot.connection.id,
+            provider: snapshot.connection.provider,
+            displayName: snapshot.connection.displayName,
+          },
+        }
+      : {}),
   };
 }
 

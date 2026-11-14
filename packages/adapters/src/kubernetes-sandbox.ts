@@ -141,6 +141,7 @@ export class KubernetesSandboxProvider implements SandboxProvider {
         takeover: true,
         persistentHome: this.homeClaim !== undefined,
         multiScreen: true,
+        inPlaceUpdate: true,
       },
     };
   }

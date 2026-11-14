@@ -302,7 +302,8 @@ describe("A2UI regression: revoked mailbox", () => {
 describe("A2UI regression: post-surface copy", () => {
   it("has one short Chinese line per surface state", () => {
     expect(surfaceNudgeFor({ capability: "ready", lifecycle: "draft" })).toBe("presented");
-    expect(A2UI_SURFACE_NUDGE.presented).toBe("请在卡片上确认或编辑。");
+    expect(A2UI_SURFACE_NUDGE.presented).toBe("请审阅后点发送，尚未发出。");
+    expect(A2UI_SURFACE_NUDGE.incomplete).toBe("请先补全收件人和主题。");
     expect(A2UI_SURFACE_NUDGE.awaiting_connection).toBe("授权完成后点卡片继续。");
     expect(A2UI_SURFACE_NUDGE.reconnect).toBe("连接已失效，请在卡片上重新授权。");
   });

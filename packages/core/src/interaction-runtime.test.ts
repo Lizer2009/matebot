@@ -31,6 +31,31 @@ describe("interaction-runtime", () => {
     expect(deriveCollectingStatus(plan, slots, "collecting")).toBe("collecting");
   });
 
+  it("treats a valid calendar batch as ready without the single-event slots", () => {
+    const calendar = {
+      intent: "calendar.create",
+      title: "Week",
+      fields: [
+        { name: "name", value: "Vegas", required: true, status: "resolved" as const },
+        { name: "start", required: true, status: "missing" as const },
+        { name: "end", required: true, status: "missing" as const },
+      ],
+      nextStep: "ask" as const,
+      riskLevel: "medium" as const,
+    };
+    const slots = {
+      name: "Vegas",
+      events: [
+        {
+          title: "回上海",
+          start: "2026-11-23T14:00:00+08:00",
+          end: "2026-11-23T16:00:00+08:00",
+        },
+      ],
+    };
+    expect(requiredFieldsSatisfied(calendar, slots)).toBe(true);
+  });
+
   it("increments draftVersion and clears confirmation on field edit", () => {
     const result = applyInteractionFieldChange(
       {
@@ -179,6 +204,45 @@ describe("interaction-runtime", () => {
           { expectedDraftVersion: 4, name: "subject", value: "Nope" },
         ),
       ).toMatchObject({ error: "terminal" });
+    }
+  });
+
+  // `superseded`, `expired`, `sent`, `executed` and `confirmed` are terminal in
+  // the kernel vocabulary even though the lifecycle type does not name them.
+  // Treating only succeeded/cancelled as final is what let a dead card be
+  // confirmed or revived.
+  it("treats every kernel-terminal status as terminal for edits and confirmation", () => {
+    const slots = { to: "a@example.com", subject: "Hi", body: "Hello" };
+    for (const status of ["superseded", "expired", "sent", "executed", "confirmed"] as const) {
+      const state = {
+        status: status as never,
+        draftVersion: 4,
+        confirmedVersion: 4,
+        plan,
+        slots,
+      };
+      expect(
+        applyInteractionFieldChange(state, {
+          expectedDraftVersion: 4,
+          name: "subject",
+          value: "Nope",
+        }),
+      ).toMatchObject({ ok: false, error: "terminal" });
+      expect(confirmInteractionDraftState(state, 4)).toMatchObject({
+        ok: false,
+        error: "terminal",
+      });
+      // A refused write leaves the version it was handed untouched.
+      expect(state.draftVersion).toBe(4);
+      expect(
+        canExecuteConfirmedInteraction({
+          draftVersion: 4,
+          confirmedVersion: 4,
+          status: status as never,
+        }),
+      ).toMatchObject({ ok: false, error: "terminal" });
+      // A terminal row keeps the status it was read with.
+      expect(deriveCollectingStatus(plan, slots, status as never)).toBe(status);
     }
   });
 });

@@ -545,7 +545,7 @@ function listNames(entries: CatalogEntry[]): string[] {
 }
 
 /** Overflowing sources still appear by name and count, with names for those that fit. */
-function sourceSummaryText(groups: Array<{ group: string; names: string[] }>): string {
+export function sourceSummaryText(groups: Array<{ group: string; names: string[] }>): string {
   if (groups.length === 0) return "";
   const sources = groups.map(({ group, names }) => `${group} (${names.length})`).join(", ");
   const listed: Array<{ group: string; names: string[] }> = [];

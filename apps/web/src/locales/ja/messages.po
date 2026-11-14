@@ -721,6 +721,10 @@ msgstr ""
 msgid "Allow once"
 msgstr "今回のみ許可"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Allow this recipient"
+msgstr ""
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "書き込みを許可"
@@ -1358,6 +1362,11 @@ msgstr "状況を確認してください。"
 msgid "Check status"
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Check status"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "APIキーまたはログイン情報を確認してから、もう一度テストしてください。"
@@ -1386,6 +1395,11 @@ msgstr "コンピューターの設定を確認中…"
 #: src/components/McpServerHealthLine.tsx
 msgid "Checking connection…"
 msgstr "接続を確認中…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Checking whether this was sent"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -2827,6 +2841,11 @@ msgstr "録音を破棄"
 msgid "Discarded"
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Discarded"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -2920,6 +2939,11 @@ msgstr ""
 msgid "Done"
 msgstr "完了"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Done"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Downgrade at renewal"
 msgstr "更新時にダウングレード"
@@ -2949,6 +2973,11 @@ msgstr "PDF をダウンロード"
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "ダウンロード中…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Draft"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -2985,17 +3014,12 @@ msgstr "名前を編集"
 msgid "Edit Profile"
 msgstr "プロフィールを編集"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 msgid "Email"
 msgstr "メールアドレス"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Email address not provided"
-msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
@@ -3154,6 +3178,11 @@ msgstr "テーブルを拡大"
 msgid "expired"
 msgstr "期限切れ"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Expired, nothing was sent"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr ""
@@ -3202,6 +3231,11 @@ msgstr "失敗"
 #: src/pages/ActivityList.tsx
 msgid "Failed"
 msgstr "失敗"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Failed"
+msgstr ""
 
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
@@ -3930,6 +3964,10 @@ msgstr "MCPサーバーを管理"
 msgid "Manage other bots"
 msgstr "他のボットを管理"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Manage rules"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr "手動"
@@ -4309,7 +4347,7 @@ msgstr "回答が必要"
 msgid "Needs an OAuth client ID"
 msgstr "OAuth クライアント ID が必要です"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Needs approval"
 msgstr ""
 
@@ -5397,8 +5435,9 @@ msgstr "APIキーを置き換え"
 msgid "Replace key"
 msgstr "キーを置き換え"
 
-#: src/components/a2ui/A2uiSurfaceCard.tsx
-msgid "Replaced by a newer draft below."
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Replaced by a newer draft"
 msgstr ""
 
 #. placeholder {0}: block.replaces.origin
@@ -5489,6 +5528,10 @@ msgstr "再起動してアップデート"
 msgid "Restore"
 msgstr "復元"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Restore drafts"
+msgstr ""
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
 msgstr "最後に保存されたワークスペースを復元します。"
@@ -5505,7 +5548,6 @@ msgstr "復元しました"
 msgid "Restoring your workspace"
 msgstr "ワークスペースを復元中"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5518,6 +5560,11 @@ msgstr "ワークスペースを復元中"
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "再試行"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Retry"
+msgstr ""
 
 #: src/App.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -5849,7 +5896,7 @@ msgid "Send with Enter"
 msgstr "Enterで送信"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
+msgid "Sending email"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -6474,6 +6521,11 @@ msgstr "未使用分の差額は次回の請求書に充当されます。"
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "個別のモデル設定は解除されました。各ボットで再度選択できます。"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "There may be a newer version"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
 msgstr "これらのファイルは大きすぎてインポートできません。"
@@ -6664,6 +6716,16 @@ msgstr ""
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This space's rules ask first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This step cannot be undone"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in Matebot yet. Use a deployment credential or choose another provider."
 msgstr "このサブスクリプションでのログインはMatebotではまだ利用できません。デプロイメントの認証情報を使用するか、別のプロバイダーを選択してください。"
@@ -6802,6 +6864,10 @@ msgstr "もう一度テストしてください。"
 #: src/lib/cron.ts
 msgid "Tuesday"
 msgstr "火曜日"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Turn off drafts for this bot"
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7317,6 +7383,16 @@ msgstr "トライアル終了後、プランは年額 {annualPrice} になりま
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "トライアル終了後、プランは {tierTargetLabel} になります。"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your rule asks first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your settings ask first"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Your skills"

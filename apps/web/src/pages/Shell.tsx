@@ -1113,6 +1113,7 @@ function SpaceShell() {
               onSpeak={speakMessage}
               onOpenComputer={computerControls.onOpenComputer}
               onOpenImportSetup={openImportSetup}
+              onManageRules={() => openSettings("confirmations")}
               rpc={rpc}
             />
           )}

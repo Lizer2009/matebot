@@ -14,6 +14,8 @@ import {
   displayName,
   humanizeToolName,
   isBackgroundRunTrigger,
+  isL0aBlock,
+  l0aIntentForBlock,
   redactSecrets,
   redactSecretsAfter,
   TAKEOVER_COMPUTER_PENDING_STATE,
@@ -34,6 +36,8 @@ import {
   HISTORY_WINDOW_SIZE,
   shouldEnqueueCompaction,
 } from "./history-compaction.js";
+import { publishL0aView } from "./interaction-l0a-publish.js";
+import { settleStaleCardsForRun } from "./interaction-stale.js";
 import {
   backOffRoutineAfterAccountError,
   clearRoutineBackoff,
@@ -42,7 +46,7 @@ import {
 import type { RunContext } from "./run-context.js";
 import { persistTurnCheckpoint } from "./run-context.js";
 import { renewRunLease, requeueComputerRun } from "./run-lifecycle.js";
-import { publishMessage, redactBlocks } from "./run-messages.js";
+import { publishMessage, redactBlocks, runLeaseFor } from "./run-messages.js";
 import {
   completionMarksUnread,
   completionNotificationBody,
@@ -388,6 +392,30 @@ async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
   await ctx.computer.checkpoint.flush();
   await persistTurnCheckpoint(ctx, event.executionId);
   await ctx.settleRunningHelpers();
+  const ask = {
+    kind: "ask" as const,
+    text: safeText,
+    detail: safeDetail,
+    status: "pending" as const,
+    actions: safeActions,
+  };
+  let blocks: (typeof ask)[] = [ask];
+  let skipMessage = false;
+  if (isL0aBlock(ask) && typeof deps.prisma.interaction?.create === "function") {
+    const published = await publishL0aView(deps.prisma, {
+      spaceId: run.spaceId,
+      threadId: run.threadId,
+      botId: run.botId,
+      runId,
+      intent: l0aIntentForBlock(ask),
+      title: safeText,
+      status: "collecting",
+      block: ask,
+      lease: runLeaseFor(deps, runId),
+    });
+    blocks = [published.block as typeof ask];
+    skipMessage = true;
+  }
   const paused = await deps.events.pauseRunForInput({
     spaceId: run.spaceId,
     threadId: run.threadId,
@@ -396,15 +424,8 @@ async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
     attemptId: ctx.attempt.id,
     leaseOwner: workerId,
     leaseFence: fence,
-    blocks: [
-      {
-        kind: "ask",
-        text: safeText,
-        detail: safeDetail,
-        status: "pending",
-        actions: safeActions,
-      },
-    ],
+    blocks,
+    skipMessage,
     // Keep unredacted labels on the run for resume; message blocks stay redacted.
     offeredActions: event.actions,
   });
@@ -628,6 +649,7 @@ async function stopStuckToolLoop(ctx: RunContext, toolName: string) {
     blocks: isBackgroundRunTrigger(run.trigger) ? [] : [{ kind: "text", text: stuckText }],
   });
   if (!stopped) return;
+  await settleStaleAfterFinalize(ctx);
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -859,6 +881,7 @@ export async function completeRun(ctx: RunContext) {
     ),
   });
   if (!completed) return;
+  await settleStaleAfterFinalize(ctx);
   ctx.stopHeartbeatAfterCompletion();
   if (run.trigger === "routine" && run.routineId) {
     await clearRoutineBackoff(deps, run.routineId);
@@ -982,6 +1005,7 @@ export async function failRun(
     ...(partialReply.length > 0 ? { partialReply } : {}),
   });
   if (!failed) return;
+  await settleStaleAfterFinalize(ctx);
   if (
     error instanceof TransientModelError ||
     error instanceof ModelAccountError ||
@@ -1050,4 +1074,10 @@ export async function failRun(
       threadId: thread.id,
     });
   }
+}
+
+async function settleStaleAfterFinalize(ctx: RunContext): Promise<void> {
+  await settleStaleCardsForRun(ctx.deps.prisma, ctx.run).catch((error) => {
+    getLogger().error("interaction stale settle", error);
+  });
 }

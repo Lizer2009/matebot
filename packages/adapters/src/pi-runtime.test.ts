@@ -4,7 +4,7 @@ import { describeToolActivity } from "./pi-runtime-tools.js";
 describe("describeToolActivity", () => {
   it("summarizes builtin tools with their most informative argument", () => {
     expect(describeToolActivity("shell", { command: "pnpm test --filter web" })).toBe(
-      "Running: pnpm test --filter web",
+      "Running a command",
     );
     expect(describeToolActivity("read_file", { path: "notes/plan.md" })).toBe(
       "Reading notes/plan.md",
@@ -40,31 +40,49 @@ describe("describeToolActivity", () => {
     );
   });
 
-  it("names MCP server and remote tool", () => {
-    expect(describeToolActivity("mcp__brex__list_expenses", {})).toBe("Using brex: list_expenses");
-    expect(describeToolActivity("mcp__demo-oauth__greet", {})).toBe("Using demo-oauth: greet");
+  it("hides MCP server and remote tool names", () => {
+    expect(describeToolActivity("mcp__brex__list_expenses", {})).toBe("Working…");
+    expect(describeToolActivity("mcp__demo-oauth__greet", {})).toBe("Working…");
   });
 
-  it("truncates long details and collapses whitespace", () => {
-    const long = `x${"y".repeat(200)}`;
-    const line = describeToolActivity("shell", { command: `a\n\t${long}` });
-    expect(line.length).toBeLessThanOrEqual("Running: ".length + 91);
-    expect(line).toContain("…");
-    expect(line).not.toContain("\n");
-    expect(line).toMatch(/^Running: a x/);
+  it("does not echo shell or computer commands", () => {
+    const command =
+      "powershell -NoProfile -Command \"[IO.File]::WriteAllBytes('C:\\\\Temp\\\\dump.py', [Convert]::FromBase64String('abc'))\"";
+    expect(describeToolActivity("shell", { command })).toBe("Running a command");
+    expect(describeToolActivity("user_computer_shell", { command })).toBe(
+      "Working on your computer",
+    );
+    expect(describeToolActivity("user_computer_shell", { command })).not.toContain("python");
+    expect(describeToolActivity("user_computer_shell", { command })).not.toContain("WriteAllBytes");
   });
 
-  it("redacts credentials from activity details", () => {
-    const token = "fake-token";
-    const line = describeToolActivity("shell", {
-      command: `curl -H 'Authorization: Bearer ${token}' https://example.test?api_key=fake-key password=fake-password`,
+  it("maps connector batches to intents, never internal names", () => {
+    expect(
+      describeToolActivity("COMPOSIO_MULTI_EXECUTE_TOOL", {
+        tools: [{ tool_slug: "GOOGLECALENDAR_FIND_EVENT", arguments: {} }],
+      }),
+    ).toBe("Checking the calendar");
+    expect(
+      describeToolActivity("COMPOSIO_MULTI_EXECUTE_TOOL", {
+        tools: [{ tool_slug: "GMAIL_SEND_EMAIL", arguments: { to: "a@example.test" } }],
+      }),
+    ).toBe("Sending email");
+    expect(
+      describeToolActivity("COMPOSIO_MULTI_EXECUTE_TOOL", {
+        tools: [{ tool_slug: "GMAIL_FETCH_EMAILS", arguments: {} }],
+      }),
+    ).toBe("Checking email");
+    const mixed = describeToolActivity("COMPOSIO_MULTI_EXECUTE_TOOL", {
+      tools: [
+        { tool_slug: "GMAIL_SEND_EMAIL", arguments: {} },
+        { tool_slug: "GOOGLECALENDAR_FIND_EVENT", arguments: {} },
+      ],
     });
-
-    expect(line).toContain("Bearer [redacted]");
-    expect(line).toContain("api_key=[redacted]");
-    expect(line).not.toContain(token);
-    expect(line).not.toContain("fake-key");
-    expect(line).not.toContain("fake-password");
+    expect(mixed).toBe("Working…");
+    expect(mixed).not.toContain("COMPOSIO_");
+    expect(mixed).not.toContain("GMAIL_");
+    expect(describeToolActivity("GMAIL_SEND_EMAIL", {})).toBe("Sending email");
+    expect(describeToolActivity("COMPOSIO_SEARCH_TOOLS", {})).toBe("Working…");
   });
 
   it("strips signed-URL query and fragment from web_fetch activity", () => {
@@ -88,7 +106,7 @@ describe("describeToolActivity", () => {
     expect(line).not.toContain("user:");
   });
 
-  it("falls back to the tool name", () => {
-    expect(describeToolActivity("destination_write", undefined)).toBe("Using destination_write");
+  it("falls back to a short intent, not the tool name", () => {
+    expect(describeToolActivity("destination_write", undefined)).toBe("Working…");
   });
 });

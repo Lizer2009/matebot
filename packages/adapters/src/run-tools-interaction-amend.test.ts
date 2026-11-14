@@ -25,7 +25,7 @@ const executedPlan = {
   riskLevel: "medium",
 };
 
-function harness() {
+function harness(occupying?: { id: string; status: string }) {
   const written: Array<Record<string, unknown>> = [];
   const original = {
     id: "ix-done",
@@ -44,14 +44,35 @@ function harness() {
   };
   const snapshot = JSON.stringify(original);
 
+  const occupyingRow = occupying && {
+    ...original,
+    id: occupying.id,
+    status: occupying.status,
+    messageId: "msg-draft",
+  };
+
   const prisma = {
     interaction: {
-      findFirst: async () => original,
+      // The open-card lookup filters by status; a succeeded row can never match it, and a
+      // fake that ignores the filter would look like a card the kernel is allowed to amend.
+      findFirst: async ({ where }: { where: { status?: { in?: string[]; notIn?: string[] } } }) => {
+        // The newest-card lookup filters with a denylist; there is nothing older here.
+        if (!where.status?.in) return original;
+        if (occupyingRow && where.status.in.includes(occupying!.status)) {
+          // Someone else's live draft holds this intent's one card slot.
+          return occupyingRow;
+        }
+        return where.status.in.includes(original.status) ? original : null;
+      },
       findMany: async () => [],
+      // The row the amendment locks and re-reads before writing it: the card the
+      // lookup found, whether that is the executed record or another draft.
       findUnique: async ({ where }: { where: { id: string } }) =>
         where.id === original.id
           ? original
-          : ((written.find((row) => row.id === where.id) as typeof original | undefined) ?? null),
+          : where.id === occupyingRow?.id
+            ? occupyingRow
+            : ((written.find((row) => row.id === where.id) as typeof original | undefined) ?? null),
       create: async ({ data }: { data: Record<string, unknown> }) => {
         const row = {
           ...data,
@@ -108,6 +129,7 @@ function harness() {
       ],
     },
     event: { create: async () => ({ id: "e", seq: 1 }) },
+    interactionEvent: { create: async () => ({ id: "ev-1" }) },
     $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),
     $executeRaw: async () => undefined,
   };
@@ -212,6 +234,27 @@ describe("correcting an executed record", () => {
     expect(result.reply).not.toContain("已发送");
   });
 
+  // A second correction of the same record rewrites the card already on screen.
+  // Saying "new" there would be a claim the timeline contradicts.
+  it("says it updated the card when the correction rewrote it", async () => {
+    const h = harness();
+    const services = servicesFor(h.ctx);
+    const result = await editInteraction(
+      h.ctx,
+      { interactionId: "ix-done", revision: 4, fields: { subject: "Corrected" } },
+      {
+        ...services,
+        publishAmendment: async (input) => {
+          const published = await services.publishAmendment!(input);
+          return { ...published, amended: true };
+        },
+      },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.reply).toContain("已更新");
+  });
+
   it("protects a field the person typed even in a correction", async () => {
     const h = harness();
     const result = await editInteraction(
@@ -221,6 +264,22 @@ describe("correcting an executed record", () => {
     );
     expect(result).toMatchObject({ ok: false, error: "no_change" });
     expect(h.written).toHaveLength(0);
+  });
+
+  // A live draft for the same intent already owns the one card slot. The correction
+  // cannot have a second card, and it must not quietly take that one over.
+  it("refuses to overwrite an unrelated draft and says why", async () => {
+    const h = harness({ id: "ix-draft", status: "collecting" });
+    const result = await editInteraction(
+      h.ctx,
+      { interactionId: "ix-done", revision: 4, fields: { subject: "Corrected" } },
+      servicesFor(h.ctx),
+    );
+    expect(result).toMatchObject({ ok: false, error: "card_in_progress" });
+    if (result.ok) return;
+    // Nothing was written, and the reply does not claim a new draft exists.
+    expect(h.written).toHaveLength(0);
+    expect(result.reply).not.toContain("已新建");
   });
 });
 

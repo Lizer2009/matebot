@@ -1,9 +1,13 @@
+import { findWaitingConnectionCards, settleInteraction } from "@matebot/adapters";
 import type { InteractionPlan } from "@matebot/contracts";
 import type { InteractionRequiredApp } from "@matebot/core";
 import {
+  accountIdFromConnectIntent,
+  connectIntentMatchesApp,
   connectionSatisfiesApp,
   emailSurfaceBlockFields,
   interactionRequiredApp,
+  resumePlanFrom,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import { appendEventInTransaction } from "@matebot/db";
@@ -66,6 +70,7 @@ async function refreshWaitingInteractions(
     threadId: string;
     botId: string;
     app: InteractionRequiredApp;
+    accountId?: string;
   },
 ): Promise<{ refreshed: string[]; waitingOnAnotherApp: boolean }> {
   const rows = await tx.interaction.findMany({
@@ -102,6 +107,11 @@ async function refreshWaitingInteractions(
     const surface = row.surfaces[0];
     if (!surface) continue;
     const plan = row.plan as InteractionPlan;
+    const storedResume = resumePlanFrom(row.plan);
+    if (input.accountId && storedResume?.accountId && storedResume.accountId !== input.accountId) {
+      waitingOnAnotherApp = true;
+      continue;
+    }
     const stamps = emailSurfaceBlockFields({
       intent: plan.intent,
       capability: "ready",
@@ -109,7 +119,11 @@ async function refreshWaitingInteractions(
     });
     await tx.interaction.updateMany({
       where: { id: row.id, draftVersion: row.draftVersion },
-      data: { status: "collecting" },
+      data: {
+        status: "collecting",
+        staleAt: null,
+        ...(storedResume?.slots ? { slots: storedResume.slots as Prisma.InputJsonValue } : {}),
+      },
     });
     const message = row.messageId
       ? await tx.message.findUnique({ where: { id: row.messageId }, select: { blocks: true } })
@@ -216,17 +230,31 @@ export async function resumeInteractionAfterConnection(
     provider: string;
     /** Whether the app can act at all, from the provider's own catalog. */
     appConnected: boolean;
+    /** The connected account, when known. A card stored for another account is left waiting. */
+    accountId?: string;
   },
 ): Promise<ConnectionResumeResult> {
   const app = interactionAppForProvider(input.provider);
   if (!app || !input.appConnected) return { refreshedInteractionIds: [], queuedRunId: null };
   const committed = await deps.prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
+    const connectCards = await findWaitingConnectionCards(tx as never, input.threadId);
+    for (const row of connectCards) {
+      if (!connectIntentMatchesApp(row.intent, app)) continue;
+      const named = accountIdFromConnectIntent(row.intent);
+      if (input.accountId && named && named !== input.accountId) continue;
+      await settleInteraction(tx as never, {
+        interactionId: row.id,
+        status: "succeeded",
+        reason: "app connected",
+      });
+    }
     const outcome = await refreshWaitingInteractions(tx, {
       spaceId: input.actor.spaceId,
       threadId: input.threadId,
       botId: input.botId,
       app,
+      ...(input.accountId ? { accountId: input.accountId } : {}),
     });
     // The refreshed card is already the next step; another run would only duplicate it.
     if (outcome.refreshed.length > 0) return { refreshed: outcome.refreshed, runId: null };

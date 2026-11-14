@@ -93,6 +93,7 @@ export const Transcript = memo(function Transcript({
   onSpeak,
   onOpenComputer,
   onOpenImportSetup,
+  onManageRules,
   authUi,
   rpc,
 }: {
@@ -144,6 +145,7 @@ export const Transcript = memo(function Transcript({
   onSpeak: (message: ThreadMessage) => void;
   onOpenComputer: (botId?: string) => void;
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
+  onManageRules?: () => void;
   /**
    * What the server says about this deployment. Undefined until `/me` answers, so a
    * card is never called unavailable just because the request has not landed yet.
@@ -219,19 +221,24 @@ export const Transcript = memo(function Transcript({
    */
   const committedSurfaces = useRef<{
     key: string;
-    isSuperseded: (block: { interactionId: string }) => boolean;
+    isSuperseded: (block: { interactionId: string; status?: string }) => boolean;
   } | null>(null);
   const surfaceView = useMemo(() => {
     const cards = mentionView.visibleMessages.flatMap((message) =>
       message.blocks.flatMap((block) =>
         block.kind === "a2ui_surface"
-          ? [{ interactionId: block.interactionId, amendsInteractionId: block.amendsInteractionId }]
+          ? [
+              {
+                interactionId: block.interactionId,
+                amendsInteractionId: block.amendsInteractionId,
+                status: block.status,
+              },
+            ]
           : [],
       ),
     );
     const key = cards
-      .map((card) => card.amendsInteractionId)
-      .filter((id): id is string => Boolean(id))
+      .map((card) => `${card.amendsInteractionId ?? ""}:${card.status ?? ""}`)
       .sort()
       .join(",");
     const previous = committedSurfaces.current;
@@ -239,7 +246,12 @@ export const Transcript = memo(function Transcript({
     const isLive = surfaceCardIsLive(cards);
     return {
       key,
-      isSuperseded: (block: { interactionId: string }) => !isLive(block.interactionId),
+      isSuperseded: (block: { interactionId: string; status?: string }) => {
+        // A stamped status is the card's own truth. The amendment chain is only
+        // for rows written before status existed (remove in batch C).
+        if (block.status) return block.status === "superseded";
+        return !isLive(block.interactionId);
+      },
     };
   }, [mentionView]);
   // A progress tick rebuilds these views. The jump still reads the latest folds, without a new
@@ -663,6 +675,7 @@ export const Transcript = memo(function Transcript({
                       onSpeak={onSpeak}
                       onOpenComputer={onOpenComputer}
                       onOpenImportSetup={onOpenImportSetup}
+                      onManageRules={onManageRules}
                       rpc={rpc}
                       showToolActivity={showToolActivity}
                       onReply={onReply}

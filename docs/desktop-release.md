@@ -93,6 +93,13 @@ sudo dpkg --add-architecture i386
 sudo apt-get update && sudo apt-get install -y --no-install-recommends wine wine32:i386
 ```
 
+If the host cannot install `wine32` (no sudo, or mixed 32-bit packages), use the
+Wine Docker image and fetch the Windows Koffi native module before packaging.
+That local test-stack path, including same-version uninstall and where the
+installer is copied (`/home/lizer05/matebot/www-dist/downloads/`), is in
+[local-test-packaging.md](./local-test-packaging.md). It does not replace this
+workflow: unsigned local EXEs are not GitHub Releases.
+
 Pass `-c.win.signExecutable=false` when there is no certificate, as
 `pnpm --filter @matebot/desktop exec electron-builder --win --x64 --publish never "-c.win.signExecutable=false"`
 does. Keep the flag quoted: PowerShell splits an unquoted

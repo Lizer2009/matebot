@@ -16,6 +16,7 @@ const createInteraction = vi.fn();
 const upsertInteractionSurface = vi.fn();
 const createThreadMessageInTransaction = vi.fn();
 const appendEventInTransaction = vi.fn();
+const appendInteractionEvent = vi.fn();
 vi.mock("@matebot/db", async () => {
   const actual = await vi.importActual<typeof import("@matebot/db")>("@matebot/db");
   return {
@@ -25,6 +26,7 @@ vi.mock("@matebot/db", async () => {
     createThreadMessageInTransaction: (...args: unknown[]) =>
       createThreadMessageInTransaction(...args),
     appendEventInTransaction: (...args: unknown[]) => appendEventInTransaction(...args),
+    appendInteractionEvent: (...args: unknown[]) => appendInteractionEvent(...args),
     withTransactionRetry: async (work: () => Promise<unknown>) => work(),
   };
 });
@@ -50,6 +52,7 @@ describe("publishInteractionSurface", () => {
     upsertInteractionSurface.mockReset();
     createThreadMessageInTransaction.mockReset();
     appendEventInTransaction.mockReset();
+    appendInteractionEvent.mockReset();
 
     compileInteractionPlan.mockResolvedValue({
       ok: true,
@@ -123,6 +126,14 @@ describe("publishInteractionSurface", () => {
       }),
     );
     expect(appendEventInTransaction).toHaveBeenCalledTimes(3);
+    expect(appendInteractionEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        interactionId: "ix-1",
+        kind: "published",
+        toStatus: "collecting",
+      }),
+    );
     expect(result).toMatchObject({
       interactionId: "ix-1",
       surfaceId: "surface-1",
@@ -163,8 +174,52 @@ describe("publishInteractionSurface", () => {
             capability: "not_connected",
             template: "email-connection-card",
             lifecycle: "draft",
+            historySlots: { to: "a@example.com", subject: "Hi" },
           }),
         ],
+      }),
+    );
+  });
+
+  it("stores the resume plan on a needs_connection card so reconnect can restore slots", async () => {
+    const interactionUpdate = vi.fn(async () => ({ id: "ix-1" }));
+    const prisma = {
+      $transaction: async (work: (tx: unknown) => Promise<unknown>) =>
+        work({
+          interaction: { update: interactionUpdate },
+        }),
+    };
+
+    await publishInteractionSurface(prisma as never, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan,
+      surfaceId: "surface-1",
+      capability: "not_connected",
+      status: "needs_connection",
+      resumePlan: {
+        provider: "gmail",
+        accountId: "conn-keep",
+        displayEmail: "keep@example.test",
+        intent: "email.compose",
+        slots: { to: "friend@example.test", subject: "冬天的问候" },
+      },
+    });
+
+    expect(createInteraction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        status: "needs_connection",
+        plan: expect.objectContaining({
+          resumePlan: {
+            provider: "gmail",
+            accountId: "conn-keep",
+            displayEmail: "keep@example.test",
+            intent: "email.compose",
+            slots: { to: "friend@example.test", subject: "冬天的问候" },
+          },
+        }),
       }),
     );
   });

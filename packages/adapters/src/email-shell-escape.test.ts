@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  interactionMailPathAvailable,
+  interactionDraftPathAvailable,
   OUTBOUND_EMAIL_SHELL_REFUSAL,
   outboundEmailScriptRefusal,
   refuseOutboundEmailShell,
@@ -68,7 +68,7 @@ describe("refuseOutboundEmailShell", () => {
   it("does not refuse when FEATURE_A2UI is off", () => {
     vi.stubEnv("FEATURE_A2UI", "0");
     expect(refuseOutboundEmailShell(ctx(), { command: smtpPython })).toBeUndefined();
-    expect(interactionMailPathAvailable(ctx())).toBe(false);
+    expect(interactionDraftPathAvailable(ctx())).toBe(false);
   });
 
   it("does not refuse when present_interaction is not offered", () => {

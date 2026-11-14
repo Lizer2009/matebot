@@ -48,6 +48,27 @@ describe("readConfirmedCalendarDraft", () => {
     expect(draft).toEqual({ kind: "invalid", error: "end_before_start", index: 1 });
   });
 
+  /**
+   * A model sends the list as JSON text, because that is what a tool argument is. Reading
+   * only the array made an eight-event itinerary look like one event with no dates.
+   */
+  it("reads a list sent as JSON text as the same batch", () => {
+    const draft = readConfirmedCalendarDraft({
+      events: JSON.stringify([
+        { name: "Standup", start: "2026-11-09T09:00:00+08:00", end: "2026-11-09T09:15:00+08:00" },
+        { title: "Review", start: "2026-11-10T14:00:00+08:00", end: "2026-11-10T15:00:00+08:00" },
+      ]),
+    });
+    expect(draft.kind).toBe("batch");
+    if (draft.kind !== "batch") return;
+    expect(draft.events.map((entry) => entry.label)).toEqual(["Standup", "Review"]);
+  });
+
+  it("does not treat unparsable text as a batch", () => {
+    const draft = readConfirmedCalendarDraft({ ...one, events: "{not json" });
+    expect(draft.kind).toBe("single");
+  });
+
   it("refuses an item that is not an object", () => {
     const draft = readConfirmedCalendarDraft({ events: ["Standup"] });
     expect(draft).toEqual({ kind: "invalid", error: "invalid_item", index: 0 });

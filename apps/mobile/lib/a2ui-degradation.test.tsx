@@ -239,7 +239,8 @@ describe("A2uiNativeSurface on a document it cannot draw", () => {
     });
     const refused = container.querySelector('[data-testid="a2ui-native-refused"]');
     expect(refused).not.toBeNull();
-    expect((refused?.textContent ?? "").trim().length).toBeGreaterThan(0);
+    expect(refused?.textContent).toContain("This card could not be shown.");
+    expect(refused?.textContent).not.toMatch(/EvilWidget/i);
   });
 
   /**
@@ -289,8 +290,8 @@ describe("A2uiNativeSurface on a document it cannot draw", () => {
     const loadError = container.querySelector('[data-testid="a2ui-native-load-error"]');
     expect(loadError).not.toBeNull();
     expect(loadError?.textContent).toMatch(/could not be shown/i);
-    // The reason travels with it, so the reader is not told only that something failed.
-    expect(loadError?.textContent).toMatch(/no content/i);
+    expect(container.textContent).toContain("Next week's schedule");
+    expect(loadError?.textContent).not.toMatch(/no content|network down|Error:/i);
     // The reader can act on it rather than being told to try a card that is not there.
     const reload = container.querySelector('[data-testid="a2ui-native-reload"]');
     expect(reload).not.toBeNull();

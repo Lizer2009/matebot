@@ -111,4 +111,87 @@ describe("compiled surface click reaches the action bridge", () => {
     expect(host.querySelectorAll("input[type='text']")).toHaveLength(1);
     expect(host.querySelectorAll("button")).toHaveLength(1);
   });
+
+  /**
+   * A parent re-render must not flash the card.
+   *
+   * The message row passes an inline listener, so its identity changes on every render. That
+   * used to be an effect dependency: each re-render dropped the surface back to its loading
+   * skeleton and rebuilt it, and a card in a busy thread blinked continuously.
+   */
+  it("keeps the drawn surface when a re-render passes a new listener", async () => {
+    const messages = await compileFor(2);
+    await act(async () => {
+      root.render(
+        createElement(A2uiSurfaceHost, { surfaceId: "surf-1", messages, onAction: vi.fn() }),
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 80));
+    });
+    expect(host.querySelector("[data-testid='a2ui-surface-host']")).toBeTruthy();
+
+    const next = vi.fn();
+    await act(async () => {
+      root.render(
+        createElement(A2uiSurfaceHost, { surfaceId: "surf-1", messages, onAction: next }),
+      );
+    });
+    // No skeleton frame: the drawn card stays while the same surface is handed over.
+    expect(host.querySelector("[data-testid='a2ui-surface-loading']")).toBeNull();
+    expect(host.querySelectorAll("input[type='text']")).toHaveLength(1);
+
+    await act(async () => {
+      host.querySelector("button")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    });
+    // The bridge is stable, but it always calls the listener the caller passed last.
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it("degrades with a fixed sentence and hint, never cause.message (AC-22)", async () => {
+    await act(async () => {
+      root.render(
+        createElement(A2uiSurfaceHost, {
+          surfaceId: "missing-surface",
+          messages: [],
+          fallbackHint: "产品发布",
+        }),
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 80));
+    });
+    const refused = host.querySelector("[data-testid='a2ui-surface-refused']");
+    expect(refused?.textContent).toContain("This card could not be shown.");
+    expect(refused?.textContent).toContain("产品发布");
+    expect(refused?.textContent).not.toMatch(/missing-surface|Failed to load|was not created/i);
+  });
+
+  it("refuses an unknown catalog component with the same sentence, never the name (AC-22)", async () => {
+    await act(async () => {
+      root.render(
+        createElement(A2uiSurfaceHost, {
+          surfaceId: "surf-1",
+          messages: [
+            {
+              version: "v0.9",
+              updateComponents: {
+                surfaceId: "surf-1",
+                components: [{ id: "root", component: "ClickHereToWin" }],
+              },
+            },
+          ],
+          fallbackHint: "产品发布",
+        }),
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 80));
+    });
+    const refused = host.querySelector("[data-testid='a2ui-surface-refused']");
+    expect(refused?.textContent).toContain("This card could not be shown.");
+    expect(refused?.textContent).toContain("产品发布");
+    expect(refused?.textContent).not.toMatch(/ClickHereToWin|Unknown catalog/i);
+  });
 });

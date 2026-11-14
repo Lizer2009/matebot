@@ -203,6 +203,10 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   doubleTapSurface = false,
   userBubble,
   onRefresh,
+  onManageRules,
+  onAllowRecipient,
+  onDisableDrafts,
+  draftsDisabled,
   a2uiEnabled,
 }: {
   onHelperToggle?: MessageRowActions["helperToggle"];
@@ -234,6 +238,10 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   doubleTapSurface?: boolean;
   userBubble?: UserBubble;
   onRefresh?: () => void | Promise<unknown>;
+  onManageRules?: () => void;
+  onAllowRecipient?: (recipient: string) => void | Promise<void>;
+  onDisableDrafts?: (disabled: boolean) => void | Promise<void>;
+  draftsDisabled?: boolean;
   /**
    * Whether this deployment serves interactive cards, from `/me`. Undefined means the
    * server has not answered yet, so the card is drawn rather than called unavailable.
@@ -793,6 +801,20 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                   }
                 : undefined
             }
+            onRetry={
+              onRefresh
+                ? async () => {
+                    try {
+                      await rpc("threads/retryInteraction", {
+                        ...target,
+                        interactionId: block.interactionId,
+                      });
+                    } finally {
+                      await onRefresh();
+                    }
+                  }
+                : undefined
+            }
             onAction={async (action) => {
               // Same contract as the web card: the compiled button carries the
               // interaction and revision it was rendered from.
@@ -832,6 +854,10 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                   }
                 : undefined
             }
+            onManageRules={onManageRules}
+            onAllowRecipient={onAllowRecipient}
+            onDisableDrafts={onDisableDrafts}
+            draftsDisabled={draftsDisabled}
           />
         );
       })}

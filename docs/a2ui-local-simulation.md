@@ -36,7 +36,7 @@ node scripts/a2ui-sim.mjs --scenario dialogue-prompts --json
 
 | 提示词 | 覆盖的步骤 |
 | --- | --- |
-| `帮我发邮件:给 418452732@qq.com 主题: 秋后问候，内容: 自理` | 失效邮箱出稿 → 发信 → 重新授权卡；就绪邮箱发信成功 |
+| `帮我发邮件:给 example@example.test 主题: 秋后问候，内容: 自理` | 失效邮箱出稿 → 发信 → 重新授权卡；就绪邮箱发信成功 |
 | `确定下周日程，主题和内容自理` | 未连接 → 连 `connect_app`；授权后是否续跑 |
 | `登录 Github 做一次简单的代码拉取到本地电脑，项目你自选` | `out_of_scope`：无对应 intent |
 

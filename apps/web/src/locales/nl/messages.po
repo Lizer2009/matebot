@@ -721,6 +721,10 @@ msgstr ""
 msgid "Allow once"
 msgstr "Een keer toestaan"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Allow this recipient"
+msgstr ""
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "Schrijven toestaan"
@@ -1358,6 +1362,11 @@ msgstr "Inchecken."
 msgid "Check status"
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Check status"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "Controleer de API-sleutel of aanmelding en test daarna opnieuw."
@@ -1386,6 +1395,11 @@ msgstr "Computerinstallatie controleren…"
 #: src/components/McpServerHealthLine.tsx
 msgid "Checking connection…"
 msgstr "Verbinding controleren…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Checking whether this was sent"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -2827,6 +2841,11 @@ msgstr "Opname weggooien"
 msgid "Discarded"
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Discarded"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -2920,6 +2939,11 @@ msgstr ""
 msgid "Done"
 msgstr "Klaar"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Done"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Downgrade at renewal"
 msgstr ""
@@ -2949,6 +2973,11 @@ msgstr "PDF downloaden"
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "Bezig met downloaden…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Draft"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -2985,17 +3014,12 @@ msgstr "Naam bewerken"
 msgid "Edit Profile"
 msgstr "Profiel bewerken"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 msgid "Email"
 msgstr "E-mail"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Email address not provided"
-msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
@@ -3154,6 +3178,11 @@ msgstr "Tabel uitvouwen"
 msgid "expired"
 msgstr "verlopen"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Expired, nothing was sent"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr ""
@@ -3202,6 +3231,11 @@ msgstr "mislukt"
 #: src/pages/ActivityList.tsx
 msgid "Failed"
 msgstr "Mislukt"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Failed"
+msgstr ""
 
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
@@ -3930,6 +3964,10 @@ msgstr "MCP-servers beheren"
 msgid "Manage other bots"
 msgstr "Andere bots beheren"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Manage rules"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr "Handmatig"
@@ -4309,7 +4347,7 @@ msgstr "Heeft een antwoord nodig"
 msgid "Needs an OAuth client ID"
 msgstr "OAuth-client-ID nodig"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Needs approval"
 msgstr ""
 
@@ -5397,8 +5435,9 @@ msgstr "API-sleutel vervangen"
 msgid "Replace key"
 msgstr "Sleutel vervangen"
 
-#: src/components/a2ui/A2uiSurfaceCard.tsx
-msgid "Replaced by a newer draft below."
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Replaced by a newer draft"
 msgstr ""
 
 #. placeholder {0}: block.replaces.origin
@@ -5489,6 +5528,10 @@ msgstr "Herstarten om bij te werken"
 msgid "Restore"
 msgstr "Herstellen"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Restore drafts"
+msgstr ""
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
 msgstr "Zet de laatst opgeslagen werkruimte terug."
@@ -5505,7 +5548,6 @@ msgstr "Hersteld"
 msgid "Restoring your workspace"
 msgstr "Je werkruimte herstellen"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5518,6 +5560,11 @@ msgstr "Je werkruimte herstellen"
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "Opnieuw proberen"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Retry"
+msgstr ""
 
 #: src/App.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -5849,7 +5896,7 @@ msgid "Send with Enter"
 msgstr "Verzenden met Enter"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
+msgid "Sending email"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -6474,6 +6521,11 @@ msgstr "Het ongebruikte verschil wordt verrekend met je volgende factuur."
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "There may be a newer version"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
 msgstr "Deze bestanden zijn te groot om te importeren."
@@ -6664,6 +6716,16 @@ msgstr ""
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This space's rules ask first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This step cannot be undone"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in Matebot yet. Use a deployment credential or choose another provider."
 msgstr "Deze abonnementsaanmelding is nog niet beschikbaar in Matebot. Gebruik een implementatiegegeven of kies een andere aanbieder."
@@ -6802,6 +6864,10 @@ msgstr "Probeer de test opnieuw."
 #: src/lib/cron.ts
 msgid "Tuesday"
 msgstr "dinsdag"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Turn off drafts for this bot"
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7317,6 +7383,16 @@ msgstr "Na je proefperiode kost je plan {annualPrice} per jaar."
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "Je abonnement wordt {tierTargetLabel} wanneer je proefperiode eindigt."
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your rule asks first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your settings ask first"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Your skills"

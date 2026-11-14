@@ -62,6 +62,30 @@ export type InteractionPlan = z.infer<typeof InteractionPlanSchema>;
 export const A2uiProtocolFamily = z.enum(["v0_9", "v1_0"]);
 export type A2uiProtocolFamily = z.infer<typeof A2uiProtocolFamily>;
 
+/**
+ * The kernel's card lifecycle.
+ *
+ * `@matebot/core` owns the vocabulary, but the dependency points core → contracts, so the values
+ * are repeated here rather than imported. A parity test in core asserts the two lists are equal,
+ * which is what keeps the copies from drifting.
+ */
+export const InteractionStatus = z.enum([
+  "collecting",
+  "ready_for_review",
+  "awaiting_approval",
+  "needs_connection",
+  "unknown",
+  "sent",
+  "executed",
+  "succeeded",
+  "confirmed",
+  "superseded",
+  "expired",
+  "failed",
+  "cancelled",
+]);
+export type InteractionStatus = z.infer<typeof InteractionStatus>;
+
 /** Mailbox preflight stamp on email.compose surfaces. */
 export const EmailSurfaceCapability = z.enum(["not_connected", "requires_reauth", "ready"]);
 export type EmailSurfaceCapability = z.infer<typeof EmailSurfaceCapability>;
@@ -71,11 +95,19 @@ export const EmailSurfaceTemplate = z.enum([
   "email-connection-card",
   "email-reauth-card",
   "email-draft-card",
+  "calendar-draft-card",
+  "calendar-submitting-card",
+  "calendar-result-success",
+  "calendar-result-failed",
+  "action-draft-card",
   "action-submitting-card",
   "action-progress-card",
   "action-result-success",
   "action-result-failed",
   "action-reconcile-card",
+  "action-superseded-card",
+  "action-expired-card",
+  "action-cancelled-card",
 ]);
 export type EmailSurfaceTemplate = z.infer<typeof EmailSurfaceTemplate>;
 
@@ -119,6 +151,32 @@ export const A2uiSurfaceBlockSchema = z.object({
   template: EmailSurfaceTemplate.optional(),
   /** Execution lifecycle on the same surface. Omitted means draft. */
   lifecycle: EmailSurfaceLifecycle.optional(),
+  /**
+   * The interaction's own status, copied at write time.
+   *
+   * `lifecycle` keeps six values and cannot tell a superseded card from a live draft; a host
+   * needs the real status to decide what the card may still do. Optional so blocks written
+   * before this field existed keep parsing: a host that finds it missing falls back to
+   * `lifecycle` + `capability`.
+   */
+  status: InteractionStatus.optional(),
+  /**
+   * True while a newer user message may have overtaken this still-open card.
+   * Not a status: a stale collecting card stays unconfirmable. Omitted means fresh.
+   */
+  stale: z.boolean().optional(),
+  /**
+   * Key slot values for agent history. Hosts do not render these; the projector
+   * needs them because it only sees the block, not Interaction.slots.
+   */
+  historySlots: z.record(z.string().trim().min(1), z.string()).optional(),
+  /**
+   * Why an approval card is waiting. Closed set, stamped by the kernel.
+   * Hosts resolve copy from the key; the model cannot supply this.
+   */
+  reasonKey: z
+    .enum(["rule.user", "rule.team", "setting.approval", "effect.irreversible"])
+    .optional(),
   /** Provider message id after a successful send. D′/E′ consume this. */
   providerMessageId: z.string().trim().min(1).optional(),
   /** Last send error when lifecycle is failed or unknown. */
@@ -144,6 +202,17 @@ export const A2uiSurfaceBlockSchema = z.object({
    * fail to parse on the way out, taking the whole card with it.
    */
   senderLabel: z.string().trim().min(1).max(80).optional(),
+  /**
+   * Sending mailbox, only when the server learned it from the provider's account record.
+   * Never copied from the connection's display name.
+   */
+  senderAddress: z
+    .string()
+    .trim()
+    .min(3)
+    .max(254)
+    .refine((value) => value.includes("@") && !/\s/.test(value))
+    .optional(),
   /**
    * Server-held document or patch pointer for later hydrate; not a client authority.
    * Prefer `a2uiSurfaceDocumentRef({ interactionId, surfaceId })` (PR-4 Option A).
@@ -317,6 +386,21 @@ export const ThreadsExecuteInteractionOutput = z.object({
   providerMessageId: z.string().trim().min(1).optional(),
 });
 export type ThreadsExecuteInteractionOutput = z.infer<typeof ThreadsExecuteInteractionOutput>;
+
+/** Revive an expired or failed card in place. Never publishes a second card. */
+export const ThreadsRetryInteractionInput = ThreadTargetSchema.safeExtend({
+  interactionId: Id,
+});
+export type ThreadsRetryInteractionInput = z.infer<typeof ThreadsRetryInteractionInput>;
+
+export const ThreadsRetryInteractionOutput = z.object({
+  ok: z.literal(true),
+  interactionId: Id,
+  surfaceId: z.string().trim().min(1),
+  draftVersion: z.number().int().positive(),
+  status: InteractionStatus,
+});
+export type ThreadsRetryInteractionOutput = z.infer<typeof ThreadsRetryInteractionOutput>;
 
 /** Inspect an UNKNOWN send. Does not deliver. */
 export const ThreadsReconcileInteractionInput = ThreadsExecuteInteractionInput;

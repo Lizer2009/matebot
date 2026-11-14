@@ -1,14 +1,19 @@
 import { randomUUID } from "node:crypto";
 import type { InteractionPlan } from "@matebot/contracts";
-import { confirmInteractionDraftState, interactionSlotsFromPlan } from "@matebot/core";
+import {
+  confirmInteractionDraftState,
+  interactionSlotsFromPlan,
+  OPEN_STATUSES,
+} from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   cancelInteractionService,
   updateInteractionFieldService,
 } from "./interaction-field-writer.js";
-import { publishInteractionSurface } from "./interaction-publish.js";
+import { publishInteractionSurface, publishOrAmend } from "./interaction-publish.js";
 
 /**
  * The draft lifecycle against a real PostgreSQL database.
@@ -76,6 +81,17 @@ describePostgres("draft lifecycle (PostgreSQL)", () => {
       await db.prisma.$disconnect();
       await db.pool.end();
     }
+  });
+
+  // Each case publishes its own card on the one thread this suite owns, and publishing does not
+  // supersede what came before. The card key is derived from (thread, intent), so leaving an open
+  // row behind would make the next publish collide with the partial unique index.
+  beforeEach(async () => {
+    if (!threadId) return;
+    await system.interaction.updateMany({
+      where: { threadId, status: { in: [...OPEN_STATUSES, "needs_connection"] } },
+      data: { status: "superseded" },
+    });
   });
 
   async function publish(fields: InteractionPlan["fields"]) {
@@ -249,6 +265,7 @@ describePostgres("draft lifecycle (PostgreSQL)", () => {
         spaceId,
         threadId,
         intent: "email.compose",
+        cardKey: interactionCardKey(threadId, "email.compose"),
         status: "ready_for_review",
         draftVersion: 1,
         plan: EMAIL_PLAN([
@@ -339,5 +356,237 @@ describePostgres("draft lifecycle (PostgreSQL)", () => {
     expect(waiting.status).toBe("needs_connection");
     expect((waiting.slots as Record<string, unknown>).body).toBe("正文");
     expect(waiting.confirmedVersion).toBeNull();
+  });
+
+  // The duplicate-card defect against the real tables, not a mocked client: two presents of one
+  // intent in one thread leave one row, one message and one block, and the second rewrites the
+  // first rather than stacking beside it.
+  it("turns a second present of one intent into one card on the timeline", async () => {
+    const first = await publish([
+      { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+      { name: "subject", value: "第一版", required: true, status: "resolved" },
+      { name: "body", value: "正文", required: true, status: "resolved" },
+    ]);
+    const second = await publishOrAmend(system, {
+      spaceId,
+      threadId,
+      botId: `bot-${stamp}`,
+      plan: EMAIL_PLAN([
+        { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "第二版", required: true, status: "resolved" },
+        { name: "body", value: "正文", required: true, status: "resolved" },
+      ]),
+    });
+
+    expect(second.amended).toBe(true);
+    expect(second.interactionId).toBe(first.interactionId);
+    expect(second.messageId).toBe(first.messageId);
+    expect(second.draftVersion).toBe(first.draftVersion + 1);
+
+    const rows = await system.interaction.findMany({
+      where: { id: { in: [first.interactionId, second.interactionId] } },
+    });
+    expect(rows).toHaveLength(1);
+    const messages = await system.message.findMany({
+      where: { id: { in: [first.messageId, second.messageId] } },
+      select: { id: true, blocks: true },
+    });
+    expect(messages).toHaveLength(1);
+    const blocks = messages[0]!.blocks as Array<{ kind: string; interactionId: string }>;
+    expect(blocks.filter((block) => block.kind === "a2ui_surface")).toHaveLength(1);
+    expect((rows[0]!.slots as Record<string, unknown>).subject).toBe("第二版");
+  });
+
+  // Concurrent presents cannot both insert: the partial unique index rejects one and the loser
+  // re-reads the winner's row, so the thread still ends with one open card and one message.
+  it("keeps one open card when several presents race", async () => {
+    const fields = (subject: string) => [
+      { name: "to", value: "alex@example.test", required: true, status: "resolved" as const },
+      { name: "subject", value: subject, required: true, status: "resolved" as const },
+      { name: "body", value: "正文", required: true, status: "resolved" as const },
+    ];
+    const results = await Promise.allSettled(
+      ["甲", "乙", "丙"].map((subject) =>
+        publishOrAmend(system, {
+          spaceId,
+          threadId,
+          botId: `bot-${stamp}`,
+          plan: EMAIL_PLAN(fields(subject)),
+        }),
+      ),
+    );
+
+    // A present is idempotent, so every caller gets a card — the same one.
+    const published = results.map((result) => {
+      if (result.status !== "fulfilled") throw result.reason;
+      return result.value;
+    });
+    expect(new Set(published.map((card) => card.interactionId)).size).toBe(1);
+    // One message, rewritten in place by each losing present, never a second one.
+    expect(new Set(published.map((card) => card.messageId)).size).toBe(1);
+    const open = await system.interaction.findMany({
+      where: { threadId, status: { in: [...OPEN_STATUSES] } },
+    });
+    expect(open).toHaveLength(1);
+    expect(await system.message.count({ where: { id: published[0]!.messageId } })).toBe(1);
+  });
+
+  it("does not amend an in-flight send and keeps occupying the open slot", async () => {
+    const published = await publish([
+      { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+      { name: "subject", value: "在途原文", required: true, status: "resolved" },
+      { name: "body", value: "正文", required: true, status: "resolved" },
+    ]);
+    const task = await system.task.create({
+      data: {
+        spaceId,
+        userId,
+        botId: `bot-${stamp}`,
+        threadId,
+        prompt: "in-flight",
+        status: "running",
+      },
+    });
+    const run = await system.run.create({
+      data: {
+        spaceId,
+        userId,
+        botId: `bot-${stamp}`,
+        threadId,
+        taskId: task.id,
+        status: "running",
+        trigger: "user_message",
+      },
+    });
+    const effect = await system.externalEffect.create({
+      data: {
+        spaceId,
+        runId: run.id,
+        kind: "email.send",
+        idempotencyKey: `inflight-${stamp}-${published.interactionId}`,
+        status: "executing",
+        request: { interactionId: published.interactionId },
+      },
+    });
+    await system.interaction.update({
+      where: { id: published.interactionId },
+      data: { approvalEffectId: effect.id, status: "ready_for_review" },
+    });
+
+    const second = await publishOrAmend(system, {
+      spaceId,
+      threadId,
+      botId: `bot-${stamp}`,
+      plan: EMAIL_PLAN([
+        { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "不得改写", required: true, status: "resolved" },
+        { name: "body", value: "正文", required: true, status: "resolved" },
+      ]),
+    });
+
+    expect(second.interactionId).toBe(published.interactionId);
+    expect(second.amended).toBe(false);
+    expect(second.draftVersion).toBe(published.draftVersion);
+    const row = await getInteraction(system, published.interactionId);
+    if (!row) throw new Error("interaction missing");
+    expect(row.status).toBe("ready_for_review");
+    expect((row.slots as Record<string, unknown>).subject).toBe("在途原文");
+    expect(
+      await system.interaction.count({
+        where: { threadId, intent: "email.compose", status: { in: [...OPEN_STATUSES] } },
+      }),
+    ).toBe(1);
+    await expect(
+      cancelInteractionService(system, {
+        spaceId,
+        threadId,
+        botId: `bot-${stamp}`,
+        interactionId: published.interactionId,
+        expectedDraftVersion: published.draftVersion,
+        runtimeCanAbort: false,
+      }),
+    ).rejects.toMatchObject({ reason: "in_flight" });
+    expect((await getInteraction(system, published.interactionId))?.status).toBe(
+      "ready_for_review",
+    );
+  });
+
+  it("matches a gmail connection card even when a newer calendar card is waiting (AC-26)", async () => {
+    const { createInteraction } = await import("@matebot/db");
+    const { findWaitingConnectionCards } = await import("./interaction-kernel-store.js");
+    const { pickMatchingConnectionCard } = await import("@matebot/core");
+    await createInteraction(system, {
+      spaceId,
+      threadId,
+      intent: "connect.gmail",
+      status: "needs_connection",
+      plan: {
+        intent: "connect.gmail",
+        title: "Gmail",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "low",
+      },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await createInteraction(system, {
+      spaceId,
+      threadId,
+      intent: "connect.googlecalendar",
+      status: "needs_connection",
+      plan: {
+        intent: "connect.googlecalendar",
+        title: "Calendar",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "low",
+      },
+    });
+    await createInteraction(system, {
+      spaceId,
+      threadId,
+      intent: "connect.gmail.ca_1",
+      status: "needs_connection",
+      plan: {
+        intent: "connect.gmail.ca_1",
+        title: "Gmail ca_1",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "low",
+      },
+    });
+    await createInteraction(system, {
+      spaceId,
+      threadId,
+      intent: "connect.gmail.ca_2",
+      status: "needs_connection",
+      plan: {
+        intent: "connect.gmail.ca_2",
+        title: "Gmail ca_2",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "low",
+      },
+    });
+    const rows = await findWaitingConnectionCards(system, threadId);
+    expect(rows.map((row) => row.intent)).toEqual(
+      expect.arrayContaining([
+        "connect.gmail",
+        "connect.googlecalendar",
+        "connect.gmail.ca_1",
+        "connect.gmail.ca_2",
+      ]),
+    );
+    expect(rows).toHaveLength(4);
+    expect(pickMatchingConnectionCard(rows, { app: "email" })?.intent).toMatch(/^connect\.gmail/);
+    expect(pickMatchingConnectionCard(rows, { app: "email", accountId: "ca_1" })?.intent).toBe(
+      "connect.gmail.ca_1",
+    );
+    expect(pickMatchingConnectionCard(rows, { app: "email", accountId: "ca_2" })?.intent).toBe(
+      "connect.gmail.ca_2",
+    );
+    expect(pickMatchingConnectionCard(rows, { app: "calendar" })?.intent).toBe(
+      "connect.googlecalendar",
+    );
   });
 });

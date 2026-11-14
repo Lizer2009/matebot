@@ -8,11 +8,14 @@ import type {
 import {
   applyNaturalLanguageEdit,
   buildAmendment,
+  EDITABLE_STATUSES,
   interactionCapabilityForIntent,
+  surfaceStatusFor,
   userEditedFieldNames,
 } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { updateInteractionFieldService } from "./interaction-field-writer.js";
+import { InteractionCardOccupiedError, publishOrAmend } from "./interaction-publish.js";
 import type { DraftSender } from "./interaction-readback.js";
 import { readbackFromStored } from "./interaction-readback.js";
 import type { RunContext } from "./run-context.js";
@@ -130,11 +133,17 @@ export type EditInteractionServices = Pick<
     interactionId: string;
     plan: unknown;
     /** The mailbox stamp for the new draft, so the card it publishes matches its readback. */
-    capabilityStamp?: { capability?: EmailSurfaceCapability; senderLabel?: string };
+    capabilityStamp?: {
+      capability?: EmailSurfaceCapability;
+      senderLabel?: string;
+      senderAddress?: string;
+    };
   }) => Promise<{
     interactionId: string;
     surfaceId: string;
     draftVersion: number;
+    /** True when the correction rewrote the card already on screen. */
+    amended?: boolean;
     plan?: unknown;
     slots?: Record<string, unknown>;
     missingRequired?: string[];
@@ -186,22 +195,40 @@ async function amendExecuted(
       ...(amended.error === "no_change" ? { reply: "这次修改没有改变任何字段。" } : {}),
     };
   }
-  const published = await services.publishAmendment({
-    interactionId: input.record.id,
-    plan: amended.plan,
-    ...(input.capabilityStamp
-      ? {
-          capabilityStamp: {
-            ...(input.capabilityStamp.capability
-              ? { capability: input.capabilityStamp.capability }
-              : {}),
-            ...(input.capabilityStamp.sender?.label
-              ? { senderLabel: input.capabilityStamp.sender.label }
-              : {}),
-          },
-        }
-      : {}),
-  });
+  let published: Awaited<ReturnType<NonNullable<EditInteractionServices["publishAmendment"]>>>;
+  try {
+    published = await services.publishAmendment({
+      interactionId: input.record.id,
+      plan: amended.plan,
+      ...(input.capabilityStamp
+        ? {
+            capabilityStamp: {
+              ...(input.capabilityStamp.capability
+                ? { capability: input.capabilityStamp.capability }
+                : {}),
+              ...(input.capabilityStamp.sender?.label
+                ? { senderLabel: input.capabilityStamp.sender.label }
+                : {}),
+              ...(input.capabilityStamp.sender?.address
+                ? { senderAddress: input.capabilityStamp.sender.address }
+                : {}),
+            },
+          }
+        : {}),
+    });
+  } catch (error) {
+    if (error instanceof InteractionCardOccupiedError) {
+      // One live card per intent: this thread already has a card the correction
+      // would have to overwrite. Say so and change nothing, rather than discard
+      // the draft the person is looking at.
+      return {
+        ok: false,
+        error: "card_in_progress",
+        reply: "这个线程里还有一张同类卡片没处理完，先处理或取消它，我再改这条已完成的记录。",
+      };
+    }
+    throw error;
+  }
   // The correction is a new draft, and the model is told what that draft holds — not what it
   // asked for — so a correction that leaves a required value out is not described as complete.
   const readback =
@@ -233,7 +260,11 @@ async function amendExecuted(
           ...(readback.sender ? { sender: readback.sender } : {}),
         }
       : {}),
-    reply: "已新建一张关联草稿，请在卡片上确认后再执行。",
+    // A second correction of the same record rewrites the card already on screen;
+    // saying "new" there would be a claim the timeline contradicts.
+    reply: published.amended
+      ? "已更新这张关联草稿，请在卡片上确认后再执行。"
+      : "已新建一张关联草稿，请在卡片上确认后再执行。",
   };
 }
 
@@ -414,15 +445,15 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         where: {
           spaceId,
           threadId,
-          status: { notIn: ["cancelled", "failed", "unknown"] },
+          // The same set the kernel lets `edit_interaction` rewrite. A denylist
+          // here would offer a superseded or expired card as a live draft.
+          status: { in: [...EDITABLE_STATUSES] },
         },
         orderBy: { updatedAt: "desc" },
         select: {
           id: true,
           intent: true,
           status: true,
-          confirmedVersion: true,
-          draftVersion: true,
           title: true,
           summary: true,
           surfaces: { select: { surfaceId: true }, orderBy: { updatedAt: "desc" }, take: 1 },
@@ -435,12 +466,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
           surfaceId: row.surfaces[0]!.surfaceId,
           intent: row.intent,
           label: row.title ?? row.summary ?? row.intent,
-          status:
-            row.status === "succeeded"
-              ? ("executed" as const)
-              : row.confirmedVersion !== null && row.confirmedVersion === row.draftVersion
-                ? ("approved" as const)
-                : ("draft" as const),
+          status: surfaceStatusFor(row.status),
         }));
     },
     loadExecutedCandidate: async ({ interactionId, allowNewest }) => {
@@ -480,9 +506,11 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
       return load(newest?.id);
     },
     publishAmendment: async ({ interactionId, plan, capabilityStamp }) => {
-      const { publishInteractionSurface } = await import("./interaction-publish.js");
       const parsed = InteractionPlanSchema.parse(plan);
-      const published = await publishInteractionSurface(prisma, {
+      // One kernel path decides create-or-amend. The open-card lookup may find a
+      // card for this intent already (the first correction), and inserting then
+      // would collide with the partial unique index.
+      const published = await publishOrAmend(prisma, {
         spaceId: run.spaceId,
         threadId: run.threadId,
         botId: run.botId,
@@ -497,6 +525,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         // The same mailbox facts the readback reports, so the card and the result agree.
         ...(capabilityStamp?.capability ? { capability: capabilityStamp.capability } : {}),
         ...(capabilityStamp?.senderLabel ? { senderLabel: capabilityStamp.senderLabel } : {}),
+        ...(capabilityStamp?.senderAddress ? { senderAddress: capabilityStamp.senderAddress } : {}),
       });
       await deps.events.notify(run.threadId, published.eventSeq).catch((error) => {
         // The card is persisted; a missed wake-up is picked up on the next read.
@@ -506,6 +535,7 @@ export function servicesFor(ctx: RunContext): EditInteractionServices {
         interactionId: published.interactionId,
         surfaceId: published.surfaceId,
         draftVersion: published.draftVersion,
+        amended: published.amended,
         // What was stored, so the caller can describe the draft it created rather than the plan
         // it asked for.
         plan: published.plan,

@@ -65,7 +65,28 @@ function fakeThread() {
         written.push({ blocks: data.blocks });
         return { id: `msg-${written.length}` };
       },
+      update: async ({ data }: { data: { blocks: unknown[] } }) => {
+        if (written[0]) written[0].blocks = data.blocks;
+        return { id: "msg-1" };
+      },
+      findUnique: async () => ({ blocks: written[0]?.blocks ?? [] }),
     },
+    interaction: {
+      findFirst: async () => null,
+      findMany: async () => [],
+      findUnique: async () => ({ status: "needs_connection", draftVersion: 1 }),
+      create: async ({ data }: { data: Record<string, unknown> }) => ({
+        id: "ix-1",
+        draftVersion: 1,
+        title: data.title,
+        summary: null,
+        intent: data.intent,
+        ...data,
+      }),
+      update: async () => ({ id: "ix-1" }),
+      updateMany: async () => ({ count: 1 }),
+    },
+    interactionEvent: { create: async () => ({ id: "iev-1" }) },
   } as never;
   const events = {
     append: async () => ({ id: "e", seq: written.length }),

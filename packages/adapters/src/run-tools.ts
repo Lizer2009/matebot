@@ -1,6 +1,7 @@
 import type { AgentToolExecutionObserver } from "@matebot/adapter-kit";
 import { toolResultTaintsRun } from "@matebot/core";
 import { isTerminatingReplyResult } from "./approval-effect.js";
+import { refuseDirectCalendarCreate } from "./calendar-tool-escape.js";
 import { refuseRefusedDestinationShell } from "./egress-fallback-guard.js";
 import { refuseOutboundEmailShell } from "./email-shell-escape.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
@@ -116,6 +117,8 @@ async function dispatchTool(
   if (IMAGE_RETURNING_COMPUTER_TOOLS.has(name) && !ctx.computer.acceptsImages) {
     return { error: MODEL_CANNOT_SEE_MESSAGE };
   }
+  const calendarEscape = refuseDirectCalendarCreate(ctx, name, args);
+  if (calendarEscape) return calendarEscape;
   if (name === "shell" || name === USER_COMPUTER_SHELL_TOOL) {
     const mailEscape = refuseOutboundEmailShell(ctx, args);
     if (mailEscape) return mailEscape;

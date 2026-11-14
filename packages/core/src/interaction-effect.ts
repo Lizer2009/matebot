@@ -1,3 +1,5 @@
+import { isEmailComposeIntent } from "./interaction-capability.js";
+
 /** ExternalEffect binding for a confirmed Interaction draft. No new approval table. */
 
 export function interactionConfirmIdempotencyKey(
@@ -9,7 +11,7 @@ export function interactionConfirmIdempotencyKey(
 
 /** Email compose confirms a send. Other intents record a neutral confirmation. */
 export function interactionEffectKind(intent: string): "email.send" | "interaction.confirm" {
-  if (intent === "email.compose" || intent === "email.send") return "email.send";
+  if (isEmailComposeIntent(intent)) return "email.send";
   return "interaction.confirm";
 }
 

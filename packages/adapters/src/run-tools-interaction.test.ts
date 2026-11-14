@@ -2,10 +2,13 @@ import type { InteractionPlan } from "@matebot/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { builtinAgentTools } from "./builtin-tools.js";
 
-const publishInteractionSurface = vi.fn();
-vi.mock("./interaction-publish.js", () => ({
-  publishInteractionSurface: (...args: unknown[]) => publishInteractionSurface(...args),
-}));
+const publishOrAmend = vi.fn();
+vi.mock("./interaction-publish.js", async () => {
+  const actual = await vi.importActual<typeof import("./interaction-publish.js")>(
+    "./interaction-publish.js",
+  );
+  return { ...actual, publishOrAmend: (...args: unknown[]) => publishOrAmend(...args) };
+});
 
 const {
   interactionPublishCapability,
@@ -29,11 +32,22 @@ const emailPlan: InteractionPlan = {
   riskLevel: "medium",
 };
 
-function context() {
+function context(waiting: Array<{ id: string; intent: string; status?: string }> = []) {
   const notify = vi.fn(async () => undefined);
   return {
     deps: {
-      prisma: {},
+      prisma: {
+        interaction: {
+          findFirst: vi.fn(async () => waiting[0] ?? null),
+          findMany: vi.fn(async () =>
+            waiting.map((row) => ({
+              id: row.id,
+              intent: row.intent,
+              status: row.status ?? "needs_connection",
+            })),
+          ),
+        },
+      },
       events: { notify },
     },
     run: {
@@ -137,7 +151,7 @@ describe("normalizeCalendarPlan", () => {
 
 describe("present_interaction", () => {
   beforeEach(() => {
-    publishInteractionSurface.mockReset();
+    publishOrAmend.mockReset();
     vi.stubEnv("FEATURE_A2UI", "1");
   });
 
@@ -145,8 +159,112 @@ describe("present_interaction", () => {
     vi.unstubAllEnvs();
   });
 
+  it("skips the compose card when this bot has drafts off and approval allows", async () => {
+    publishOrAmend.mockResolvedValueOnce({ skipped: true, reason: "drafts_disabled" });
+    const notify = vi.fn(async () => undefined);
+    const ctx = {
+      deps: {
+        prisma: {
+          interaction: { findFirst: vi.fn(async () => null) },
+          connection: {
+            findMany: async () => [
+              {
+                id: "conn-1",
+                connectorId: "composio",
+                provider: "gmail",
+                displayName: "Gmail",
+                status: "connected",
+                providerRef: "acct-1",
+              },
+            ],
+          },
+          spaceSettingOverride: { findUnique: async () => null },
+          userActionApprovalRule: { findMany: async () => [] },
+          actionApprovalRule: { findMany: async () => [] },
+        },
+        events: { notify },
+      },
+      run: {
+        id: "run-1",
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        trigger: "user",
+        userId: "user-1",
+      },
+      bot: { draftsDisabled: true },
+      context: { userId: "user-1", signal: new AbortController().signal },
+      notify,
+    };
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      skippedDraft: true,
+      draftsDisabled: true,
+      executed: false,
+      intent: "email.compose",
+    });
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it("refuses the action when drafts are off and a rule denies it", async () => {
+    const ctx = {
+      deps: {
+        prisma: {
+          interaction: { findFirst: vi.fn(async () => null) },
+          connection: {
+            findMany: async () => [
+              {
+                id: "conn-1",
+                connectorId: "composio",
+                provider: "gmail",
+                displayName: "Gmail",
+                status: "connected",
+                providerRef: "acct-1",
+              },
+            ],
+          },
+          spaceSettingOverride: { findUnique: async () => null },
+          userActionApprovalRule: {
+            findMany: async () => [
+              {
+                id: "rule-deny",
+                effect: "deny",
+                matchKind: "tool",
+                matchValue: "gmail_send_email",
+                createdAt: new Date("2026-01-01T00:00:00.000Z"),
+              },
+            ],
+          },
+          actionApprovalRule: { findMany: async () => [] },
+        },
+        events: { notify: vi.fn(async () => undefined) },
+      },
+      run: {
+        id: "run-1",
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        trigger: "user",
+        userId: "user-1",
+      },
+      bot: { draftsDisabled: true },
+      context: { userId: "user-1", signal: new AbortController().signal },
+      notify: vi.fn(async () => undefined),
+    };
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(result.error).toMatch(/blocked by an approval rule/);
+    expect(publishOrAmend).not.toHaveBeenCalled();
+  });
+
   it("publishes an email.compose surface when FEATURE_A2UI is on", async () => {
-    publishInteractionSurface.mockResolvedValueOnce({
+    publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-1",
       surfaceId: "surface-1",
       messageId: "msg-1",
@@ -160,7 +278,7 @@ describe("present_interaction", () => {
       ctx as never,
       call({ plan: emailPlan }),
     )) as Record<string, unknown>;
-    expect(publishInteractionSurface).toHaveBeenCalledWith(
+    expect(publishOrAmend).toHaveBeenCalledWith(
       ctx.deps.prisma,
       expect.objectContaining({
         spaceId: "space-1",
@@ -183,8 +301,76 @@ describe("present_interaction", () => {
     expect(ctx.notify).toHaveBeenCalledWith("thread-1", 9);
   });
 
+  it("does not open a compose connection view when connect.gmail is already waiting (AC-26 reverse)", async () => {
+    const ctx = context([
+      { id: "ix-connect", intent: "connect.gmail", status: "needs_connection" },
+    ]);
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      interactionId: "ix-connect",
+      status: "needs_connection",
+      skippedDuplicateConnection: true,
+    });
+  });
+
+  it("does not open a compose connection view when a named reconnect card is already waiting", async () => {
+    const ctx = context([
+      { id: "ix-ca1", intent: "connect.gmail.ca_1", status: "needs_connection" },
+    ]);
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      interactionId: "ix-ca1",
+      skippedDuplicateConnection: true,
+    });
+  });
+
+  it("does not let a newer calendar connect card swallow an email compose (AC-26 reverse)", async () => {
+    const ctx = context([
+      { id: "ix-cal", intent: "connect.googlecalendar", status: "needs_connection" },
+      { id: "ix-gmail", intent: "connect.gmail", status: "needs_connection" },
+    ]);
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      interactionId: "ix-gmail",
+      skippedDuplicateConnection: true,
+    });
+  });
+
+  it("still publishes email compose when only a calendar connect card is waiting", async () => {
+    publishOrAmend.mockResolvedValueOnce({
+      interactionId: "ix-mail",
+      surfaceId: "s-mail",
+      messageId: "m-mail",
+      documentRef: "a2ui:interaction:ix-mail:surface:s-mail",
+      draftVersion: 1,
+      eventSeq: 1,
+      capability: "not_connected",
+    });
+    const ctx = context([
+      { id: "ix-cal", intent: "connect.googlecalendar", status: "needs_connection" },
+    ]);
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).toHaveBeenCalled();
+    expect(result.interactionId).toBe("ix-mail");
+  });
+
   it("says nothing when the surface was published without a capability stamp", async () => {
-    publishInteractionSurface.mockResolvedValueOnce({
+    publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-2",
       surfaceId: "surface-2",
       messageId: "msg-2",
@@ -197,11 +383,11 @@ describe("present_interaction", () => {
       call({ plan: emailPlan }),
     )) as Record<string, unknown>;
     expect(result).not.toHaveProperty("capability");
-    expect(result.reply).toBe("请在卡片上确认或编辑。");
+    expect(result.reply).toBe("请审阅后点发送，尚未发出。");
   });
 
   it("answers a calendar request with a calendar surface, not prose", async () => {
-    publishInteractionSurface.mockResolvedValueOnce({
+    publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-cal",
       surfaceId: "surface-cal",
       messageId: "msg-cal",
@@ -223,7 +409,7 @@ describe("present_interaction", () => {
         },
       }),
     )) as Record<string, unknown>;
-    expect(publishInteractionSurface).toHaveBeenCalledWith(
+    expect(publishOrAmend).toHaveBeenCalledWith(
       ctx.deps.prisma,
       expect.objectContaining({
         plan: expect.objectContaining({
@@ -239,8 +425,64 @@ describe("present_interaction", () => {
     expect(result).toMatchObject({
       intent: "calendar.create",
       capability: "ready",
-      reply: "请在卡片上确认或编辑。",
+      reply: "请审阅后点创建，尚未写入日历。",
     });
+  });
+
+  it("leaves the open-card decision to the kernel instead of resolving a draft locally", async () => {
+    publishOrAmend.mockResolvedValueOnce({
+      interactionId: "ix-2",
+      surfaceId: "surface-2",
+      messageId: "msg-2",
+      documentRef: "a2ui:interaction:ix-2:surface:surface-2",
+      draftVersion: 2,
+      eventSeq: 13,
+      amended: true,
+      capability: "ready",
+      plan: {
+        intent: "calendar.create",
+        title: "Trip",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "medium",
+      },
+      slots: {},
+      missingRequired: [],
+    });
+    const ctx = context();
+    await interactionTools.present_interaction!(
+      ctx as never,
+      call({
+        plan: {
+          intent: "calendar.create",
+          title: "Trip",
+          fields: [{ name: "name", value: "Vegas", required: true, status: "resolved" }],
+          nextStep: "ask",
+          riskLevel: "medium",
+        },
+      }),
+    );
+    // One call decides create-or-amend; the card's own surface is the kernel's business.
+    // findFirst may look up an existing connect.* view (AC-26); it must not pick the draft.
+    expect(publishOrAmend).toHaveBeenCalledTimes(1);
+    expect(publishOrAmend.mock.calls[0]![1]).not.toHaveProperty("amendsInteractionId");
+  });
+
+  it("refuses result intents instead of publishing an action draft", async () => {
+    const result = (await interactionTools.present_interaction!(
+      context() as never,
+      call({
+        plan: {
+          intent: "calendar.query",
+          title: "Next week",
+          fields: [],
+          nextStep: "render",
+          riskLevel: "low",
+        },
+      }),
+    )) as Record<string, unknown>;
+    expect(result.error).toBe("result_intent");
+    expect(publishOrAmend).not.toHaveBeenCalled();
   });
 
   it("refuses when FEATURE_A2UI is off", async () => {
@@ -250,7 +492,7 @@ describe("present_interaction", () => {
       call({ plan: emailPlan }),
     )) as Record<string, unknown>;
     expect(result.error).toMatch(/not enabled/i);
-    expect(publishInteractionSurface).not.toHaveBeenCalled();
+    expect(publishOrAmend).not.toHaveBeenCalled();
   });
 });
 
@@ -361,14 +603,14 @@ describe("interactionPublishCapability", () => {
 
 describe("present_interaction describes the card it stored", () => {
   beforeEach(() => {
-    publishInteractionSurface.mockReset();
+    publishOrAmend.mockReset();
     vi.stubEnv("FEATURE_A2UI", "1");
   });
 
   it("reports the fields, the gaps and the sender from what was published", async () => {
     // The publisher reports what it stored; the tool passes that through so the reply can be
     // written from the card instead of from the plan the model submitted.
-    publishInteractionSurface.mockResolvedValueOnce({
+    publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-1",
       surfaceId: "surface-1",
       messageId: "msg-1",
@@ -396,6 +638,7 @@ describe("present_interaction describes the card it stored", () => {
     )) as Record<string, unknown>;
 
     expect(result.missingRequired).toEqual(["body"]);
+    expect(result.reply).toBe("请先补全收件人和主题。");
     expect(result.actionable).toBe(false);
     expect(result.blockedBy).toEqual(["body"]);
     expect(result.fields).toEqual([
@@ -403,5 +646,65 @@ describe("present_interaction describes the card it stored", () => {
       { name: "subject", value: "冬天的问候", required: true, filled: true },
       { name: "body", value: "", required: true, filled: false },
     ]);
+  });
+
+  it("uses the one-line nudge and does not restate fields in the same-turn reply (AC-21)", async () => {
+    const { A2UI_SURFACE_NUDGE } = await import("@matebot/core");
+    const completePlan: InteractionPlan = {
+      intent: "email.compose",
+      title: "冬天的问候",
+      fields: [
+        { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+        { name: "body", value: "正文", required: true, status: "resolved" },
+      ],
+      nextStep: "render",
+      riskLevel: "medium",
+    };
+    publishOrAmend.mockResolvedValueOnce({
+      interactionId: "ix-1",
+      surfaceId: "surface-1",
+      messageId: "msg-1",
+      documentRef: "a2ui:interaction:ix-1:surface:surface-1",
+      draftVersion: 1,
+      eventSeq: 1,
+      capability: "ready",
+      missingRequired: [],
+      plan: completePlan,
+      slots: { to: "alex@example.test", subject: "冬天的问候", body: "正文" },
+    });
+    const result = (await interactionTools.present_interaction!(
+      context() as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(result.reply).toBe(A2UI_SURFACE_NUDGE.presented);
+    expect(String(result.reply)).not.toContain("alex@example.test");
+    expect(String(result.reply)).not.toContain("冬天的问候");
+  });
+
+  it("stores a resume plan when the card waits on a connection", async () => {
+    publishOrAmend.mockResolvedValueOnce({
+      interactionId: "ix-1",
+      surfaceId: "surface-1",
+      messageId: "msg-1",
+      documentRef: "a2ui:interaction:ix-1:surface:surface-1",
+      draftVersion: 1,
+      eventSeq: 1,
+      capability: "not_connected",
+      missingRequired: ["subject", "body"],
+      plan: emailPlan,
+      slots: { to: "a@example.com" },
+    });
+    await interactionTools.present_interaction!(context() as never, call({ plan: emailPlan }));
+    expect(publishOrAmend).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        status: "needs_connection",
+        resumePlan: expect.objectContaining({
+          intent: "email.compose",
+          slots: expect.objectContaining({ to: "a@example.com" }),
+        }),
+      }),
+    );
   });
 });

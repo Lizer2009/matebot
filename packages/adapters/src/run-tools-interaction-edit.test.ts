@@ -1,7 +1,7 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
-import { userEditedFieldNames } from "@matebot/core";
+import { EDITABLE_STATUSES, userEditedFieldNames } from "@matebot/core";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { editInteraction } from "./run-tools-interaction-edit.js";
+import { editInteraction, servicesFor } from "./run-tools-interaction-edit.js";
 
 /**
  * The tool handler the model actually calls. These exercise the production path:
@@ -415,4 +415,70 @@ describe("edit_interaction reports what the card holds afterwards", () => {
     expect(names).not.toContain("from");
     expect(names).not.toContain("sender");
   });
+});
+
+// `listOpenSurfaces` is what the model may edit. It must use the kernel's
+// editable set and its one status mapping, or a superseded/expired card is
+// offered as a live draft.
+describe("edit_interaction open surfaces", () => {
+  it("queries only editable statuses and maps their status through the kernel", async () => {
+    type ListedRow = {
+      id: string;
+      intent: string;
+      status: string;
+      title: string | null;
+      summary: string | null;
+      surfaces: Array<{ surfaceId: string }>;
+    };
+    const rows: ListedRow[] = [
+      openRow("ix-collecting", "collecting"),
+      openRow("ix-ready", "ready_for_review"),
+      openRow("ix-approved", "awaiting_approval"),
+      openRow("ix-superseded", "superseded"),
+      openRow("ix-expired", "expired"),
+    ];
+    const findMany = vi.fn(
+      async (args: { where: { status: { in: string[] } } }): Promise<ListedRow[]> =>
+        rows.filter((row) => args.where.status.in.includes(row.status)),
+    );
+    const ctx = {
+      deps: { prisma: { interaction: { findMany } } },
+      run: { id: "run-1", spaceId: "space-1", threadId: "thread-1", botId: "bot-1" },
+    } as never;
+
+    const surfaces = await servicesFor(ctx).listOpenSurfaces({
+      spaceId: "space-1",
+      threadId: "thread-1",
+    });
+
+    // The query contract: only the statuses the kernel lets edit.
+    expect(findMany.mock.calls[0]![0].where.status).toEqual({ in: [...EDITABLE_STATUSES] });
+    // The superseded and expired rows were excluded; the rest map read-side.
+    expect(surfaces.map((surface) => [surface.taskId, surface.status])).toEqual([
+      ["ix-collecting", "draft"],
+      ["ix-ready", "draft"],
+      ["ix-approved", "approved"],
+    ]);
+  });
+
+  function openRow(
+    id: string,
+    status: string,
+  ): {
+    id: string;
+    intent: string;
+    status: string;
+    title: string | null;
+    summary: string | null;
+    surfaces: Array<{ surfaceId: string }>;
+  } {
+    return {
+      id,
+      intent: "email.compose",
+      status,
+      title: id,
+      summary: null,
+      surfaces: [{ surfaceId: `surface-${id}` }],
+    };
+  }
 });

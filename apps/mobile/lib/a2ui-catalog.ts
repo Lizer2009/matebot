@@ -78,9 +78,7 @@ export function emailFieldsFromSurfaceMessages(messages: unknown[] | undefined):
   return empty;
 }
 
-export function isEmailComposeIntent(intent: string | undefined): boolean {
-  return intent === "email.compose" || intent === "email.send";
-}
+export { isEmailComposeIntent } from "@matebot/core";
 
 /** Parse a v0.9 component list into the native catalog. Unknown components refuse the surface. */
 export function parseNativeCatalog(messages: unknown[] | undefined): NativeCatalogResult {

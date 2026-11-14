@@ -1,16 +1,28 @@
 import type * as db from "@matebot/db";
-import { appendEventInTransaction } from "@matebot/db";
+import { appendEventInTransaction, createInteraction } from "@matebot/db";
 import { describe, expect, it, vi } from "vitest";
 import { chooseFocus, markAppConnected, promptFocus } from "./onboarding.js";
 
 const posted = vi.hoisted(() => [] as Array<{ blocks: unknown[]; markUnread?: boolean }>);
+vi.mock("@matebot/adapters", async (original) => ({
+  ...(await original()),
+  settleInteraction: vi.fn(async () => ({ settled: true, previousStatus: "collecting" })),
+}));
 vi.mock("@matebot/db", async (original) => ({
   ...(await original<typeof db>()),
+  createInteraction: vi.fn(async () => ({
+    id: "ix-1",
+    intent: "question.focus",
+    draftVersion: 1,
+    title: "What do you want me on first?",
+    summary: null,
+  })),
   createThreadMessageInTransaction: vi.fn(async (_tx, input) => {
     posted.push(input);
     return { id: "posted" };
   }),
   appendEventInTransaction: vi.fn(async () => ({ seq: 1 })),
+  appendInteractionEvent: vi.fn(),
 }));
 function fixture(catalog: unknown[]) {
   posted.length = 0;
@@ -20,11 +32,18 @@ function fixture(catalog: unknown[]) {
       findMany: vi.fn(async () => [{ id: "choice", blocks: [{ kind: "choice", answerId: null }] }]),
       update: vi.fn(),
     },
+    interaction: {
+      findFirst: vi.fn(async () => null),
+      update: vi.fn(),
+      findUnique: vi.fn(async () => ({ status: "collecting", draftVersion: 1 })),
+      updateMany: vi.fn(async () => ({ count: 1 })),
+    },
   };
   const deps = {
     prisma: {
       bot: { findFirst: vi.fn(async () => ({ id: "bot", thread: { id: "thread" } })) },
       $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(tx)),
+      interaction: tx.interaction,
     },
     events: { notify: vi.fn() },
     connectors: {
@@ -41,6 +60,37 @@ function fixture(catalog: unknown[]) {
   return { deps, actor, tx };
 }
 describe("onboarding connection suggestions", () => {
+  it("stamps kernel cardStatus onto the chosen focus card", async () => {
+    const { deps, actor, tx } = fixture([]);
+    tx.message.findMany = vi.fn(async () => [
+      {
+        id: "choice",
+        blocks: [
+          {
+            kind: "choice",
+            question: "What do you want me on first?",
+            options: [{ id: "day", letter: "A", label: "Day-to-day work" }],
+            interactionId: "ix-1",
+            cardStatus: "collecting",
+          },
+        ],
+      },
+    ]) as never;
+    await chooseFocus(deps, actor, "bot", "day");
+    expect(tx.message.update).toHaveBeenCalledWith({
+      where: { id: "choice" },
+      data: {
+        blocks: [
+          expect.objectContaining({
+            answerId: "day",
+            cardStatus: "succeeded",
+            interactionId: "ix-1",
+          }),
+        ],
+      },
+    });
+  });
+
   it("does not invent authorization cards when no connector has an app catalog", async () => {
     const { deps, actor } = fixture([]);
     await chooseFocus(deps, actor, "bot", "day");
@@ -85,6 +135,10 @@ describe("promptFocus", () => {
     await promptFocus(deps, actor, "bot");
     expect(posted.flatMap((message) => message.blocks)).toContainEqual(
       expect.objectContaining({ kind: "choice" }),
+    );
+    expect(createInteraction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ intent: "question.focus" }),
     );
   });
 

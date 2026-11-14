@@ -119,6 +119,9 @@ describe("email surface template matrix", () => {
         providerMessageId: " msg-1 ",
       }),
     ).toEqual({
+      // The kernel status travels with the block so a host never has to infer it from the
+      // six-value lifecycle; see surface-stamp.ts.
+      status: "succeeded",
       template: "action-result-success",
       lifecycle: "succeeded",
       capability: "ready",
@@ -135,6 +138,81 @@ describe("email surface template matrix", () => {
       lifecycle: "failed",
       error: "Could not send the email",
     });
+  });
+
+  // The batch-A defect in one assertion: every closed status used to fall through the email
+  // runtime's branches into `email-draft-card`, so a replaced card arrived editable with a
+  // working Send. The kernel status now owns the template, and the email rules may only refine
+  // a card that is still open.
+  it("never lets the email rules turn a closed status back into a draft", () => {
+    for (const status of ["superseded", "expired", "cancelled"] as const) {
+      const stamps = emailSurfaceBlockFields({
+        intent: "email.compose",
+        interactionStatus: status,
+      });
+      expect(stamps.template, status).toBe(
+        status === "superseded"
+          ? "action-superseded-card"
+          : status === "expired"
+            ? "action-expired-card"
+            : "action-cancelled-card",
+      );
+      expect(stamps.status, status).toBe(status);
+    }
+  });
+
+  // The writer used to ask the email resolver for every intent. That function returns
+  // `email-draft-card` for anything that is not mail, so a calendar draft — and a finished
+  // calendar card — arrived looking like a live email form. Stamp owns non-mail templates.
+  it("never hands a calendar card an email template", () => {
+    for (const status of [
+      "collecting",
+      "ready_for_review",
+      "awaiting_approval",
+      "needs_connection",
+      "unknown",
+      "sent",
+      "executed",
+      "succeeded",
+      "confirmed",
+      "superseded",
+      "expired",
+      "failed",
+      "cancelled",
+    ] as const) {
+      const stamps = emailSurfaceBlockFields({
+        intent: "calendar.create",
+        interactionStatus: status,
+      });
+      expect(stamps.template.startsWith("email-"), status).toBe(false);
+    }
+    expect(
+      emailSurfaceBlockFields({
+        intent: "calendar.create",
+        interactionStatus: "ready_for_review",
+      }).template,
+    ).toBe("calendar-draft-card");
+  });
+
+  // The two email rules that survive, because they are about an open draft's mailbox rather than
+  // about a lifecycle state: no connection, and a failed send whose grant is gone.
+  it("still refines an open draft from the mailbox stamp", () => {
+    expect(
+      emailSurfaceBlockFields({
+        intent: "email.compose",
+        capability: "requires_reauth",
+        interactionStatus: "ready_for_review",
+      }).template,
+    ).toBe("email-reauth-card");
+    expect(
+      emailSurfaceBlockFields({
+        intent: "email.compose",
+        capability: "ready",
+        interactionStatus: "failed",
+        effectStatus: "failed",
+        error: "The connection is no longer active. Ask the user to reconnect.",
+      }).template,
+    ).toBe("email-reauth-card");
   });
 
   it("prefers a server template stamp on the block", () => {

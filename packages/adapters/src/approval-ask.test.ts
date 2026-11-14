@@ -70,6 +70,28 @@ describe("buildApprovalAskBlock", () => {
     if (block.kind !== "ask") throw new Error("expected ask block");
     expect(block.detail).toContain("stay separate from other spaces");
   });
+
+  it("titles a batch review with the inner actions, not the wrapper tool name", () => {
+    const block = buildApprovalAskBlock(
+      "effect-1",
+      "COMPOSIO_MULTI_EXECUTE_TOOL",
+      {
+        tools: [
+          { tool_slug: "GMAIL_DELETE_EVENT", arguments: { event_id: "1" } },
+          { tool_slug: "GMAIL_DELETE_EVENT", arguments: { event_id: "2" } },
+        ],
+      },
+      [],
+      {
+        batch: { items: "tools", action: "tool_slug", arguments: "arguments" },
+      },
+    );
+    expect(block.kind).toBe("ask");
+    if (block.kind !== "ask") throw new Error("expected ask");
+    expect(block.text).toBe("Review before GMAIL_DELETE_EVENT, GMAIL_DELETE_EVENT");
+    expect(block.text).not.toContain("COMPOSIO_MULTI_EXECUTE_TOOL");
+    expect(block.status).toBe("pending");
+  });
 });
 
 it("shows the full instruction replacement as a diff with Apply and Dismiss", () => {

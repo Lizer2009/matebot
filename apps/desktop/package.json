@@ -1,7 +1,7 @@
 {
   "name": "@matebot/desktop",
   "productName": "Matebot",
-  "version": "0.7.1-pr49.5daee6f29",
+  "version": "0.7.3-pr50.00c1c6178",
   "author": {
     "name": "Matebot"
   },
@@ -25,6 +25,9 @@
     "@sentry/electron": "8.3.0",
     "electron-updater": "6.8.11",
     "koffi": "3.3.4"
+  },
+  "optionalDependencies": {
+    "@koromix/koffi-win32-x64": "3.3.4"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

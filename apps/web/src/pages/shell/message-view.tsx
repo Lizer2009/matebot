@@ -81,6 +81,7 @@ export const MessageView = memo(function MessageView({
   onSpeak,
   onOpenComputer,
   onOpenImportSetup,
+  onManageRules,
   rpc,
   showToolActivity,
   onReply,
@@ -102,7 +103,7 @@ export const MessageView = memo(function MessageView({
    * Whether a later draft in this thread corrects this card's interaction, so it must not offer
    * to create or send again.
    */
-  isSurfaceSuperseded?: (block: { interactionId: string }) => boolean;
+  isSurfaceSuperseded?: (block: { interactionId: string; status?: string }) => boolean;
   onAnswer: (
     message: ThreadMessage,
     text: string,
@@ -122,9 +123,15 @@ export const MessageView = memo(function MessageView({
    */
   a2uiEnabled?: boolean;
   memberName?: (botId: string | undefined) => string | undefined;
-  peerBot: (
-    botId: string,
-  ) => { name?: string; color: string; status?: string; avatarSet?: BotAvatarSet } | undefined;
+  peerBot: (botId: string) =>
+    | {
+        name?: string;
+        color: string;
+        status?: string;
+        avatarSet?: BotAvatarSet;
+        draftsDisabled?: boolean;
+      }
+    | undefined;
   replyParent?: ThreadMessage;
   onJumpToMessage?: (messageId: string) => void;
   onRefresh: () => Promise<void>;
@@ -136,6 +143,7 @@ export const MessageView = memo(function MessageView({
   onOpenComputer: (botId?: string) => void;
   /** Opens where an imported item's setup is finished. */
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
+  onManageRules?: () => void;
   rpc: ReturnType<typeof createSpaceRpc>;
   showToolActivity: boolean;
   onReply: (message: ThreadMessage) => void;
@@ -592,6 +600,27 @@ export const MessageView = memo(function MessageView({
                         }
                       : undefined
                   }
+                  onAllowRecipient={async (recipient) => {
+                    await rpc.approvalRules.set({
+                      effect: "always_allow",
+                      matchKind: "recipient",
+                      matchValue: recipient,
+                    });
+                  }}
+                  onRetry={
+                    botId || groupId
+                      ? async () => {
+                          try {
+                            await rpc.threads.retryInteraction({
+                              ...(botId ? { botId } : { groupId: groupId! }),
+                              interactionId: block.interactionId,
+                            });
+                          } finally {
+                            await onRefresh();
+                          }
+                        }
+                      : undefined
+                  }
                   onAction={
                     botId || groupId
                       ? async (action) => {
@@ -628,6 +657,16 @@ export const MessageView = memo(function MessageView({
                             draftVersion: Number(block.draftVersion),
                           });
                           await onRefresh();
+                        }
+                      : undefined
+                  }
+                  onManageRules={onManageRules}
+                  draftsDisabled={botId ? peerBot(botId)?.draftsDisabled : undefined}
+                  onDisableDrafts={
+                    botId
+                      ? async (disabled) => {
+                          await rpc.bots.update({ botId, draftsDisabled: disabled });
+                          await onBotChanged();
                         }
                       : undefined
                   }

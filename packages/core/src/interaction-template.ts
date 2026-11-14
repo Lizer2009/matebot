@@ -1,23 +1,31 @@
+import { isEmailComposeIntent } from "./interaction-capability.js";
 import { deliveryNeedsReconnect } from "./interaction-connection.js";
 import type { EmailSurfaceCapability } from "./interaction-preflight.js";
 import type { InteractionLifecycleStatus } from "./interaction-runtime.js";
+import type { InteractionStatus } from "./interaction-status.js";
+import { surfacePhase } from "./surface-phase.js";
+import type { SurfaceTemplate } from "./surface-stamp.js";
+import { SURFACE_TEMPLATES, surfaceStampFor } from "./surface-stamp.js";
 
 /**
- * Catalog template ids for the email surface (design §4.4).
+ * Catalog template ids a card may carry (design §4.4).
  * Hosts switch on this instead of intent-only.
+ *
+ * One list, owned by `surface-stamp.ts`; this name stays because it is what the rest of the
+ * package and the block payload already read.
  */
-export const EMAIL_SURFACE_TEMPLATES = [
-  "email-connection-card",
-  "email-reauth-card",
-  "email-draft-card",
-  "action-submitting-card",
-  "action-progress-card",
-  "action-result-success",
-  "action-result-failed",
-  "action-reconcile-card",
-] as const;
+export const EMAIL_SURFACE_TEMPLATES = SURFACE_TEMPLATES;
 
-export type EmailSurfaceTemplate = (typeof EMAIL_SURFACE_TEMPLATES)[number];
+export type EmailSurfaceTemplate = SurfaceTemplate;
+
+/**
+ * The three statuses the email runtime may not refine.
+ *
+ * They close the card, and the runtime's branches have no case for them, so they used to fall
+ * through to `email-draft-card` — a replaced or expired card arrived at the client looking
+ * editable. The kernel status owns their template exactly.
+ */
+const CLOSED_KERNEL_STATUSES: ReadonlySet<string> = new Set(["superseded", "expired", "cancelled"]);
 
 /** Timeline lifecycle stamp. Submitting is instantaneous (VALIDATING). */
 export const EMAIL_SURFACE_LIFECYCLES = [
@@ -34,7 +42,13 @@ export type EmailSurfaceLifecycle = (typeof EMAIL_SURFACE_LIFECYCLES)[number];
 export type EmailSurfaceTemplateInput = {
   intent?: string;
   capability?: EmailSurfaceCapability;
-  interactionStatus: InteractionLifecycleStatus;
+  /**
+   * The card's status. Wider than the runtime lifecycle on purpose: a closed card reaches the
+   * writer as `superseded` / `expired` / `cancelled` from the kernel vocabulary, and narrowing
+   * this to the nine runtime values meant those three could never be stamped at all — they fell
+   * through to a draft template instead.
+   */
+  interactionStatus: InteractionLifecycleStatus | InteractionStatus;
   /** ExternalEffect.status. D′/E′ consume `ambiguous` as in-flight / UNKNOWN. */
   effectStatus?: string | null;
   /** Last send error; a reconnect failure keeps the card actionable. */
@@ -42,7 +56,7 @@ export type EmailSurfaceTemplateInput = {
 };
 
 export function isEmailSurfaceIntent(intent: string | undefined): boolean {
-  return intent === "email.compose" || intent === "email.send";
+  return isEmailComposeIntent(intent);
 }
 
 const EXECUTION_STATUSES: ReadonlySet<InteractionLifecycleStatus> = new Set([
@@ -102,19 +116,35 @@ export function emailSurfaceBlockFields(
     error?: string | null;
   },
 ): {
-  template: EmailSurfaceTemplate;
+  status?: InteractionStatus;
+  template: SurfaceTemplate;
   lifecycle: EmailSurfaceLifecycle;
   capability?: EmailSurfaceCapability;
   providerMessageId?: string;
   error?: string;
 } {
-  const lifecycle = resolveEmailSurfaceLifecycle(input);
-  const template = resolveEmailSurfaceTemplate(input);
+  const inFlight = resolveEmailSurfaceLifecycle(input);
+  const inFlightStatus =
+    inFlight === "submitting" || inFlight === "executing" ? inFlight : undefined;
+  const stamp = surfaceStampFor({
+    status: inFlightStatus ?? input.interactionStatus,
+    intent: input.intent,
+  });
+  // The kernel status decides the template. Mail may still refine an *open* card: a mailbox
+  // that is not connected (or whose authorization died) shows a connection card, and a send
+  // that failed because the grant is gone shows a reconnect card instead of a dead end.
+  // Anything else — a closed card, or a card that is not mail — keeps the stamp. Asking the
+  // email resolver for a calendar intent used to return `email-draft-card`, so a calendar
+  // draft arrived looking like a live email form.
+  const template =
+    isEmailSurfaceIntent(input.intent) && !CLOSED_KERNEL_STATUSES.has(input.interactionStatus)
+      ? resolveEmailSurfaceTemplate(input)
+      : stamp.template;
   const providerMessageId = input.providerMessageId?.trim();
   const error = input.error?.trim();
   return {
+    ...stamp,
     template,
-    lifecycle,
     ...(input.capability ? { capability: input.capability } : {}),
     ...(providerMessageId ? { providerMessageId } : {}),
     ...(error ? { error } : {}),
@@ -214,10 +244,10 @@ export function emailDeliveryOutcome(input: {
 /**
  * The card's visible phase and whether its controls are locked.
  *
- * Both hosts derived this with the same copy-pasted expression, which is exactly
- * the duplicated domain state matrix the spec forbids: two hosts drifting on
- * "is the Send button live" is a correctness bug, not a styling one. The rule is
- * one function; each host only decides what to render for the phase.
+ * Mail used to own this; calendar had none. Both now go through `surfacePhase`. This wrapper
+ * keeps the email callers compiling and fills the email-derived template only when the caller
+ * has not already given a status or template — otherwise a replaced card would be stamped a
+ * draft again.
  */
 export function emailSurfacePhase(input: {
   template?: EmailSurfaceTemplate;
@@ -227,36 +257,15 @@ export function emailSurfacePhase(input: {
   error?: string | null;
   /** A submit is in flight from this client. */
   busy?: boolean;
-}): {
-  template: EmailSurfaceTemplate;
-  phase: EmailSurfaceTemplate;
-  locked: boolean;
-  /** Whether this phase is a terminal execution state. */
-  settled: boolean;
-} {
-  const template = emailSurfaceTemplateFromBlock(input);
-  // While a submit is in flight from this client, the card shows progress even
-  // if the server stamp has not arrived yet.
-  const phase: EmailSurfaceTemplate =
-    input.busy &&
-    (template === "email-draft-card" ||
-      template === "action-submitting-card" ||
-      template === "action-result-failed")
-      ? "action-progress-card"
-      : template;
-  const locked =
-    phase === "action-submitting-card" ||
-    phase === "action-progress-card" ||
-    phase === "action-result-success" ||
-    phase === "action-result-failed" ||
-    phase === "action-reconcile-card";
-  return {
-    template,
-    phase,
-    locked,
-    settled:
-      phase === "action-result-success" ||
-      phase === "action-result-failed" ||
-      phase === "action-reconcile-card",
-  };
+  status?: string;
+}): ReturnType<typeof surfacePhase> {
+  const intent = input.intent ?? "email.compose";
+  if (input.status || input.template) {
+    return surfacePhase({ ...input, intent });
+  }
+  return surfacePhase({
+    ...input,
+    intent,
+    template: emailSurfaceTemplateFromBlock({ ...input, intent }),
+  });
 }

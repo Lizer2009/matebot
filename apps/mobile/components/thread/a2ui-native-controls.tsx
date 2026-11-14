@@ -6,20 +6,24 @@ export function A2uiTextField({
   value,
   onChangeText,
   testID,
+  multiline,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   testID: string;
+  multiline?: boolean;
 }) {
   return (
-    <View style={{ gap: 4 }}>
+    <View style={{ gap: 4, width: "100%", minWidth: 0 }}>
       <Text style={{ fontSize: 13 }}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
         testID={testID}
         value={value}
+        multiline={multiline}
         onChangeText={onChangeText}
+        style={{ width: "100%" }}
       />
     </View>
   );
@@ -51,7 +55,11 @@ export function A2uiSheet({
   label?: string;
 }) {
   return (
-    <View testID={testID ?? "a2ui-native-sheet"} accessibilityLabel={label}>
+    <View
+      testID={testID ?? "a2ui-native-sheet"}
+      accessibilityLabel={label}
+      style={{ width: "100%", minWidth: 0, gap: 8 }}
+    >
       {children}
     </View>
   );

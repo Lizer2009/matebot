@@ -1,5 +1,6 @@
+import { settleInteraction } from "@matebot/adapters";
 import type { Actor, MessageBlock } from "@matebot/contracts";
-import { QUEUE_HOLDING_RUN_STATUSES } from "@matebot/core";
+import { QUEUE_HOLDING_RUN_STATUSES, stampL0aBlock } from "@matebot/core";
 import type { Prisma, PrismaClient, ThreadEvents } from "@matebot/db";
 import {
   appendEventInTransaction,
@@ -126,11 +127,25 @@ async function rewriteCards(
         else if (block.status === "connected") connected = true;
       }
       if (!matching.some(selectable)) continue;
-      const next = blocks.map((block) =>
-        isApproval(block, input.serverId) && selectable(block)
-          ? { ...block, status: input.status }
-          : block,
-      );
+      const next = blocks.map((block) => {
+        if (!(isApproval(block, input.serverId) && selectable(block))) return block;
+        const flipped = { ...block, status: input.status };
+        return flipped.interactionId
+          ? stampL0aBlock(flipped, {
+              interactionId: flipped.interactionId,
+              cardStatus: input.status === "dismissed" ? "cancelled" : "succeeded",
+            })
+          : flipped;
+      });
+      for (const block of matching) {
+        if (selectable(block) && block.interactionId) {
+          await settleInteraction(tx as never, {
+            interactionId: block.interactionId,
+            status: input.status === "dismissed" ? "cancelled" : "succeeded",
+            reason: "mcp approval",
+          });
+        }
+      }
       await tx.message.update({ where: { id: message.id }, data: { blocks: next } });
       flipped += 1;
       const eventBotId = message.botId ?? thread.botId ?? input.botId;

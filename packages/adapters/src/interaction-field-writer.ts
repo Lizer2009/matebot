@@ -1,25 +1,35 @@
 import { reconcilePlanToSchema } from "@matebot/a2ui-adapter";
-import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
+import type {
+  A2uiProtocolFamily,
+  A2uiSurfaceBlock,
+  InteractionPlan,
+  MessageBlock,
+} from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
 import {
   applyInteractionFieldChange,
   decideCancel,
   emailSurfaceBlockFields,
+  historySlotsFromValues,
   interactionCapabilityForIntent,
   interactionSlotsFromPlan,
+  labeledSurfaceSchema,
+  TERMINAL_STATUSES,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
   appendEventInTransaction,
   getInteraction,
   InteractionNotFoundError,
+  InteractionTerminalError,
   InteractionVersionConflictError,
   upsertInteractionSurface,
   withTransactionRetry,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
-import { senderLabelFromBlock } from "./interaction-publish.js";
+import { cardSendIsInFlight } from "./interaction-kernel-store.js";
+import { senderStampFromBlock } from "./interaction-publish.js";
 
 /**
  * The single write path for an interaction field.
@@ -29,10 +39,6 @@ import { senderLabelFromBlock } from "./interaction-publish.js";
  * the surface, and republishes it; two implementations eventually disagree.
  * Neither sends — that stays the card's own Send gesture.
  */
-
-function isEmailPlan(plan: InteractionPlan): boolean {
-  return plan.intent === "email.compose" || plan.intent === "email.send";
-}
 
 function protocolFamilyOf(value: string): A2uiProtocolFamily {
   return value === "v1_0" || value === "v0_9" ? value : "v0_9";
@@ -72,7 +78,10 @@ async function compilePlanSurface(input: {
 }> {
   // The same reconciliation the publish path applies. An edit republishes the card, and without
   // this the row would drift back to the model's spellings on the first keystroke.
-  const schema = interactionCapabilityForIntent(input.plan.intent)?.schema;
+  const capability = interactionCapabilityForIntent(input.plan.intent);
+  const schema = capability
+    ? labeledSurfaceSchema(capability.schema, { capability, title: input.plan.title })
+    : undefined;
   const reconciled = reconcilePlanToSchema(input.plan, schema, {
     ...(input.changedField ? { prefer: [input.changedField] } : {}),
   });
@@ -85,16 +94,14 @@ async function compilePlanSurface(input: {
     throw new Error(`field "${reconciled.oversizedField}" carries more data than a draft may hold`);
   }
   const plan = reconciled.plan;
-  const stamps = isEmailPlan(plan)
-    ? emailSurfaceBlockFields({
-        intent: plan.intent,
-        capability: input.capability,
-        interactionStatus: input.interactionStatus,
-        effectStatus: input.effectStatus,
-        providerMessageId: input.providerMessageId,
-        error: input.error,
-      })
-    : {};
+  const stamps = emailSurfaceBlockFields({
+    intent: plan.intent,
+    capability: input.capability,
+    interactionStatus: input.interactionStatus,
+    effectStatus: input.effectStatus,
+    providerMessageId: input.providerMessageId,
+    error: input.error,
+  });
   const { compileInteractionPlan } = await import("@matebot/a2ui-adapter");
   const compiled = await compileInteractionPlan({
     plan,
@@ -131,6 +138,9 @@ export async function updateInteractionFieldService(
   if (!current || current.threadId !== input.threadId) {
     throw new InteractionNotFoundError(input.interactionId);
   }
+  if (await cardSendIsInFlight(prisma, input.interactionId)) {
+    throw new InteractionTerminalError(input.interactionId, current.status);
+  }
 
   const plan = current.plan as InteractionPlan;
   const slots =
@@ -160,6 +170,11 @@ export async function updateInteractionFieldService(
         current.draftVersion,
       );
     }
+    if (changed.error === "terminal") {
+      // The card closed between the client listing it and this write. Answering
+      // with a conflict lets the client reload instead of showing a server error.
+      throw new InteractionTerminalError(input.interactionId, current.status);
+    }
     throw new Error(changed.message);
   }
 
@@ -184,13 +199,13 @@ export async function updateInteractionFieldService(
     interactionStatus: changed.status,
     changedField: input.name,
   });
-  const stamps = isEmailPlan(changed.plan)
-    ? emailSurfaceBlockFields({
-        intent: changed.plan.intent,
-        capability,
-        interactionStatus: changed.status,
-      })
-    : {};
+  const stamps = emailSurfaceBlockFields({
+    intent: changed.plan.intent,
+    capability,
+    interactionStatus: changed.status,
+  });
+  const nextSlots = interactionSlotsFromPlan(compiled.plan);
+  const historySlots = historySlotsFromValues(changed.plan.intent, nextSlots);
 
   await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
@@ -202,11 +217,12 @@ export async function updateInteractionFieldService(
         data: {
           // Both the plan and the slots are stored in the schema's spelling: the confirm gate
           // looks values up by that name on the next turn.
-          slots: interactionSlotsFromPlan(compiled.plan) as Prisma.InputJsonValue,
+          slots: nextSlots as Prisma.InputJsonValue,
           plan: compiled.plan as Prisma.InputJsonValue,
           draftVersion: changed.draftVersion,
           confirmedVersion: null,
           status: changed.status,
+          staleAt: null,
           title: compiled.plan.title,
           summary: compiled.plan.summary,
         },
@@ -228,7 +244,7 @@ export async function updateInteractionFieldService(
       // What the card already says about itself, so a rebuild keeps the parts this write does
       // not own.
       const previousBlock = (Array.isArray(currentBlocks) ? currentBlocks : []).find(
-        (entry): entry is Extract<MessageBlock, { kind: "a2ui_surface" }> =>
+        (entry): entry is A2uiSurfaceBlock =>
           entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId,
       );
       const block: MessageBlock = {
@@ -244,7 +260,10 @@ export async function updateInteractionFieldService(
         // The connection's label is not part of what an edit changes; a rebuild that dropped it
         // would leave the card's read-only sender row blank after the first keystroke.
         ...(previousBlock?.senderLabel ? { senderLabel: previousBlock.senderLabel } : {}),
+        ...(previousBlock?.senderAddress ? { senderAddress: previousBlock.senderAddress } : {}),
+        ...(previousBlock?.reasonKey ? { reasonKey: previousBlock.reasonKey } : {}),
         ...stamps,
+        ...(historySlots ? { historySlots } : {}),
       };
       if (current.messageId) {
         const message = await tx.message.findUnique({ where: { id: current.messageId } });
@@ -373,8 +392,9 @@ export async function cancelInteractionService(
       current.draftVersion,
     );
   }
+  const inFlight = await cardSendIsInFlight(prisma, input.interactionId);
   const decision = decideCancel({
-    status: current.status as InteractionLifecycleStatus,
+    status: inFlight ? "executing" : (current.status as InteractionLifecycleStatus),
     // An in-flight action resolves as an abort request rather than a refusal when
     // the caller's runtime can stop it; the caller checks that it actually did.
     runtimeCanAbort: input.runtimeCanAbort === true,
@@ -420,13 +440,20 @@ export async function cancelInteractionService(
 
   await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
+      // Occupancy stays on the last kernel open status. Re-check the bound
+      // effect inside the transaction so a send that started after the outer
+      // read cannot be cancelled as if it were still a draft.
+      if (await cardSendIsInFlight(tx as PrismaClient, input.interactionId)) {
+        throw new InteractionCancelRejectedError(
+          "in_flight",
+          "这次操作已经在进行中或已经完成，不能再取消。",
+        );
+      }
       const updated = await tx.interaction.updateMany({
         where: {
           id: input.interactionId,
           draftVersion: input.expectedDraftVersion,
-          // Re-checked inside the transaction so a concurrent execute cannot slip
-          // a started action past the decision made above.
-          status: { notIn: ["executing", "succeeded", "unknown", "failed", "cancelled"] },
+          status: { notIn: [...TERMINAL_STATUSES, "unknown"] },
         },
         data: { status: "cancelled", confirmedVersion: null, draftVersion },
       });
@@ -450,6 +477,11 @@ export async function cancelInteractionService(
             })
           ).documentRef
         : (current as { documentRef?: string }).documentRef;
+      const stamps = emailSurfaceBlockFields({
+        intent: plan.intent,
+        capability,
+        interactionStatus: "cancelled",
+      });
       const cancelledBlock: MessageBlock = {
         kind: "a2ui_surface",
         interactionId: input.interactionId,
@@ -460,13 +492,7 @@ export async function cancelInteractionService(
         title: plan.title,
         summary: plan.summary,
         ...(documentRef ? { documentRef } : {}),
-        ...(isEmailPlan(plan)
-          ? emailSurfaceBlockFields({
-              intent: plan.intent,
-              capability,
-              interactionStatus: "cancelled",
-            })
-          : {}),
+        ...stamps,
       };
       if (current.messageId) {
         const message = await tx.message.findUnique({ where: { id: current.messageId } });
@@ -474,12 +500,18 @@ export async function cancelInteractionService(
           const existing = Array.isArray(message.blocks) ? (message.blocks as MessageBlock[]) : [];
           // A cancelled card still shows which mailbox it would have used; dropping the label
           // here would blank that row at the moment the person is deciding what to do next.
-          const cancelledLabel = senderLabelFromBlock(existing, surfaceRow.surfaceId);
+          const cancelledSender = senderStampFromBlock(existing, surfaceRow.surfaceId);
           const blocks = existing.map((entry) =>
             entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId
-              ? cancelledLabel
-                ? { ...cancelledBlock, senderLabel: cancelledLabel }
-                : cancelledBlock
+              ? {
+                  ...cancelledBlock,
+                  ...(cancelledSender.senderLabel
+                    ? { senderLabel: cancelledSender.senderLabel }
+                    : {}),
+                  ...(cancelledSender.senderAddress
+                    ? { senderAddress: cancelledSender.senderAddress }
+                    : {}),
+                }
               : entry,
           );
           await tx.message.update({

@@ -427,7 +427,8 @@ export function botsRoutes(ctx: RouterContext) {
           emitBotUpdated:
             botProfileLabelsChanged(input) ||
             input.expectedSettings !== undefined ||
-            input.dailyCheckIns !== undefined,
+            input.dailyCheckIns !== undefined ||
+            input.draftsDisabled !== undefined,
           expectedInstructions: input.expectedInstructions,
           expectedSettings: input.expectedSettings,
           data: {
@@ -455,6 +456,7 @@ export function botsRoutes(ctx: RouterContext) {
               ? { crossSpaceCommunication: input.crossSpaceCommunication }
               : {}),
             ...(input.dailyCheckIns !== undefined ? { dailyCheckIns: input.dailyCheckIns } : {}),
+            ...(input.draftsDisabled !== undefined ? { draftsDisabled: input.draftsDisabled } : {}),
             ...(input.fleetManagement !== undefined
               ? { fleetManagement: input.fleetManagement }
               : {}),
@@ -472,6 +474,17 @@ export function botsRoutes(ctx: RouterContext) {
         });
         for (const setting of changedBotSettings(existing, input)) {
           deps.analytics?.capture(context.actor.userId, { name: "bot_setting_changed", setting });
+        }
+        if (
+          input.draftsDisabled !== undefined &&
+          input.draftsDisabled !== existing.draftsDisabled
+        ) {
+          await recordSecurityEvent({
+            type: "approval.policy.changed",
+            userId: context.actor.userId,
+            spaceId: context.actor.spaceId,
+            metadata: { procedure: "bots.update", kind: "drafts_disabled" },
+          });
         }
         const bots = await repos.listBots(context.actor);
         const bot = bots.find((b) => b.id === input.botId);

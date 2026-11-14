@@ -3,9 +3,11 @@ import { FLEET_TOOL_NAMES } from "@matebot/contracts";
 import type { CatalogEntry } from "./lazy-tool-catalog.js";
 import {
   catalogEntries,
+  fitsNameIndexBudget,
   formatNameIndexText,
   groupedNames,
   rankCatalogEntries,
+  sourceSummaryText,
 } from "./lazy-tool-catalog.js";
 import { BUILTIN_AGENT_TOOL_NAMES } from "./run-tool-selection.js";
 
@@ -104,10 +106,14 @@ function searchEntries(deferred: readonly ConnectorTool[]): CatalogEntry[] {
 }
 
 function bridgeTools(deferred: readonly ConnectorTool[]): ConnectorTool[] {
+  const grouped = groupedNames(searchEntries(deferred));
+  const indexText = fitsNameIndexBudget(grouped)
+    ? formatNameIndexText(grouped)
+    : sourceSummaryText(grouped);
   return [
     {
       name: FIND_TOOL,
-      description: `Get the parameters of built-in tools not in your tool list, including ones your instructions name. Call this before use_tool. Pass names for exact tools or query to search.\n${formatNameIndexText(groupedNames(searchEntries(deferred)))}`,
+      description: `Get the parameters of built-in tools not in your tool list, including ones your instructions name. Call this before use_tool. Pass names for exact tools or query to search.\n${indexText}`,
       inputSchema: {
         type: "object",
         properties: {

@@ -274,6 +274,8 @@ export interface SandboxCapabilities {
   persistentHome: boolean;
   /** Distinct graphical screens for concurrent Team bots on one computer. */
   multiScreen?: boolean;
+  /** In-place image/template upgrade. False for desktop, wuying, and none. */
+  inPlaceUpdate?: boolean;
 }
 
 export interface ConnectorTool {
@@ -797,6 +799,8 @@ export interface BackgroundJobPayloads {
   "action.reconcile": { effectId: string };
   /** Read an Expo push receipt; the token is identified by its digest, never stored. */
   "push.receipt": { userId: string; ticketId: string; tokenDigest: string };
+  /** Close one approval card whose window has ended. */
+  "interaction.expire": { interactionId: string };
 }
 
 export type BackgroundJobName = keyof BackgroundJobPayloads;
@@ -906,6 +910,11 @@ export interface MessagingSendRequest {
   idempotencyKey?: string;
   /** A file to post as this message; only sent to platforms with the `files` capability. */
   attachment?: MessagingOutboundAttachment;
+  /**
+   * Approval/ask controls reconstructed from the source message.
+   * Slack renders Skip for deny. Never a live provider write by itself.
+   */
+  actions?: Array<{ id: string; label: string }>;
 }
 
 /** An outbound file, already read from the artifact store. */

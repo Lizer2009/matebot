@@ -11,6 +11,10 @@ vi.mock("@matebot/db", async (original) => ({
   ...(await original<typeof db>()),
   appendEventInTransaction: vi.fn(async () => ({ seq: 1 })),
 }));
+vi.mock("@matebot/adapters", async (original) => ({
+  ...(await original()),
+  settleInteraction: vi.fn(async () => ({ settled: true, previousStatus: "awaiting_approval" })),
+}));
 
 /** PostgreSQL jsonb `@>` containment, which Prisma `array_contains` compiles to. */
 function jsonContains(value: unknown, needle: unknown): boolean {
@@ -59,6 +63,41 @@ function fixture(blocks: unknown[]) {
 }
 
 describe("resolveMcpApprovalCards", () => {
+  it("stamps kernel cardStatus when flipping a published L0-A card", async () => {
+    const blocks = [
+      {
+        kind: "mcp_approval",
+        name: "A",
+        serverId: "srv-a",
+        transport: "sse",
+        endpoint: null,
+        needsOAuth: false,
+        status: "pending",
+        interactionId: "ix-1",
+        cardStatus: "awaiting_approval",
+      },
+    ];
+    const { deps, actor, tx } = fixture(blocks);
+    await resolveMcpApprovalCards(deps, actor, {
+      botId: "bot",
+      serverId: "srv-a",
+      status: "connected",
+      threadId: "group-thread",
+    });
+    expect(tx.message.update).toHaveBeenCalledWith({
+      where: { id: "card-message" },
+      data: {
+        blocks: [
+          expect.objectContaining({
+            status: "connected",
+            cardStatus: "succeeded",
+            interactionId: "ix-1",
+          }),
+        ],
+      },
+    });
+  });
+
   it("flips pending and pre-upgrade cards for the matching server", async () => {
     const blocks = [
       { kind: "text", text: "before" },

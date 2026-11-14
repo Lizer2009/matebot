@@ -19,6 +19,8 @@ import {
   ThreadsGetA2uiSurfaceOutput,
   ThreadsReconcileInteractionInput,
   ThreadsReconcileInteractionOutput,
+  ThreadsRetryInteractionInput,
+  ThreadsRetryInteractionOutput,
   ThreadsUpdateInteractionFieldInput,
   ThreadsUpdateInteractionFieldOutput,
 } from "./interaction.js";
@@ -106,11 +108,57 @@ describe("a2ui_surface MessageBlock", () => {
     });
   });
 
+  it("lets L0-A views carry the kernel interaction id and status", () => {
+    expect(
+      MessageBlock.parse({
+        kind: "app_connect",
+        provider: "gmail",
+        name: "Gmail",
+        description: "",
+        logo: null,
+        status: "pending",
+        interactionId: "ix-1",
+        cardStatus: "needs_connection",
+      }),
+    ).toMatchObject({ interactionId: "ix-1", cardStatus: "needs_connection" });
+    expect(
+      MessageBlock.parse({
+        kind: "ask",
+        text: "Allow?",
+        status: "pending",
+        interactionId: "ix-2",
+        cardStatus: "awaiting_approval",
+      }),
+    ).toMatchObject({ interactionId: "ix-2", cardStatus: "awaiting_approval" });
+    expect(
+      MessageBlock.parse({
+        kind: "choice",
+        question: "Pick",
+        options: [],
+        interactionId: "ix-3",
+        cardStatus: "collecting",
+      }),
+    ).toMatchObject({ interactionId: "ix-3", cardStatus: "collecting" });
+  });
+
   it("accepts an optional mailbox capability stamp", () => {
     expect(
       A2uiSurfaceBlockSchema.parse({ ...surface, capability: "not_connected" }).capability,
     ).toBe("not_connected");
     expect(A2uiSurfaceBlockSchema.parse(surface).capability).toBeUndefined();
+  });
+
+  it("accepts a provider mailbox only when it looks like an address", () => {
+    expect(
+      A2uiSurfaceBlockSchema.parse({
+        ...surface,
+        senderAddress: "lizer@example.test",
+      }).senderAddress,
+    ).toBe("lizer@example.test");
+    expect(A2uiSurfaceBlockSchema.safeParse({ ...surface, senderAddress: "Gmail" }).success).toBe(
+      false,
+    );
+    expect(A2uiSurfaceBlockSchema.parse(surface).senderAddress).toBeUndefined();
   });
 
   it("accepts lifecycle, template, and providerMessageId stamps", () => {
@@ -133,6 +181,32 @@ describe("a2ui_surface MessageBlock", () => {
         lifecycle: "unknown",
       }).lifecycle,
     ).toBe("unknown");
+  });
+
+  it("accepts an optional kernel status stamp, and keeps old blocks valid", () => {
+    expect(A2uiSurfaceBlockSchema.parse({ ...surface, status: "superseded" }).status).toBe(
+      "superseded",
+    );
+    // A block written before the field existed has no `status`. Hosts fall back to `lifecycle`,
+    // so parsing one must stay valid for as long as history holds them.
+    expect(A2uiSurfaceBlockSchema.parse(surface).status).toBeUndefined();
+    // The status is a closed vocabulary: a value outside it would reach copy that has no line.
+    expect(A2uiSurfaceBlockSchema.safeParse({ ...surface, status: "pending" }).success).toBe(false);
+  });
+
+  it("accepts optional history slots and a stale flag, and keeps old blocks valid", () => {
+    expect(
+      A2uiSurfaceBlockSchema.parse({
+        ...surface,
+        stale: true,
+        historySlots: { to: "example@example.test", subject: "产品发布" },
+      }),
+    ).toMatchObject({
+      stale: true,
+      historySlots: { to: "example@example.test", subject: "产品发布" },
+    });
+    expect(A2uiSurfaceBlockSchema.parse(surface).stale).toBeUndefined();
+    expect(A2uiSurfaceBlockSchema.parse(surface).historySlots).toBeUndefined();
   });
 
   it("requires interactionId, surfaceId, protocolFamily, and draftVersion", () => {
@@ -263,6 +337,19 @@ describe("threads interaction RPC draft schemas", () => {
         executed: false,
       }).executed,
     ).toBe(false);
+  });
+
+  it("rejects a retry call that omits the thread target", () => {
+    expect(ThreadsRetryInteractionInput.safeParse({ interactionId: "ix-1" }).success).toBe(false);
+    expect(
+      ThreadsRetryInteractionOutput.parse({
+        ok: true,
+        interactionId: "ix-1",
+        surfaceId: "surf-1",
+        draftVersion: 4,
+        status: "collecting",
+      }).status,
+    ).toBe("collecting");
   });
 
   it("rejects a reconcile call that omits the thread target", () => {

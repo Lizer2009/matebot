@@ -1,34 +1,36 @@
-import {
-  BottomSheet,
-  Button,
-  Host,
-  RNHostView,
-  TextField,
-  useNativeState,
-} from "@expo/ui/swift-ui";
+import { Button, Host, TextField, useNativeState } from "@expo/ui/swift-ui";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { View } from "react-native";
+
+const fillRow = { width: "100%" as const, minWidth: 0, alignSelf: "stretch" as const };
 
 export function A2uiTextField({
   label,
   value,
   onChangeText,
   testID,
+  multiline,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   testID: string;
+  multiline?: boolean;
 }) {
   const text = useNativeState(value);
   useEffect(() => {
     text.set(value);
   }, [text, value]);
   return (
-    <View testID={testID}>
-      <Host matchContents>
-        <TextField text={text} placeholder={label} onTextChange={onChangeText} />
+    <View testID={testID} style={fillRow}>
+      <Host matchContents style={fillRow}>
+        <TextField
+          text={text}
+          placeholder={label}
+          axis={multiline ? "vertical" : "horizontal"}
+          onTextChange={onChangeText}
+        />
       </Host>
     </View>
   );
@@ -61,25 +63,13 @@ export function A2uiSheet({
   testID?: string;
   label?: string;
 }) {
-  const [presented, setPresented] = useState(true);
   return (
-    <View testID={testID ?? "a2ui-native-sheet"}>
-      <Host matchContents>
-        <BottomSheet
-          isPresented={presented}
-          onIsPresentedChange={setPresented}
-          fitToContents
-          anchor={
-            presented || !label ? undefined : (
-              <Button label={label} onPress={() => setPresented(true)} />
-            )
-          }
-        >
-          <RNHostView matchContents>
-            <View style={{ gap: 8 }}>{children}</View>
-          </RNHostView>
-        </BottomSheet>
-      </Host>
+    <View
+      testID={testID ?? "a2ui-native-sheet"}
+      accessibilityLabel={label}
+      style={{ ...fillRow, gap: 8 }}
+    >
+      {children}
     </View>
   );
 }

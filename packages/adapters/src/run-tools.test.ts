@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApprovedEffectReplayQueue, terminatingToolResult } from "./approval-effect.js";
+import { DIRECT_CALENDAR_CREATE_REFUSAL } from "./calendar-tool-escape.js";
 
 const audited = vi.hoisted(() => [] as { tool: string; outcome: string; metadata: unknown }[]);
 vi.mock("./run-tool-gate.js", async (importOriginal) => ({
@@ -205,6 +206,28 @@ describe("email shell escape", () => {
       error: OUTBOUND_EMAIL_SHELL_REFUSAL,
     });
     expect(audited).toEqual([]);
+  });
+
+  it("rejects a connector calendar create while draft cards are offered", async () => {
+    vi.stubEnv("FEATURE_A2UI", "1");
+    const base = dispatchContext(false);
+    const ctx = {
+      ...base,
+      tools: {
+        ...base.tools,
+        builtins: [{ name: "present_interaction" }],
+      },
+    };
+    await expect(
+      applyTool(
+        ctx as never,
+        "COMPOSIO_MULTI_EXECUTE_TOOL",
+        {
+          tools: [{ tool_slug: "GOOGLECALENDAR_CREATE_EVENT", arguments: { summary: "Vegas" } }],
+        },
+        "call-1",
+      ),
+    ).resolves.toEqual({ error: DIRECT_CALENDAR_CREATE_REFUSAL });
   });
 });
 

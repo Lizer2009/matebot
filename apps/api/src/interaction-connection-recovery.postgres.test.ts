@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { ManagedConnectorProvider } from "@matebot/adapter-kit";
-import { ConnectorRegistry } from "@matebot/adapters";
+import { ComposioConnector, ConnectorRegistry, FakeComposioClient } from "@matebot/adapters";
 import type { Actor } from "@matebot/contracts";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
 import { RPCHandler } from "@orpc/server/fetch";
@@ -242,6 +243,7 @@ describePostgres("card recovery through the real connection routes", () => {
         threadId,
         messageId,
         intent: "email.compose",
+        cardKey: interactionCardKey(threadId, "email.compose"),
         status: "needs_connection",
         draftVersion: 2,
         plan: {
@@ -340,6 +342,41 @@ describePostgres("card recovery through the real connection routes", () => {
     expect(await system.externalEffect.findMany({ where: { spaceId } })).toEqual([]);
     return row;
   }
+
+  it("Fake Composio pending begin then complete resumes the waiting card", async () => {
+    const fake = new FakeComposioClient();
+    fake.authorizeMode = "pending";
+    const connector = new ComposioConnector({ client: fake });
+    const handler = new RPCHandler(createRouter(deps(connector)));
+
+    expect((await cardBlock())?.capability).toBe("not_connected");
+
+    const begun = await rpc(handler, "connections/begin", {
+      connectorId: "composio",
+      provider: "gmail",
+      displayName: "Gmail",
+    });
+    expect(begun.status).toBe(200);
+    const begunJson = (
+      begun.json as {
+        json: { connectionId: string; authorizationUrl: string | null; status?: string };
+      }
+    ).json;
+    expect(begunJson.authorizationUrl).toMatch(/^https:\/\/fake-composio\.test\/oauth/);
+    expect((await draft()).status).toBe("needs_connection");
+    expect(fake.accounts).toEqual([]);
+
+    const completed = await rpc(handler, "connections/complete", {
+      connectionId: begunJson.connectionId,
+      code: "fake-oauth-code",
+    });
+    expect(completed.status).toBe(200);
+    expect((completed.json as { json: { status: string } }).json.status).toBe("connected");
+    expect(fake.accounts.length).toBeGreaterThan(0);
+
+    await expectRecovered();
+    expect(await system.externalEffect.findMany({ where: { spaceId } })).toEqual([]);
+  });
 
   it("missing → begin → complete: the same card becomes editable and nothing is sent", async () => {
     const { provider, state, finishInBrowser } = mailboxProvider();
@@ -624,6 +661,7 @@ describePostgres("card recovery through the real connection routes", () => {
         threadId: otherThreadId,
         messageId: otherMessageId,
         intent: "email.compose",
+        cardKey: interactionCardKey(otherThreadId, "email.compose"),
         status: "needs_connection",
         draftVersion: 1,
         plan: {
@@ -785,6 +823,7 @@ describePostgres("card recovery through the real connection routes", () => {
         spaceId: otherSpaceId,
         threadId: otherThreadId,
         intent: "email.compose",
+        cardKey: interactionCardKey(otherThreadId, "email.compose"),
         status: "needs_connection",
         draftVersion: 1,
         plan: {
@@ -916,5 +955,60 @@ describePostgres("card recovery through the real connection routes", () => {
     expect(row.slots).toMatchObject({ to: "alex@example.test", subject: "我写的主题" });
     expect(row.confirmedVersion).toBeNull();
     expect(await system.externalEffect.findMany({ where: { spaceId } })).toEqual([]);
+  });
+
+  it("settles matching connect.* cards on complete without a client RPC (F-08)", async () => {
+    const gmailId = `${P}-ix-gmail-${randomUUID()}`;
+    const calId = `${P}-ix-cal-${randomUUID()}`;
+    await system.interaction.create({
+      data: {
+        id: gmailId,
+        spaceId,
+        threadId,
+        intent: "connect.gmail",
+        cardKey: interactionCardKey(threadId, "connect.gmail"),
+        status: "needs_connection",
+        draftVersion: 1,
+        plan: {
+          intent: "connect.gmail",
+          title: "Gmail",
+          fields: [],
+          nextStep: "ask",
+          riskLevel: "low",
+        } as never,
+      },
+    });
+    await system.interaction.create({
+      data: {
+        id: calId,
+        spaceId,
+        threadId,
+        intent: "connect.googlecalendar",
+        cardKey: interactionCardKey(threadId, "connect.googlecalendar"),
+        status: "needs_connection",
+        draftVersion: 1,
+        plan: {
+          intent: "connect.googlecalendar",
+          title: "Calendar",
+          fields: [],
+          nextStep: "ask",
+          riskLevel: "low",
+        } as never,
+      },
+    });
+    const { provider, finishInBrowser } = mailboxProvider();
+    const handler = new RPCHandler(createRouter(deps(provider)));
+    const begun = await rpc(handler, "connections/begin", {
+      connectorId: "composio",
+      provider: "gmail",
+      displayName: "Gmail",
+    });
+    const connectionId = (begun.json as { json: { connectionId: string } }).json.connectionId;
+    finishInBrowser();
+    await rpc(handler, "connections/complete", { connectionId });
+    expect((await getInteraction(system, gmailId))?.status).toBe("succeeded");
+    expect((await getInteraction(system, calId))?.status).toBe("needs_connection");
+    await rpc(handler, "connections/complete", { connectionId });
+    expect((await getInteraction(system, gmailId))?.status).toBe("succeeded");
   });
 });

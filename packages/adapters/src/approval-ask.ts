@@ -210,10 +210,15 @@ function describeApprovalAction(
   args: Record<string, unknown>,
   batchShape: ToolBatch | undefined,
 ): string {
-  // A batch is named by the actions it runs; "…" stands for an entry that names none.
-  const batch = batchShape && batchActions(batchShape, args);
-  if (batch?.actions.length) {
-    return [...batch.actions, ...(batch.complete ? [] : ["…"])].join(", ");
+  // A batch card lists every inner action in order, repeats included.
+  // "…" stands for an entry that names none. The gate still uses the unique set.
+  if (batchShape) {
+    const batch = batchActions(batchShape, args);
+    if (batch.actions.length) {
+      return [...innerBatchActionNames(batchShape, args), ...(batch.complete ? [] : ["…"])].join(
+        ", ",
+      );
+    }
   }
   if (toolName === "delete_bot" || toolName === "archive_bot") {
     const name = args.confirm_name ?? args.confirmName;
@@ -225,6 +230,21 @@ function describeApprovalAction(
   }
   const target = webFetchSite(toolName, args) ?? pickScopeLabel(args);
   return target ? `${toolName} → ${target}` : toolName;
+}
+
+/** Each named inner action, in call order. Unlike `batchActions`, repeats stay. */
+function innerBatchActionNames(shape: ToolBatch, args: Record<string, unknown>): string[] {
+  const items = args[shape.items];
+  if (!Array.isArray(items)) return [];
+  const names: string[] = [];
+  for (const item of items) {
+    const action =
+      item && typeof item === "object"
+        ? (item as Record<string, unknown>)[shape.action]
+        : undefined;
+    if (typeof action === "string" && action.trim()) names.push(action.trim());
+  }
+  return names;
 }
 
 function formatApprovalDetail(

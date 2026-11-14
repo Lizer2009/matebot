@@ -69,6 +69,24 @@ beforeAll(() => vi.stubEnv("FEATURE_A2UI", "1"));
 afterAll(() => vi.unstubAllEnvs());
 
 describe("refresh_result", () => {
+  it("re-reads csv-upload through the file reader instead of the unwired registry stub", async () => {
+    const csvRead = vi.fn(async (input: { window: { from: string; to: string } }) => ({
+      ok: true as const,
+      rows: [],
+      asOf: "2026-11-14T00:00:00.000Z",
+      sourceLabel: "Upload: sample-quarters.csv",
+      window: input.window,
+    }));
+    const result = await refreshResult(
+      ctx,
+      { sourceId: "csv-upload", from: "2020-01-01", to: "2020-03-31", interactionId: "ix-res" },
+      { ...deps(), csvRead },
+    );
+    expect(result).toMatchObject({ ok: true, interactionId: "ix-res" });
+    expect(csvRead).toHaveBeenCalled();
+    expect(republished.at(-1)?.provenance.source).toMatch(/sample-quarters/);
+  });
+
   it("re-reads the source for the new window and reports its provenance", async () => {
     readCalls.length = 0;
     republished.length = 0;

@@ -68,10 +68,10 @@ describe("useA2uiSurfaceDocument", () => {
     const state = latest();
     expect(state.messages).toBeUndefined();
     expect(state.unavailable).toBe(true);
-    expect(state.error).toBeTruthy();
+    expect(state.error).toBeNull();
   });
 
-  it("reports a fetch error with its reason", async () => {
+  it("reports a fetch failure without the exception text (AC-22)", async () => {
     const fetchDocument = vi.fn(async () => {
       throw new Error("network down");
     });
@@ -80,7 +80,7 @@ describe("useA2uiSurfaceDocument", () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(latest().error).toBe("network down");
+    expect(latest().error).toBeNull();
     expect(latest().unavailable).toBe(true);
   });
 

@@ -1,6 +1,10 @@
 import type { InteractionPlan } from "@matebot/contracts";
 import type { EmailSurfaceCapability } from "@matebot/core";
-import { interactionCapabilityForIntent } from "@matebot/core";
+import {
+  interactionCapabilityForIntent,
+  isCalendarCreateIntent,
+  readConfirmedCalendarDraft,
+} from "@matebot/core";
 
 /**
  * What the model is told about a card, in terms it can act on.
@@ -97,9 +101,16 @@ export function describeDraftForModel(input: {
       filled: !isEmpty(value),
     };
   });
+  // A calendar batch is several events held in `events`; the single-event start and end are
+  // empty on purpose. Counting them as gaps told the model its complete card was incomplete,
+  // and it filled a week-long placeholder event to satisfy them.
+  const batchCoversSingleSlots =
+    isCalendarCreateIntent(input.plan.intent) &&
+    readConfirmedCalendarDraft(input.slots).kind === "batch";
   const missingRequired = fields
     .filter((field) => field.required && !field.filled)
-    .map((field) => field.name);
+    .map((field) => field.name)
+    .filter((name) => !(batchCoversSingleSlots && (name === "start" || name === "end")));
 
   const blockedBy = [...missingRequired];
   // A draft that has already settled cannot be acted on again, whatever its fields say. Saying

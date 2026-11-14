@@ -261,6 +261,202 @@ describe("ask history", () => {
   });
 });
 
+describe("a2ui surface history", () => {
+  it("projects intent and lifecycle so a later turn can see the card", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          // Brief projects this status word. EmailSurfaceLifecycle has no "sent" member.
+          // @ts-expect-error lifecycle "sent" is the projected status, not a contract enum value
+          lifecycle: "sent",
+          summary: "to: a@b.com",
+        },
+      ]),
+    ).toBe("[card: email.compose → sent (to: a@b.com)]");
+  });
+
+  it("never drops a legacy surface with no title or summary", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+        },
+      ]),
+    ).toBe("[card: a2ui_surface → draft]");
+  });
+
+  it("projects an unregistered test.form intent from the block", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "test.form",
+          lifecycle: "draft",
+          summary: "note: hello",
+        },
+      ]),
+    ).toBe("[card: test.form → draft (note: hello)]");
+  });
+
+  it("projects superseded from status, not lifecycle, with key slots", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          status: "superseded",
+          lifecycle: "draft",
+          historySlots: { to: "example@example.test", subject: "产品发布" },
+        },
+      ]),
+    ).toBe("[card: email.compose → superseded (To example@example.test · Subject 产品发布)]");
+  });
+
+  it("projects expired and unknown from status so a later turn does not treat them as drafts", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          status: "expired",
+          lifecycle: "draft",
+          historySlots: { to: "example@example.test", subject: "产品发布" },
+        },
+      ]),
+    ).toContain("→ expired");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-2",
+          surfaceId: "s-2",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          status: "unknown",
+          lifecycle: "draft",
+        },
+      ]),
+    ).toBe("[card: email.compose → unknown]");
+  });
+
+  it("falls back to lifecycle and summary when status and slots are missing", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "a2ui_surface",
+          interactionId: "ix-1",
+          surfaceId: "s-1",
+          protocolFamily: "v0_9",
+          draftVersion: 1,
+          intent: "email.compose",
+          lifecycle: "draft",
+          summary: "to: a@b.com",
+        },
+      ]),
+    ).toBe("[card: email.compose → draft (to: a@b.com)]");
+  });
+
+  it("projects L0-A kinds with status and account, never secrets (F-07)", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "ask",
+          text: "Allow this send?",
+          status: "pending",
+          cardStatus: "awaiting_approval",
+          input: "secret",
+          actions: [{ id: "deny", label: "Deny" }],
+        },
+      ]),
+    ).toBe("[card: ask → awaiting_approval]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "app_connect",
+          connectorId: "fake",
+          provider: "gmail",
+          name: "Gmail",
+          description: "Mail",
+          logo: null,
+          status: "pending",
+          cardStatus: "needs_connection",
+        },
+      ]),
+    ).toBe("[card: app_connect → needs_connection → gmail]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "choice",
+          question: "Which?",
+          options: [{ id: "a", letter: "A", label: "A" }],
+          cardStatus: "collecting",
+        },
+      ]),
+    ).toBe("[card: choice → collecting]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "mcp_approval",
+          serverId: "srv-1",
+          name: "Tools",
+          transport: "stdio",
+          endpoint: null,
+          needsOAuth: false,
+          status: "pending",
+          cardStatus: "awaiting_approval",
+        },
+      ]),
+    ).toBe("[card: mcp_approval → awaiting_approval]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "connect",
+          name: "Gmail",
+          initial: "G",
+          color: "test",
+          status: "pending",
+          cardStatus: "needs_connection",
+        },
+      ]),
+    ).toBe("[card: connect → needs_connection → Gmail]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "ask",
+          text: "API key",
+          status: "answered",
+          cardStatus: "succeeded",
+          answer: "sk-live-secret",
+          input: "secret",
+        },
+      ]),
+    ).toBe("[card: ask → succeeded]");
+  });
+});
+
 describe("artifactTypeLabel", () => {
   it("reads like the file's extension", () => {
     expect(artifactTypeLabel("text/plain")).toBe("TXT");

@@ -1,10 +1,16 @@
 import type { A2uiProtocolFamily, InteractionPlan, MessageBlock } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
-import { batchResultRows, buildResultSurface, emailSurfaceBlockFields } from "@matebot/core";
+import {
+  batchResultRows,
+  buildResultSurface,
+  closedSurfaceReasonKey,
+  emailSurfaceBlockFields,
+  surfaceReasonKeyForApproval,
+} from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import { appendEventInTransaction, withTransactionRetry } from "@matebot/db";
-import { senderLabelFromBlock } from "./interaction-publish.js";
+import { senderStampFromBlock } from "./interaction-publish.js";
 
 function capabilityFromBlocks(
   blocks: MessageBlock[] | undefined,
@@ -46,6 +52,8 @@ export type ProjectInteractionEmailSurfaceInput = {
   approvalEffectId?: string;
   /** Mailbox three-state; refreshed on a reauth failure so the card stays actionable. */
   capability?: EmailSurfaceCapability;
+  /** Closed-set reason when the card is waiting for approval. */
+  reasonKey?: string;
   actionEvent?:
     | "thread.interaction.action_started"
     | "thread.interaction.action_progress"
@@ -120,7 +128,7 @@ export async function projectInteractionEmailSurface(
     });
     // The card keeps the connection's label across a confirm, an execute or a progress stamp;
     // rebuilding without it would blank the read-only sender row mid-lifecycle.
-    const senderLabel = senderLabelFromBlock(existing, surfaceRow.surfaceId);
+    const senderStamp = senderStampFromBlock(existing, surfaceRow.surfaceId);
     const block: MessageBlock = {
       kind: "a2ui_surface",
       interactionId: input.interaction.id,
@@ -134,8 +142,16 @@ export async function projectInteractionEmailSurface(
         ? { summary: input.interaction.summary ?? input.plan.summary }
         : {}),
       documentRef,
-      ...(senderLabel ? { senderLabel } : {}),
+      ...(senderStamp.senderLabel ? { senderLabel: senderStamp.senderLabel } : {}),
+      ...(senderStamp.senderAddress ? { senderAddress: senderStamp.senderAddress } : {}),
       ...stamps,
+      ...(input.interactionStatus === "awaiting_approval"
+        ? {
+            reasonKey:
+              closedSurfaceReasonKey(input.reasonKey) ??
+              surfaceReasonKeyForApproval({ scope: "setting" }),
+          }
+        : {}),
     };
     const blocks = existing.map((entry) =>
       entry.kind === "a2ui_surface" && entry.surfaceId === surfaceRow.surfaceId ? block : entry,

@@ -7,11 +7,19 @@ import { connectApp } from "./connect-app.js";
 const stored = vi.hoisted(() => [] as { blocks: MessageBlock[]; clientNonce: string }[]);
 vi.mock("@matebot/db", async (original) => ({
   ...(await original<typeof db>()),
+  createInteraction: vi.fn(async () => ({
+    id: "ix-1",
+    intent: "connect.gmail",
+    draftVersion: 1,
+    title: "Connect Gmail",
+    summary: null,
+  })),
   createThreadMessageInTransaction: vi.fn(async (_tx, input) => {
     stored.push(input);
     return { id: "card" };
   }),
   appendEventInTransaction: vi.fn(async () => ({ seq: 1, firstResponse: true })),
+  appendInteractionEvent: vi.fn(),
 }));
 const entry: ConnectionCatalogItem = {
   connectorId: "fake",
@@ -21,7 +29,27 @@ const entry: ConnectionCatalogItem = {
   connected: false,
   noAuth: false,
 };
-function fixture(items = [entry]) {
+function fixture(
+  items = [entry],
+  openDemands:
+    | { intent: string; status: string }
+    | Array<{ intent: string; status: string }>
+    | null = null,
+) {
+  const demands =
+    openDemands == null ? [] : Array.isArray(openDemands) ? openDemands : [openDemands];
+  const rows = demands.map((demand, index) => ({
+    id: `ix-open-${index}`,
+    intent: demand.intent,
+    status: demand.status,
+  }));
+  const interaction = {
+    findFirst: vi.fn(async () => rows[0] ?? null),
+    findMany: vi.fn(async () => rows),
+    update: vi.fn(),
+    updateMany: vi.fn(async () => ({ count: 1 })),
+    findUnique: vi.fn(async () => ({ status: "needs_connection", draftVersion: 1 })),
+  };
   const tx = {
     $executeRaw: vi.fn(),
     message: {
@@ -31,9 +59,14 @@ function fixture(items = [entry]) {
           stored.find((message) => message.clientNonce === where.clientNonce) ?? null,
       ),
     },
+    interaction,
   };
   const deps = {
-    prisma: { $transaction: vi.fn(async (fn) => fn(tx)) },
+    prisma: {
+      $transaction: vi.fn(async (fn) => fn(tx)),
+      interaction,
+      connection: { findMany: vi.fn(async () => []) },
+    },
     events: { notify: vi.fn() },
   } as unknown as Parameters<typeof connectApp>[0];
   const catalog = vi.fn(async () => items);
@@ -82,6 +115,8 @@ describe("connect_app execution", () => {
             description: "Search, read, draft, and send email.",
             logo: null,
             status: "pending",
+            interactionId: "ix-1",
+            cardStatus: "needs_connection",
           },
         ],
         clientNonce: "connect-app:effect",
@@ -131,6 +166,67 @@ describe("connect_app execution", () => {
     await f.call();
     await f.call("gmail", "another-effect");
     expect(stored).toHaveLength(1);
+  });
+
+  it("does not post a second connection card when the compose card already needs the app (AC-26)", async () => {
+    const f = fixture([entry], { intent: "email.compose", status: "needs_connection" });
+    const result = await f.call();
+    expect(result).toMatchObject({ status: "pending" });
+    expect(stored).toHaveLength(0);
+  });
+
+  it("does not let a newer calendar demand swallow a gmail connect (AC-26)", async () => {
+    const f = fixture(
+      [entry],
+      [
+        { intent: "connect.googlecalendar", status: "needs_connection" },
+        { intent: "connect.gmail", status: "needs_connection" },
+      ],
+    );
+    const result = await f.call("Gmail");
+    expect(result).toMatchObject({ status: "pending" });
+    expect(stored).toHaveLength(0);
+  });
+
+  it("still posts gmail when only a calendar card is waiting", async () => {
+    const f = fixture([entry], { intent: "connect.googlecalendar", status: "needs_connection" });
+    await f.call("Gmail");
+    expect(stored).toHaveLength(1);
+    expect(stored[0]?.blocks[0]).toMatchObject({ provider: "gmail" });
+  });
+
+  it("gives two named reconnects two card keys (AC-23)", async () => {
+    const { createInteraction } = await import("@matebot/db");
+    vi.mocked(createInteraction)
+      .mockResolvedValueOnce({
+        id: "ix-a",
+        intent: "connect.gmail.ca_1",
+        draftVersion: 1,
+        title: "Connect Gmail",
+        summary: null,
+      } as never)
+      .mockResolvedValueOnce({
+        id: "ix-b",
+        intent: "connect.gmail.ca_2",
+        draftVersion: 1,
+        title: "Connect Gmail",
+        summary: null,
+      } as never);
+    const f = fixture();
+    (
+      f.deps.prisma as unknown as { connection: { findMany: ReturnType<typeof vi.fn> } }
+    ).connection.findMany = vi.fn(async () => [
+      { provider: "gmail", providerRef: "ca_1" },
+      { provider: "gmail", providerRef: "ca_2" },
+    ]);
+    await f.call("Gmail");
+    expect(createInteraction).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(createInteraction).mock.calls[0]![1]).toMatchObject({
+      intent: "connect.gmail.ca_1",
+    });
+    expect(vi.mocked(createInteraction).mock.calls[1]![1]).toMatchObject({
+      intent: "connect.gmail.ca_2",
+    });
   });
 });
 

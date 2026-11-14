@@ -251,6 +251,13 @@ describe("ChoiceCard", () => {
     expect(view.textContent).not.toContain("Day-to-day work");
   });
 
+  it("hides dismiss and disables options once the kernel closed the card", () => {
+    const view = render({ ...choice, cardStatus: "succeeded" });
+    expect(view.querySelector("[data-testid='choice-card-dismiss']")).toBeNull();
+    expect(button(view, "Day-to-day work").disabled).toBe(true);
+    expect(button(view, "Inbox & email").disabled).toBe(true);
+  });
+
   it("lets a later server answer replace the option chosen locally", async () => {
     rpc.mockResolvedValue({});
     const view = render();

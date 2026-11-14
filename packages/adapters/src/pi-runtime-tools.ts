@@ -24,6 +24,7 @@ import {
   oneTimeCodeArgument,
 } from "./bot-secrets.js";
 import { FIND_TOOL, findTools, partitionTools, USE_TOOL } from "./builtin-tool-bridge.js";
+import { COMPOSIO_MULTI_EXECUTE_TOOL } from "./composio-batch.js";
 import { shortenToolResultText } from "./context-selection.js";
 import type { PiAgentRuntimeOptions } from "./pi-runtime.js";
 import { COMPUTER_MODE_TOOLS } from "./pi-runtime-computer-mode.js";
@@ -171,6 +172,37 @@ export function normalizeAgentToolName(name: string): string {
 }
 
 const ACTIVITY_DETAIL_LIMIT = 90;
+const WORKING = "Working…";
+
+/** Intent for a connector action slug. Never the slug itself. */
+function connectorSlugIntent(slug: string): string {
+  const key = slug.toUpperCase();
+  if (key.includes("CALENDAR") || key.includes("GOOGLECALENDAR")) return "Checking the calendar";
+  if (/SEND/.test(key) && /MAIL|EMAIL|DRAFT/.test(key)) return "Sending email";
+  if (/GMAIL|OUTLOOK|MAIL|EMAIL/.test(key)) return "Checking email";
+  return WORKING;
+}
+
+function composioBatchSlugs(args: Record<string, unknown>): string[] {
+  const tools = args.tools;
+  if (!Array.isArray(tools)) return [];
+  const slugs: string[] = [];
+  for (const item of tools) {
+    if (!item || typeof item !== "object") continue;
+    const slug = (item as { tool_slug?: unknown }).tool_slug;
+    if (typeof slug === "string" && slug.trim()) slugs.push(slug.trim());
+  }
+  return slugs;
+}
+
+function looksLikeInternalToolName(name: string): boolean {
+  return (
+    name === COMPOSIO_MULTI_EXECUTE_TOOL ||
+    name.startsWith("COMPOSIO_") ||
+    name.startsWith("mcp__") ||
+    (/^[A-Z][A-Z0-9_]+$/.test(name) && name.includes("_"))
+  );
+}
 
 /** One human-readable line describing a tool call, shown live in the thread. */
 export function describeToolActivity(toolName: string, args: unknown): string {
@@ -183,9 +215,8 @@ export function describeToolActivity(toolName: string, args: unknown): string {
       .trim();
     return text.length > ACTIVITY_DETAIL_LIMIT ? `${text.slice(0, ACTIVITY_DETAIL_LIMIT)}…` : text;
   };
-  if (toolName === "shell") return `Running: ${detail(record.command)}`;
-  if (toolName === "user_computer_shell")
-    return `Running on your computer: ${detail(record.command)}`;
+  if (toolName === "shell") return "Running a command";
+  if (toolName === "user_computer_shell") return "Working on your computer";
   if (toolName === "user_computer_observe") return `Looking at ${detail(record.app)}`;
   if (toolName === "user_computer_act") return `Using ${detail(record.app)}`;
   if (toolName === "read_file") return `Reading ${detail(record.path)}`;
@@ -228,9 +259,12 @@ export function describeToolActivity(toolName: string, args: unknown): string {
     return `Updating skill: ${detail(record.name ?? record.skillId)}`;
   if (toolName === "skill_delete")
     return `Deleting skill: ${detail(record.name ?? record.skillId)}`;
-  const mcp = toolName.match(/^mcp__(.+?)__(.+)$/);
-  if (mcp) return `Using ${mcp[1]}: ${mcp[2]}`;
-  return `Using ${toolName}`;
+  if (toolName === COMPOSIO_MULTI_EXECUTE_TOOL) {
+    const intents = [...new Set(composioBatchSlugs(record).map(connectorSlugIntent))];
+    return intents.length === 1 ? (intents[0] ?? WORKING) : WORKING;
+  }
+  if (looksLikeInternalToolName(toolName)) return connectorSlugIntent(toolName);
+  return WORKING;
 }
 
 /**

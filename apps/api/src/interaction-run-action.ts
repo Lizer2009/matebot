@@ -47,7 +47,7 @@ export type ConfirmThenExecuteInput = {
   revision: number;
   userId: string;
   /** The capability's effect kind; null means the action has no sender yet. */
-  kind: "email.send" | "calendar.create" | null;
+  kind: string | null;
 };
 
 /** The error code a rejected service call carries, when it has one. */

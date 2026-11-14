@@ -397,6 +397,7 @@ export class CreateOSSandboxProvider implements SandboxProvider {
         takeover: true,
         persistentHome: true,
         multiScreen: true,
+        inPlaceUpdate: true,
       },
     };
   }

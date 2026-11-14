@@ -59,6 +59,17 @@ export function asConnectorTools(input: unknown): ConnectorTool[] {
   return tools;
 }
 
+function declaredReadOnly(raw: Record<string, unknown>): boolean | undefined {
+  if (typeof raw.readOnly === "boolean") return raw.readOnly;
+  if (typeof raw.read_only === "boolean") return raw.read_only;
+  const annotations = raw.annotations;
+  if (annotations && typeof annotations === "object" && !Array.isArray(annotations)) {
+    const hint = (annotations as Record<string, unknown>).readOnlyHint;
+    if (typeof hint === "boolean") return hint;
+  }
+  return undefined;
+}
+
 function mapOneTool(item: unknown): ConnectorTool | undefined {
   if (!item || typeof item !== "object") return undefined;
   const raw = item as Record<string, unknown>;
@@ -66,16 +77,19 @@ function mapOneTool(item: unknown): ConnectorTool | undefined {
     const fn = raw.function as Record<string, unknown>;
     const name = String(fn.name ?? "");
     if (!name) return undefined;
+    const readOnly = declaredReadOnly(fn) ?? declaredReadOnly(raw);
     return {
       name,
       description: String(fn.description ?? name),
       inputSchema: asObject(fn.parameters) ?? { type: "object", properties: {} },
       batch: composioToolBatch(name),
       route: { connectorId: "composio", toolName: name },
+      ...(readOnly === undefined ? {} : { readOnly }),
     };
   }
   const name = String(raw.slug ?? raw.name ?? "");
   if (!name) return undefined;
+  const readOnly = declaredReadOnly(raw);
   return {
     name,
     description: String(raw.description ?? name),
@@ -84,6 +98,7 @@ function mapOneTool(item: unknown): ConnectorTool | undefined {
       asObject(raw.parameters) ?? { type: "object", properties: {} },
     batch: composioToolBatch(name),
     route: { connectorId: "composio", toolName: name },
+    ...(readOnly === undefined ? {} : { readOnly }),
   };
 }
 
@@ -349,11 +364,47 @@ export function planLiveConnectionSync(
   return { connectIds, revokeIds };
 }
 
+const UNAVAILABLE_TOOL = "unavailable";
+
+function unavailableBrief(reason: string): string {
+  return reason.length > 400 ? `${reason.slice(0, 400)}...` : reason;
+}
+
+function missingComposioSessionReason(reconnect: string[]): string {
+  if (reconnect.length === 0) {
+    return "No active Composio session could list tools for the connected apps.";
+  }
+  const names = reconnect.join(", ");
+  return `The ${names} connection is no longer active. Ask the user to reconnect ${names}.`;
+}
+
+/** Stand-in when connected apps exist but this run cannot list their tools. */
+function composioUnavailableTool(reason: string): ConnectorTool {
+  const brief = unavailableBrief(reason);
+  return {
+    name: "composio__unavailable",
+    description: `Connected apps are assigned but unavailable right now, so none of their tools can be used. Reason: ${brief}. Tell the user to reconnect rather than using shell to write a client. Calling this tool returns the same error.`,
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    readOnly: true,
+    route: { connectorId: "composio", toolName: UNAVAILABLE_TOOL },
+  };
+}
+
+function listedToolItems(input: unknown): unknown[] | undefined {
+  if (Array.isArray(input)) return input;
+  if (input && typeof input === "object" && Array.isArray((input as { items?: unknown }).items)) {
+    return (input as { items: unknown[] }).items;
+  }
+  return undefined;
+}
+
 export class ComposioConnector implements ComposioProvider {
   private client: ComposioClient | undefined;
   private readonly apiKey: string | undefined;
   /** An injected client has its own catalog, so it must not share the process-wide cache. */
   private readonly directoryCache: typeof composioToolkitDirectory;
+  /** Last discovery failure per `${spaceId} ${userId}`, repeated when that placeholder is called. */
+  private readonly composioUnavailableReasons = new Map<string, string>();
 
   constructor(options: { apiKey?: string; client?: ComposioClient } = {}) {
     this.apiKey = options.apiKey;
@@ -534,12 +585,64 @@ export class ComposioConnector implements ComposioProvider {
   async discoverTools(context: AdapterContext): Promise<ConnectorTool[]> {
     const connections = connectedComposioConnections(context);
     if (connections.length === 0) return [];
-    const { session } = await this.sessionForExecute(context.userId, connections);
-    if (!session) return [];
-    return asConnectorTools(await session.tools());
+    const listed = await this.composioListing(context, connections);
+    const key = this.unavailableKey(context);
+    if ("reason" in listed) {
+      this.composioUnavailableReasons.set(key, unavailableBrief(listed.reason));
+      return [composioUnavailableTool(listed.reason)];
+    }
+    this.composioUnavailableReasons.delete(key);
+    return listed.tools;
+  }
+
+  private unavailableKey(context: AdapterContext): string {
+    return `${context.spaceId} ${context.userId}`;
+  }
+
+  private async composioListing(
+    context: AdapterContext,
+    connections: ConnectedConnector[],
+  ): Promise<{ tools: ConnectorTool[] } | { reason: string }> {
+    try {
+      const { session, reconnect } = await this.sessionForExecute(context.userId, connections);
+      if (!session) return { reason: missingComposioSessionReason(reconnect) };
+      const listed = await session.tools();
+      const items = listedToolItems(listed);
+      if (!items) {
+        return { reason: "Composio returned a tool list that could not be converted." };
+      }
+      const tools = asConnectorTools(listed);
+      if (tools.length === 0 && items.length > 0) {
+        return { reason: "Composio returned a tool list that could not be converted." };
+      }
+      return { tools };
+    } catch (error) {
+      return { reason: sanitizeComposioError(error) };
+    }
+  }
+
+  private async composioFailureReason(context: AdapterContext): Promise<string> {
+    const stored = this.composioUnavailableReasons.get(this.unavailableKey(context));
+    if (stored) return stored;
+    const connections = connectedComposioConnections(context);
+    if (connections.length === 0) {
+      return "No active Composio session could list tools for the connected apps.";
+    }
+    const listed = await this.composioListing(context, connections);
+    if ("reason" in listed) return unavailableBrief(listed.reason);
+    return "Connected apps are assigned but their tools could not be listed.";
   }
 
   async *execute(call: ConnectorCall, context: AdapterContext): AsyncIterable<ConnectorEvent> {
+    if (call.route?.toolName === UNAVAILABLE_TOOL || call.tool === "composio__unavailable") {
+      yield {
+        type: "error",
+        message:
+          this.composioUnavailableReasons.get(this.unavailableKey(context)) ??
+          (await this.composioFailureReason(context)),
+      };
+      return;
+    }
     const executed = [];
     try {
       const { session, reconnect, connectedAccounts } = await this.sessionForExecute(
@@ -656,7 +759,11 @@ export class ComposioConnector implements ComposioProvider {
     request: { state: string; code?: string },
     _context: AdapterContext,
   ): Promise<{ connectionRef: string }> {
-    return { connectionRef: request.state };
+    const { connectedAccounts } = await this.sdk();
+    const account = await connectedAccounts
+      .waitForConnection(request.state, 20_000)
+      .catch(() => undefined);
+    return { connectionRef: account?.id || request.state };
   }
 
   async revoke(connectionRef: string, context: AdapterContext): Promise<void> {

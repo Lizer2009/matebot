@@ -6,6 +6,8 @@ import {
   partitionTools,
   USE_TOOL,
 } from "./builtin-tool-bridge.js";
+import { agentConnectionTools } from "./builtin-tools.js";
+import { NAME_INDEX_MAX_BYTES } from "./lazy-tool-catalog.js";
 import { describeToolActivity } from "./pi-runtime-tools.js";
 import { BUILTIN_AGENT_TOOL_NAMES, selectBuiltinToolsForRun } from "./run-tool-selection.js";
 
@@ -60,7 +62,8 @@ describe("built-in tool bridge", () => {
     // `find_tool` indexes every deferred tool by name, so adding one (`present_result`)
     // grows this by its name and group, not by its schema. `cancel_interaction`
     // costs its 20-byte name for the same reason; the budget moves by exactly that.
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_932);
+    // `message_user` also forbids pasting commands and scripts now: +7 bytes net.
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(31_939);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining(["render_plot", "create_space", "generate_secret", "scratchpad_add"]),
     );
@@ -129,5 +132,38 @@ describe("built-in tool bridge", () => {
     expect(
       describeToolActivity(USE_TOOL, { name: "create_space", arguments: { name: "Finance" } }),
     ).toBe("Creating space: Finance");
+  });
+
+  it("drops the inline name index when deferred tools overflow the catalog budget", () => {
+    const deferred = Array.from({ length: 80 }, (_, i) => ({
+      name: `scratchpad_extra_${String(i).padStart(3, "0")}_tool`,
+      description: "x",
+      inputSchema: { type: "object", properties: {} },
+    }));
+    // partitionTools only defers names in the built-in set. Register the fixture, then
+    // remove it so later cases still see the real catalog.
+    for (const tool of deferred) BUILTIN_AGENT_TOOL_NAMES.add(tool.name);
+    try {
+      const { listed } = partitionTools(deferred);
+      const description = listed.find((tool) => tool.name === FIND_TOOL)!.description;
+      expect(Buffer.byteLength(description, "utf8")).toBeLessThan(400 + NAME_INDEX_MAX_BYTES + 200);
+      expect(description).toMatch(/Sources:/);
+      expect(description).not.toContain("scratchpad_extra_000_tool");
+    } finally {
+      for (const tool of deferred) BUILTIN_AGENT_TOOL_NAMES.delete(tool.name);
+    }
+  });
+
+  it("defers agent-connection tools instead of listing their schemas", () => {
+    const { listed, deferred } = partitionTools(agentConnectionTools);
+    expect(deferred.map((tool) => tool.name).sort()).toEqual([
+      "connect_agent",
+      "message_agent",
+      "respond_agent_connection",
+    ]);
+    expect(listed.map((tool) => tool.name).sort()).toEqual(["find_tool", "use_tool"]);
+    for (const name of ["connect_agent", "message_agent", "respond_agent_connection"]) {
+      expect(CORE_BUILTIN_TOOL_NAMES.has(name)).toBe(false);
+    }
   });
 });

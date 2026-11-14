@@ -2,7 +2,7 @@ import * as z from "zod";
 import { AgentImportSetupItemSchema } from "./agent-import-setup.js";
 import { botSecretDestinationSchema, LoginFieldLabels, OneTimeCodeTarget } from "./bot-secrets.js";
 import { Id, ThinkingLevelSchema } from "./ids.js";
-import { A2uiSurfaceBlockSchema } from "./interaction.js";
+import { A2uiSurfaceBlockSchema, InteractionStatus } from "./interaction.js";
 import { McpTransportSchema } from "./mcp.js";
 import { PAGE_TITLE_MAX_LENGTH } from "./pages.js";
 
@@ -107,6 +107,12 @@ const ChartBlock = z
 export const SecretAskPurpose = z.enum(["otp", "password", "api_key"]);
 export type SecretAskPurpose = z.infer<typeof SecretAskPurpose>;
 
+/** Kernel row this L0-A view belongs to (spec §3.3.1). Omitted on pre-kernel blocks. */
+const l0aKernelStamp = {
+  interactionId: Id.optional(),
+  cardStatus: InteractionStatus.optional(),
+};
+
 /** The settings a bot can change on itself from chat. */
 export const BotSettingsValuesSchema = z.object({
   modelProvider: z.string().trim().min(1).max(80).nullable().optional(),
@@ -172,6 +178,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
         }),
       )
       .optional(),
+    ...l0aKernelStamp,
   }),
   z.object({
     kind: z.literal("choice"),
@@ -180,6 +187,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     options: z.array(z.object({ id: z.string(), letter: z.string(), label: z.string() })),
     /** Set once the user picks an option; renders the picker as answered. */
     answerId: z.string().optional(),
+    ...l0aKernelStamp,
   }),
   z.object({
     /** Inline app authorization card (Composio-backed): logo, name, one-line
@@ -191,6 +199,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     description: z.string(),
     logo: z.string().nullable(),
     status: z.enum(["pending", "connected"]),
+    ...l0aKernelStamp,
   }),
   z.object({
     kind: z.literal("connect"),
@@ -198,6 +207,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     initial: z.string(),
     color: z.string(),
     status: z.enum(["pending", "connected"]),
+    ...l0aKernelStamp,
   }),
   z.object({
     kind: z.literal("computer"),
@@ -301,6 +311,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     endpoint: z.string().nullable(),
     needsOAuth: z.boolean(),
     status: z.enum(["pending", "connected", "dismissed"]).default("pending"),
+    ...l0aKernelStamp,
   }),
   z.object({
     kind: z.literal("import_setup"),

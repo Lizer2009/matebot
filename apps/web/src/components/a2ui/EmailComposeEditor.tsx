@@ -1,10 +1,11 @@
 import { useLingui } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
-import type { emailSurfaceTemplateFromBlock } from "@matebot/core";
+import type { emailSurfaceTemplateFromBlock, SurfaceActionKind } from "@matebot/core";
 import { emailSurfacePhase } from "@matebot/core";
 import { Button, Input, Spinner, Textarea } from "@matebot/ui-web";
 import { useEffect, useId, useRef, useState } from "react";
 import { SuccessPop } from "../ai/primitives";
+import { CardApprovalMenu } from "./CardApprovalMenu";
 import type { EmailDraftFields, EmailFieldName } from "./email-fields";
 import { EMAIL_DRAFT_FIELD_NAMES } from "./email-fields";
 
@@ -25,27 +26,40 @@ export function EmailComposeEditor({
   capability,
   template,
   lifecycle,
-  providerMessageId,
+  status,
+  action: actionProp,
+  actionLabel,
   error: surfaceError,
   fields,
   senderLabel,
+  senderAddress,
   onFieldChange,
   onConfirm,
   onSend,
   onConnect,
   onCheckStatus,
   onDiscard,
+  onManageRules,
+  onAllowRecipient,
+  onDisableDrafts,
+  draftsDisabled,
 }: {
   draftVersion: number;
   confirmedVersion?: number;
   capability?: A2uiSurfaceBlock["capability"];
   template?: A2uiSurfaceBlock["template"];
   lifecycle?: A2uiSurfaceBlock["lifecycle"];
-  providerMessageId?: string;
+  status?: string;
+  /** The one control this card may still show. The host decides; this editor does not guess. */
+  action?: SurfaceActionKind;
+  /** Two-part label from `surfaceActionLabel`. Falls back to Send. */
+  actionLabel?: string;
   error?: string;
   fields: EmailDraftFields;
   /** The connection's own label for the read-only "sending from" row. Never an address. */
   senderLabel?: string;
+  /** Provider mailbox, only when the server learned it from the account record. */
+  senderAddress?: string;
   onFieldChange?: (
     name: EmailFieldName,
     value: string,
@@ -56,6 +70,10 @@ export function EmailComposeEditor({
   onConnect?: () => Promise<void>;
   onCheckStatus?: () => Promise<void>;
   onDiscard?: () => void | Promise<void>;
+  onManageRules?: () => void;
+  onAllowRecipient?: (recipient: string) => void | Promise<void>;
+  onDisableDrafts?: (disabled: boolean) => void | Promise<void>;
+  draftsDisabled?: boolean;
 }) {
   const { t } = useLingui();
   const toId = useId();
@@ -124,8 +142,9 @@ export function EmailComposeEditor({
    */
   const draftComplete =
     values.to.trim() !== "" && values.subject.trim() !== "" && values.body.trim() !== "";
-  // One rule shared with the native card; see emailSurfacePhase in @matebot/core.
-  const { phase, locked } = emailSurfacePhase({
+  // One rule shared with the native card. The host already folded a finished card;
+  // what remains here is an open surface, and `action` is the one control it may show.
+  const { phase, locked, affordance } = emailSurfacePhase({
     template:
       mailbox === "ready" &&
       (template === "email-connection-card" || template === "email-reauth-card")
@@ -136,7 +155,11 @@ export function EmailComposeEditor({
     intent: "email.compose",
     error: surfaceError,
     busy,
+    ...(status ? { status } : {}),
   });
+  // A successful Connect updates the mailbox here before the server stamp arrives.
+  // The host's action still says `connect`; the local mailbox is what lets Send appear.
+  const action = mailbox !== capability ? affordance.action : (actionProp ?? affordance.action);
 
   /**
    * Record a keystroke as the person's own text.
@@ -222,9 +245,6 @@ export function EmailComposeEditor({
       className="grid gap-3"
       onSubmit={(event) => event.preventDefault()}
     >
-      <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-muted-foreground">
-        {t`Email`}
-      </div>
       <div className="grid gap-1">
         <label htmlFor={subjectId} className="sr-only">
           {t`Subject`}
@@ -259,18 +279,7 @@ export function EmailComposeEditor({
                 data-testid="a2ui-email-sender"
                 className="block truncate text-[15px] text-foreground"
               >
-                {senderLabel ?? t`Connected account`}
-              </span>
-              {/*
-                The address is not known: the connection's name is whatever the client passed
-                when it was created, and the provider's account record does not carry the
-                mailbox. Saying so is better than showing a name where an address belongs.
-              */}
-              <span
-                data-testid="a2ui-email-sender-note"
-                className="block text-[12px] text-muted-foreground"
-              >
-                {t`Email address not provided`}
+                {senderAddress ?? senderLabel ?? t`Connected account`}
               </span>
             </span>
           </div>
@@ -293,7 +302,6 @@ export function EmailComposeEditor({
           label={t`CC`}
           value={values.cc}
           autoComplete="email"
-          placeholder="name@example.com"
           disabled={locked}
           onChange={(value) => typed("cc", value)}
           onBlur={(value) => {
@@ -323,13 +331,17 @@ export function EmailComposeEditor({
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <StatusLine
           phase={phase}
-          providerMessageId={providerMessageId}
           surfaceError={surfaceError}
+          recipient={fields.to}
+          draftsDisabled={draftsDisabled}
+          onAllowRecipient={onAllowRecipient}
+          onDisableDrafts={onDisableDrafts}
+          onManageRules={onManageRules}
         />
         <div className="flex items-center gap-3">
-          {phase === "action-submitting-card" ||
-          phase === "action-progress-card" ||
-          phase === "action-result-success" ? null : (
+          {action === "none" ||
+          phase === "action-submitting-card" ||
+          phase === "action-progress-card" ? null : (
             <Button
               type="button"
               variant="ghost"
@@ -348,12 +360,12 @@ export function EmailComposeEditor({
               {t`Discard`}
             </Button>
           )}
-          {phase === "action-submitting-card" ||
-          phase === "action-progress-card" ? null : mailboxNeedsConnect(mailbox) &&
-            phase === "email-connection-card" ? (
+          {action === "connect" && mailboxNeedsConnect(mailbox) ? (
             <Button
               type="button"
-              data-testid="a2ui-email-connect"
+              data-testid={
+                mailbox === "requires_reauth" ? "a2ui-email-reauth" : "a2ui-email-connect"
+              }
               disabled={busy}
               onClick={() => {
                 if (!onConnect) return;
@@ -365,41 +377,11 @@ export function EmailComposeEditor({
                   .finally(() => setBusy(false));
               }}
             >
-              {t`Connect email`}
+              {mailbox === "requires_reauth"
+                ? t({ message: "Reconnect", context: "mailbox" })
+                : t`Connect email`}
             </Button>
-          ) : mailboxNeedsConnect(mailbox) && phase === "email-reauth-card" ? (
-            <Button
-              type="button"
-              data-testid="a2ui-email-reauth"
-              disabled={busy}
-              onClick={() => {
-                if (!onConnect) return;
-                setBusy(true);
-                setError(null);
-                void onConnect()
-                  .then(() => setMailbox("ready"))
-                  .catch((err: unknown) => setError(messageOf(err)))
-                  .finally(() => setBusy(false));
-              }}
-            >
-              {t({ message: "Reconnect", context: "mailbox" })}
-            </Button>
-          ) : phase === "action-result-failed" ? (
-            <Button
-              type="button"
-              data-testid="a2ui-email-retry"
-              disabled={busy}
-              onClick={() => {
-                setBusy(true);
-                setError(null);
-                void Promise.resolve(onSend?.(version))
-                  .catch((err: unknown) => setError(messageOf(err)))
-                  .finally(() => setBusy(false));
-              }}
-            >
-              {t`Retry`}
-            </Button>
-          ) : phase === "action-reconcile-card" ? (
+          ) : action === "check_status" ? (
             <Button
               type="button"
               data-testid="a2ui-email-check-status"
@@ -415,7 +397,7 @@ export function EmailComposeEditor({
             >
               {t`Check status`}
             </Button>
-          ) : phase === "action-result-success" ? null : onSend ? (
+          ) : action === "submit" && onSend ? (
             <Button
               type="button"
               data-testid="a2ui-email-send"
@@ -440,7 +422,7 @@ export function EmailComposeEditor({
                   .finally(() => setBusy(false));
               }}
             >
-              {t`Send`}
+              {actionLabel ?? t`Send`}
             </Button>
           ) : null}
         </div>
@@ -461,12 +443,20 @@ export function EmailComposeEditor({
 
 function StatusLine({
   phase,
-  providerMessageId,
   surfaceError,
+  recipient,
+  draftsDisabled,
+  onAllowRecipient,
+  onDisableDrafts,
+  onManageRules,
 }: {
   phase: ReturnType<typeof emailSurfaceTemplateFromBlock>;
-  providerMessageId?: string;
   surfaceError?: string;
+  recipient?: string;
+  draftsDisabled?: boolean;
+  onAllowRecipient?: (recipient: string) => void | Promise<void>;
+  onDisableDrafts?: (disabled: boolean) => void | Promise<void>;
+  onManageRules?: () => void;
 }) {
   const { t } = useLingui();
   if (phase === "action-submitting-card" || phase === "action-progress-card") {
@@ -477,7 +467,7 @@ function StatusLine({
         aria-live="polite"
       >
         <Spinner className="size-3.5" aria-hidden />
-        {t`Sending`}
+        {t`Sending email`}
       </div>
     );
   }
@@ -485,11 +475,6 @@ function StatusLine({
     return (
       <div data-testid="a2ui-email-status" className="grid gap-1" aria-live="polite">
         <SuccessPop label={t`Sent`} />
-        {providerMessageId ? (
-          <div data-testid="a2ui-email-provider-id" className="text-[12px] text-muted-foreground">
-            {providerMessageId}
-          </div>
-        ) : null}
       </div>
     );
   }
@@ -528,13 +513,13 @@ function StatusLine({
     );
   }
   return (
-    <div
-      data-testid="a2ui-email-status"
-      className="text-[13px] text-muted-foreground"
-      aria-live="polite"
-    >
-      {t`Needs approval`}
-    </div>
+    <CardApprovalMenu
+      recipient={recipient}
+      draftsDisabled={draftsDisabled}
+      onAllowRecipient={onAllowRecipient}
+      onDisableDrafts={onDisableDrafts}
+      onManageRules={onManageRules}
+    />
   );
 }
 

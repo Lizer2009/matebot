@@ -5,6 +5,7 @@ import {
   interactionCapabilityForIntent,
   userEditedFieldNames,
 } from "@matebot/core";
+import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient } from "@matebot/db";
 import { asSystem, createDb, getInteraction } from "@matebot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -111,6 +112,7 @@ describePostgres("connection recovery (PostgreSQL)", () => {
         threadId,
         messageId,
         intent: "email.compose",
+        cardKey: interactionCardKey(threadId, "email.compose"),
         status: "needs_connection",
         draftVersion: 1,
         plan: plan([
@@ -265,6 +267,7 @@ describePostgres("connection recovery (PostgreSQL)", () => {
         spaceId,
         threadId: otherThread,
         intent: "calendar.create",
+        cardKey: interactionCardKey(otherThread, "calendar.create"),
         status: "needs_connection",
         draftVersion: 1,
         plan: {

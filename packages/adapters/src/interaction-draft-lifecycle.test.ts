@@ -5,6 +5,7 @@ import {
   interactionSlotsFromPlan,
   requiredFieldsSatisfied,
 } from "@matebot/core";
+import { InteractionTerminalError } from "@matebot/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { updateInteractionFieldService } from "./interaction-field-writer.js";
 import { publishInteractionSurface } from "./interaction-publish.js";
@@ -41,18 +42,30 @@ vi.mock("@matebot/db", async () => {
     createThreadMessageInTransaction: (...args: unknown[]) =>
       createThreadMessageInTransaction(...args),
     appendEventInTransaction: (...args: unknown[]) => appendEventInTransaction(...args),
+    appendInteractionEvent: vi.fn(async () => undefined),
     getInteraction: (...args: unknown[]) => getInteraction(...args),
     withTransactionRetry: async (work: () => Promise<unknown>) => work(),
   };
 });
 
+const interactionFindUnique = vi.fn(async () => ({ approvalEffectId: null as string | null }));
+const effectFindUnique = vi.fn(async () => null as { id: string; status: string } | null);
+
 const prisma = {
+  interaction: {
+    findUnique: interactionFindUnique,
+  },
+  externalEffect: {
+    findUnique: effectFindUnique,
+  },
   $transaction: async (work: (tx: unknown) => Promise<unknown>) =>
     work({
       interaction: {
+        findUnique: interactionFindUnique,
         updateMany: txInteractionUpdateMany,
         update: vi.fn(async () => ({ id: "ix-1" })),
       },
+      externalEffect: { findUnique: effectFindUnique },
       message: { findUnique: txMessageFindUnique, update: txMessageUpdate },
     }),
   interactionSurface: { findFirst: (...args: unknown[]) => surfaceFindFirst(...args) },
@@ -202,6 +215,33 @@ describe("a field edit republishes in the schema's names", () => {
     expect(requiredFieldsSatisfied(data.data.plan, data.data.slots)).toBe(true);
     // The person's own text is stamped as theirs.
     expect(data.data.plan.fields.find((field) => field.name === "body")?.source).toBe("user");
+  });
+
+  it("clears staleAt so a later settle does not close the card being edited", async () => {
+    arrangeDraft(
+      emailPlan([
+        { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+        { name: "body", required: true, status: "missing" },
+      ]),
+      { to: "alex@example.test", subject: "冬天的问候" },
+    );
+
+    await updateInteractionFieldService(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      interactionId: "ix-1",
+      expectedDraftVersion: 1,
+      name: "body",
+      value: "愿这个冬天顺遂。",
+      origin: "user",
+    });
+
+    const lastUpdate = txInteractionUpdateMany.mock.calls.at(-1)?.[0] as
+      | { data: { staleAt?: Date | null } }
+      | undefined;
+    expect(lastUpdate?.data.staleAt).toBeNull();
   });
 
   it("an edit to a plan stored with two spellings still lands on the schema's name", async () => {
@@ -494,6 +534,48 @@ describe("cancel always works", () => {
     };
     expect(data.data.status).toBe("cancelled");
   });
+
+  it("refuses to cancel a send whose effect is already in flight", async () => {
+    const { cancelInteractionService, InteractionCancelRejectedError } = await import(
+      "./interaction-field-writer.js"
+    );
+    getInteraction.mockResolvedValue({
+      id: "ix-1",
+      threadId: "thread-1",
+      status: "ready_for_review",
+      draftVersion: 1,
+      confirmedVersion: 1,
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      slots: { to: "a@example.test", subject: "s", body: "b" },
+      messageId: "msg-1",
+      approvalEffectId: "effect-1",
+    });
+    interactionFindUnique.mockResolvedValue({ approvalEffectId: "effect-1" });
+    effectFindUnique.mockResolvedValue({
+      id: "effect-1",
+      status: "executing",
+    });
+    try {
+      await expect(
+        cancelInteractionService(prisma, {
+          spaceId: "space-1",
+          threadId: "thread-1",
+          botId: "bot-1",
+          interactionId: "ix-1",
+          expectedDraftVersion: 1,
+          runtimeCanAbort: false,
+        }),
+      ).rejects.toBeInstanceOf(InteractionCancelRejectedError);
+      expect(txInteractionUpdateMany).not.toHaveBeenCalled();
+    } finally {
+      interactionFindUnique.mockResolvedValue({ approvalEffectId: null });
+      effectFindUnique.mockResolvedValue(null);
+    }
+  });
 });
 
 describe("the label survives every rebuild of the card", () => {
@@ -580,6 +662,29 @@ describe("the card carries the connection's label, never an address", () => {
     expect(Object.keys(block.blocks[0] ?? {})).not.toContain("from");
   });
 
+  it("writes a provider mailbox only when the publisher was given one", async () => {
+    await publishInteractionSurface(prisma, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      capability: "ready",
+      senderLabel: "Gmail",
+      senderAddress: "lizer@example.test",
+    });
+    const block = createThreadMessageInTransaction.mock.calls.at(-1)?.[1] as {
+      blocks: Array<Record<string, unknown>>;
+    };
+    expect(block.blocks[0]).toMatchObject({
+      senderLabel: "Gmail",
+      senderAddress: "lizer@example.test",
+    });
+  });
+
   it("omits the label when no connection named one", async () => {
     await publishInteractionSurface(prisma, {
       spaceId: "space-1",
@@ -627,11 +732,25 @@ describe("the sender row survives a rebuild", () => {
     // An edit rebuilds the block. A rebuild that dropped the label would blank the card's
     // read-only sender row after the first keystroke.
     messageFindUnique.mockResolvedValue({
-      blocks: [{ kind: "a2ui_surface", surfaceId: "surface-1", senderLabel: "Gmail" }],
+      blocks: [
+        {
+          kind: "a2ui_surface",
+          surfaceId: "surface-1",
+          senderLabel: "Gmail",
+          senderAddress: "lizer@example.test",
+        },
+      ],
     });
     txMessageFindUnique.mockResolvedValue({
       id: "msg-1",
-      blocks: [{ kind: "a2ui_surface", surfaceId: "surface-1", senderLabel: "Gmail" }],
+      blocks: [
+        {
+          kind: "a2ui_surface",
+          surfaceId: "surface-1",
+          senderLabel: "Gmail",
+          senderAddress: "lizer@example.test",
+        },
+      ],
     });
     getInteraction.mockResolvedValue({
       id: "ix-1",
@@ -664,6 +783,50 @@ describe("the sender row survives a rebuild", () => {
     const update = txMessageUpdate.mock.calls.at(-1)?.[0] as {
       data: { blocks: Array<Record<string, unknown>> };
     };
-    expect(update.data.blocks[0]).toMatchObject({ senderLabel: "Gmail" });
+    expect(update.data.blocks[0]).toMatchObject({
+      senderLabel: "Gmail",
+      senderAddress: "lizer@example.test",
+    });
   });
+});
+
+describe("a field edit on a card that closed", () => {
+  // A card can be superseded between the moment a client listed it and the moment
+  // the person's keystroke arrives. That is a lost race, not a server fault: the
+  // row must not be written, and the caller has to be able to answer as a conflict.
+  it.each(["superseded", "expired", "sent", "executed", "confirmed", "cancelled"])(
+    "refuses a %s row with a typed error and writes nothing",
+    async (status) => {
+      getInteraction.mockResolvedValue({
+        id: "ix-1",
+        threadId: "thread-1",
+        status,
+        draftVersion: 3,
+        confirmedVersion: 3,
+        plan: emailPlan([
+          { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+          { name: "body", value: "正文", required: true, status: "resolved" },
+        ]),
+        slots: { to: "alex@example.test", subject: "冬天的问候", body: "正文" },
+        messageId: "msg-1",
+      });
+
+      await expect(
+        updateInteractionFieldService(prisma, {
+          spaceId: "space-1",
+          threadId: "thread-1",
+          botId: "bot-1",
+          interactionId: "ix-1",
+          expectedDraftVersion: 3,
+          name: "subject",
+          value: "新主题",
+          origin: "user",
+        }),
+      ).rejects.toBeInstanceOf(InteractionTerminalError);
+
+      expect(txInteractionUpdateMany).not.toHaveBeenCalled();
+      expect(txMessageUpdate).not.toHaveBeenCalled();
+    },
+  );
 });

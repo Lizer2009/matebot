@@ -54,6 +54,9 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       openPeerChat: (peer) => rowActionsRef.current.openPeerChat(peer),
       layout: (id, y, index) => rowActionsRef.current.layout(id, y, index),
       refresh: () => rowActionsRef.current.refresh?.(),
+      manageRules: () => rowActionsRef.current.manageRules?.(),
+      allowRecipient: (recipient) => rowActionsRef.current.allowRecipient?.(recipient),
+      disableDrafts: (disabled) => rowActionsRef.current.disableDrafts?.(disabled),
     }),
     [],
   );
@@ -150,6 +153,7 @@ export function useThreadRows({
           key={message.id}
           message={message}
           actions={rowActions}
+          draftsDisabled={currentBot?.draftsDisabled}
           botId={botId}
           bubbleBotId={botId ?? snap?.members?.[0]?.botId ?? ""}
           groupId={groupId}

@@ -51,6 +51,39 @@ async function signIn(
   }).catch(() => undefined);
 }
 
+/**
+ * Authorize a Fake Composio app through the production routes.
+ *
+ * Pending Fake returns an authorization URL and only creates the account on
+ * `connections.complete`. Instant Fake has no URL and is already connected.
+ * Either way this is not a live provider write.
+ */
+async function connectFakeApp(
+  page: import("@playwright/test").Page,
+  provider: string,
+  displayName: string,
+) {
+  const begun = await rpc<{ connectionId: string; authorizationUrl: string | null }>(
+    page,
+    "connections/begin",
+    { connectorId: "composio", provider, displayName },
+  );
+  if (begun.authorizationUrl) {
+    await rpc(page, "connections/complete", {
+      connectionId: begun.connectionId,
+      code: "fake-oauth-code",
+    });
+  }
+}
+
+async function connectFakeMailbox(page: import("@playwright/test").Page) {
+  await connectFakeApp(page, "gmail", "Email");
+}
+
+async function connectFakeCalendar(page: import("@playwright/test").Page) {
+  await connectFakeApp(page, "googlecalendar", "Calendar");
+}
+
 /** Send a message that the scripted runtime turns into one production tool call. */
 async function send(page: import("@playwright/test").Page, text: string) {
   const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
@@ -65,6 +98,7 @@ async function waitForSurface(page: import("@playwright/test").Page, testId: str
 
 test("compose card, model-shaped edit, same card, then a fake send", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
 
   await send(
     page,
@@ -107,6 +141,58 @@ test("compose card, model-shaped edit, same card, then a fake send", async ({ pa
   await captureScreenshot(page, testInfo, "a2ui-e2e-02-edited-same-card");
 });
 
+test("approval menu has four items and Allow this recipient leaves Send", async ({
+  page,
+}, testInfo) => {
+  await signIn(page, testInfo);
+  // Fake Composio connects without a live mailbox. Present after the account
+  // exists so the card is the approval surface (Needs approval), not Connect.
+  await connectFakeMailbox(page);
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "Hello",
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "Hi", required: true, status: "resolved" },
+          { name: "body", value: "Hello there", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+  await waitForSurface(page, "a2ui-email-compose");
+  await expect(page.getByTestId("a2ui-email-send")).toBeVisible({ timeout: 30_000 });
+  const status = page.getByTestId("a2ui-email-status");
+  await expect(status).toContainText("Needs approval");
+  await status.click();
+  await expect(page.getByTestId("a2ui-email-allow-recipient")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-approval-require")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-disable-drafts")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-manage-rules")).toBeVisible();
+  await captureScreenshot(page, testInfo, "a2ui-e2e-d-approval-menu");
+  await page.getByTestId("a2ui-email-allow-recipient").click();
+  await expect(page.getByTestId("a2ui-email-send")).toBeVisible();
+  const rules = await rpc<Array<{ effect: string; matchKind: string; matchValue: string }>>(
+    page,
+    "approvalRules/list",
+    {},
+  );
+  expect(rules).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        effect: "always_allow",
+        matchKind: "recipient",
+        matchValue: "friend@example.test",
+      }),
+    ]),
+  );
+  await captureScreenshot(page, testInfo, "a2ui-e2e-d-allow-recipient-send-stays");
+});
+
 /**
  * A result card built from a file the user uploaded.
  *
@@ -116,10 +202,10 @@ test("compose card, model-shaped edit, same card, then a fake send", async ({ pa
  * with these numbers means every step worked.
  */
 const SAMPLE_CSV = [
-  "quarter,region,amount",
-  "Q1,North,1200.50",
-  "Q1,South,800",
-  "Q2,North,1500",
+  "date,quarter,region,amount",
+  "2026-02-01,Q1,North,1200.50",
+  "2026-02-15,Q1,South,800",
+  "2026-05-01,Q2,North,1500",
 ].join("\n");
 
 async function uploadCsv(page: import("@playwright/test").Page, botId: string): Promise<string> {
@@ -241,6 +327,105 @@ async function cardInteractionId(page: import("@playwright/test").Page): Promise
   return value;
 }
 
+async function cardSurfaceId(page: import("@playwright/test").Page): Promise<string> {
+  const value = await page.getByTestId("a2ui-surface-card").first().getAttribute("data-surface-id");
+  if (!value) throw new Error("the card on screen exposed no surface id");
+  return value;
+}
+
+const e2eApi = process.env.API_URL ?? "http://127.0.0.1:3110";
+
+type SeededSurface = {
+  interactionId: string;
+  cardKey: string | null;
+  messageId: string | null;
+  status: string;
+  draftVersion: number;
+  surfaceId: string | null;
+  block: {
+    interactionId: string;
+    surfaceId: string;
+    status: string | null;
+    template: string | null;
+    lifecycle: string | null;
+    draftVersion: number;
+  } | null;
+};
+
+async function seedExpiredSurface(interactionId: string): Promise<SeededSurface> {
+  const response = await fetch(`${e2eApi}/__e2e/seed-expired-surface`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ interactionId }),
+  });
+  const body = (await response.json()) as SeededSurface & { error?: string };
+  if (!response.ok) {
+    throw new Error(`seed-expired-surface ${response.status}: ${body.error ?? "failed"}`);
+  }
+  return body;
+}
+
+async function markAwaitingApprovalExpired(interactionId: string): Promise<SeededSurface> {
+  const response = await fetch(`${e2eApi}/__e2e/mark-awaiting-approval-expired`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ interactionId }),
+  });
+  const body = (await response.json()) as SeededSurface & { error?: string };
+  if (!response.ok) {
+    throw new Error(`mark-awaiting-approval-expired ${response.status}: ${body.error ?? "failed"}`);
+  }
+  return body;
+}
+
+async function expireDueInteractions(
+  interactionId: string,
+): Promise<{ expired: string[]; surface?: SeededSurface }> {
+  const response = await fetch(`${e2eApi}/__e2e/expire-due-interactions`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ interactionId }),
+  });
+  const body = (await response.json()) as {
+    expired: string[];
+    surface?: SeededSurface;
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new Error(`expire-due-interactions ${response.status}: ${body.error ?? "failed"}`);
+  }
+  return body;
+}
+
+async function inspectLastPresent(botId: string): Promise<{
+  tool: { name?: string; error?: unknown; outcome?: string } | null;
+  queryRows: number;
+}> {
+  const response = await fetch(
+    `${e2eApi}/__e2e/inspect-last-present?botId=${encodeURIComponent(botId)}`,
+  );
+  const body = (await response.json()) as {
+    tool: { name?: string; error?: unknown; outcome?: string } | null;
+    queryRows: number;
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new Error(`inspect-last-present ${response.status}: ${body.error ?? "failed"}`);
+  }
+  return body;
+}
+
+async function inspectSurface(interactionId: string): Promise<SeededSurface> {
+  const response = await fetch(
+    `${e2eApi}/__e2e/inspect-surface?interactionId=${encodeURIComponent(interactionId)}`,
+  );
+  const body = (await response.json()) as SeededSurface & { error?: string };
+  if (!response.ok) {
+    throw new Error(`inspect-surface ${response.status}: ${body.error ?? "failed"}`);
+  }
+  return body;
+}
+
 /**
  * A calendar card is a real card, at both widths.
  *
@@ -334,6 +519,7 @@ for (const viewport of [
 
 test("a field the person typed survives a late model edit", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
   await send(
     page,
     `call present_interaction with ${JSON.stringify({
@@ -376,6 +562,7 @@ test("an out-of-date revision is refused instead of overwriting the card", async
   page,
 }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
   await send(
     page,
     `call present_interaction with ${JSON.stringify({
@@ -416,6 +603,7 @@ test("an out-of-date revision is refused instead of overwriting the card", async
 
 test("changing a payload after approval invalidates that approval", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
   await send(
     page,
     `call present_interaction with ${JSON.stringify({
@@ -495,11 +683,168 @@ test("a draft can be cancelled from the card and offers nothing to send", async 
   await captureScreenshot(page, testInfo, "a2ui-e2e-06-cancelled");
 });
 
-test("asking for a schedule produces a result card, never a create draft", async ({
+/**
+ * Browser → production retryInteraction → isolated Postgres.
+ *
+ * The expired stamp is an isolated seed (`/__e2e/seed-expired-surface`):
+ * `settleInteraction` then `surfaceStampFor` on the same message block. Live
+ * e2e has no mailbox, so the card is often `needs_connection` (kernel-exempt);
+ * the seed then does a labeled open-status fixture write and settles. That is
+ * not the C-batch expiry scanner, does not write `staleAt`, and is not a
+ * status-only SQL update (which would still look like a draft).
+ */
+test("expired card retry revives the same persisted surface", async ({ page }, testInfo) => {
+  await signIn(page, testInfo);
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "冬天的问候",
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+          { name: "body", value: "正文", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+  await waitForSurface(page, "a2ui-email-compose");
+
+  const interactionId = await cardInteractionId(page);
+  const surfaceId = await cardSurfaceId(page);
+  const before = await inspectSurface(interactionId);
+  expect(before.cardKey).toBeTruthy();
+  expect(before.messageId).toBeTruthy();
+  expect(before.surfaceId).toBe(surfaceId);
+
+  const seeded = await seedExpiredSurface(interactionId);
+  expect(seeded).toMatchObject({
+    interactionId,
+    cardKey: before.cardKey,
+    messageId: before.messageId,
+    surfaceId,
+    status: "expired",
+    block: {
+      interactionId,
+      surfaceId,
+      status: "expired",
+      template: "action-expired-card",
+    },
+  });
+
+  await page.reload();
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Expired, nothing was sent", {
+    timeout: 45_000,
+  });
+  await expect(page.getByTestId("a2ui-surface-retry")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(0);
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  expect(await cardSurfaceId(page)).toBe(surfaceId);
+  await captureScreenshot(page, testInfo, "a2ui-live-expired-retry");
+
+  await page.getByTestId("a2ui-surface-retry").click();
+  await expect(page.getByTestId("a2ui-email-compose")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("a2ui-surface-retry")).toHaveCount(0);
+  await expect(
+    page.getByTestId("a2ui-email-send").or(page.getByTestId("a2ui-email-connect")),
+  ).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-to")).toHaveValue("friend@example.test", {
+    timeout: 30_000,
+  });
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("冬天的问候");
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  expect(await cardSurfaceId(page)).toBe(surfaceId);
+  await captureScreenshot(page, testInfo, "a2ui-live-retry-draft");
+
+  const revived = await inspectSurface(interactionId);
+  expect(revived).toMatchObject({
+    interactionId,
+    cardKey: before.cardKey,
+    messageId: before.messageId,
+    surfaceId,
+    block: {
+      interactionId,
+      surfaceId,
+      template: "email-draft-card",
+    },
+  });
+  expect(["collecting", "ready_for_review"]).toContain(revived.status);
+  expect(revived.draftVersion).toBeGreaterThan(seeded.draftVersion);
+  expect(revived.block?.status).toBe(revived.status);
+
+  await page.reload();
+  await expect(page.getByTestId("a2ui-email-compose")).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-surface-retry")).toHaveCount(0);
+  await expect(page.getByTestId("a2ui-email-to")).toHaveValue("friend@example.test", {
+    timeout: 30_000,
+  });
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("冬天的问候");
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  expect(await cardSurfaceId(page)).toBe(surfaceId);
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(1);
+  await captureScreenshot(page, testInfo, "a2ui-live-retry-reload");
+});
+
+test("approval window expiry folds the live card through the production closer", async ({
   page,
 }, testInfo) => {
   await signIn(page, testInfo);
   await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "冬天的问候",
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+          { name: "body", value: "正文", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+  await waitForSurface(page, "a2ui-email-compose");
+
+  const interactionId = await cardInteractionId(page);
+  const marked = await markAwaitingApprovalExpired(interactionId);
+  expect(marked.status).toBe("awaiting_approval");
+  expect(marked.block?.status).not.toBe("expired");
+
+  const expired = await expireDueInteractions(interactionId);
+  expect(expired.expired).toEqual([interactionId]);
+  expect(expired.surface).toMatchObject({
+    interactionId,
+    status: "expired",
+    block: {
+      interactionId,
+      status: "expired",
+      template: "action-expired-card",
+    },
+  });
+
+  await page.reload();
+  await expect(page.getByTestId("a2ui-surface-folded")).toContainText("Expired, nothing was sent", {
+    timeout: 45_000,
+  });
+  await expect(page.getByTestId("a2ui-surface-retry")).toBeVisible();
+  await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-live-auto-expired");
+});
+
+test("asking for a schedule produces a result card, never a create draft", async ({
+  page,
+}, testInfo) => {
+  await signIn(page, testInfo);
+  // `calendar.query` is cardKind result. present_interaction is the action-draft
+  // tool; publishing a query there produced no surface and must not become a
+  // create draft (spec registry + §4.2).
+  const botId = await send(
     page,
     `call present_interaction with ${JSON.stringify({
       plan: {
@@ -511,9 +856,20 @@ test("asking for a schedule produces a result card, never a create draft", async
       },
     })}`,
   );
-  await waitForSurface(page, "a2ui-surface-card");
-  // A query offers no Create action.
+  await expect(
+    page.getByTestId("message-bot-bubble").getByText("Handled on the card."),
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(0);
+  // Shell chrome has a Create control; a refused query must not draw a calendar card.
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  // Scripted assistant copy is canned; the production tool result is what must
+  // carry result_intent, and no calendar.query row is stored.
+  const refusal = await inspectLastPresent(botId);
+  expect(refusal.queryRows).toBe(0);
+  expect(refusal.tool).toMatchObject({
+    name: "present_interaction",
+    error: "result_intent",
+  });
   await captureScreenshot(page, testInfo, "a2ui-e2e-07-query-not-create");
 });
 
@@ -533,8 +889,9 @@ test("a result with no source is refused rather than shown", async ({ page }, te
  * asserted on a pure function.
  */
 
-test("two open cards make an unqualified edit ask which one", async ({ page }, testInfo) => {
+test("two emails in one thread stay one open card", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
   const plan = (title: string) =>
     JSON.stringify({
       plan: {
@@ -551,35 +908,64 @@ test("two open cards make an unqualified edit ask which one", async ({ page }, t
     });
   await send(page, `call present_interaction with ${plan("First")}`);
   await waitForSurface(page, "a2ui-email-compose");
+  const firstId = await cardInteractionId(page);
   await send(page, `call present_interaction with ${plan("Second")}`);
-  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(2, { timeout: 45_000 });
+  // Spec §4.1: same thread + same intent is one open card. Two emails merge.
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(1, { timeout: 45_000 });
+  expect(await cardInteractionId(page)).toBe(firstId);
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("Second", { timeout: 30_000 });
+  await captureScreenshot(page, testInfo, "a2ui-e2e-08-one-email");
+});
 
-  const subjects = page.getByTestId("a2ui-email-subject");
-  // Both cards must have hydrated before either can be compared: a card still
-  // loading shows the same element with an empty value.
-  await expect
-    .poll(
-      async () =>
-        subjects.evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
-      { timeout: 30_000 },
-    )
-    .toEqual(["First", "Second"]);
-  const before = await subjects.evaluateAll((nodes) =>
-    nodes.map((node) => (node as HTMLInputElement).value),
+test("two open cards make an unqualified edit ask which one", async ({ page }, testInfo) => {
+  await signIn(page, testInfo);
+  await connectFakeMailbox(page);
+  await connectFakeCalendar(page);
+  const emailPlan = JSON.stringify({
+    plan: {
+      intent: "email.compose",
+      title: "Hello",
+      fields: [
+        { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "Hello", required: true, status: "resolved" },
+        { name: "body", value: "Hello there", required: true, status: "resolved" },
+      ],
+      nextStep: "request_approval",
+      riskLevel: "medium",
+    },
+  });
+  const calendarPlan = JSON.stringify({
+    plan: {
+      intent: "calendar.create",
+      title: "Team sync",
+      fields: [
+        { name: "name", value: "Team sync", required: true, status: "resolved" },
+        { name: "start", value: "2026-11-09T09:00:00+08:00", required: true, status: "resolved" },
+        { name: "end", value: "2026-11-09T10:00:00+08:00", required: true, status: "resolved" },
+      ],
+      nextStep: "request_approval",
+      riskLevel: "medium",
+    },
+  });
+  // One user message, two tool calls: a second send would auto-settle the first
+  // card (§4.3), which is why two sequential presents cannot prove ambiguity.
+  await send(
+    page,
+    `call present_interaction with ${emailPlan} then call present_interaction with ${calendarPlan}`,
   );
+  await waitForSurface(page, "a2ui-email-compose");
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(2, { timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("Hello", { timeout: 30_000 });
+  // Different intent, so the calendar draft is a second open card — not shell chrome.
+  await expect(page.getByTestId("a2ui-surface-card").nth(1)).toContainText("Team sync");
 
-  // "Change it" with two cards open must be resolved by asking, not by guessing.
   const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
   const ambiguous = await page.request.post("/rpc/threads/editInteraction", {
-    data: { json: { botId: bots[0]!.id, revision: 2, fields: { subject: "changed" } } },
+    data: { json: { botId: bots[0]!.id, revision: 1, fields: { subject: "changed" } } },
   });
   expect(ambiguous.status()).toBeGreaterThanOrEqual(400);
   expect(await ambiguous.text()).toContain("ambiguous_target");
-
-  // Neither card was touched.
-  expect(
-    await subjects.evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
-  ).toEqual(before);
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("Hello");
   await captureScreenshot(page, testInfo, "a2ui-e2e-08-ambiguous");
 });
 
@@ -710,6 +1096,7 @@ test("a calendar draft draws its schema fields and edits on the same card", asyn
 }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await signIn(page, testInfo);
+  await connectFakeCalendar(page);
 
   await send(
     page,
@@ -741,25 +1128,13 @@ test("a calendar draft draws its schema fields and edits on the same card", asyn
   const card = page.getByTestId("a2ui-surface-card").first();
   await expect(card).toBeVisible({ timeout: 45_000 });
   await expect(page.getByTestId("a2ui-surface-host")).toHaveCount(1);
-  // The schema's own labels, each stated once, so a date is a date input and not
-  // a free-text guess. A control that drew its own label *and* a Text label above
-  // it printed every name twice before this.
-  await expect(card).toContainText("Starts");
-  await expect(card).toContainText("Time zone");
-  const labels = await card.innerText();
-  expect(labels.match(/Starts/g) ?? []).toHaveLength(1);
-  expect(labels.match(/Time zone/g) ?? []).toHaveLength(1);
-  // The timezone value reached the card. The renderer sets a control's value as a
-  // property rather than an attribute, so the live values are read from the DOM.
-  await expect
-    .poll(async () =>
-      card
-        .locator("input")
-        .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
-    )
-    .toContain("Asia/Shanghai");
-  // The batch is data: it is not drawn as an editable control or pasted as text.
-  await expect(card).not.toContainText("Follow-up");
+  // A batch list is the draft. The compiler hides the single-event Starts/Ends
+  // controls so they cannot be edited as if they were one event
+  // (`compile-surface.ts` / `CALENDAR_SINGLE_EVENT_FIELDS`).
+  await expect(card).toContainText("Weekly sync");
+  await expect(card).toContainText("Follow-up");
+  await expect(card).not.toContainText("Starts");
+  await expect(card).not.toContainText("Ends");
   const values = await card
     .locator("input, textarea")
     .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value));
@@ -790,25 +1165,93 @@ test("a calendar draft draws its schema fields and edits on the same card", asyn
     draftVersion: 2,
   });
 
-  // Reload: the card a person gets on a fresh read is the same interaction, at the
-  // new revision, with the edited value in its control. Live event delivery to an
-  // already-finished run is covered by the email-edit test; this asserts what was
-  // persisted, which is what a reload or another device sees.
+  // Reload: the same interaction, at the new revision. The batch list is still
+  // the visible draft; the renamed name slot is not a single-event control.
   await page.reload();
   const reloaded = page.getByTestId("a2ui-surface-card").first();
   await expect(reloaded).toBeVisible({ timeout: 45_000 });
   await expect(reloaded).toHaveAttribute("data-draft-version", "2", { timeout: 30_000 });
   expect(await cardInteractionId(page)).toBe(interactionId);
-  await expect
-    .poll(
-      async () =>
-        reloaded
-          .locator("input")
-          .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
-      { timeout: 30_000 },
-    )
-    .toContain("Weekly sync (renamed)");
-  // Still one card, and no second draft was created.
+  await expect(reloaded).toContainText("Follow-up");
   await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(1);
   await captureScreenshot(page, testInfo, "a2ui-e2e-12-calendar-same-card-edit");
+});
+
+/**
+ * Fake Composio pending begin → connections.complete → the same card resumes.
+ *
+ * Instant begin would mark the mailbox connected before complete ran. This
+ * presents first so the card is waiting, then finishes OAuth through the
+ * production complete route. Not a live mailbox write.
+ */
+test("completing Fake Composio OAuth resumes the waiting compose card", async ({
+  page,
+}, testInfo) => {
+  await signIn(page, testInfo);
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "Hello",
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "Hi", required: true, status: "resolved" },
+          { name: "body", value: "Hello there", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+  await waitForSurface(page, "a2ui-email-compose");
+  await expect(page.getByTestId("a2ui-email-connect")).toBeVisible({ timeout: 30_000 });
+  const interactionId = await cardInteractionId(page);
+  await expect(page.getByTestId("a2ui-email-subject")).toBeDisabled();
+  await captureScreenshot(page, testInfo, "a2ui-e2e-pending-connect");
+
+  await connectFakeMailbox(page);
+  await expect(page.getByTestId("a2ui-email-connect")).toHaveCount(0, { timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("Hi", { timeout: 30_000 });
+  await expect(page.getByTestId("a2ui-email-subject")).toBeEnabled();
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  await captureScreenshot(page, testInfo, "a2ui-e2e-complete-resume");
+});
+
+test("gmail and calendar connection cards can wait together (F-02)", async ({ page }, testInfo) => {
+  await signIn(page, testInfo);
+  const emailPlan = JSON.stringify({
+    plan: {
+      intent: "email.compose",
+      title: "Hello",
+      fields: [
+        { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "Hello", required: true, status: "resolved" },
+        { name: "body", value: "Hello there", required: true, status: "resolved" },
+      ],
+      nextStep: "request_approval",
+      riskLevel: "medium",
+    },
+  });
+  const calendarPlan = JSON.stringify({
+    plan: {
+      intent: "calendar.create",
+      title: "Team sync",
+      fields: [
+        { name: "name", value: "Team sync", required: true, status: "resolved" },
+        { name: "start", value: "2026-11-09T09:00:00+08:00", required: true, status: "resolved" },
+        { name: "end", value: "2026-11-09T10:00:00+08:00", required: true, status: "resolved" },
+      ],
+      nextStep: "request_approval",
+      riskLevel: "medium",
+    },
+  });
+  await send(
+    page,
+    `call present_interaction with ${emailPlan} then call present_interaction with ${calendarPlan}`,
+  );
+  await expect(page.getByTestId("a2ui-email-connect")).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(2, { timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-surface-card").nth(1)).toContainText(/Team sync|Calendar/i);
+  await captureScreenshot(page, testInfo, "a2ui-e2e-t321-two-connect");
 });

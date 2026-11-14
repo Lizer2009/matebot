@@ -1,4 +1,4 @@
-import { findInteractionCapability } from "./interaction-capability.js";
+import { canonicalIntent, findInteractionCapability } from "./interaction-capability.js";
 import type { EmailConnectionSnapshot } from "./interaction-preflight.js";
 import {
   emailCapabilityAllowsSend,
@@ -154,11 +154,23 @@ const ACTION_BY_TEMPLATE: Record<EmailSurfaceTemplate, SimulatedPrimaryAction> =
   "email-connection-card": "connect",
   "email-reauth-card": "reconnect",
   "email-draft-card": "send",
+  "calendar-draft-card": "send",
+  "calendar-submitting-card": "none",
+  "calendar-result-success": "none",
+  "calendar-result-failed": "retry",
+  // A card that is not mail still has one submit; the simulator only renders mail, so this is
+  // the generic draft's action rather than a state the simulation reaches.
+  "action-draft-card": "send",
   "action-submitting-card": "none",
   "action-progress-card": "none",
   "action-result-success": "none",
   "action-result-failed": "retry",
   "action-reconcile-card": "check_status",
+  // A replaced card has nothing to press; an expired one offers the same retry a failed send
+  // does; a discarded one is the person's own decision and offers nothing.
+  "action-superseded-card": "none",
+  "action-expired-card": "retry",
+  "action-cancelled-card": "none",
 };
 
 /** Render one email surface for a connection state and lifecycle. */
@@ -268,9 +280,7 @@ export function simulateSendGate(input: { connection: SimulatedConnectionState }
 export type SimulatedApp = "email" | "calendar" | "none";
 
 export function simulatedApp(intent: string): SimulatedApp {
-  if (intent === "email.compose" || intent === "email.send") return "email";
-  if (intent.startsWith("calendar.")) return "calendar";
-  return "none";
+  return findInteractionCapability(canonicalIntent(intent))?.requiresConnection ?? "none";
 }
 
 /**

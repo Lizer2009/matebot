@@ -8,6 +8,7 @@ import type {
 import { runContinueJob } from "@matebot/adapter-kit";
 import {
   applyJudgeDecision,
+  approvalBlockForChannel,
   approvalModeFromPreference,
   batchActions,
   connectorKindFromToolName,
@@ -17,6 +18,8 @@ import {
   displayName,
   humanizeToolName,
   isDiscoveryTool,
+  isL0aBlock,
+  l0aIntentForBlock,
   newSiteOutcome,
   outboundSiteGate,
   planActionGate,
@@ -54,6 +57,7 @@ import {
 import { reviewWithBackups } from "./auto-review-backups.js";
 import { trustedDocumentationUrls } from "./builtin-skills.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { publishL0aView } from "./interaction-l0a-publish.js";
 import { findConnectedModelCredential } from "./model-selection.js";
 import { paidRequestEffect } from "./paid-request.js";
 import { PURCHASE_CHECKED_TOOLS, purchaseApprovalOf } from "./purchase-gate.js";
@@ -74,6 +78,7 @@ import {
   uncertainEffectError,
 } from "./run-effects.js";
 import { renewRunLease } from "./run-lifecycle.js";
+import { runLeaseFor } from "./run-messages.js";
 import { notifyRun } from "./run-notifications.js";
 import { resolveCompletedSecretLeftover } from "./run-secret.js";
 import type { ToolRequest } from "./run-tool-request.js";
@@ -716,6 +721,40 @@ async function showApprovalCard(ctx: RunContext, call: ToolCall, card: ApprovalC
   await ctx.computer.checkpoint.flush();
   await persistTurnCheckpoint(ctx, executionId);
   await ctx.settleRunningHelpers();
+  let ask = buildApprovalAskBlock(
+    applied!.effect.id,
+    name,
+    name === "update_bot" && "previousInstructions" in args ? { ...args, botId: bot.id } : args,
+    ctx.secrets,
+    card,
+  );
+  if (run.trigger === "messaging" && isL0aBlock(ask)) {
+    const identity = await deps.prisma.messagingIdentity
+      ?.findUnique?.({ where: { botId: bot.id }, select: { provider: true } })
+      .catch(() => null);
+    ask = approvalBlockForChannel(ask, {
+      trigger: run.trigger,
+      provider: identity?.provider,
+    });
+  }
+  let blocks = [ask];
+  let skipMessage = false;
+  if (isL0aBlock(ask) && typeof deps.prisma.interaction?.create === "function") {
+    const published = await publishL0aView(deps.prisma, {
+      spaceId: run.spaceId,
+      threadId: run.threadId,
+      botId: run.botId,
+      runId,
+      intent: l0aIntentForBlock(ask),
+      title: ask.kind === "ask" ? ask.text : "Approval",
+      status: "awaiting_approval",
+      block: ask,
+      lease: runLeaseFor(deps, runId),
+      approvalScope: "user",
+    });
+    blocks = [published.block];
+    skipMessage = true;
+  }
   const paused = await deps.events.pauseRunForInput({
     spaceId: run.spaceId,
     threadId: run.threadId,
@@ -724,15 +763,8 @@ async function showApprovalCard(ctx: RunContext, call: ToolCall, card: ApprovalC
     attemptId: ctx.attempt.id,
     leaseOwner: ctx.workerId,
     leaseFence: ctx.fence,
-    blocks: [
-      buildApprovalAskBlock(
-        applied!.effect.id,
-        name,
-        name === "update_bot" && "previousInstructions" in args ? { ...args, botId: bot.id } : args,
-        ctx.secrets,
-        card,
-      ),
-    ],
+    blocks,
+    skipMessage,
   });
   // pauseRunForInput returning false after a successful renew means the run row no
   // longer matches this worker. Exiting via pauseForApproval() would leave the run

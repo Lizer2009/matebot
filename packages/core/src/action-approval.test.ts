@@ -952,6 +952,12 @@ it("requires human confirmation to approve an agent connection", () => {
   expect(toolRequiresApproval("respond_agent_connection", false)).toBe(true);
 });
 
+it("requires approval for cross-owner connect and message even as builtins", () => {
+  expect(toolRequiresApproval("connect_agent", false)).toBe(true);
+  expect(toolRequiresApproval("message_agent", false)).toBe(true);
+  expect(toolRequiresExplicitApproval("respond_agent_connection")).toBe(true);
+});
+
 describe("repeatsDeniedAction", () => {
   const WRAPPER = "COMPOSIO_MULTI_EXECUTE_TOOL";
   const sent = { tools: [{ tool_slug: "GMAIL_SEND_EMAIL" }] };
@@ -980,5 +986,46 @@ describe("repeatsDeniedAction", () => {
       repeatsDeniedAction({ toolName: WRAPPER, args: args("GMAIL_SEND_DRAFT"), denied: [sent] }),
     ).toBe(false);
     expect(repeatsDeniedAction({ toolName: WRAPPER, args: {}, denied: [sent] })).toBe(false);
+  });
+});
+
+describe("recipient approval rules", () => {
+  const allowAlex: ActionApprovalRule = {
+    effect: "always_allow",
+    matchKind: "recipient",
+    matchValue: "alex@example.test",
+  };
+
+  it("always-allow recipient matches that mailbox only", () => {
+    expect(
+      resolveActionApprovalDetail({
+        toolName: "gmail_send_email",
+        recipient: "Alex@example.test",
+        rules: [allowAlex],
+      }).decision,
+    ).toBe("allow");
+    expect(
+      resolveActionApprovalDetail({
+        toolName: "gmail_send_email",
+        recipient: "Alex@example.test",
+        rules: [allowAlex],
+      }).source,
+    ).toBe("always_allow");
+    expect(
+      resolveActionApprovalDetail({
+        toolName: "gmail_send_email",
+        recipient: "other@example.test",
+        rules: [allowAlex],
+      }).source,
+    ).not.toBe("always_allow");
+  });
+
+  it("does not match a recipient rule when no recipient is in the call", () => {
+    expect(
+      resolveActionApprovalDetail({
+        toolName: "gmail_send_email",
+        rules: [allowAlex],
+      }).source,
+    ).toBe("default");
   });
 });

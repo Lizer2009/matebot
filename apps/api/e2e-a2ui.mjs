@@ -10,15 +10,12 @@
  *
  * Usage: node apps/api/e2e-a2ui.mjs [playwright args...]
  */
-import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const apiDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.dirname(path.dirname(apiDir));
-const require = createRequire(import.meta.url);
 
 const apiPort = Number(process.env.API_PORT ?? 3110);
 const webPort = Number(process.env.WEB_PORT ?? 5180);
@@ -101,7 +98,15 @@ const handles = await createApp({
   databaseUrl,
   modelConnectionFetch: createModelConnectionFixtureFetch(adapters.listPiCatalog()),
   prisma: undefined,
-  composio: new adapters.ComposioConnector({ client: new adapters.FakeComposioClient() }),
+  composio: new adapters.ComposioConnector({
+    client: (() => {
+      const fake = new adapters.FakeComposioClient();
+      // Pending OAuth: begin returns a URL and complete creates the account.
+      // Instant begin would skip connections.complete.
+      fake.authorizeMode = "pending";
+      return fake;
+    })(),
+  }),
   connectors: [new adapters.DestinationEmulator()],
   pipedream,
   email,
@@ -112,10 +117,108 @@ const handles = await createApp({
   userDevices: new adapters.UserDeviceEmulator(),
 });
 
+const { seedExpiredSurface, inspectSeededSurface, inspectLastPresentRefusal } = await import(
+  "./src/e2e-seed-expired-surface.ts"
+);
+const { markAwaitingApprovalExpired, expireDueLiveInteractions } = await import(
+  "./src/e2e-expire-due-interactions.ts"
+);
+
 const server = serve({
   fetch: async (request) => {
-    if (new URL(request.url).pathname === "/__e2e/emails") {
+    const url = new URL(request.url);
+    if (url.pathname === "/__e2e/emails") {
       return Response.json(email.sent, { headers: { "cache-control": "no-store" } });
+    }
+    // Isolated Batch B seed only. Not mounted on the production app.
+    if (url.pathname === "/__e2e/seed-expired-surface" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const interactionId =
+          body && typeof body === "object" && typeof body.interactionId === "string"
+            ? body.interactionId
+            : "";
+        if (!interactionId) {
+          return Response.json({ error: "interactionId required" }, { status: 400 });
+        }
+        return Response.json(await seedExpiredSurface(handles.prisma, interactionId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "seed failed" },
+          { status: 400 },
+        );
+      }
+    }
+    if (url.pathname === "/__e2e/mark-awaiting-approval-expired" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const interactionId =
+          body && typeof body === "object" && typeof body.interactionId === "string"
+            ? body.interactionId
+            : "";
+        if (!interactionId) {
+          return Response.json({ error: "interactionId required" }, { status: 400 });
+        }
+        return Response.json(await markAwaitingApprovalExpired(handles.prisma, interactionId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "mark failed" },
+          { status: 400 },
+        );
+      }
+    }
+    if (url.pathname === "/__e2e/expire-due-interactions" && request.method === "POST") {
+      try {
+        const body = await request.json().catch(() => ({}));
+        const interactionId =
+          body && typeof body === "object" && typeof body.interactionId === "string"
+            ? body.interactionId
+            : undefined;
+        return Response.json(await expireDueLiveInteractions(handles.prisma, interactionId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "expire failed" },
+          { status: 400 },
+        );
+      }
+    }
+    if (url.pathname === "/__e2e/inspect-last-present" && request.method === "GET") {
+      try {
+        const botId = url.searchParams.get("botId") ?? "";
+        if (!botId) {
+          return Response.json({ error: "botId required" }, { status: 400 });
+        }
+        return Response.json(await inspectLastPresentRefusal(handles.prisma, botId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "inspect failed" },
+          { status: 400 },
+        );
+      }
+    }
+    if (url.pathname === "/__e2e/inspect-surface" && request.method === "GET") {
+      try {
+        const interactionId = url.searchParams.get("interactionId") ?? "";
+        if (!interactionId) {
+          return Response.json({ error: "interactionId required" }, { status: 400 });
+        }
+        return Response.json(await inspectSeededSurface(handles.prisma, interactionId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "inspect failed" },
+          { status: 400 },
+        );
+      }
     }
     return handles.app.fetch(request);
   },

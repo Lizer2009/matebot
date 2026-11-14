@@ -3,9 +3,9 @@ import {
   FLEET_TOOL_NAMES,
   FLEET_WRITE_TOOL_NAMES,
 } from "@matebot/contracts";
-import { isBackgroundRunTrigger, isOwnerStartedRun } from "@matebot/core";
+import { isBackgroundRunTrigger, isEmailComposeIntent, isOwnerStartedRun } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
-import { builtinAgentTools } from "./builtin-tools.js";
+import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
 import { selectMemoryTools } from "./memory-tools.js";
 import { filterImageReturningComputerTools } from "./model-vision.js";
@@ -44,7 +44,9 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
 /** Offered only to a user who connected a wallet. */
 const PURCHASE_TOOL_NAMES = new Set(["request_purchase", "purchase_status", "paid_request"]);
 
-export const BUILTIN_AGENT_TOOL_NAMES = new Set(builtinAgentTools.map((tool) => tool.name));
+export const BUILTIN_AGENT_TOOL_NAMES = new Set(
+  [...builtinAgentTools, ...agentConnectionTools].map((tool) => tool.name),
+);
 
 const FLEET_TOOL_NAMES_SET: ReadonlySet<string> = new Set(FLEET_TOOL_NAMES);
 
@@ -206,7 +208,6 @@ export function followUpsOffered(
   );
 }
 
-const EMAIL_NATIVE_INTENTS = new Set(["email.compose", "email.send"]);
 const EMAIL_SHELL_ESCAPE_TOOLS = new Set(["shell", "user_computer_shell"]);
 
 /**
@@ -217,7 +218,7 @@ export function preferredToolForEmailIntent(
   intent: string,
   offeredToolNames: readonly string[],
 ): "present_interaction" | undefined {
-  if (!EMAIL_NATIVE_INTENTS.has(intent)) return undefined;
+  if (!isEmailComposeIntent(intent)) return undefined;
   return offeredToolNames.includes("present_interaction") ? "present_interaction" : undefined;
 }
 

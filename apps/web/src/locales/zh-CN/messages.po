@@ -721,6 +721,10 @@ msgstr ""
 msgid "Allow once"
 msgstr "允许一次"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Allow this recipient"
+msgstr ""
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "允许写入"
@@ -1358,6 +1362,11 @@ msgstr "报到。"
 msgid "Check status"
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Check status"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "请检查 API 密钥或登录，然后重新测试。"
@@ -1386,6 +1395,11 @@ msgstr "正在检查电脑设置…"
 #: src/components/McpServerHealthLine.tsx
 msgid "Checking connection…"
 msgstr "正在检查连接…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Checking whether this was sent"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
@@ -1779,7 +1793,7 @@ msgstr "已连接 {0}。"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
 msgid "Connected account"
-msgstr ""
+msgstr "已连接的账号"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -2827,6 +2841,11 @@ msgstr "丢弃录音"
 msgid "Discarded"
 msgstr "已丢弃"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Discarded"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -2920,6 +2939,11 @@ msgstr ""
 msgid "Done"
 msgstr "完成"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Done"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Downgrade at renewal"
 msgstr "续订时降级"
@@ -2949,6 +2973,11 @@ msgstr "下载 PDF"
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "正在下载…"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Draft"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -2985,17 +3014,12 @@ msgstr "编辑名称"
 msgid "Edit Profile"
 msgstr "编辑资料"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 msgid "Email"
 msgstr "邮箱"
-
-#: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Email address not provided"
-msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
@@ -3154,6 +3178,11 @@ msgstr "展开表格"
 msgid "expired"
 msgstr "已过期"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Expired, nothing was sent"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr ""
@@ -3202,6 +3231,11 @@ msgstr "失败"
 #: src/pages/ActivityList.tsx
 msgid "Failed"
 msgstr "失败"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Failed"
+msgstr ""
 
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
@@ -3930,6 +3964,10 @@ msgstr "管理 MCP 服务器"
 msgid "Manage other bots"
 msgstr "管理其他机器人"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Manage rules"
+msgstr "管理规则"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr "手动"
@@ -4309,7 +4347,7 @@ msgstr "等你回答"
 msgid "Needs an OAuth client ID"
 msgstr "需要 OAuth 客户端 ID"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
+#: src/components/a2ui/CardApprovalMenu.tsx
 msgid "Needs approval"
 msgstr "需要批准"
 
@@ -5397,8 +5435,9 @@ msgstr "替换 API 密钥"
 msgid "Replace key"
 msgstr "替换密钥"
 
-#: src/components/a2ui/A2uiSurfaceCard.tsx
-msgid "Replaced by a newer draft below."
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Replaced by a newer draft"
 msgstr ""
 
 #. placeholder {0}: block.replaces.origin
@@ -5489,6 +5528,10 @@ msgstr "重启后更新"
 msgid "Restore"
 msgstr "恢复"
 
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Restore drafts"
+msgstr ""
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
 msgstr "恢复上次保存的工作区。"
@@ -5505,7 +5548,6 @@ msgstr "已恢复"
 msgid "Restoring your workspace"
 msgstr "正在恢复工作区"
 
-#: src/components/a2ui/EmailComposeEditor.tsx
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -5518,6 +5560,11 @@ msgstr "正在恢复工作区"
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "重试"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Retry"
+msgstr ""
 
 #: src/App.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -5849,8 +5896,8 @@ msgid "Send with Enter"
 msgstr "按 Enter 发送"
 
 #: src/components/a2ui/EmailComposeEditor.tsx
-msgid "Sending"
-msgstr ""
+msgid "Sending email"
+msgstr "正在发送邮件"
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
@@ -6474,6 +6521,11 @@ msgstr "未使用的差额将抵扣到你的下一张账单。"
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "已清除各自的模型。你可以在每个 Bot 里重新选择。"
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "There may be a newer version"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
 msgstr "这些文件太大，无法导入。"
@@ -6664,6 +6716,16 @@ msgstr ""
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This space's rules ask first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "This step cannot be undone"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in Matebot yet. Use a deployment credential or choose another provider."
 msgstr "此订阅登录在 Matebot 中尚不可用。请使用部署凭据或选择其他提供方。"
@@ -6802,6 +6864,10 @@ msgstr "请重试测试。"
 #: src/lib/cron.ts
 msgid "Tuesday"
 msgstr "周二"
+
+#: src/components/a2ui/CardApprovalMenu.tsx
+msgid "Turn off drafts for this bot"
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7317,6 +7383,16 @@ msgstr "试用结束后，你的套餐将变为每年 {annualPrice}。"
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "试用结束后，你的方案将变为 {tierTargetLabel}。"
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your rule asks first"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/a2ui/surface-copy.ts
+msgid "Your settings ask first"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Your skills"

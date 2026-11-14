@@ -1,5 +1,5 @@
 import type { MessageBlock } from "@matebot/contracts";
-import { mcpConnectionVerdict } from "@matebot/core";
+import { l0aHostInteractive, mcpConnectionVerdict } from "@matebot/core";
 import { typeScale } from "@matebot/ui-tokens";
 import { useEffect, useState } from "react";
 import type { ViewProps } from "react-native";
@@ -59,10 +59,11 @@ export function McpApprovalCard({
     );
   }, [block.status]);
   const status = block.status && block.status !== "pending" ? block.status : localStatus;
+  const interactive = l0aHostInteractive(block);
   const summary = block.endpoint ?? `stdio (${block.transport})`;
 
   async function submit(action: "approve" | "dismiss") {
-    if (readOnly || status !== "pending" || pendingAction !== null) return;
+    if (readOnly || !interactive || status !== "pending" || pendingAction !== null) return;
     setPendingAction(action);
     try {
       if (action === "approve") {
@@ -145,7 +146,7 @@ export function McpApprovalCard({
               })()
             : t("Dismissed. Reconnect anytime from MCP settings.")}
         </Text>
-      ) : !readOnly ? (
+      ) : !readOnly && interactive ? (
         <>
           <Text style={[styles.description, { color: tokens.foreground }]}>
             {block.needsOAuth

@@ -1,16 +1,19 @@
 import { runContinueJob, runJobKey } from "@matebot/adapter-kit";
-import { settleCallRequest } from "@matebot/adapters";
-import type { Actor, ProductEvent } from "@matebot/contracts";
+import { markOpenCardsStale, settleCallRequest, settleInteraction } from "@matebot/adapters";
+import type { Actor, MessageBlock, ProductEvent } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef, parseA2uiSurfaceDocumentRef } from "@matebot/contracts";
 import {
   AttachmentValidationError,
   applyNaturalLanguageEdit,
   CALL_CLIENT_NONCE_PREFIX,
   callClientNonce,
+  EDITABLE_STATUSES,
   expandSkillReferencesInPrompt,
   interactionCapabilityForIntent,
+  isL0aBlock,
   MODEL_REQUIRED_SEND_ERROR,
   QUEUE_HOLDING_RUN_STATUSES,
+  surfaceStatusFor,
   timingFields,
   userEditedFieldNames,
 } from "@matebot/core";
@@ -23,6 +26,7 @@ import {
   getInteraction,
   getInteractionSurface,
   InteractionNotFoundError,
+  InteractionTerminalError,
   InteractionVersionConflictError,
   IsolationError,
   lockOwnedGroup,
@@ -33,6 +37,7 @@ import { ORPCError } from "@orpc/server";
 import { isA2uiFeatureEnabled } from "../a2ui-feature.js";
 import { requestEffectAbort } from "../interaction-abort.js";
 import { dispatchInteractionActionService } from "../interaction-dispatch.js";
+import { InteractionRetryRejectedError, retryInteractionService } from "../interaction-retry.js";
 import { confirmThenExecute } from "../interaction-run-action.js";
 import {
   cancelInteractionService,
@@ -83,7 +88,8 @@ import {
   THREAD_MESSAGE_PAGE_SIZE,
 } from "./shared.js";
 
-/** Deterministic nonce for a call's marker message. The unique (threadId, clientNonce)
+/**
+ * Deterministic nonce for a call's marker message. The unique (threadId, clientNonce)
  * index makes it the hang-up idempotency key, and the "call:" prefix lets clients derive
  * the marker's callId. User turns carry a uuid suffix, so they never collide. */
 export function callMarkerClientNonce(callId: string): string {
@@ -505,9 +511,9 @@ export function threadsRoutes(ctx: RouterContext) {
               botId,
               status: { in: [...QUEUE_HOLDING_RUN_STATUSES] },
             },
-            select: { id: true },
+            select: { id: true, createdAt: true },
           });
-          let run: { id: string } | null = null;
+          let run: { id: string; createdAt: Date } | null = null;
           if (!active) {
             const task = await tx.task.create({
               data: {
@@ -530,7 +536,7 @@ export function threadsRoutes(ctx: RouterContext) {
                 trigger: "follow_up",
                 sourceMessageId: message.id,
               },
-              select: { id: true },
+              select: { id: true, createdAt: true },
             });
             await tx.message.update({ where: { id: message.id }, data: { runId: run.id } });
           } else {
@@ -553,7 +559,12 @@ export function threadsRoutes(ctx: RouterContext) {
             payload: { messageId: message.id, role: "user", blocks },
           });
           await touchGroupUpdatedAt(tx, target.groupId);
-          return { runId: run?.id, eventSeq: event.seq, message };
+          return {
+            runId: run?.id,
+            createdAt: run?.createdAt ?? active?.createdAt,
+            eventSeq: event.seq,
+            message,
+          };
         });
         if (committed) {
           deps.analytics?.capture(
@@ -563,6 +574,12 @@ export function threadsRoutes(ctx: RouterContext) {
           );
           await deps.events.notify(target.threadId, committed.eventSeq).catch((error) => {
             getLogger().error("group follow-up realtime notification", error);
+          });
+          await markOpenCardsStale(deps.prisma, {
+            threadId: target.threadId,
+            at: committed.createdAt ?? new Date(),
+          }).catch((error) => {
+            getLogger().error("interaction stale mark", error);
           });
           if (committed.runId) {
             await deps.jobs.enqueue(runContinueJob(committed.runId)).catch((error) => {
@@ -733,6 +750,24 @@ export function threadsRoutes(ctx: RouterContext) {
             message: "This prompt is no longer awaiting an answer",
           });
         }
+        const findMessage = deps.prisma.message?.findUnique;
+        if (typeof findMessage === "function") {
+          const answeredMessage = await findMessage({
+            where: { id: input.messageId },
+            select: { blocks: true },
+          });
+          const answeredBlocks = Array.isArray(answeredMessage?.blocks)
+            ? (answeredMessage.blocks as MessageBlock[])
+            : [];
+          const l0a = answeredBlocks.find(isL0aBlock);
+          if (l0a?.interactionId) {
+            await settleInteraction(deps.prisma, {
+              interactionId: l0a.interactionId,
+              status: input.dismiss ? "cancelled" : "succeeded",
+              reason: input.dismiss ? "ask dismissed" : "ask answered",
+            }).catch(() => undefined);
+          }
+        }
         await deps.jobs.enqueue(runContinueJob(input.runId)).catch((error) => {
           // The answer and queued run are durable; the reconciler repairs a missed immediate wake.
           getLogger().error("thread answer enqueue", error);
@@ -806,6 +841,11 @@ export function threadsRoutes(ctx: RouterContext) {
                 message: "Interaction draft was updated elsewhere; reload and retry",
               });
             }
+            if (error instanceof InteractionTerminalError) {
+              throw new ORPCError("CONFLICT", {
+                message: "Interaction is closed; reload the thread",
+              });
+            }
             throw error;
           }
         },
@@ -832,9 +872,9 @@ export function threadsRoutes(ctx: RouterContext) {
               effectId: row?.approvalEffectId ?? "",
               spaceId: context.actor.spaceId,
             });
-            // The row is deliberately left in `executing`: the effect settles it
-            // as failed or unknown, and cancelling it now could erase something
-            // that already happened.
+            // The row stays on its last kernel open status: the effect settles
+            // it as failed or unknown, and cancelling it now could erase
+            // something that already happened.
             throw new ORPCError("CONFLICT", {
               message: abort.aborted
                 ? "已请求停止这次操作；结果以卡片最终状态为准。"
@@ -875,6 +915,7 @@ export function threadsRoutes(ctx: RouterContext) {
             draftVersion: input.draftVersion,
             userId: context.actor.userId,
             connector: deps.connectors,
+            jobs: deps.jobs,
           });
           return {
             ok: true as const,
@@ -942,7 +983,10 @@ export function threadsRoutes(ctx: RouterContext) {
         const interactions = await deps.prisma.interaction.findMany({
           where: {
             threadId: target.threadId,
-            status: { notIn: ["cancelled", "failed", "unknown"] },
+            // Only a card the kernel still lets a person edit. The old query was a
+            // denylist, so `superseded` and `expired` stayed editable — and were
+            // then mapped to "draft" below.
+            status: { in: [...EDITABLE_STATUSES] },
           },
           orderBy: { updatedAt: "desc" },
           select: {
@@ -962,12 +1006,7 @@ export function threadsRoutes(ctx: RouterContext) {
             surfaceId: row.surfaces[0]!.surfaceId,
             intent: row.intent,
             label: row.title ?? row.summary ?? row.intent,
-            status:
-              row.status === "succeeded"
-                ? ("executed" as const)
-                : row.status === "awaiting_approval"
-                  ? ("approved" as const)
-                  : ("draft" as const),
+            status: surfaceStatusFor(row.status),
           }));
         // The schema comes from the registry for the card being edited, so a
         // model cannot widen the fields by proposing them.
@@ -996,16 +1035,27 @@ export function threadsRoutes(ctx: RouterContext) {
             },
             listOpenSurfaces: async () => open,
             applyField: async (fieldInput) => {
-              const written = await updateInteractionFieldService(deps.prisma, {
-                spaceId: fieldInput.spaceId,
-                threadId: fieldInput.threadId,
-                botId: fieldInput.botId || botId || "",
-                interactionId: fieldInput.interactionId,
-                expectedDraftVersion: fieldInput.expectedDraftVersion,
-                name: fieldInput.name,
-                value: fieldInput.value,
-              });
-              return { draftVersion: written.draftVersion };
+              try {
+                const written = await updateInteractionFieldService(deps.prisma, {
+                  spaceId: fieldInput.spaceId,
+                  threadId: fieldInput.threadId,
+                  botId: fieldInput.botId || botId || "",
+                  interactionId: fieldInput.interactionId,
+                  expectedDraftVersion: fieldInput.expectedDraftVersion,
+                  name: fieldInput.name,
+                  value: fieldInput.value,
+                });
+                return { draftVersion: written.draftVersion };
+              } catch (error) {
+                // The same field write the card's own control makes; a card that
+                // closed while the model was editing is a conflict, not a fault.
+                if (error instanceof InteractionTerminalError) {
+                  throw new ORPCError("CONFLICT", {
+                    message: "Interaction is closed; reload the thread",
+                  });
+                }
+                throw error;
+              }
             },
           },
           {
@@ -1061,12 +1111,7 @@ export function threadsRoutes(ctx: RouterContext) {
                   threadId: row.threadId,
                   intent: row.intent,
                   // The surface's own status carries the executed record.
-                  status:
-                    row.status === "succeeded"
-                      ? ("executed" as const)
-                      : row.confirmedVersion !== null && row.confirmedVersion === row.draftVersion
-                        ? ("approved" as const)
-                        : ("draft" as const),
+                  status: surfaceStatusFor(row.status),
                   draftVersion: row.draftVersion,
                   confirmedVersion: row.confirmedVersion,
                   schema: capability.schema,
@@ -1082,6 +1127,7 @@ export function threadsRoutes(ctx: RouterContext) {
                       confirmInteractionService(deps.prisma, {
                         ...confirmInput,
                         connector: deps.connectors,
+                        jobs: deps.jobs,
                       }),
                     execute: (executeInput) =>
                       executeConfirmedInteractionService(deps.prisma, {
@@ -1123,6 +1169,28 @@ export function threadsRoutes(ctx: RouterContext) {
           };
         },
       ),
+      retryInteraction: authed.threads.retryInteraction.handler(async ({ context, input }) => {
+        assertA2uiEnabled();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const botId = await resolveInteractionBotId(deps.prisma, target, input.interactionId);
+        try {
+          const result = await retryInteractionService(deps.prisma, {
+            spaceId: context.actor.spaceId,
+            threadId: target.threadId,
+            botId,
+            interactionId: input.interactionId,
+          });
+          return { ok: true as const, ...result };
+        } catch (error) {
+          if (error instanceof InteractionNotFoundError) {
+            throw new ORPCError("NOT_FOUND", { message: "Interaction not found" });
+          }
+          if (error instanceof InteractionRetryRejectedError) {
+            throw new ORPCError("CONFLICT", { message: error.message });
+          }
+          throw error;
+        }
+      }),
       reconcileInteraction: authed.threads.reconcileInteraction.handler(
         async ({ context, input }) => {
           assertA2uiEnabled();

@@ -174,6 +174,8 @@ import {
   ThreadsGetA2uiSurfaceOutput,
   ThreadsReconcileInteractionInput,
   ThreadsReconcileInteractionOutput,
+  ThreadsRetryInteractionInput,
+  ThreadsRetryInteractionOutput,
   ThreadsUpdateInteractionFieldInput,
   ThreadsUpdateInteractionFieldOutput,
   ThreadTargetSchema,
@@ -785,6 +787,11 @@ export const appContract = {
       .input(ThreadsDispatchInteractionActionInput)
       .output(ThreadsDispatchInteractionActionOutput),
     /**
+     * Revive an expired or failed card in place. Reuses the same card key; never
+     * publishes a second card. Refuses superseded, cancelled, and in-flight rows.
+     */
+    retryInteraction: oc.input(ThreadsRetryInteractionInput).output(ThreadsRetryInteractionOutput),
+    /**
      * Inspect an UNKNOWN email send. Never re-invokes send. Rejects when A2UI
      * is not enabled or the interaction is not waiting on reconcile.
      */
@@ -1298,7 +1305,7 @@ export const appContract = {
       .input(
         settingsScopeInput.extend({
           effect: z.enum(["always_allow", "require_approval", "deny"]),
-          matchKind: z.enum(["tool", "connector", "site"]),
+          matchKind: z.enum(["tool", "connector", "site", "recipient"]),
           matchValue: z.string().trim().min(1),
         }),
       )

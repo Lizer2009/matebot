@@ -33,9 +33,11 @@ import {
   screenLeaseIdForRun,
 } from "./computer-lifecycle.js";
 import { checkpointComputerWorkspace } from "./computer-workspace.js";
+import { describeDesktopSandbox } from "./desktop-sandbox.js";
 import { FakeSandboxProvider } from "./fake-sandbox.js";
 import { LocalAgentHomeStore } from "./home.js";
 import { SandboxUnsafeStopError } from "./sandbox-errors.js";
+import { describeWuyingSandbox } from "./wuying-sandbox.js";
 
 // The plan's size is read from billing, which these Prisma doubles do not model.
 vi.mock("@matebot/db", async (importOriginal) => ({
@@ -2782,6 +2784,10 @@ function leasePrisma(options: {
 describe("computer replacement", () => {
   it("exposes update availability by sandbox kind", () => {
     expect(computerSupportsUpdate("e2b")).toBe(true);
+    expect(computerSupportsUpdate("railway")).toBe(true);
+    expect(computerSupportsUpdate("createos")).toBe(true);
+    expect(computerSupportsUpdate("boxd")).toBe(true);
+    expect(computerSupportsUpdate("unknown")).toBe(true);
     expect(computerSupportsUpdate("desktop")).toBe(false);
     expect(computerSupportsUpdate("wuying")).toBe(false);
     expect(computerSupportsUpdate("none")).toBe(false);
@@ -4013,6 +4019,22 @@ describe("computer terminal capability", () => {
     expect(computerSupportsTerminal("novita")).toBe(true);
     expect(computerSupportsTerminal("unknown")).toBe(false);
     expect(computerSupportsTerminal("none")).toBe(false);
+    expect(computerSupportsTerminal("railway")).toBe(false);
+    expect(computerSupportsTerminal("createos")).toBe(false);
+    expect(computerSupportsTerminal("boxd")).toBe(false);
+  });
+
+  it("reads terminal and update from describe() capabilities, not a parallel kind list", () => {
+    expect(describeWuyingSandbox().capabilities.pty).toBe(false);
+    expect(describeWuyingSandbox().capabilities.inPlaceUpdate).toBe(false);
+    expect(computerSupportsTerminal("wuying")).toBe(describeWuyingSandbox().capabilities.pty);
+    expect(computerSupportsUpdate("wuying")).toBe(
+      describeWuyingSandbox().capabilities.inPlaceUpdate === true,
+    );
+    expect(computerSupportsTerminal("desktop")).toBe(describeDesktopSandbox().capabilities.pty);
+    expect(computerSupportsUpdate("desktop")).toBe(
+      describeDesktopSandbox().capabilities.inPlaceUpdate === true,
+    );
   });
 });
 

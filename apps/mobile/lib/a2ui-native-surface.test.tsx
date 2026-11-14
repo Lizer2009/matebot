@@ -93,6 +93,29 @@ describe("native A2UI surface", () => {
     act(() => root.render(node));
   }
 
+  it("keeps the email form inside the thread card", () => {
+    render(<A2uiNativeSurface block={block} />);
+    const surface = document.querySelector('[data-testid="a2ui-native-surface"]');
+    expect(surface).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-native-sheet"]')).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-email-to"]')).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-email-subject"]')).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-email-body"]')).not.toBeNull();
+    expect(surface?.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
+  });
+
+  it("shows the same category heading web uses (F-12)", () => {
+    render(<A2uiNativeSurface block={{ ...block, title: "产品发布" }} />);
+    expect(text("a2ui-surface-category")).toBe("Email");
+    expect(text("a2ui-surface-title")).toBe("产品发布");
+  });
+
+  it("hints that a live card may have a newer version without hiding Send", () => {
+    render(<A2uiNativeSurface block={{ ...block, stale: true, status: "ready_for_review" }} />);
+    expect(text("a2ui-surface-stale-hint")).toBe("There may be a newer version");
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
+  });
+
   it("sends with confirm+execute in one gesture when confirmation is missing", async () => {
     const onConfirm = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);
@@ -145,7 +168,7 @@ describe("native A2UI surface", () => {
     await act(async () => {
       click("a2ui-email-send");
     });
-    expect(text("a2ui-email-progress")).toBe("Sending");
+    expect(text("a2ui-email-progress")).toBe("Sending email");
     expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
     await act(async () => {
       finishSend();
@@ -165,7 +188,8 @@ describe("native A2UI surface", () => {
         }}
       />,
     );
-    expect(text("a2ui-email-sent")).toBe("Sent");
+    expect(document.body.textContent).toContain("Done");
+    expect(document.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
   });
 
   it("shows a failed card without Sent when send is an internal error", async () => {
@@ -197,8 +221,8 @@ describe("native A2UI surface", () => {
         onSend={onSend}
       />,
     );
-    expect(text("a2ui-email-failed")).toBe("Internal server error");
-    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(document.body.textContent).toContain("Failed");
+    expect(document.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 
@@ -296,10 +320,25 @@ describe("native A2UI surface", () => {
       />,
     );
     expect(text("a2ui-email-sender")).toBe("Gmail");
-    // The connection's name is whatever the client called it; the mailbox is not in the record.
-    expect(text("a2ui-email-sender-note")).toBe("Email address not provided");
+    expect(document.querySelector('[data-testid="a2ui-email-sender-note"]')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Email address not provided/);
     // Read-only: the sending mailbox is not one of the form's inputs.
     expect(document.querySelector('input[aria-label="From"]')).toBeNull();
+  });
+
+  it("shows the provider mailbox when the block carries one", () => {
+    render(
+      <A2uiNativeSurface
+        block={{
+          ...block,
+          capability: "ready",
+          senderLabel: "Gmail",
+          senderAddress: "lizer@example.test",
+        }}
+        onSend={vi.fn(async () => undefined)}
+      />,
+    );
+    expect(text("a2ui-email-sender")).toBe("lizer@example.test");
   });
 
   it("shows progress without Send", () => {
@@ -314,11 +353,11 @@ describe("native A2UI surface", () => {
         onSend={vi.fn(async () => undefined)}
       />,
     );
-    expect(text("a2ui-email-progress")).toBe("Sending");
+    expect(text("a2ui-email-progress")).toBe("Sending email");
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 
-  it("shows success with the provider message id", () => {
+  it("shows success without the provider message id", () => {
     render(
       <A2uiNativeSurface
         block={{
@@ -329,32 +368,116 @@ describe("native A2UI surface", () => {
         }}
       />,
     );
-    expect(text("a2ui-email-sent")).toBe("Sent");
-    expect(text("a2ui-email-provider-id")).toBe("msg-1");
+    expect(document.body.textContent).toContain("Done");
+    expect(document.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
+    expect(document.querySelector('[data-testid="a2ui-email-provider-id"]')).toBeNull();
+    expect(document.body.textContent).not.toContain("msg-1");
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 
+  it("opens Manage rules from the approval menu", async () => {
+    const onManageRules = vi.fn();
+    const onSend = vi.fn(async () => undefined);
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, capability: "ready" }}
+        onManageRules={onManageRules}
+        onSend={onSend}
+      />,
+    );
+    expect(text("a2ui-email-status")).toBe("Needs approval");
+    await act(async () => {
+      click("a2ui-email-status");
+    });
+    expect(text("a2ui-email-approval-require")).toBe("Needs approval");
+    await act(async () => {
+      click("a2ui-email-manage-rules");
+    });
+    expect(onManageRules).toHaveBeenCalledTimes(1);
+    expect(onSend).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
+  });
+
+  it("hides Manage rules when no settings opener is passed", async () => {
+    render(<A2uiNativeSurface block={{ ...block, capability: "ready" }} />);
+    await act(async () => {
+      click("a2ui-email-status");
+    });
+    expect(document.querySelector('[data-testid="a2ui-email-manage-rules"]')).toBeNull();
+    expect(text("a2ui-email-approval-require")).toBe("Needs approval");
+  });
+
+  it("shows four approval items and Allow this recipient does not send", async () => {
+    const onAllowRecipient = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const onDisableDrafts = vi.fn(async () => undefined);
+    const onManageRules = vi.fn();
+    render(
+      <A2uiNativeSurface
+        block={{ ...block, capability: "ready" }}
+        messages={[
+          {
+            updateDataModel: {
+              value: {
+                fields: [
+                  { name: "to", value: "alex@example.test" },
+                  { name: "subject", value: "Hi" },
+                  { name: "body", value: "Hello" },
+                ],
+              },
+            },
+          },
+        ]}
+        onAllowRecipient={onAllowRecipient}
+        onDisableDrafts={onDisableDrafts}
+        onManageRules={onManageRules}
+        onSend={onSend}
+      />,
+    );
+    await act(async () => {
+      click("a2ui-email-status");
+    });
+    expect(text("a2ui-email-allow-recipient")).toBe("Allow this recipient");
+    expect(text("a2ui-email-approval-require")).toBe("Needs approval");
+    expect(text("a2ui-email-disable-drafts")).toBe("Turn off drafts for this bot");
+    expect(text("a2ui-email-manage-rules")).toBe("Manage rules");
+    await act(async () => {
+      click("a2ui-email-allow-recipient");
+    });
+    expect(onAllowRecipient).toHaveBeenCalledWith("alex@example.test");
+    expect(onSend).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
+    await act(async () => {
+      click("a2ui-email-disable-drafts");
+    });
+    expect(onDisableDrafts).toHaveBeenCalledWith(true);
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
   it("shows failed with Retry and no Send", async () => {
+    const onRetry = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);
     render(
       <A2uiNativeSurface
         block={{
           ...block,
+          status: "failed",
           template: "action-result-failed",
           lifecycle: "failed",
           error: "Could not send the email",
         }}
         onSend={onSend}
+        onRetry={onRetry}
       />,
     );
-    expect(text("a2ui-email-failed")).toBe("Could not send the email");
-    expect(document.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(document.body.textContent).toContain("Failed");
     expect(document.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
     await act(async () => {
-      click("a2ui-email-retry");
+      click("a2ui-surface-retry");
       await Promise.resolve();
     });
-    expect(onSend).toHaveBeenCalled();
+    expect(onRetry).toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
   });
 
   it("shows UNKNOWN with Check status and no Send", async () => {
@@ -426,7 +549,8 @@ describe("native A2UI surface", () => {
         />,
       ),
     );
-    expect(text("a2ui-native-refused")).toBe("EvilWidget");
+    expect(text("a2ui-native-refused")).toContain("This card could not be shown.");
+    expect(text("a2ui-native-refused")).not.toMatch(/EvilWidget/i);
   });
 
   const resultBlock = {
@@ -437,6 +561,7 @@ describe("native A2UI surface", () => {
     draftVersion: 1,
     intent: "interaction.result",
     title: "Quarterly totals",
+    status: "succeeded",
   } satisfies A2uiSurfaceBlock;
 
   it("draws every cell of a result table and its provenance", async () => {

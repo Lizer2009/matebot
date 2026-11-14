@@ -1,25 +1,91 @@
 import { featuredConnectorProvidersMatch } from "./featured-connectors.js";
+import { canonicalIntent, findInteractionCapability } from "./interaction-capability.js";
 import { isEmailMailboxProvider } from "./interaction-preflight.js";
 
 /** External app an interaction cannot act without. Provider-neutral ids. */
 export type InteractionRequiredApp = "email" | "calendar";
-
-const CALENDAR_INTENTS: ReadonlySet<string> = new Set(["calendar.create", "calendar.compose"]);
 
 /** Which app an intent acts through. Undefined intents need no connection. */
 export function interactionRequiredApp(
   intent: string | undefined,
 ): InteractionRequiredApp | undefined {
   if (!intent) return undefined;
-  if (intent === "email.compose" || intent === "email.send") return "email";
-  if (CALENDAR_INTENTS.has(intent)) return "calendar";
-  return undefined;
+  return findInteractionCapability(canonicalIntent(intent))?.requiresConnection ?? undefined;
 }
 
 /** Whether a connected row's provider is the app, however the connector names it. */
 export function connectionSatisfiesApp(app: InteractionRequiredApp, provider: string): boolean {
   if (app === "email") return isEmailMailboxProvider(provider);
   return featuredConnectorProvidersMatch(provider, "google-calendar");
+}
+
+/** Provider slug from a L0-A connect intent (`connect.gmail` / `connect.gmail.ca_1`). */
+export function providerFromConnectIntent(intent: string): string | undefined {
+  if (!intent.startsWith("connect.")) return undefined;
+  return intent.slice("connect.".length).split(".")[0] || undefined;
+}
+
+/** Named account from `connect.{provider}.{accountId}`, when present. */
+export function accountIdFromConnectIntent(intent: string): string | undefined {
+  if (!intent.startsWith("connect.")) return undefined;
+  const rest = intent.slice("connect.".length);
+  const dot = rest.indexOf(".");
+  if (dot < 0) return undefined;
+  const accountId = rest.slice(dot + 1).trim();
+  return accountId || undefined;
+}
+
+export function connectIntentMatchesApp(intent: string, app: InteractionRequiredApp): boolean {
+  const provider = providerFromConnectIntent(intent);
+  return Boolean(provider && connectionSatisfiesApp(app, provider));
+}
+
+/**
+ * The open connection card that belongs to this app or named account.
+ *
+ * Rows must already be newest-first. Matching is by app (and account when
+ * named), never "the newest needs_connection row in the thread".
+ */
+export function pickMatchingConnectionCard<T extends { intent: string; status?: string }>(
+  rows: readonly T[],
+  input: {
+    app?: InteractionRequiredApp;
+    provider?: string;
+    intent?: string;
+    accountId?: string;
+  },
+): T | undefined {
+  const candidates = rows.filter((row) => {
+    if (row.status && row.status !== "needs_connection") return false;
+    if (
+      input.intent &&
+      (row.intent === input.intent || row.intent.startsWith(`${input.intent}.`))
+    ) {
+      return true;
+    }
+    if (input.app && connectIntentMatchesApp(row.intent, input.app)) return true;
+    if (input.provider) {
+      const provider = providerFromConnectIntent(row.intent);
+      if (provider && featuredConnectorProvidersMatch(provider, input.provider)) return true;
+      if (
+        interactionResumesWhenConnected({
+          intent: row.intent,
+          interactionStatus: row.status ?? "needs_connection",
+          provider: input.provider,
+        })
+      ) {
+        return true;
+      }
+    }
+    return false;
+  });
+  if (input.accountId) {
+    const named = candidates.filter(
+      (row) => accountIdFromConnectIntent(row.intent) === input.accountId,
+    );
+    if (named.length) return named[0];
+  }
+  return candidates[0];
 }
 
 /**

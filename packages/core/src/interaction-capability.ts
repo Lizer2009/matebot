@@ -1,5 +1,6 @@
 import type { InteractionSurfaceSchema } from "@matebot/contracts";
 import type { InteractionRequiredApp } from "./interaction-connection.js";
+import { l0aCardKindForIntent } from "./l0a-capability.js";
 
 /**
  * L1 capability registry: the server's list of what an A2UI surface may do.
@@ -14,6 +15,21 @@ import type { InteractionRequiredApp } from "./interaction-connection.js";
  * interaction already stores the intent it was created with.
  */
 
+/** Which heading shape a card of this capability uses (§6.4). */
+export type SurfaceCardShape = "review" | "decision";
+
+/** The one verb a button may use. Never taken from the model's plan. */
+export type SurfaceActionVerb = "send" | "create";
+
+/**
+ * Whether a capability occupies the one-open-card unique index.
+ *
+ * `action` cards are drafts the kernel publishes; only one may be open per
+ * thread+intent. `result` cards enter already terminal, so the index does not
+ * apply (spec §5.6).
+ */
+export type CardKind = "action" | "result";
+
 export type InteractionCapability = {
   intent: string;
   /** Short human label, used in prompts and fallbacks. */
@@ -26,7 +42,7 @@ export type InteractionCapability = {
    */
   requiresConnection: InteractionRequiredApp | null;
   /** ExternalEffect kind the action creates, or null for a read-only surface. */
-  effectKind: "email.send" | "calendar.create" | null;
+  effectKind: string | null;
   /** Read-only capabilities may render a result without any connection. */
   readOnly: boolean;
   /**
@@ -34,6 +50,17 @@ export type InteractionCapability = {
    * registry lists the intent so it is recognized, not so it is executable.
    */
   implemented: boolean;
+  /** Which heading shape a card of this capability uses (§6.4). */
+  cardShape: SurfaceCardShape;
+  /** The one verb its button may use. Never taken from the model's plan. */
+  actionVerb?: SurfaceActionVerb;
+  /**
+   * Slot names a later turn must see in history (spec §6.7.1). Empty means the
+   * projector falls back to title/summary.
+   */
+  historyDigestFields?: readonly string[];
+  /** Action drafts vs terminal result cards (spec §5.6). */
+  cardKind: CardKind;
 };
 
 const EMAIL_SCHEMA: InteractionSurfaceSchema = {
@@ -102,6 +129,10 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     effectKind: "email.send",
     readOnly: false,
     implemented: true,
+    cardShape: "review",
+    actionVerb: "send",
+    historyDigestFields: ["to", "subject"],
+    cardKind: "action",
   },
   {
     intent: "calendar.create",
@@ -111,6 +142,10 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     effectKind: "calendar.create",
     readOnly: false,
     implemented: true,
+    cardShape: "review",
+    actionVerb: "create",
+    historyDigestFields: ["name", "start", "end"],
+    cardKind: "action",
   },
   {
     intent: "calendar.query",
@@ -120,6 +155,8 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     effectKind: null,
     readOnly: true,
     implemented: true,
+    cardShape: "review",
+    cardKind: "result",
   },
   {
     intent: "interaction.result",
@@ -129,10 +166,27 @@ export const INTERACTION_CAPABILITIES: readonly InteractionCapability[] = [
     effectKind: null,
     readOnly: true,
     implemented: true,
+    cardShape: "review",
+    cardKind: "result",
   },
 ] as const;
 
 const BY_INTENT = new Map(INTERACTION_CAPABILITIES.map((entry) => [entry.intent, entry]));
+
+/**
+ * Older spellings that mean a registered intent. Lookups stay keyed by the
+ * registered name; callers canonicalize first so `email.send` is not a second
+ * card kind.
+ */
+export const INTENT_ALIASES: Readonly<Record<string, string>> = {
+  "email.send": "email.compose",
+  "calendar.compose": "calendar.create",
+};
+
+/** Map an alias or registered intent onto the registry key. */
+export function canonicalIntent(intent: string): string {
+  return INTENT_ALIASES[intent] ?? intent;
+}
 
 /** The capability for an intent, or undefined when nothing is registered. */
 export function findInteractionCapability(intent: string): InteractionCapability | undefined {
@@ -141,6 +195,25 @@ export function findInteractionCapability(intent: string): InteractionCapability
 
 export function interactionCapabilityForIntent(intent: string): InteractionCapability | undefined {
   return findInteractionCapability(intent);
+}
+
+/** Action vs result for a registered intent, its alias, or an L0-A prefix. */
+export function cardKindForIntent(intent: string): CardKind | undefined {
+  return (
+    findInteractionCapability(canonicalIntent(intent))?.cardKind ?? l0aCardKindForIntent(intent)
+  );
+}
+
+export function isActionIntent(intent: string | undefined): boolean {
+  return intent !== undefined && cardKindForIntent(intent) === "action";
+}
+
+export function isEmailComposeIntent(intent: string | undefined): boolean {
+  return intent !== undefined && canonicalIntent(intent) === "email.compose";
+}
+
+export function isCalendarCreateIntent(intent: string | undefined): boolean {
+  return intent !== undefined && canonicalIntent(intent) === "calendar.create";
 }
 
 /** Every registered intent, for prompts and docs to stay in sync with code. */

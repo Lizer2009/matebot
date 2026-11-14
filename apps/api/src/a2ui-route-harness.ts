@@ -139,7 +139,10 @@ export function interactionHarness(input: {
       findFirst: async () => ({ id: "run-1" }),
     },
     externalEffect: {
-      findUnique: async () => null,
+      findUnique: async ({ where }: { where: { id: string } }) =>
+        row.approvalEffectId && where.id === row.approvalEffectId
+          ? { id: where.id, status: "executing" }
+          : null,
       create: async ({ data }: { data: Record<string, unknown> }) => ({ id: "effect-1", ...data }),
       updateMany: async () => ({ count: 1 }),
     },

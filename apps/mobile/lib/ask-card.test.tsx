@@ -177,6 +177,12 @@ async function render(
   return container.querySelector("span")!;
 }
 
+it("hides answer controls when the kernel already closed the ask", async () => {
+  await render({ cardStatus: "succeeded", status: "pending" });
+  expect(container.querySelector("input")).toBeNull();
+  expect(container.querySelector("button")).toBeNull();
+});
+
 it("caps a secret card's title at two lines and leaves question titles whole", async () => {
   const login = await render({
     input: "secret",

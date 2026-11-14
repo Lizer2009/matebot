@@ -1,4 +1,5 @@
 import type { MessageBlock } from "@matebot/contracts";
+import { l0aHostInteractive } from "@matebot/core";
 import { typeScale } from "@matebot/ui-tokens";
 import { useRef, useState } from "react";
 import type { ViewProps } from "react-native";
@@ -64,6 +65,7 @@ export function ChoiceCard({
   const { t } = useI18n();
   const readOnly = useThreadReadOnly();
   const tokens = useMobileTokens();
+  const interactive = l0aHostInteractive(block);
   const { width: windowWidth } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
   // Set in the handler, so a second tap cannot pass before the buttons re-render disabled.
@@ -75,7 +77,7 @@ export function ChoiceCard({
 
   // Dismissing records the server's dismissed answer id, so both outcomes share this path.
   async function submit(optionId: string) {
-    if (readOnly || pending.current || answerId) return;
+    if (readOnly || !interactive || pending.current || answerId) return;
     pending.current = true;
     setBusy(true);
     try {
@@ -121,7 +123,7 @@ export function ChoiceCard({
             </Text>
           ) : null}
         </View>
-        {!readOnly && !answerId ? (
+        {!readOnly && interactive && !answerId ? (
           <GlassIconButton
             testID="choice-card-dismiss"
             accessibilityLabel={t("Dismiss")}
@@ -143,8 +145,11 @@ export function ChoiceCard({
               key={option.id}
               accessibilityRole="button"
               accessibilityLabel={option.label}
-              accessibilityState={{ disabled: readOnly || busy || chosen, selected: chosen }}
-              disabled={readOnly || busy || chosen}
+              accessibilityState={{
+                disabled: readOnly || !interactive || busy || chosen,
+                selected: chosen,
+              }}
+              disabled={readOnly || !interactive || busy || chosen}
               onPress={() => void submit(option.id)}
               style={({ pressed }) => [
                 styles.option,

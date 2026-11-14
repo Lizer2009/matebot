@@ -769,6 +769,8 @@ model Bot {
   teamChatRules          String  @default("")
   crossSpaceCommunication Boolean @default(true)
   dailyCheckIns Boolean @default(true)
+  /// When true, action intents skip the compose card and run under existing approval rules.
+  draftsDisabled Boolean @default(false)
   fleetManagement        Boolean @default(true)
   routines          Routine[]
   scratchpadItems   ScratchpadItem[]
@@ -1047,6 +1049,20 @@ model Interaction {
   runId            String?
   run              Run?                 @relation(fields: [runId], references: [id], onDelete: SetNull)
   intent           String
+  /// sha256(threadId + NUL + intent). One action card per thread per intent.
+  /// The partial unique index on this column is written by hand in the migration
+  /// (Prisma cannot declare a WHERE clause); a test in CI checks it still exists.
+  /// Optional because the previous release keeps running for seconds after the
+  /// migration and does not write the key, so the column stays nullable until that
+  /// release has drained; a later migration tightens it. The index already keeps
+  /// every row that does have a key unique.
+  cardKey          String?
+  /// Set when a newer user message may have overtaken this card. Cleared by any
+  /// publish, edit, or confirm. Freshness is a column, not a status: a stale
+  /// `collecting` card must stay unconfirmable, which a status value would break.
+  staleAt          DateTime?
+  /// When this card stops being actionable. Only `awaiting_approval` sets it.
+  expiresAt        DateTime?
   status           String
   draftVersion     Int                  @default(1)
   confirmedVersion Int?
@@ -1062,7 +1078,9 @@ model Interaction {
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   surfaces         InteractionSurface[]
+  events           InteractionEvent[]
 
+  @@index([threadId, cardKey])
   @@index([threadId, updatedAt])
   @@index([spaceId, threadId])
   @@index([runId])
@@ -1083,6 +1101,22 @@ model InteractionSurface {
 
   @@unique([interactionId, surfaceId])
   @@map("interaction_surfaces")
+}
+
+/// Append-only log of one card's state changes (spec §4.5). No UPDATE path.
+model InteractionEvent {
+  id             String      @id @default(cuid())
+  interactionId  String
+  interaction    Interaction @relation(fields: [interactionId], references: [id], onDelete: Cascade)
+  at             DateTime    @default(now())
+  kind           String
+  fromStatus     String?
+  toStatus       String?
+  reason         String?
+  runId          String?
+
+  @@index([interactionId, at])
+  @@map("interaction_events")
 }
 
 model SteeringMessage {

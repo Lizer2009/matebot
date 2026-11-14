@@ -171,6 +171,7 @@ export class DaytonaSandboxProvider implements SandboxProvider {
         takeover: true,
         persistentHome: true,
         multiScreen: true,
+        inPlaceUpdate: true,
       },
     };
   }

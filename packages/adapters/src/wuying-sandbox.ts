@@ -30,6 +30,7 @@ import { boundedComputerActions, computerObservation } from "./computer-support.
 import { normalizeDesktopWorkspacePath } from "./desktop-sandbox-paths.js";
 import { McpSession } from "./mcp-transport.js";
 import { shouldSkipPortableWorkspaceFile } from "./workspace-save-policy.js";
+import { WUYING_SANDBOX_DESCRIPTOR } from "./wuying-capabilities.js";
 import type { WuyingControlPlane } from "./wuying-openapi.js";
 import { WuyingOpenApi } from "./wuying-openapi.js";
 
@@ -111,18 +112,10 @@ export interface WuyingSandboxOptions {
 }
 
 export function describeWuyingSandbox() {
+  // A fresh copy per call: callers historically received their own object.
   return {
-    id: "wuying",
-    contractVersion: "1",
-    adapterVersion: "0.1.0",
-    capabilities: {
-      graphical: true,
-      pty: false,
-      snapshots: false,
-      takeover: true,
-      persistentHome: true,
-      multiScreen: false,
-    },
+    ...WUYING_SANDBOX_DESCRIPTOR,
+    capabilities: { ...WUYING_SANDBOX_DESCRIPTOR.capabilities },
   };
 }
 

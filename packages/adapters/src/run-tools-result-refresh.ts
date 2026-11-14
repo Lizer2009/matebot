@@ -1,5 +1,5 @@
 import type { ResultSourceRead } from "@matebot/core";
-import { queryResultSource, windowDecision } from "@matebot/core";
+import { cardKindForIntent, queryResultSource, windowDecision } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import type { publishResultSurface } from "./interaction-result-publish.js";
 import { calendarResultReader } from "./result-source-calendar.js";
@@ -47,6 +47,8 @@ export type RefreshResultServices = {
   connectionFor: (app: "email" | "calendar") => Promise<string | null>;
   /** A per-turn reader for a source that reads through the user's provider. */
   read?: ResultSourceRead;
+  /** The uploaded-file reader for `csv-upload`, from the original result's file. */
+  csvRead?: ResultSourceRead;
   /** The prompt this run is answering, so the server can tell whose period this is. */
   userPrompt?: string | null;
   /** Republish the same interaction's surface with the new result. */
@@ -145,9 +147,11 @@ export async function refreshResult(
     { sourceId, window: { from, to }, ...(timezone ? { timezone } : {}) },
     {
       connectionId,
-      ...(services.read
-        ? { readFor: (id: string) => (id === "calendar-events" ? services.read : undefined) }
-        : {}),
+      readFor: (id: string) => {
+        if (id === "calendar-events") return services.read;
+        if (id === "csv-upload") return services.csvRead;
+        return undefined;
+      },
     },
   );
   if (!queried.ok) {
@@ -241,7 +245,7 @@ export function refreshResultServices(ctx: RunContext): RefreshResultServices {
         select: { id: true, title: true, intent: true },
       });
       return rows
-        .filter((row) => row.intent === "interaction.result")
+        .filter((row) => cardKindForIntent(row.intent) === "result")
         .map((row) => ({ taskId: row.id, label: row.title ?? row.id }));
     },
     read: async (input) => {
@@ -265,6 +269,44 @@ export function refreshResultServices(ctx: RunContext): RefreshResultServices {
       return reader(input);
     },
     connectionFor: connectionForApp,
+    csvRead: deps.artifacts
+      ? async (input) => {
+          const { attachedFileArtifactIds } = await import("./run-tools-result.js");
+          const { csvResultReader } = await import("./result-source-csv.js");
+          let attachedArtifactIds = await attachedFileArtifactIds(run.sourceMessageId, deps);
+          if (attachedArtifactIds.length === 0) {
+            const origin = await prisma.interaction.findFirst({
+              where: { threadId: run.threadId, intent: "interaction.result" },
+              orderBy: { createdAt: "asc" },
+              select: { run: { select: { sourceMessageId: true } } },
+            });
+            attachedArtifactIds = await attachedFileArtifactIds(origin?.run?.sourceMessageId, deps);
+          }
+          const reader = csvResultReader(
+            {
+              artifacts: {
+                find: (artifactId) =>
+                  prisma.artifact.findFirst({
+                    where: { id: artifactId, spaceId: run.spaceId, userId: run.userId },
+                    select: { id: true, name: true, mimeType: true, storageKey: true },
+                  }),
+                read: (storageKey) =>
+                  deps.artifacts!.get(storageKey, {
+                    operationId: "interaction.result.refresh",
+                    traceId: "interaction.result.refresh",
+                    spaceId: run.spaceId,
+                    userId: run.userId,
+                    signal: new AbortController().signal,
+                  }),
+              },
+              attachedArtifactIds,
+            },
+            input.artifactId ? { artifactId: input.artifactId } : {},
+          );
+          if (!reader) return { ok: false, error: "no_uploaded_file", outcome: "unavailable" };
+          return reader(input);
+        }
+      : undefined,
     republish: async (input) => {
       const { republishResultSurface } = await import("./interaction-result-publish.js");
       const republished = await republishResultSurface(

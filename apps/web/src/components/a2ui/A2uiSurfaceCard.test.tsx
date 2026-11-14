@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+
+import { i18n } from "@lingui/core";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -25,6 +27,7 @@ let root: Root;
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  i18n.loadAndActivate({ locale: "en", messages: {} });
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -36,19 +39,109 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderCard(block: A2uiSurfaceBlock, messages?: unknown[], superseded?: boolean) {
+function renderCard(
+  block: A2uiSurfaceBlock,
+  messages?: unknown[],
+  supersededOrOptions?: boolean | { superseded?: boolean; onRetry?: () => Promise<void> },
+) {
+  const options =
+    typeof supersededOrOptions === "boolean"
+      ? { superseded: supersededOrOptions }
+      : (supersededOrOptions ?? {});
   act(() =>
     root.render(
       <A2uiSurfaceCard
         block={block}
         messages={messages}
-        {...(superseded === undefined ? {} : { superseded })}
+        {...(options.superseded === undefined ? {} : { superseded: options.superseded })}
+        {...(options.onRetry ? { onRetry: options.onRetry } : {})}
       />,
     ),
   );
 }
 
 describe("A2uiSurfaceCard", () => {
+  it("keeps a succeeded result card's table instead of folding it to Done", () => {
+    const messages = [
+      {
+        version: "v0.9",
+        createSurface: {
+          surfaceId: "surf-r",
+          catalogId: "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json",
+        },
+      },
+      {
+        version: "v0.9",
+        updateComponents: {
+          surfaceId: "surf-r",
+          components: [
+            { id: "root", component: "Column", children: ["title", "source"] },
+            { id: "title", component: "Text", text: "Quarterly totals", variant: "h3" },
+            { id: "source", component: "Text", text: "Upload: sample-quarters.csv" },
+          ],
+        },
+      },
+    ];
+    renderCard(
+      fixtureA2uiSurfaceBlock({
+        intent: "interaction.result",
+        status: "succeeded",
+        title: "Quarterly totals",
+        summary: "Upload: sample-quarters.csv",
+        documentRef: undefined,
+        surfaceId: "surf-r",
+      }),
+      messages,
+    );
+    expect(container.querySelector('[data-testid="a2ui-surface-folded"]')).toBeNull();
+    expect(container.textContent).toContain("sample-quarters.csv");
+  });
+
+  it("offers nothing on a replaced card, even when its document holds a button", () => {
+    renderCard(fixtureA2uiSurfaceBlock({ status: "superseded", lifecycle: "draft" }));
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-surface-host"]')).toBeNull();
+    expect(container.textContent).toContain("Replaced by a newer draft");
+  });
+
+  it("offers only Retry on an expired card", () => {
+    renderCard(fixtureA2uiSurfaceBlock({ status: "expired", lifecycle: "draft" }), undefined, {
+      onRetry: async () => {},
+    });
+    expect(container.querySelector('[data-testid="a2ui-surface-retry"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+  });
+
+  it("shows the category above the card's own title", () => {
+    renderCard(fixtureA2uiSurfaceBlock({ title: "产品发布", intent: "email.compose" }));
+    const header = container.querySelector('[data-testid="a2ui-surface-header"]')!;
+    expect(header.textContent).toContain("Email");
+    expect(header.textContent).toContain("产品发布");
+  });
+
+  it("hints that a live card may have a newer version without changing its controls", () => {
+    renderCard(fixtureA2uiSurfaceBlock({ stale: true, status: "ready_for_review" }));
+    expect(container.querySelector('[data-testid="a2ui-surface-stale-hint"]')?.textContent).toBe(
+      "There may be a newer version",
+    );
+    expect(container.querySelector('[data-testid="a2ui-surface-header"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="a2ui-surface-folded"]')).toBeNull();
+  });
+
+  it("does not show the stale hint on a replaced card", () => {
+    renderCard(fixtureA2uiSurfaceBlock({ status: "superseded", stale: true, lifecycle: "draft" }));
+    expect(container.querySelector('[data-testid="a2ui-surface-stale-hint"]')).toBeNull();
+  });
+
+  it("treats a legacy block with no status as the draft it claims to be", () => {
+    const { status: _omitted, ...legacy } = fixtureA2uiSurfaceBlock({
+      lifecycle: "draft",
+      documentRef: undefined,
+    });
+    renderCard(legacy as never);
+    expect(container.querySelector('[data-testid="a2ui-surface-placeholder"]')).toBeTruthy();
+  });
+
   it("shows a corrected draft as replaced and offers nothing to press", () => {
     // Two cards for the same event each had a working Create button, so a user could create it
     // twice, and the older button gave no sign it was stale.
@@ -59,7 +152,7 @@ describe("A2uiSurfaceCard", () => {
     );
     expect(
       container.querySelector('[data-testid="a2ui-surface-superseded"]')?.textContent,
-    ).toContain("Replaced by a newer draft below");
+    ).toContain("Replaced by a newer draft");
     expect(container.querySelector('[data-testid="a2ui-surface-host"]')).toBeNull();
     expect(container.querySelector('[data-testid="a2ui-surface-placeholder"]')).toBeNull();
   });
@@ -101,7 +194,8 @@ describe("A2uiSurfaceCard", () => {
       await Promise.resolve();
     });
     const refused = container.querySelector('[data-testid="a2ui-surface-refused"]');
-    expect(refused?.textContent).toMatch(/EvilWidget/);
+    expect(refused?.textContent).toContain("This card could not be shown.");
+    expect(refused?.textContent).not.toMatch(/EvilWidget|Unknown catalog/i);
     expect(container.querySelector('[data-testid="a2ui-surface-host"]')).toBeNull();
   });
 
@@ -248,12 +342,10 @@ describe("A2uiSurfaceCard", () => {
         />,
       ),
     );
-    expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
-    expect(
-      (container.querySelector('[data-testid="a2ui-email-compose"]') as HTMLElement).getAttribute(
-        "data-sent",
-      ),
-    ).toBe("true");
+    expect(container.textContent).toContain("Done");
+    expect(container.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
+    expect(container.textContent).not.toContain("msg-1");
   });
 
   it("shows a failed card without Sent when send is an internal error", async () => {
@@ -284,6 +376,7 @@ describe("A2uiSurfaceCard", () => {
         <A2uiSurfaceCard
           block={{
             ...block,
+            status: "failed",
             template: "action-result-failed",
             lifecycle: "failed",
             error: "Internal server error",
@@ -293,10 +386,8 @@ describe("A2uiSurfaceCard", () => {
         />,
       ),
     );
-    expect(container.querySelector('[data-testid="a2ui-email-failed"]')?.textContent).toMatch(
-      /Internal server error/,
-    );
-    expect(container.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(container.textContent).toContain("Failed");
+    expect(container.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 
@@ -386,13 +477,49 @@ describe("A2uiSurfaceCard", () => {
       ),
     );
     expect(container.querySelector('[data-testid="a2ui-email-sender"]')?.textContent).toBe("Gmail");
-    // The connection's name is whatever the client called it; the record holds no mailbox.
-    expect(container.querySelector('[data-testid="a2ui-email-sender-note"]')?.textContent).toBe(
-      "Email address not provided",
-    );
+    // A missing mailbox is not announced as "not provided"; the connection name is enough.
+    expect(container.querySelector('[data-testid="a2ui-email-sender-note"]')).toBeNull();
+    expect(container.textContent).not.toMatch(/Email address not provided/);
     // Read-only: the sending mailbox is not one of the form's inputs.
     expect(container.querySelector('input[aria-label="From"]')).toBeNull();
     expect(container.querySelector('[data-testid="a2ui-email-from"]')).toBeNull();
+  });
+
+  it("shows the provider mailbox when the block carries one", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+      senderLabel: "Gmail",
+      senderAddress: "lizer@example.test",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={vi.fn()} />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-sender"]')?.textContent).toBe(
+      "lizer@example.test",
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-sender-note"]')).toBeNull();
+  });
+
+  it("falls back to Connected account when neither label nor address is present", () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={vi.fn()} />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="a2ui-email-sender"]')?.textContent).toBe(
+      "Connected account",
+    );
   });
 
   it("does not name a sending account on a card that is asking for one", () => {
@@ -459,7 +586,7 @@ describe("A2uiSurfaceCard", () => {
     const form = container.querySelector('[data-testid="a2ui-email-compose"]') as HTMLElement;
     expect(form.getAttribute("data-template")).toBe("action-progress-card");
     expect(container.querySelector('[data-testid="a2ui-email-progress"]')?.textContent).toMatch(
-      /Sending/,
+      /Sending email/,
     );
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
     expect(
@@ -467,7 +594,7 @@ describe("A2uiSurfaceCard", () => {
     ).toBe(true);
   });
 
-  it("shows success with the provider message id on the same surface", () => {
+  it("shows success without the provider message id", () => {
     const block = fixtureA2uiSurfaceBlock({
       intent: "email.compose",
       documentRef: undefined,
@@ -478,14 +605,128 @@ describe("A2uiSurfaceCard", () => {
       providerMessageId: "msg-1",
     });
     act(() => root.render(<A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} />));
-    expect(container.querySelector('[data-testid="a2ui-email-sent"]')?.textContent).toMatch(/Sent/);
-    expect(container.querySelector('[data-testid="a2ui-email-provider-id"]')?.textContent).toBe(
-      "msg-1",
-    );
+    expect(container.textContent).toContain("Done");
+    expect(container.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
+    expect(container.querySelector('[data-testid="a2ui-email-provider-id"]')).toBeNull();
+    expect(container.textContent).not.toContain("msg-1");
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
   });
 
+  it("opens Manage rules from the approval menu", async () => {
+    const onManageRules = vi.fn();
+    const onSend = vi.fn(async () => undefined);
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onManageRules={onManageRules}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const status = container.querySelector(
+      '[data-testid="a2ui-email-status"]',
+    ) as HTMLButtonElement;
+    expect(status.textContent).toMatch(/Needs approval/);
+    await act(async () => {
+      status.click();
+    });
+    const manage = document.querySelector('[data-testid="a2ui-email-manage-rules"]') as HTMLElement;
+    expect(manage).toBeTruthy();
+    await act(async () => {
+      manage.click();
+    });
+    expect(onManageRules).toHaveBeenCalledTimes(1);
+    expect(onSend).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeTruthy();
+  });
+
+  it("hides Manage rules when no settings opener is passed", async () => {
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+    });
+    act(() => root.render(<A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} />));
+    const status = container.querySelector(
+      '[data-testid="a2ui-email-status"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      status.click();
+    });
+    expect(document.querySelector('[data-testid="a2ui-email-manage-rules"]')).toBeNull();
+    expect(document.querySelector('[data-testid="a2ui-email-approval-require"]')).toBeTruthy();
+  });
+
+  it("shows four approval items and Allow this recipient does not send", async () => {
+    const onAllowRecipient = vi.fn(async () => undefined);
+    const onSend = vi.fn(async () => undefined);
+    const onDisableDrafts = vi.fn(async () => undefined);
+    const onManageRules = vi.fn();
+    const block = fixtureA2uiSurfaceBlock({
+      intent: "email.compose",
+      documentRef: undefined,
+      draftVersion: 1,
+      capability: "ready",
+    });
+    act(() =>
+      root.render(
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onAllowRecipient={onAllowRecipient}
+          onDisableDrafts={onDisableDrafts}
+          onManageRules={onManageRules}
+          onSend={onSend}
+        />,
+      ),
+    );
+    const status = container.querySelector(
+      '[data-testid="a2ui-email-status"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      status.click();
+    });
+    expect(
+      document.querySelector('[data-testid="a2ui-email-allow-recipient"]')?.textContent,
+    ).toMatch(/Allow this recipient/);
+    expect(document.querySelector('[data-testid="a2ui-email-approval-require"]')).toBeTruthy();
+    expect(
+      document.querySelector('[data-testid="a2ui-email-disable-drafts"]')?.textContent,
+    ).toMatch(/Turn off drafts for this bot/);
+    expect(document.querySelector('[data-testid="a2ui-email-manage-rules"]')).toBeTruthy();
+    const allow = document.querySelector(
+      '[data-testid="a2ui-email-allow-recipient"]',
+    ) as HTMLElement;
+    await act(async () => {
+      allow.click();
+    });
+    expect(onAllowRecipient).toHaveBeenCalledWith("a@example.com");
+    expect(onSend).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeTruthy();
+    await act(async () => {
+      status.click();
+    });
+    const disable = document.querySelector(
+      '[data-testid="a2ui-email-disable-drafts"]',
+    ) as HTMLElement;
+    await act(async () => {
+      disable.click();
+    });
+    expect(onDisableDrafts).toHaveBeenCalledWith(true);
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
   it("shows a failed card with Retry and no Send", async () => {
+    const onRetry = vi.fn(async () => undefined);
     const onSend = vi.fn(async () => undefined);
     const block = fixtureA2uiSurfaceBlock({
       intent: "email.compose",
@@ -493,25 +734,32 @@ describe("A2uiSurfaceCard", () => {
       draftVersion: 1,
       confirmedVersion: 1,
       capability: "ready",
+      status: "failed",
       template: "action-result-failed",
       lifecycle: "failed",
       error: "Could not send the email",
     });
     act(() =>
       root.render(
-        <A2uiSurfaceCard block={block} messages={emailSurfaceMessages()} onSend={onSend} />,
+        <A2uiSurfaceCard
+          block={block}
+          messages={emailSurfaceMessages()}
+          onSend={onSend}
+          onRetry={onRetry}
+        />,
       ),
     );
-    expect(container.querySelector('[data-testid="a2ui-email-failed"]')?.textContent).toMatch(
-      /Could not send the email/,
-    );
-    expect(container.querySelector('[data-testid="a2ui-email-sent"]')).toBeNull();
+    expect(container.textContent).toContain("Failed");
+    expect(container.querySelector('[data-testid="a2ui-email-compose"]')).toBeNull();
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();
-    const retry = container.querySelector('[data-testid="a2ui-email-retry"]') as HTMLButtonElement;
+    const retry = container.querySelector(
+      '[data-testid="a2ui-surface-retry"]',
+    ) as HTMLButtonElement;
     await act(async () => {
       retry.click();
     });
-    expect(onSend).toHaveBeenCalledWith(1);
+    expect(onRetry).toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
   });
 
   it("shows UNKNOWN with Check status and no Send", async () => {
@@ -681,9 +929,9 @@ describe("A2uiSurfaceCard when the document cannot be resolved", () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(
-      container.querySelector('[data-testid="a2ui-surface-placeholder-reason"]')?.textContent,
-    ).toBe("boom");
+    expect(container.textContent).toContain("This card could not be shown.");
+    expect(container.textContent).not.toContain("boom");
+    expect(container.querySelector('[data-testid="a2ui-surface-placeholder-reason"]')).toBeNull();
     const retry = container.querySelector("button");
     expect(retry?.textContent).toContain("Try again");
     await act(async () => {

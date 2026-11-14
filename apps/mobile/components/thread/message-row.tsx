@@ -60,6 +60,10 @@ export type MessageRowActions = {
   layout: (messageId: string, y: number, index: number) => void;
   /** Reload the thread so UNKNOWN can pick up an E′ reconcile stamp. Resolves when settled. */
   refresh?: () => void | Promise<unknown>;
+  /** Opens the existing Approvals settings. Optional so a row without a host still renders. */
+  manageRules?: () => void;
+  allowRecipient?: (recipient: string) => void | Promise<void>;
+  disableDrafts?: (disabled: boolean) => void | Promise<void>;
 };
 
 type MessageRowProps = {
@@ -95,6 +99,7 @@ type MessageRowProps = {
   userBubble?: UserBubble;
   /** Whether this deployment serves interactive cards, from `/me`. */
   a2uiEnabled?: boolean;
+  draftsDisabled?: boolean;
   inGroup: boolean;
   columnWidth: number;
   enableJump: boolean;
@@ -132,6 +137,7 @@ export const MessageRow = memo(function MessageRow({
   activityStatus,
   userBubble,
   a2uiEnabled,
+  draftsDisabled,
   inGroup,
   columnWidth,
   enableJump,
@@ -460,6 +466,10 @@ export const MessageRow = memo(function MessageRow({
                 onHelperToggle={actions.helperToggle}
                 userBubble={userBubble}
                 onRefresh={actions.refresh}
+                onManageRules={actions.manageRules}
+                onAllowRecipient={actions.allowRecipient}
+                onDisableDrafts={actions.disableDrafts}
+                draftsDisabled={draftsDisabled}
               />
             </ThreadReadOnlyContext.Provider>
           </MessageContextMenu>
