@@ -126,4 +126,23 @@ describe("L0-A capability prefixes", () => {
       status: "pending",
     });
   });
+
+  it("keeps an answered ask answered when the kernel row is later superseded", () => {
+    expect(
+      stampL0aBlock(
+        {
+          kind: "ask",
+          text: "Which city?",
+          status: "answered",
+          answer: "Paris",
+        },
+        { interactionId: "ix-ask", cardStatus: "superseded" },
+      ),
+    ).toMatchObject({
+      interactionId: "ix-ask",
+      cardStatus: "superseded",
+      status: "answered",
+      answer: "Paris",
+    });
+  });
 });

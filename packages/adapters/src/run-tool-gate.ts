@@ -739,7 +739,7 @@ async function showApprovalCard(ctx: RunContext, call: ToolCall, card: ApprovalC
   }
   let blocks = [ask];
   let skipMessage = false;
-  if (isL0aBlock(ask) && typeof deps.prisma.interaction?.findFirst === "function") {
+  if (isL0aBlock(ask) && typeof deps.prisma.interaction?.create === "function") {
     const published = await publishL0aView(deps.prisma, {
       spaceId: run.spaceId,
       threadId: run.threadId,

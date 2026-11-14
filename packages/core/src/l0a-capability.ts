@@ -110,6 +110,16 @@ export function stampL0aBlock<T extends L0aBlock>(
   if (block.kind === "choice") {
     return { ...block, interactionId: input.interactionId, cardStatus: input.cardStatus };
   }
+  // A free-text answer writes `answered` first; a later stale restamp must not
+  // put the ask back to pending just because the kernel row was superseded.
+  if (block.kind === "ask" && block.status === "answered") {
+    return {
+      ...block,
+      interactionId: input.interactionId,
+      cardStatus: input.cardStatus,
+      status: "answered",
+    };
+  }
   return {
     ...block,
     interactionId: input.interactionId,
