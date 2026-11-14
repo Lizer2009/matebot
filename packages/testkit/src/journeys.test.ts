@@ -3567,11 +3567,7 @@ describeJourneys("required product journeys", () => {
       const { cookie, chief } = await fleetOwner("two-live-cards");
       await createBot(cookie, "Alpha");
       await createBot(cookie, "Beta");
-      await sendForApproval(
-        cookie,
-        chief.id,
-        "create a group named Crew with Alpha, Beta",
-      );
+      await sendForApproval(cookie, chief.id, "create a group named Crew with Alpha, Beta");
       await rpc(app, cookie, "threads/send", {
         botId: chief.id,
         text: "ask me which city to use",
