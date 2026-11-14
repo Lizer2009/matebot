@@ -66,7 +66,7 @@ export function ChoiceCard({
   return (
     <div className="flex justify-start">
       <BuiCard className="relative w-[420px] max-w-full px-[18px] py-[14px]">
-        {!block.answerId ? (
+        {!block.answerId && interactive ? (
           <Button
             variant="ghost"
             size="icon-sm"

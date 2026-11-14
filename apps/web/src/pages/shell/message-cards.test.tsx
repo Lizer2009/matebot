@@ -240,3 +240,63 @@ it("authorizes a card in a normal chat and marks its thread connected", async ()
     host.remove();
   }
 });
+
+it("hides Connect when the kernel already closed the card", async () => {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(async () =>
+      root.render(
+        <AppConnectCard
+          botId="bot"
+          threadId="normal-chat"
+          block={{
+            kind: "app_connect",
+            connectorId: "fake",
+            provider: "gmail",
+            name: "Gmail",
+            description: "",
+            logo: null,
+            status: "pending",
+            cardStatus: "succeeded",
+          }}
+        />,
+      ),
+    );
+    expect(host.querySelector("button")).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
+  }
+});
+
+it("hides Approve when the kernel already cancelled the MCP card", async () => {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(async () =>
+      root.render(
+        <McpApprovalCard
+          botId="bot"
+          threadId="thread"
+          block={{
+            kind: "mcp_approval",
+            name: "Example",
+            serverId: "server",
+            transport: "streamable_http",
+            endpoint: "https://example.test/mcp",
+            needsOAuth: false,
+            status: "pending",
+            cardStatus: "cancelled",
+          }}
+        />,
+      ),
+    );
+    expect(host.querySelector("button")).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
+  }
+});

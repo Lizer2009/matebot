@@ -417,6 +417,42 @@ it.each(["Allow in this space", "Allow for this chat"])(
   },
 );
 
+it("hides answer controls when the kernel already closed the ask", async () => {
+  await render({
+    kind: "ask",
+    text: "Which city?",
+    status: "pending",
+    cardStatus: "succeeded",
+  });
+  expect(container.querySelector("textarea, input")).toBeNull();
+  expect(button("Send answer")).toBeUndefined();
+});
+
+it("hides secret save when the kernel already closed the card", async () => {
+  await render({ ...secretCard, cardStatus: "succeeded" });
+  expect(container.querySelector("input")).toBeNull();
+  expect(button("Save")).toBeUndefined();
+});
+
+it("disables onboarding choices once the kernel closed the card", async () => {
+  await act(async () =>
+    root.render(
+      <ChoiceCard
+        botId="bot"
+        block={{
+          kind: "choice",
+          question: "Which city?",
+          options: [{ id: "paris", letter: "A", label: "Paris" }],
+          cardStatus: "succeeded",
+        }}
+        onBotChanged={async () => {}}
+      />,
+    ),
+  );
+  expect(button("AParis")?.disabled).toBe(true);
+  expect(container.querySelector('[aria-label="Dismiss"]')).toBeNull();
+});
+
 it("gives onboarding choices the same lettered rows as questions", async () => {
   await act(async () =>
     root.render(

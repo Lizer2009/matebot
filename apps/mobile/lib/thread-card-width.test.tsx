@@ -540,6 +540,29 @@ describe("thread cards", () => {
     expect(card?.textContent).toContain("Example notes");
     expect(styleOf(card)).toMatchObject({ maxWidth: 576 });
     expect(styleOf(card).width).toBeUndefined();
+    expect(container.textContent).toContain("Approve");
+  });
+
+  it("hides MCP approve once the kernel closed the card", () => {
+    act(() =>
+      root.render(
+        <McpApprovalCard
+          botId="bot-1"
+          block={{
+            kind: "mcp_approval",
+            serverId: "server-1",
+            name: "Example notes",
+            transport: "streamable_http",
+            endpoint: "https://mcp.example.test",
+            needsOAuth: false,
+            status: "pending",
+            cardStatus: "cancelled",
+          }}
+        />,
+      ),
+    );
+    expect(container.textContent).not.toContain("Approve");
+    expect(container.textContent).not.toContain("Not now");
   });
 
   it("labels a running helper", () => {

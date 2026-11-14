@@ -1,6 +1,6 @@
 import type { LoginFieldInput } from "@matebot/contracts";
 import { normalizeOneTimeCode, vaultKind } from "@matebot/contracts";
-import { isSecretAskBlock } from "@matebot/core";
+import { isSecretAskBlock, l0aHostInteractive } from "@matebot/core";
 import { fontWeight, typeScale } from "@matebot/ui-tokens";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
@@ -40,6 +40,7 @@ export function AskBlock({
 }) {
   const tokens = useMobileTokens();
   const { t } = useI18n();
+  canAnswer = canAnswer && l0aHostInteractive(ask);
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
