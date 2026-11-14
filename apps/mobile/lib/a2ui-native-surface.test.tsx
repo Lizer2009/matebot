@@ -554,6 +554,7 @@ describe("native A2UI surface", () => {
     draftVersion: 1,
     intent: "interaction.result",
     title: "Quarterly totals",
+    status: "succeeded",
   } satisfies A2uiSurfaceBlock;
 
   it("draws every cell of a result table and its provenance", async () => {

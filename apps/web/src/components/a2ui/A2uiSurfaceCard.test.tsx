@@ -61,6 +61,42 @@ function renderCard(
 }
 
 describe("A2uiSurfaceCard", () => {
+  it("keeps a succeeded result card's table instead of folding it to Done", () => {
+    const messages = [
+      {
+        version: "v0.9",
+        createSurface: {
+          surfaceId: "surf-r",
+          catalogId: "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json",
+        },
+      },
+      {
+        version: "v0.9",
+        updateComponents: {
+          surfaceId: "surf-r",
+          components: [
+            { id: "root", component: "Column", children: ["title", "source"] },
+            { id: "title", component: "Text", text: "Quarterly totals", variant: "h3" },
+            { id: "source", component: "Text", text: "Upload: sample-quarters.csv" },
+          ],
+        },
+      },
+    ];
+    renderCard(
+      fixtureA2uiSurfaceBlock({
+        intent: "interaction.result",
+        status: "succeeded",
+        title: "Quarterly totals",
+        summary: "Upload: sample-quarters.csv",
+        documentRef: undefined,
+        surfaceId: "surf-r",
+      }),
+      messages,
+    );
+    expect(container.querySelector('[data-testid="a2ui-surface-folded"]')).toBeNull();
+    expect(container.textContent).toContain("sample-quarters.csv");
+  });
+
   it("offers nothing on a replaced card, even when its document holds a button", () => {
     renderCard(fixtureA2uiSurfaceBlock({ status: "superseded", lifecycle: "draft" }));
     expect(container.querySelector('[data-testid="a2ui-email-send"]')).toBeNull();

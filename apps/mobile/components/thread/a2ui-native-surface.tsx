@@ -1,5 +1,6 @@
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import {
+  cardKindForIntent,
   emailSurfacePhase,
   needsRecovery,
   surfacePhase,
@@ -164,7 +165,7 @@ export function A2uiNativeSurface({
     ...(block.lifecycle ? { lifecycle: block.lifecycle } : {}),
     ...(mailbox ? { capability: mailbox } : {}),
   });
-  if (affordance.terminal) {
+  if (affordance.terminal && cardKindForIntent(block.intent ?? "") !== "result") {
     const copy = surfaceStatusCopy({
       status: block.status ?? block.lifecycle ?? "succeeded",
     });

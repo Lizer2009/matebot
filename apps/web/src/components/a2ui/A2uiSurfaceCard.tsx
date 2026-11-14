@@ -1,6 +1,7 @@
 import { Trans } from "@lingui/react/macro";
 import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import {
+  cardKindForIntent,
   interactionCapabilityForIntent,
   isActionIntent,
   needsRecovery,
@@ -111,7 +112,9 @@ export function A2uiSurfaceCard({
     );
   }
 
-  if (affordance.terminal) {
+  // Result cards arrive already succeeded (§4.2). Folding them to "Done" hid the
+  // table and the source line. Only action drafts fold; results keep their document.
+  if (affordance.terminal && cardKindForIntent(block.intent ?? "") !== "result") {
     const copy = surfaceStatusCopy({ status: status ?? block.lifecycle ?? "succeeded" });
     const replaced = (status ?? "") === "superseded";
     return (
