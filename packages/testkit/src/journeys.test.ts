@@ -16,7 +16,12 @@ import {
 } from "@matebot/adapters";
 import type { createApp } from "@matebot/api/app";
 import type { MessageBlock } from "@matebot/contracts";
-import { ACTIVE_RUN_STATUSES, ONCE_ROUTINE_CRON, resolveScreenProxySecret } from "@matebot/core";
+import {
+  ACTIVE_RUN_STATUSES,
+  answerableAskMessageIds,
+  ONCE_ROUTINE_CRON,
+  resolveScreenProxySecret,
+} from "@matebot/core";
 import { openScreenCapability } from "@matebot/core/node/screen-capability";
 import {
   appendEvent,
@@ -3558,6 +3563,38 @@ describeJourneys("required product journeys", () => {
       expect(await activeGroups(me.userId, "Other")).toEqual([]);
     });
 
+    it("a later city question stays interactive beside a live group approval", async () => {
+      const { cookie, chief } = await fleetOwner("two-live-cards");
+      await createBot(cookie, "Alpha");
+      await createBot(cookie, "Beta");
+      await sendForApproval(
+        cookie,
+        chief.id,
+        "create a group named Crew with Alpha, Beta",
+      );
+      await rpc(app, cookie, "threads/send", {
+        botId: chief.id,
+        text: "ask me which city to use",
+      });
+      const both = await waitFor(app, cookie, chief.id, (snap) => {
+        const unanswered = snap.messages.flatMap((message) =>
+          message.blocks.filter((block) => block.kind === "ask" && block.status !== "answered"),
+        );
+        return (
+          unanswered.some((block) => (block.text ?? "").includes("Crew")) &&
+          unanswered.some((block) => /which city/i.test(block.text ?? ""))
+        );
+      });
+      const unanswered = both.messages.flatMap((message) =>
+        message.blocks.filter((block) => block.kind === "ask" && block.status !== "answered"),
+      );
+      expect(unanswered.map((block) => block.cardStatus).sort()).toEqual([
+        "awaiting_approval",
+        "collecting",
+      ]);
+      expect(answerableAskMessageIds(both).size).toBe(2);
+    });
+
     it("create_group refuses 1 and 11 members without a card", async () => {
       const { cookie, me, chief } = await fleetOwner("create-size");
       const names: string[] = [];
@@ -4196,6 +4233,7 @@ type Snap = {
     blocks: Array<{
       kind?: string;
       status?: string;
+      cardStatus?: string;
       answer?: string;
       text?: string;
       actions?: unknown[];

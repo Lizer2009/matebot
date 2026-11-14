@@ -41,13 +41,17 @@ function fixture() {
     blocks: [] as MessageBlock[],
     draftVersion: 1,
     status: "needs_connection",
+    runId: undefined as string | undefined,
   };
   const interactionUpdate = vi.fn(async () => ({ id: "ix-1" }));
   const interactionUpdateMany = vi.fn(async () => ({ count: 1 }));
-  const messageUpdate = vi.fn(async ({ data }: { data: { blocks: MessageBlock[] } }) => {
-    stored.blocks = data.blocks;
-    return { id: "msg-1" };
-  });
+  const messageUpdate = vi.fn(
+    async ({ data }: { data: { blocks: MessageBlock[]; runId?: string } }) => {
+      stored.blocks = data.blocks;
+      stored.runId = data.runId;
+      return { id: "msg-1" };
+    },
+  );
   const prisma = {
     $transaction: async (work: (tx: unknown) => Promise<unknown>) =>
       work({
@@ -184,6 +188,48 @@ describe("publishL0aView", () => {
         status: "pending",
       }),
     ]);
+  });
+
+  it("retargets the timeline message to the run that re-presented the card", async () => {
+    const { prisma, stored, messageUpdate, interactionUpdateMany } = fixture();
+    stored.blocks = [
+      {
+        kind: "ask",
+        text: "What do you want me on first?",
+        status: "pending",
+        interactionId: "ix-1",
+        cardStatus: "collecting",
+      },
+    ];
+    stored.status = "collecting";
+    findOpenCard.mockResolvedValue({
+      id: "ix-1",
+      status: "collecting",
+      messageId: "msg-1",
+      draftVersion: 1,
+      staleAt: null,
+    });
+
+    await publishL0aView(prisma as never, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      runId: "run-city",
+      intent: "question.clarify",
+      title: "Which city should I use?",
+      status: "collecting",
+      block: { kind: "ask", text: "Which city should I use?", status: "pending" },
+    });
+
+    expect(messageUpdate).toHaveBeenCalledWith({
+      where: { id: "msg-1" },
+      data: expect.objectContaining({ runId: "run-city" }),
+    });
+    expect(interactionUpdateMany).toHaveBeenCalledWith({
+      where: expect.objectContaining({ id: "ix-1" }),
+      data: expect.objectContaining({ runId: "run-city" }),
+    });
+    expect(stored.runId).toBe("run-city");
   });
 
   it("gives two named reconnects two card keys (AC-23)", async () => {

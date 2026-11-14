@@ -234,6 +234,7 @@ async function amendL0aView(
           draftVersion: nextVersion,
           staleAt: null,
           expiresAt,
+          ...(input.runId ? { runId: input.runId } : {}),
         },
       });
       if (written.count !== 1) {
@@ -250,7 +251,10 @@ async function amendL0aView(
       const nextBlocks = replaceL0aBlock(previous, existing.id, block);
       await tx.message.update({
         where: { id: existing.messageId! },
-        data: { blocks: nextBlocks as never },
+        data: {
+          blocks: nextBlocks as never,
+          ...(input.runId ? { runId: input.runId } : {}),
+        },
       });
       const event = await appendEventInTransaction(tx, {
         spaceId: input.spaceId,

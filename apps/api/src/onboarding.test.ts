@@ -1,5 +1,5 @@
 import type * as db from "@matebot/db";
-import { appendEventInTransaction } from "@matebot/db";
+import { appendEventInTransaction, createInteraction } from "@matebot/db";
 import { describe, expect, it, vi } from "vitest";
 import { chooseFocus, markAppConnected, promptFocus } from "./onboarding.js";
 
@@ -12,7 +12,7 @@ vi.mock("@matebot/db", async (original) => ({
   ...(await original<typeof db>()),
   createInteraction: vi.fn(async () => ({
     id: "ix-1",
-    intent: "question.clarify",
+    intent: "question.focus",
     draftVersion: 1,
     title: "What do you want me on first?",
     summary: null,
@@ -135,6 +135,10 @@ describe("promptFocus", () => {
     await promptFocus(deps, actor, "bot");
     expect(posted.flatMap((message) => message.blocks)).toContainEqual(
       expect.objectContaining({ kind: "choice" }),
+    );
+    expect(createInteraction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ intent: "question.focus" }),
     );
   });
 

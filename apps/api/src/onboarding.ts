@@ -199,7 +199,8 @@ export async function promptFocus(
     spaceId: target.spaceId,
     threadId: target.threadId,
     botId: target.botId,
-    intent: l0aIntentForBlock(blocks[0] as Extract<MessageBlock, { kind: "choice" }>),
+    // Own occupancy slot so a later `question.clarify` ask cannot rewrite this card.
+    intent: "question.focus",
     title: "What do you want me on first?",
     status: "collecting",
     block: blocks[0] as Extract<MessageBlock, { kind: "choice" }>,

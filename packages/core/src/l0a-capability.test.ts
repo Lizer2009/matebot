@@ -69,6 +69,7 @@ describe("L0-A capability prefixes", () => {
   it("treats L0-A prefix intents as action cards without registering A2UI forms", () => {
     expect(cardKindForIntent("connect.gmail")).toBe("action");
     expect(isActionIntent("question.clarify")).toBe(true);
+    expect(isActionIntent("question.focus")).toBe(true);
     expect(isActionIntent("approval.mcp.srv1")).toBe(true);
     expect(findInteractionCapability("connect.gmail")).toBeUndefined();
   });
