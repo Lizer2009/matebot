@@ -40,6 +40,58 @@ describe("inferScript save_page", () => {
   });
 });
 
+describe("inferScript A2UI tools", () => {
+  const presentResult = `call present_result with ${JSON.stringify({
+    title: "Quarterly totals",
+    sourceId: "csv-upload",
+    from: "2026-01-01",
+    to: "2026-12-31",
+  })}`;
+
+  it("still presents a result when the prompt carries an attached-file note", () => {
+    const prompt = `${presentResult}\n\nUser attached file "sample-quarters.csv" (text/csv, 103 bytes).`;
+    expect(inferScript(prompt)[0]?.toolCalls).toEqual([
+      {
+        name: "present_result",
+        args: {
+          title: "Quarterly totals",
+          sourceId: "csv-upload",
+          from: "2026-01-01",
+          to: "2026-12-31",
+        },
+      },
+    ]);
+  });
+
+  it("issues two A2UI tools from one turn when the prompt says then call", () => {
+    const email = JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "Hello",
+        fields: [],
+        nextStep: "render",
+        riskLevel: "low",
+      },
+    });
+    const calendar = JSON.stringify({
+      plan: {
+        intent: "calendar.create",
+        title: "Sync",
+        fields: [],
+        nextStep: "render",
+        riskLevel: "low",
+      },
+    });
+    const script = inferScript(
+      `call present_interaction with ${email} then call present_interaction with ${calendar}`,
+    );
+    expect(script[0]?.toolCalls).toEqual([
+      { name: "present_interaction", args: JSON.parse(email) },
+      { name: "present_interaction", args: JSON.parse(calendar) },
+    ]);
+  });
+});
+
 describe("inferScript message_bot", () => {
   const messageBotScript = (confirmName: string, message: string) => [
     {

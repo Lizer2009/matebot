@@ -225,7 +225,7 @@ export function inferScript(
   const a2uiName =
     "present_interaction|present_result|refresh_result|edit_interaction|cancel_interaction";
   const parseA2uiCall = (text: string) => {
-    const match = new RegExp(`^(?:@\\S+\\s+)?call (${a2uiName}) with (\\{[\\s\\S]*\\})$`).exec(
+    const match = new RegExp(`^(?:@\\S+\\s+)?call (${a2uiName}) with (\\{[\\s\\S]*\\})`).exec(
       text.trim(),
     );
     if (!match) return undefined;
