@@ -292,6 +292,43 @@ describe("present_interaction", () => {
     expect(ctx.notify).toHaveBeenCalledWith("thread-1", 9);
   });
 
+  it("does not open a compose connection view when connect.gmail is already waiting (AC-26 reverse)", async () => {
+    const ctx = context();
+    ctx.deps.prisma.interaction.findFirst = vi.fn(async () => ({
+      id: "ix-connect",
+      intent: "connect.gmail",
+      status: "needs_connection",
+    }));
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      interactionId: "ix-connect",
+      status: "needs_connection",
+      skippedDuplicateConnection: true,
+    });
+  });
+
+  it("does not open a compose connection view when a named reconnect card is already waiting", async () => {
+    const ctx = context();
+    ctx.deps.prisma.interaction.findFirst = vi.fn(async () => ({
+      id: "ix-ca1",
+      intent: "connect.gmail.ca_1",
+      status: "needs_connection",
+    }));
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      interactionId: "ix-ca1",
+      skippedDuplicateConnection: true,
+    });
+  });
+
   it("says nothing when the surface was published without a capability stamp", async () => {
     publishOrAmend.mockResolvedValueOnce({
       interactionId: "ix-2",
@@ -386,8 +423,8 @@ describe("present_interaction", () => {
       }),
     );
     // One call decides create-or-amend; the card's own surface is the kernel's business.
+    // findFirst may look up an existing connect.* view (AC-26); it must not pick the draft.
     expect(publishOrAmend).toHaveBeenCalledTimes(1);
-    expect(ctx.deps.prisma.interaction.findFirst).not.toHaveBeenCalled();
     expect(publishOrAmend.mock.calls[0]![1]).not.toHaveProperty("amendsInteractionId");
   });
 

@@ -2,6 +2,7 @@ import type { ActionApprovalRule, InteractionPlan } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
 import type { EmailSurfaceCapability } from "@matebot/core";
 import {
+  connectionSatisfiesApp,
   interactionRequiredApp,
   interactionSlotsFromPlan,
   isCalendarCreateIntent,
@@ -151,6 +152,37 @@ function surfaceNudgeReply(
   return state ? surfaceNudgeText({ state, intent }) : undefined;
 }
 
+/** Provider slug from a L0-A connect intent (`connect.gmail` / `connect.gmail.ca_1`). */
+function providerFromConnectIntent(intent: string): string | undefined {
+  if (!intent.startsWith("connect.")) return undefined;
+  return intent.slice("connect.".length).split(".")[0] || undefined;
+}
+
+/**
+ * AC-26 reverse: a live `connect.{provider}` card already is the connection view
+ * for this app, so compose must not stamp a second `needs_connection` surface.
+ */
+async function existingConnectView(
+  prisma: RunContext["deps"]["prisma"],
+  input: { threadId: string; intent: string },
+): Promise<{ id: string; intent: string } | undefined> {
+  const app = interactionRequiredApp(input.intent);
+  if (!app || typeof prisma.interaction?.findFirst !== "function") return undefined;
+  const row = await prisma.interaction.findFirst({
+    where: {
+      threadId: input.threadId,
+      status: "needs_connection",
+      intent: { startsWith: "connect." },
+    },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true, intent: true },
+  });
+  if (!row) return undefined;
+  const provider = providerFromConnectIntent(row.intent);
+  if (!provider || !connectionSatisfiesApp(app, provider)) return undefined;
+  return row;
+}
+
 async function presentInteraction(ctx: RunContext, call: ToolCall) {
   if (!isA2uiFeatureEnabled()) {
     return { error: "Interactive drafts are not enabled on this server." };
@@ -220,6 +252,21 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
         reply:
           "Drafts are off for this bot. The action runs under existing approval rules without a compose card.",
       };
+    }
+    if (capabilityStamp.status === "needs_connection") {
+      const existing = await existingConnectView(deps.prisma, {
+        threadId: run.threadId,
+        intent: plan.intent,
+      });
+      if (existing) {
+        return {
+          interactionId: existing.id,
+          status: "needs_connection" as const,
+          skippedDuplicateConnection: true,
+          intent: plan.intent,
+          reply: surfaceNudgeReply("not_connected", undefined, plan.intent),
+        };
+      }
     }
     const published = await publishOrAmend(deps.prisma, {
       spaceId: run.spaceId,
