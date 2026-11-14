@@ -1,11 +1,14 @@
-import type { InteractionPlan } from "@matebot/contracts";
+import type { InteractionPlan, MessageBlock } from "@matebot/contracts";
 import type { InteractionStatus, SettleRefusal } from "@matebot/core";
 import {
   canRetryStatus,
   decideSettle,
   deriveCollectingStatus,
   historySlotsFromValues,
+  INTERACTION_STATUSES,
+  isL0aBlock,
   OPEN_STATUSES,
+  stampL0aBlock,
   surfaceStampFor,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
@@ -157,8 +160,15 @@ export async function restampInteractionSurface(
   if (!message || !Array.isArray(message.blocks)) return;
   const stamp = surfaceStampFor({ status: input.status, intent: input.intent });
   const historySlots = historySlotsFromValues(input.intent, input.slots ?? {});
+  const kernelStatus = INTERACTION_STATUSES.find((status) => status === input.status);
   const nextBlocks = message.blocks.map((entry) => {
-    const block = entry as { kind?: string; interactionId?: string };
+    const block = entry as MessageBlock;
+    if (isL0aBlock(block) && block.interactionId === input.interactionId && kernelStatus) {
+      return stampL0aBlock(block, {
+        interactionId: input.interactionId,
+        cardStatus: kernelStatus,
+      });
+    }
     if (block.kind !== "a2ui_surface" || block.interactionId !== input.interactionId) {
       return entry;
     }

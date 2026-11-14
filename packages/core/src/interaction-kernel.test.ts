@@ -45,6 +45,24 @@ describe("decideSettle", () => {
     });
   });
 
+  it("lets a connection card complete once the user connects", () => {
+    expect(decideSettle({ current: "needs_connection", next: "succeeded" })).toEqual({
+      ok: true,
+      status: "succeeded",
+    });
+    expect(decideSettle({ current: "needs_connection", next: "cancelled" })).toEqual({
+      ok: true,
+      status: "cancelled",
+    });
+  });
+
+  it("still refuses to close an in-doubt send", () => {
+    expect(decideSettle({ current: "unknown", next: "succeeded" })).toEqual({
+      ok: false,
+      reason: "exempt_from_settlement",
+    });
+  });
+
   // The check order matters: an exempt status asked for the status it already has
   // is a no-op, not an exemption.
   it("checks the same status before the exempt rule", () => {

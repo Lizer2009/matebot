@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cardKindForIntent, findInteractionCapability, isActionIntent } from "./interaction-capability.js";
-import { derivedL0aBlockStatus, l0aIntentForBlock } from "./l0a-capability.js";
+import { derivedL0aBlockStatus, l0aIntentForBlock, stampL0aBlock } from "./l0a-capability.js";
 
 describe("l0aIntentForBlock", () => {
   it("names connect / approval / question intents from the live block kinds", () => {
@@ -70,5 +70,25 @@ describe("L0-A capability prefixes", () => {
     expect(derivedL0aBlockStatus("ask", "awaiting_approval")).toBe("pending");
     expect(derivedL0aBlockStatus("ask", "succeeded")).toBe("answered");
     expect(derivedL0aBlockStatus("mcp_approval", "cancelled")).toBe("dismissed");
+  });
+
+  it("stamps the kernel row onto the live view", () => {
+    expect(
+      stampL0aBlock(
+        {
+          kind: "app_connect",
+          provider: "gmail",
+          name: "Gmail",
+          description: "",
+          logo: null,
+          status: "connected",
+        },
+        { interactionId: "ix-1", cardStatus: "needs_connection" },
+      ),
+    ).toMatchObject({
+      interactionId: "ix-1",
+      cardStatus: "needs_connection",
+      status: "pending",
+    });
   });
 });

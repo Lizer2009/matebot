@@ -34,7 +34,20 @@ export function decideSettle(input: { current: string; next: InteractionStatus }
   const { current, next } = input;
   if (!KNOWN.has(current)) return { ok: false, reason: "unknown_status" };
   if (current === next) return { ok: false, reason: "same_status" };
-  if (EXEMPT.has(current)) return { ok: false, reason: "exempt_from_settlement" };
+  if (EXEMPT.has(current)) {
+    // Sweeps must not close a reconnect or an in-doubt send (D1/D2). Completing
+    // an L0-A connection card is a user action, not a sweep: succeeded/cancelled
+    // are allowed from `needs_connection`. `unknown` stays fully exempt.
+    if (
+      current === "needs_connection" &&
+      isTerminalStatus(next) &&
+      next !== "superseded" &&
+      next !== "expired"
+    ) {
+      return { ok: true, status: next };
+    }
+    return { ok: false, reason: "exempt_from_settlement" };
+  }
   if (isTerminalStatus(current)) return { ok: false, reason: "already_terminal" };
   if (!isTerminalStatus(next)) return { ok: false, reason: "not_terminal_target" };
   return { ok: true, status: next };

@@ -1,4 +1,5 @@
 import type { MessageBlock } from "@matebot/contracts";
+import type { InteractionStatus } from "./interaction-status.js";
 
 /**
  * L0-A interactive blocks share the interaction kernel without becoming A2UI
@@ -87,4 +88,20 @@ export function derivedL0aBlockStatus(
 function connectIntent(provider: string, accountId?: string): string {
   const slug = provider.trim().toLowerCase();
   return accountId ? `connect.${slug}.${accountId}` : `connect.${slug}`;
+}
+
+/** Stamp the kernel row onto a live L0-A view and derive the legacy block status. */
+export function stampL0aBlock<T extends L0aBlock>(
+  block: T,
+  input: { interactionId: string; cardStatus: InteractionStatus },
+): T {
+  if (block.kind === "choice") {
+    return { ...block, interactionId: input.interactionId, cardStatus: input.cardStatus };
+  }
+  return {
+    ...block,
+    interactionId: input.interactionId,
+    cardStatus: input.cardStatus,
+    status: derivedL0aBlockStatus(block.kind, input.cardStatus),
+  };
 }

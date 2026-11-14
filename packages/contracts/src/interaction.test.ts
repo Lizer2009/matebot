@@ -108,6 +108,39 @@ describe("a2ui_surface MessageBlock", () => {
     });
   });
 
+  it("lets L0-A views carry the kernel interaction id and status", () => {
+    expect(
+      MessageBlock.parse({
+        kind: "app_connect",
+        provider: "gmail",
+        name: "Gmail",
+        description: "",
+        logo: null,
+        status: "pending",
+        interactionId: "ix-1",
+        cardStatus: "needs_connection",
+      }),
+    ).toMatchObject({ interactionId: "ix-1", cardStatus: "needs_connection" });
+    expect(
+      MessageBlock.parse({
+        kind: "ask",
+        text: "Allow?",
+        status: "pending",
+        interactionId: "ix-2",
+        cardStatus: "awaiting_approval",
+      }),
+    ).toMatchObject({ interactionId: "ix-2", cardStatus: "awaiting_approval" });
+    expect(
+      MessageBlock.parse({
+        kind: "choice",
+        question: "Pick",
+        options: [],
+        interactionId: "ix-3",
+        cardStatus: "collecting",
+      }),
+    ).toMatchObject({ interactionId: "ix-3", cardStatus: "collecting" });
+  });
+
   it("accepts an optional mailbox capability stamp", () => {
     expect(
       A2uiSurfaceBlockSchema.parse({ ...surface, capability: "not_connected" }).capability,
