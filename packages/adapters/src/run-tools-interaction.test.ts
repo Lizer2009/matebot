@@ -32,12 +32,21 @@ const emailPlan: InteractionPlan = {
   riskLevel: "medium",
 };
 
-function context() {
+function context(waiting: Array<{ id: string; intent: string; status?: string }> = []) {
   const notify = vi.fn(async () => undefined);
   return {
     deps: {
       prisma: {
-        interaction: { findFirst: vi.fn(async (): Promise<{ id: string } | null> => null) },
+        interaction: {
+          findFirst: vi.fn(async () => waiting[0] ?? null),
+          findMany: vi.fn(async () =>
+            waiting.map((row) => ({
+              id: row.id,
+              intent: row.intent,
+              status: row.status ?? "needs_connection",
+            })),
+          ),
+        },
       },
       events: { notify },
     },
@@ -293,12 +302,9 @@ describe("present_interaction", () => {
   });
 
   it("does not open a compose connection view when connect.gmail is already waiting (AC-26 reverse)", async () => {
-    const ctx = context();
-    ctx.deps.prisma.interaction.findFirst = vi.fn(async () => ({
-      id: "ix-connect",
-      intent: "connect.gmail",
-      status: "needs_connection",
-    }));
+    const ctx = context([
+      { id: "ix-connect", intent: "connect.gmail", status: "needs_connection" },
+    ]);
     const result = (await interactionTools.present_interaction!(
       ctx as never,
       call({ plan: emailPlan }),
@@ -312,12 +318,9 @@ describe("present_interaction", () => {
   });
 
   it("does not open a compose connection view when a named reconnect card is already waiting", async () => {
-    const ctx = context();
-    ctx.deps.prisma.interaction.findFirst = vi.fn(async () => ({
-      id: "ix-ca1",
-      intent: "connect.gmail.ca_1",
-      status: "needs_connection",
-    }));
+    const ctx = context([
+      { id: "ix-ca1", intent: "connect.gmail.ca_1", status: "needs_connection" },
+    ]);
     const result = (await interactionTools.present_interaction!(
       ctx as never,
       call({ plan: emailPlan }),
@@ -327,6 +330,43 @@ describe("present_interaction", () => {
       interactionId: "ix-ca1",
       skippedDuplicateConnection: true,
     });
+  });
+
+  it("does not let a newer calendar connect card swallow an email compose (AC-26 reverse)", async () => {
+    const ctx = context([
+      { id: "ix-cal", intent: "connect.googlecalendar", status: "needs_connection" },
+      { id: "ix-gmail", intent: "connect.gmail", status: "needs_connection" },
+    ]);
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      interactionId: "ix-gmail",
+      skippedDuplicateConnection: true,
+    });
+  });
+
+  it("still publishes email compose when only a calendar connect card is waiting", async () => {
+    publishOrAmend.mockResolvedValueOnce({
+      interactionId: "ix-mail",
+      surfaceId: "s-mail",
+      messageId: "m-mail",
+      documentRef: "a2ui:interaction:ix-mail:surface:s-mail",
+      draftVersion: 1,
+      eventSeq: 1,
+      capability: "not_connected",
+    });
+    const ctx = context([
+      { id: "ix-cal", intent: "connect.googlecalendar", status: "needs_connection" },
+    ]);
+    const result = (await interactionTools.present_interaction!(
+      ctx as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(publishOrAmend).toHaveBeenCalled();
+    expect(result.interactionId).toBe("ix-mail");
   });
 
   it("says nothing when the surface was published without a capability stamp", async () => {
@@ -606,6 +646,40 @@ describe("present_interaction describes the card it stored", () => {
       { name: "subject", value: "冬天的问候", required: true, filled: true },
       { name: "body", value: "", required: true, filled: false },
     ]);
+  });
+
+  it("uses the one-line nudge and does not restate fields in the same-turn reply (AC-21)", async () => {
+    const { A2UI_SURFACE_NUDGE } = await import("@matebot/core");
+    const completePlan: InteractionPlan = {
+      intent: "email.compose",
+      title: "冬天的问候",
+      fields: [
+        { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "冬天的问候", required: true, status: "resolved" },
+        { name: "body", value: "正文", required: true, status: "resolved" },
+      ],
+      nextStep: "render",
+      riskLevel: "medium",
+    };
+    publishOrAmend.mockResolvedValueOnce({
+      interactionId: "ix-1",
+      surfaceId: "surface-1",
+      messageId: "msg-1",
+      documentRef: "a2ui:interaction:ix-1:surface:surface-1",
+      draftVersion: 1,
+      eventSeq: 1,
+      capability: "ready",
+      missingRequired: [],
+      plan: completePlan,
+      slots: { to: "alex@example.test", subject: "冬天的问候", body: "正文" },
+    });
+    const result = (await interactionTools.present_interaction!(
+      context() as never,
+      call({ plan: emailPlan }),
+    )) as Record<string, unknown>;
+    expect(result.reply).toBe(A2UI_SURFACE_NUDGE.presented);
+    expect(String(result.reply)).not.toContain("alex@example.test");
+    expect(String(result.reply)).not.toContain("冬天的问候");
   });
 
   it("stores a resume plan when the card waits on a connection", async () => {

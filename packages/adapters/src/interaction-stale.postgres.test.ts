@@ -172,4 +172,32 @@ describePostgres("two-stage stale settle (PostgreSQL)", () => {
       (await system.interaction.findUnique({ where: { id: published.interactionId } }))?.status,
     ).toBe("needs_connection");
   });
+
+  it("refuses an old stale snapshot after confirm cleared staleAt (AC-8c)", async () => {
+    const published = await publishOrAmend(system, {
+      spaceId,
+      threadId,
+      botId,
+      plan: EMAIL_PLAN,
+    });
+    await markOpenCardsStale(system, { threadId, at: mark });
+    const confirmed = await system.interaction.updateMany({
+      where: { id: published.interactionId, draftVersion: published.draftVersion },
+      data: {
+        staleAt: null,
+        confirmedVersion: published.draftVersion,
+        status: "awaiting_approval",
+      },
+    });
+    expect(confirmed.count).toBe(1);
+    expect(
+      await settleStaleCards(system, {
+        threadId,
+        staleAtSnapshot: mark,
+        reason: "user_message",
+      }),
+    ).toEqual({ settled: [] });
+    const row = await system.interaction.findUnique({ where: { id: published.interactionId } });
+    expect(row).toMatchObject({ status: "awaiting_approval", staleAt: null });
+  });
 });

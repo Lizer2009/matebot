@@ -3,11 +3,11 @@ import { InteractionPlanSchema } from "@matebot/contracts";
 import type { EmailSurfaceCapability } from "@matebot/core";
 import {
   cardKindForIntent,
-  connectionSatisfiesApp,
   interactionRequiredApp,
   interactionSlotsFromPlan,
   isCalendarCreateIntent,
   isEmailComposeIntent,
+  pickMatchingConnectionCard,
   readConfirmedCalendarDraft,
   resolveActionApprovalDetail,
   resumePlanForNeedsConnection,
@@ -27,6 +27,7 @@ import {
   loadOwnerEmailConnections,
   loadProviderReadiness,
 } from "./interaction-email-capability.js";
+import { findWaitingConnectionCards } from "./interaction-kernel-store.js";
 import { publishOrAmend } from "./interaction-publish.js";
 import type { DraftSender } from "./interaction-readback.js";
 import { describeDraftForModel } from "./interaction-readback.js";
@@ -153,12 +154,6 @@ function surfaceNudgeReply(
   return state ? surfaceNudgeText({ state, intent }) : undefined;
 }
 
-/** Provider slug from a L0-A connect intent (`connect.gmail` / `connect.gmail.ca_1`). */
-function providerFromConnectIntent(intent: string): string | undefined {
-  if (!intent.startsWith("connect.")) return undefined;
-  return intent.slice("connect.".length).split(".")[0] || undefined;
-}
-
 /**
  * AC-26 reverse: a live `connect.{provider}` card already is the connection view
  * for this app, so compose must not stamp a second `needs_connection` surface.
@@ -168,20 +163,9 @@ async function existingConnectView(
   input: { threadId: string; intent: string },
 ): Promise<{ id: string; intent: string } | undefined> {
   const app = interactionRequiredApp(input.intent);
-  if (!app || typeof prisma.interaction?.findFirst !== "function") return undefined;
-  const row = await prisma.interaction.findFirst({
-    where: {
-      threadId: input.threadId,
-      status: "needs_connection",
-      intent: { startsWith: "connect." },
-    },
-    orderBy: { updatedAt: "desc" },
-    select: { id: true, intent: true },
-  });
-  if (!row) return undefined;
-  const provider = providerFromConnectIntent(row.intent);
-  if (!provider || !connectionSatisfiesApp(app, provider)) return undefined;
-  return row;
+  if (!app || typeof prisma.interaction?.findMany !== "function") return undefined;
+  const rows = await findWaitingConnectionCards(prisma as never, input.threadId);
+  return pickMatchingConnectionCard(rows, { app });
 }
 
 async function presentInteraction(ctx: RunContext, call: ToolCall) {

@@ -872,9 +872,9 @@ export function threadsRoutes(ctx: RouterContext) {
               effectId: row?.approvalEffectId ?? "",
               spaceId: context.actor.spaceId,
             });
-            // The row is deliberately left in `executing`: the effect settles it
-            // as failed or unknown, and cancelling it now could erase something
-            // that already happened.
+            // The row stays on its last kernel open status: the effect settles
+            // it as failed or unknown, and cancelling it now could erase
+            // something that already happened.
             throw new ORPCError("CONFLICT", {
               message: abort.aborted
                 ? "已请求停止这次操作；结果以卡片最终状态为准。"

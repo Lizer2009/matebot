@@ -89,7 +89,7 @@ describePostgres("draft lifecycle (PostgreSQL)", () => {
   beforeEach(async () => {
     if (!threadId) return;
     await system.interaction.updateMany({
-      where: { threadId, status: { in: [...OPEN_STATUSES] } },
+      where: { threadId, status: { in: [...OPEN_STATUSES, "needs_connection"] } },
       data: { status: "superseded" },
     });
   });
@@ -429,5 +429,164 @@ describePostgres("draft lifecycle (PostgreSQL)", () => {
     });
     expect(open).toHaveLength(1);
     expect(await system.message.count({ where: { id: published[0]!.messageId } })).toBe(1);
+  });
+
+  it("does not amend an in-flight send and keeps occupying the open slot", async () => {
+    const published = await publish([
+      { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+      { name: "subject", value: "在途原文", required: true, status: "resolved" },
+      { name: "body", value: "正文", required: true, status: "resolved" },
+    ]);
+    const task = await system.task.create({
+      data: {
+        spaceId,
+        userId,
+        botId: `bot-${stamp}`,
+        threadId,
+        prompt: "in-flight",
+        status: "running",
+      },
+    });
+    const run = await system.run.create({
+      data: {
+        spaceId,
+        userId,
+        botId: `bot-${stamp}`,
+        threadId,
+        taskId: task.id,
+        status: "running",
+        trigger: "user_message",
+      },
+    });
+    const effect = await system.externalEffect.create({
+      data: {
+        spaceId,
+        runId: run.id,
+        kind: "email.send",
+        idempotencyKey: `inflight-${stamp}-${published.interactionId}`,
+        status: "executing",
+        request: { interactionId: published.interactionId },
+      },
+    });
+    await system.interaction.update({
+      where: { id: published.interactionId },
+      data: { approvalEffectId: effect.id, status: "ready_for_review" },
+    });
+
+    const second = await publishOrAmend(system, {
+      spaceId,
+      threadId,
+      botId: `bot-${stamp}`,
+      plan: EMAIL_PLAN([
+        { name: "to", value: "alex@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "不得改写", required: true, status: "resolved" },
+        { name: "body", value: "正文", required: true, status: "resolved" },
+      ]),
+    });
+
+    expect(second.interactionId).toBe(published.interactionId);
+    expect(second.amended).toBe(false);
+    expect(second.draftVersion).toBe(published.draftVersion);
+    const row = await getInteraction(system, published.interactionId);
+    if (!row) throw new Error("interaction missing");
+    expect(row.status).toBe("ready_for_review");
+    expect((row.slots as Record<string, unknown>).subject).toBe("在途原文");
+    expect(
+      await system.interaction.count({
+        where: { threadId, intent: "email.compose", status: { in: [...OPEN_STATUSES] } },
+      }),
+    ).toBe(1);
+    await expect(
+      cancelInteractionService(system, {
+        spaceId,
+        threadId,
+        botId: `bot-${stamp}`,
+        interactionId: published.interactionId,
+        expectedDraftVersion: published.draftVersion,
+        runtimeCanAbort: false,
+      }),
+    ).rejects.toMatchObject({ reason: "in_flight" });
+    expect((await getInteraction(system, published.interactionId))?.status).toBe(
+      "ready_for_review",
+    );
+  });
+
+  it("matches a gmail connection card even when a newer calendar card is waiting (AC-26)", async () => {
+    const { createInteraction } = await import("@matebot/db");
+    const { findWaitingConnectionCards } = await import("./interaction-kernel-store.js");
+    const { pickMatchingConnectionCard } = await import("@matebot/core");
+    await createInteraction(system, {
+      spaceId,
+      threadId,
+      intent: "connect.gmail",
+      status: "needs_connection",
+      plan: {
+        intent: "connect.gmail",
+        title: "Gmail",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "low",
+      },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await createInteraction(system, {
+      spaceId,
+      threadId,
+      intent: "connect.googlecalendar",
+      status: "needs_connection",
+      plan: {
+        intent: "connect.googlecalendar",
+        title: "Calendar",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "low",
+      },
+    });
+    await createInteraction(system, {
+      spaceId,
+      threadId,
+      intent: "connect.gmail.ca_1",
+      status: "needs_connection",
+      plan: {
+        intent: "connect.gmail.ca_1",
+        title: "Gmail ca_1",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "low",
+      },
+    });
+    await createInteraction(system, {
+      spaceId,
+      threadId,
+      intent: "connect.gmail.ca_2",
+      status: "needs_connection",
+      plan: {
+        intent: "connect.gmail.ca_2",
+        title: "Gmail ca_2",
+        fields: [],
+        nextStep: "ask",
+        riskLevel: "low",
+      },
+    });
+    const rows = await findWaitingConnectionCards(system, threadId);
+    expect(rows.map((row) => row.intent)).toEqual(
+      expect.arrayContaining([
+        "connect.gmail",
+        "connect.googlecalendar",
+        "connect.gmail.ca_1",
+        "connect.gmail.ca_2",
+      ]),
+    );
+    expect(rows).toHaveLength(4);
+    expect(pickMatchingConnectionCard(rows, { app: "email" })?.intent).toMatch(/^connect\.gmail/);
+    expect(pickMatchingConnectionCard(rows, { app: "email", accountId: "ca_1" })?.intent).toBe(
+      "connect.gmail.ca_1",
+    );
+    expect(pickMatchingConnectionCard(rows, { app: "email", accountId: "ca_2" })?.intent).toBe(
+      "connect.gmail.ca_2",
+    );
+    expect(pickMatchingConnectionCard(rows, { app: "calendar" })?.intent).toBe(
+      "connect.googlecalendar",
+    );
   });
 });

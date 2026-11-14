@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountIdFromConnectIntent,
   deliveryNeedsReconnect,
   interactionRequiredApp,
   interactionResumesWhenConnected,
+  pickMatchingConnectionCard,
+  providerFromConnectIntent,
 } from "./interaction-connection.js";
 import {
   preflightCalendarCapability,
@@ -12,6 +15,49 @@ import {
 import { emailSurfaceBlockFields } from "./interaction-template.js";
 
 const liveAccount = { provider: "gmail", status: "connected", providerRef: "ca_live" };
+
+describe("pickMatchingConnectionCard", () => {
+  const gmail = { id: "ix-gmail", intent: "connect.gmail", status: "needs_connection" };
+  const calendar = { id: "ix-cal", intent: "connect.googlecalendar", status: "needs_connection" };
+  const named = { id: "ix-ca1", intent: "connect.gmail.ca_1", status: "needs_connection" };
+  const compose = { id: "ix-mail", intent: "email.compose", status: "needs_connection" };
+
+  it("does not let a newer calendar card swallow a gmail demand", () => {
+    expect(
+      pickMatchingConnectionCard([calendar, gmail], { app: "email", provider: "gmail" })?.id,
+    ).toBe("ix-gmail");
+    expect(
+      pickMatchingConnectionCard([calendar, gmail], {
+        app: "calendar",
+        provider: "googlecalendar",
+      })?.id,
+    ).toBe("ix-cal");
+  });
+
+  it("keeps a named account even when a later calendar card is newer", () => {
+    expect(
+      pickMatchingConnectionCard([calendar, named], {
+        app: "email",
+        accountId: "ca_1",
+      })?.id,
+    ).toBe("ix-ca1");
+  });
+
+  it("reuses a compose card that is already waiting on the same app", () => {
+    expect(
+      pickMatchingConnectionCard([calendar, compose], {
+        provider: "gmail",
+        intent: "connect.gmail",
+      })?.id,
+    ).toBe("ix-mail");
+  });
+
+  it("parses named connect intents", () => {
+    expect(providerFromConnectIntent("connect.gmail.ca_1")).toBe("gmail");
+    expect(accountIdFromConnectIntent("connect.gmail.ca_1")).toBe("ca_1");
+    expect(accountIdFromConnectIntent("connect.gmail")).toBeUndefined();
+  });
+});
 
 describe("interactionRequiredApp", () => {
   it("maps email and calendar intents to the app they act through", () => {

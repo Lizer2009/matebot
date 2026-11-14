@@ -159,6 +159,60 @@ describe("settleInteraction", () => {
     expect(updateMany).not.toHaveBeenCalled();
   });
 
+  it("rolls the row back when restamping the block fails (F-05)", async () => {
+    let rowStatus = "ready_for_review";
+    const updateMany = vi.fn(async ({ data }: { data: { status: string } }) => {
+      rowStatus = data.status;
+      return { count: 1 };
+    });
+    const findUnique = vi.fn(async ({ where }: { where: { id?: string } }) => {
+      if (where.id === "i1") {
+        return {
+          id: "i1",
+          status: "ready_for_review",
+          messageId: "m1",
+          draftVersion: 1,
+          staleAt: null,
+          intent: "email.compose",
+          slots: {},
+        };
+      }
+      return { blocks: [{ kind: "a2ui_surface", interactionId: "i1" }] };
+    });
+    const messageUpdate = vi.fn(async () => {
+      throw new Error("block write failed");
+    });
+    const createEvent = vi.fn();
+    const tx = {
+      interaction: { findUnique, updateMany },
+      message: { findUnique, update: messageUpdate },
+      interactionEvent: { create: createEvent },
+    };
+    const prisma = {
+      interaction: { findUnique, updateMany },
+      message: { findUnique, update: messageUpdate },
+      interactionEvent: { create: createEvent },
+      $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => {
+        const previous = rowStatus;
+        try {
+          return await fn(tx);
+        } catch (error) {
+          rowStatus = previous;
+          throw error;
+        }
+      }),
+    } as unknown as PrismaClient;
+    await expect(
+      settleInteraction(prisma, {
+        interactionId: "i1",
+        status: "superseded",
+        reason: "sweep",
+      }),
+    ).rejects.toThrow(/block write failed/);
+    expect(rowStatus).toBe("ready_for_review");
+    expect(createEvent).not.toHaveBeenCalled();
+  });
+
   it("refuses a non-terminal target without writing", async () => {
     const { prisma, updateMany } = fakePrisma({ id: "i1", status: "collecting" });
     await expect(

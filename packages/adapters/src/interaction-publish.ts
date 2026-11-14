@@ -12,7 +12,9 @@ import {
   interactionCapabilityForIntent,
   interactionSlotsFromPlan,
   isEmailComposeIntent,
+  labeledSurfaceSchema,
   planWithResumePlan,
+  surfaceReasonKeyForApproval,
   timingFields,
 } from "@matebot/core";
 import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
@@ -27,7 +29,7 @@ import {
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import type { OpenCardRow } from "./interaction-kernel-store.js";
-import { findOpenCard, settleInteraction } from "./interaction-kernel-store.js";
+import { cardSendIsInFlight, findOpenCard, settleInteraction } from "./interaction-kernel-store.js";
 
 /** The registered schema for an intent, when the capability is known. */
 function capabilitySchema(intent: string) {
@@ -47,7 +49,10 @@ async function compilePlanSurface(input: {
   /** The plan reconciled onto the registered schema, which is what the row must store. */
   plan: InteractionPlan;
 }> {
-  const schema = capabilitySchema(input.plan.intent);
+  const capability = interactionCapabilityForIntent(input.plan.intent);
+  const schema = capability
+    ? labeledSurfaceSchema(capability.schema, { capability, title: input.plan.title })
+    : capabilitySchema(input.plan.intent);
   const { compileInteractionPlan, reconcilePlanToSchema } = await import("@matebot/a2ui-adapter");
   const reconciled = reconcilePlanToSchema(input.plan, schema);
   if (reconciled.conflict) {
@@ -120,6 +125,11 @@ export type PublishInteractionSurfaceInput = {
   senderAddress?: string;
   /** Stored on the plan JSON so reconnect can restore this card without a model turn. */
   resumePlan?: InteractionResumePlan;
+  /**
+   * Why an approval card is waiting. Closed set; omitted unless status is
+   * `awaiting_approval`.
+   */
+  approvalScope?: "user" | "team" | "setting";
 };
 
 /**
@@ -328,6 +338,9 @@ export async function publishInteractionSurface(
         ...(senderAddress ? { senderAddress } : {}),
         ...stamps,
         ...historyStamp(input.plan.intent, slots),
+        ...((input.status ?? "collecting") === "awaiting_approval"
+          ? { reasonKey: surfaceReasonKeyForApproval({ scope: input.approvalScope ?? "setting" }) }
+          : {}),
       };
       const message = await createThreadMessageInTransaction(tx, {
         threadId: input.threadId,
@@ -467,6 +480,28 @@ export async function publishOrAmend(
       threadId: input.threadId,
       intent: input.plan.intent,
     });
+    if (existing && (await cardSendIsInFlight(prisma, existing.id))) {
+      // Occupancy is the open kernel status; amending the payload mid-send is
+      // unsafe. Return the live card as-is rather than creating a second one.
+      const latestSurface = await prisma.interactionSurface.findFirst({
+        where: { interactionId: existing.id },
+        orderBy: { updatedAt: "desc" },
+        select: { surfaceId: true },
+      });
+      const surfaceId = latestSurface?.surfaceId ?? "surface";
+      return {
+        interactionId: existing.id,
+        surfaceId,
+        messageId: existing.messageId ?? "",
+        documentRef: `a2ui:interaction:${existing.id}:surface:${surfaceId}`,
+        draftVersion: existing.draftVersion,
+        eventSeq: 0,
+        amended: false,
+        missingRequired: [],
+        plan: input.plan,
+        slots: {},
+      };
+    }
     if (existing?.messageId) {
       try {
         return await amendPublishedCard(prisma, {
@@ -567,6 +602,23 @@ async function amendPublishedCard(
       // without the lock both would read the same revision, write the same
       // next one, and one of the two field updates would vanish.
       await tx.$executeRaw`SELECT id FROM "interactions" WHERE id = ${existing.id} FOR UPDATE`;
+      // Occupancy is the open kernel row; the bound effect is what means "do
+      // not rewrite the payload". Re-check under the lock so a send that
+      // claimed the effect after the outer read cannot be amended.
+      if (await cardSendIsInFlight(tx as PrismaClient, existing.id)) {
+        return {
+          interactionId: existing.id,
+          surfaceId,
+          messageId: input.messageId,
+          documentRef: `a2ui:interaction:${existing.id}:surface:${surfaceId}`,
+          draftVersion: existing.draftVersion,
+          eventSeq: 0,
+          amended: false,
+          missingRequired: [],
+          plan: input.plan,
+          slots: {},
+        };
+      }
       const locked = await tx.interaction.findUnique({
         where: { id: existing.id },
         select: { status: true, draftVersion: true },
@@ -651,6 +703,9 @@ async function amendPublishedCard(
         ...(blockAddress ? { senderAddress: blockAddress } : {}),
         ...stamps,
         ...historyStamp(input.plan.intent, slots),
+        ...((input.status ?? "collecting") === "awaiting_approval"
+          ? { reasonKey: surfaceReasonKeyForApproval({ scope: input.approvalScope ?? "setting" }) }
+          : {}),
       };
       const nextBlocks = previous.some(
         (entry) => entry.kind === "a2ui_surface" && entry.interactionId === existing.id,

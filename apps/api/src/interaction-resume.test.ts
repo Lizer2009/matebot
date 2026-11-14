@@ -67,8 +67,13 @@ function fixture(options: { interactions?: Row[]; busy?: boolean; hasBot?: boole
     $executeRaw: vi.fn(async () => undefined),
     interaction: {
       findMany: vi.fn(async () => rows),
+      findUnique: vi.fn(
+        async ({ where }: { where: { id: string } }) =>
+          rows.find((row) => row.id === where.id) ?? null,
+      ),
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
+    interactionEvent: { create: vi.fn(async () => ({ id: "ev-1" })) },
     message: {
       findUnique: vi.fn(
         async ({ where }: { where: { id: string } }) => messages.get(where.id) ?? null,
@@ -172,7 +177,7 @@ describe("resumeInteractionAfterConnection", () => {
     });
     expect(f.messages.get("msg-cal")?.blocks[0]).toMatchObject({
       capability: "ready",
-      template: "action-draft-card",
+      template: "calendar-draft-card",
       lifecycle: "draft",
       status: "collecting",
     });
@@ -344,5 +349,55 @@ describe("resumeInteractionAfterConnection", () => {
     expect(result).toEqual({ refreshedInteractionIds: [], queuedRunId: null });
     expect(f.createdRuns).toEqual([]);
     expect(f.enqueued).toEqual([]);
+  });
+
+  it("settles a matching connect card when the app connects (F-08)", async () => {
+    const f = fixture({
+      interactions: [
+        { id: "ix-connect", intent: "connect.gmail", status: "needs_connection", draftVersion: 1 },
+        {
+          id: "ix-cal",
+          intent: "connect.googlecalendar",
+          status: "needs_connection",
+          draftVersion: 1,
+        },
+      ],
+    });
+    await resumeInteractionAfterConnection(f.deps, {
+      actor,
+      botId: "bot-1",
+      threadId: "thread-1",
+      provider: "gmail",
+      appConnected: true,
+    });
+    expect(f.tx.interaction.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "ix-connect", status: "needs_connection" },
+        data: expect.objectContaining({ status: "succeeded" }),
+      }),
+    );
+    expect(f.tx.interaction.updateMany).not.toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: "ix-cal" }) }),
+    );
+  });
+
+  it("is a no-op to complete the same connect card twice", async () => {
+    const f = fixture({
+      interactions: [
+        { id: "ix-connect", intent: "connect.gmail", status: "succeeded", draftVersion: 1 },
+      ],
+    });
+    await resumeInteractionAfterConnection(f.deps, {
+      actor,
+      botId: "bot-1",
+      threadId: "thread-1",
+      provider: "gmail",
+      appConnected: true,
+    });
+    expect(f.tx.interaction.updateMany).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: "succeeded" }),
+      }),
+    );
   });
 });

@@ -84,6 +84,45 @@ describe("capability registry", () => {
     );
   });
 
+  it("pins the production files that still name interaction.result as an intent (AC-11)", async () => {
+    const { readdir, readFile, stat } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "../../..");
+    const roots = [
+      join(repoRoot, "packages/core/src"),
+      join(repoRoot, "packages/adapters/src"),
+      join(repoRoot, "apps/api/src"),
+    ];
+    const hits: string[] = [];
+    async function walk(dir: string): Promise<void> {
+      for (const name of await readdir(dir)) {
+        const path = join(dir, name);
+        const info = await stat(path);
+        if (info.isDirectory()) {
+          if (name === "node_modules" || name === "dist" || name === "generated") continue;
+          await walk(path);
+          continue;
+        }
+        if (!name.endsWith(".ts") || name.endsWith(".test.ts") || name.endsWith(".test.tsx")) {
+          continue;
+        }
+        const source = await readFile(path, "utf8");
+        if (/intent:\s*["']interaction\.result["']/.test(source)) {
+          hits.push(path.slice(repoRoot.length + 1));
+        }
+      }
+    }
+    for (const root of roots) await walk(root);
+    hits.sort();
+    expect(hits).toEqual([
+      "packages/adapters/src/interaction-result-publish.ts",
+      "packages/adapters/src/run-tools-result-refresh.ts",
+      "packages/adapters/src/run-tools-result.ts",
+      "packages/core/src/interaction-capability.ts",
+    ]);
+  });
+
   it("exposes exactly the four product intents", () => {
     expect(interactionIntents().sort()).toEqual(
       ["calendar.create", "calendar.query", "email.compose", "interaction.result"].sort(),

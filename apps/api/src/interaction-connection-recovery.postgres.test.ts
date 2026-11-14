@@ -956,4 +956,59 @@ describePostgres("card recovery through the real connection routes", () => {
     expect(row.confirmedVersion).toBeNull();
     expect(await system.externalEffect.findMany({ where: { spaceId } })).toEqual([]);
   });
+
+  it("settles matching connect.* cards on complete without a client RPC (F-08)", async () => {
+    const gmailId = `${P}-ix-gmail-${randomUUID()}`;
+    const calId = `${P}-ix-cal-${randomUUID()}`;
+    await system.interaction.create({
+      data: {
+        id: gmailId,
+        spaceId,
+        threadId,
+        intent: "connect.gmail",
+        cardKey: interactionCardKey(threadId, "connect.gmail"),
+        status: "needs_connection",
+        draftVersion: 1,
+        plan: {
+          intent: "connect.gmail",
+          title: "Gmail",
+          fields: [],
+          nextStep: "ask",
+          riskLevel: "low",
+        } as never,
+      },
+    });
+    await system.interaction.create({
+      data: {
+        id: calId,
+        spaceId,
+        threadId,
+        intent: "connect.googlecalendar",
+        cardKey: interactionCardKey(threadId, "connect.googlecalendar"),
+        status: "needs_connection",
+        draftVersion: 1,
+        plan: {
+          intent: "connect.googlecalendar",
+          title: "Calendar",
+          fields: [],
+          nextStep: "ask",
+          riskLevel: "low",
+        } as never,
+      },
+    });
+    const { provider, finishInBrowser } = mailboxProvider();
+    const handler = new RPCHandler(createRouter(deps(provider)));
+    const begun = await rpc(handler, "connections/begin", {
+      connectorId: "composio",
+      provider: "gmail",
+      displayName: "Gmail",
+    });
+    const connectionId = (begun.json as { json: { connectionId: string } }).json.connectionId;
+    finishInBrowser();
+    await rpc(handler, "connections/complete", { connectionId });
+    expect((await getInteraction(system, gmailId))?.status).toBe("succeeded");
+    expect((await getInteraction(system, calId))?.status).toBe("needs_connection");
+    await rpc(handler, "connections/complete", { connectionId });
+    expect((await getInteraction(system, gmailId))?.status).toBe("succeeded");
+  });
 });

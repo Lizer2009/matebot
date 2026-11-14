@@ -85,6 +85,21 @@ describePostgres("interaction card key (PostgreSQL)", () => {
     await expect(insert(key, "ready_for_review")).rejects.toMatchObject({ code: "P2002" });
   });
 
+  it("keeps one open row when concurrent inserts race on the same key", async () => {
+    const key = interactionCardKey(threadId, `race-${suffix}`);
+    const results = await Promise.allSettled([
+      insert(key, "collecting"),
+      insert(key, "ready_for_review"),
+      insert(key, "awaiting_approval"),
+    ]);
+    const ok = results.filter((result) => result.status === "fulfilled");
+    const failed = results.filter((result) => result.status === "rejected");
+    expect(ok).toHaveLength(1);
+    expect(failed).toHaveLength(2);
+    expect(failed.every((result) => result.reason?.code === "P2002")).toBe(true);
+    expect(await prisma.interaction.count({ where: { threadId, cardKey: key } })).toBe(1);
+  });
+
   // The index is partial: a terminal row must not block a new open one, or every
   // executed card would freeze its intent for that thread forever.
   it("allows a new open card once the previous one is terminal", async () => {
@@ -106,6 +121,140 @@ describePostgres("interaction card key (PostgreSQL)", () => {
       const row = await insert(key, status);
       expect(row.cardKey).toBe(key);
     }
+  });
+
+  it("keeps the kernel status CHECK the vocabulary depends on (AC-4)", async () => {
+    const rows = await prisma.$queryRaw<{ conname: string }[]>`
+      SELECT conname FROM pg_constraint
+      WHERE conrelid = '"interactions"'::regclass
+        AND conname = 'interactions_status_kernel_check'
+    `;
+    expect(rows).toHaveLength(1);
+  });
+
+  it("refuses executing and other values the thirteen-word list does not contain", async () => {
+    const key = interactionCardKey(threadId, `bogus-${suffix}`);
+    await expect(insert(key, "executing")).rejects.toBeTruthy();
+    await expect(insert(key, "submitting")).rejects.toBeTruthy();
+    await expect(insert(key, "totally_bogus")).rejects.toBeTruthy();
+    await expect(
+      createInteraction(prisma, {
+        spaceId,
+        threadId,
+        intent: `create-executing-${suffix}`,
+        status: "executing" as never,
+        plan,
+      }),
+    ).rejects.toThrow(/kernel vocabulary/);
+  });
+
+  it("keeps an open kernel status occupying the slot so a send cannot sit beside a new draft", async () => {
+    const key = interactionCardKey(threadId, `occupy-${suffix}`);
+    await insert(key, "ready_for_review");
+    await expect(insert(key, "collecting")).rejects.toMatchObject({ code: "P2002" });
+    await expect(
+      prisma.interaction.updateMany({
+        where: { cardKey: key },
+        data: { status: "executing" },
+      }),
+    ).rejects.toBeTruthy();
+  });
+
+  it("remaps historical executing beside collecting to one open card (never succeeded)", async () => {
+    const migration = await readFile(
+      new URL(
+        "../prisma/migrations/20261129120000_interaction_status_check/migration.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(migration).toMatch(/ready_for_review/);
+    expect(migration).not.toMatch(/SET "status" = 'succeeded'/);
+    await prisma.$executeRawUnsafe(`
+      CREATE TEMP TABLE interactions_mig (
+        id text PRIMARY KEY,
+        status text NOT NULL,
+        "cardKey" text,
+        "updatedAt" timestamptz NOT NULL
+      )
+    `);
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO interactions_mig (id, status, "cardKey", "updatedAt") VALUES
+        ('old-executing', 'executing', 'same-key', TIMESTAMPTZ '2026-11-01 00:00:00+00'),
+        ('new-collecting', 'collecting', 'same-key', TIMESTAMPTZ '2026-11-02 00:00:00+00'),
+        ('junk', 'totally_bogus', 'other-key', TIMESTAMPTZ '2026-11-02 00:00:00+00')
+    `);
+    await prisma.$executeRawUnsafe(`
+      UPDATE interactions_mig SET status = 'ready_for_review' WHERE status IN ('executing', 'submitting')
+    `);
+    await prisma.$executeRawUnsafe(`
+      UPDATE interactions_mig SET status = 'unknown' WHERE status NOT IN (
+        'collecting','ready_for_review','awaiting_approval','needs_connection','unknown',
+        'sent','executed','succeeded','confirmed','superseded','expired','failed','cancelled'
+      )
+    `);
+    await prisma.$executeRawUnsafe(`
+      WITH ranked AS (
+        SELECT id, ROW_NUMBER() OVER (PARTITION BY "cardKey" ORDER BY "updatedAt" DESC, id DESC) AS rn
+        FROM interactions_mig
+        WHERE status IN ('collecting', 'ready_for_review', 'awaiting_approval')
+          AND "cardKey" IS NOT NULL
+      )
+      UPDATE interactions_mig AS i SET status = 'superseded' FROM ranked AS r
+      WHERE i.id = r.id AND r.rn > 1
+    `);
+    const rows = await prisma.$queryRawUnsafe<Array<{ id: string; status: string }>>(
+      `SELECT id, status FROM interactions_mig ORDER BY id`,
+    );
+    expect(rows).toEqual([
+      { id: "junk", status: "unknown" },
+      { id: "new-collecting", status: "collecting" },
+      { id: "old-executing", status: "superseded" },
+    ]);
+    await prisma.$executeRawUnsafe(`DROP TABLE interactions_mig`);
+  });
+
+  it("runs the original backfill CTE against empty, duplicate, and terminal fixtures (AC-3)", async () => {
+    const migration = await readFile(
+      new URL(
+        "../prisma/migrations/20261126120000_interaction_card_key/migration.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const cte = /WITH ranked AS \([\s\S]*?WHERE i\."id" = r\."id" AND r\.rn > 1;/.exec(
+      migration,
+    )?.[0];
+    expect(cte).toBeTruthy();
+    const rewritten = cte!.replaceAll('"interactions"', '"interactions_ac3"');
+    await prisma.$executeRawUnsafe(`
+      CREATE TEMP TABLE interactions_ac3 (
+        id text PRIMARY KEY,
+        status text NOT NULL,
+        "cardKey" text,
+        "updatedAt" timestamptz NOT NULL
+      )
+    `);
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO interactions_ac3 (id, status, "cardKey", "updatedAt") VALUES
+        ('empty-open', 'collecting', 'k-empty', TIMESTAMPTZ '2026-11-01 00:00:00+00'),
+        ('dup-old', 'collecting', 'k-dup', TIMESTAMPTZ '2026-11-01 00:00:00+00'),
+        ('dup-new', 'ready_for_review', 'k-dup', TIMESTAMPTZ '2026-11-02 00:00:00+00'),
+        ('term', 'succeeded', 'k-term', TIMESTAMPTZ '2026-11-02 00:00:00+00'),
+        ('term-open', 'collecting', 'k-term', TIMESTAMPTZ '2026-11-03 00:00:00+00')
+    `);
+    await prisma.$executeRawUnsafe(rewritten);
+    const rows = await prisma.$queryRawUnsafe<Array<{ id: string; status: string }>>(
+      `SELECT id, status FROM interactions_ac3 ORDER BY id`,
+    );
+    expect(rows).toEqual([
+      { id: "dup-new", status: "ready_for_review" },
+      { id: "dup-old", status: "superseded" },
+      { id: "empty-open", status: "collecting" },
+      { id: "term", status: "succeeded" },
+      { id: "term-open", status: "collecting" },
+    ]);
+    await prisma.$executeRawUnsafe(`DROP TABLE interactions_ac3`);
   });
 
   // The helper is what makes the column's nullability a rollout window rather than a hole:

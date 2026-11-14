@@ -5,6 +5,7 @@ import {
   parseA2uiSurfaceDocumentRef,
 } from "@matebot/contracts";
 import type { InteractionStatus } from "@matebot/core";
+import { assertKernelStatus } from "@matebot/core";
 import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { Prisma, PrismaClient } from "./client.js";
 import { withTransactionRetry } from "./transaction-retry.js";
@@ -91,6 +92,8 @@ export async function createInteraction(
         .filter((field) => field.value !== undefined)
         .map((field) => [field.name, field.value]),
     );
+  const status = input.status ?? "collecting";
+  assertKernelStatus(status);
   return prisma.interaction.create({
     data: {
       spaceId: input.spaceId,
@@ -102,7 +105,7 @@ export async function createInteraction(
       // never writes a key, has drained.
       cardKey: input.cardKey ?? interactionCardKey(input.threadId, input.intent),
       ...(input.expiresAt ? { expiresAt: input.expiresAt } : {}),
-      status: input.status ?? "collecting",
+      status,
       draftVersion: 1,
       plan: plan as Prisma.InputJsonValue,
       slots: slots as Prisma.InputJsonValue,

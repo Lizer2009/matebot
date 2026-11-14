@@ -6,6 +6,7 @@ import {
   deriveCollectingStatus,
   historySlotsFromValues,
   INTERACTION_STATUSES,
+  isInFlightEffectStatus,
   isL0aBlock,
   OPEN_STATUSES,
   stampL0aBlock,
@@ -14,6 +15,21 @@ import {
 import type { Prisma, PrismaClient } from "@matebot/db";
 import { appendInteractionEvent } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+
+type KernelClient = {
+  interaction: {
+    findUnique: PrismaClient["interaction"]["findUnique"];
+    findFirst: PrismaClient["interaction"]["findFirst"];
+    findMany: PrismaClient["interaction"]["findMany"];
+    updateMany: PrismaClient["interaction"]["updateMany"];
+  };
+  message: {
+    findUnique: PrismaClient["message"]["findUnique"];
+    update: PrismaClient["message"]["update"];
+  };
+  interactionEvent: { create: PrismaClient["interactionEvent"]["create"] };
+  externalEffect?: { findUnique: PrismaClient["externalEffect"]["findUnique"] };
+};
 
 export type OpenCardRow = {
   id: string;
@@ -73,6 +89,47 @@ export async function findOpenCard(
 }
 
 /**
+ * Waiting connection cards in one thread, newest first.
+ *
+ * Callers then match by app or named account. `findFirst` by `updatedAt` is
+ * what let a newer calendar card swallow an older gmail demand (AC-26).
+ */
+export async function findWaitingConnectionCards(
+  prisma: PrismaClient,
+  threadId: string,
+): Promise<Array<{ id: string; intent: string; status: string }>> {
+  if (typeof prisma.interaction?.findMany !== "function") return [];
+  return prisma.interaction.findMany({
+    where: { threadId, status: "needs_connection" },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true, intent: true, status: true },
+  });
+}
+
+/**
+ * Whether this card's bound effect is already in flight.
+ *
+ * Occupancy stays on the last kernel open status; the effect is what means
+ * "do not amend the payload".
+ */
+export async function cardSendIsInFlight(
+  prisma: PrismaClient,
+  interactionId: string,
+): Promise<boolean> {
+  if (typeof prisma.interaction?.findUnique !== "function") return false;
+  const row = await prisma.interaction.findUnique({
+    where: { id: interactionId },
+    select: { approvalEffectId: true },
+  });
+  if (!row?.approvalEffectId) return false;
+  const effect = await prisma.externalEffect.findUnique({
+    where: { id: row.approvalEffectId },
+    select: { status: true },
+  });
+  return Boolean(effect && isInFlightEffectStatus(effect.status));
+}
+
+/**
  * The only path that closes a card.
  *
  * Reads the row, asks the kernel whether the move is allowed, then writes with
@@ -100,38 +157,45 @@ export async function settleInteraction(
   const decision = decideSettle({ current: current.status, next: input.status });
   if (!decision.ok) return { settled: false, reason: decision.reason };
 
-  const written = await prisma.interaction.updateMany({
-    where: {
-      id: input.interactionId,
-      status: current.status,
-      ...(input.staleAtSnapshot !== undefined ? { staleAt: input.staleAtSnapshot } : {}),
-    },
-    data: { status: decision.status, staleAt: null },
-  });
-  if (written.count === 0) return { settled: false, reason: "concurrent" };
+  const apply = async (tx: KernelClient): Promise<SettleResult> => {
+    const written = await tx.interaction.updateMany({
+      where: {
+        id: input.interactionId,
+        status: current.status,
+        ...(input.staleAtSnapshot !== undefined ? { staleAt: input.staleAtSnapshot } : {}),
+      },
+      data: { status: decision.status, staleAt: null },
+    });
+    if (written.count === 0) return { settled: false, reason: "concurrent" };
 
-  await restampInteractionSurface(prisma, {
-    interactionId: current.id,
-    messageId: current.messageId,
-    intent: current.intent,
-    status: decision.status,
-    slots: (current.slots ?? {}) as Record<string, unknown>,
-  });
-  await appendInteractionEvent(prisma, {
-    interactionId: current.id,
-    kind: "settled",
-    fromStatus: current.status,
-    toStatus: decision.status,
-    reason: input.reason,
-  });
+    await restampInteractionSurface(tx, {
+      interactionId: current.id,
+      messageId: current.messageId,
+      intent: current.intent,
+      status: decision.status,
+      slots: (current.slots ?? {}) as Record<string, unknown>,
+    });
+    await appendInteractionEvent(tx, {
+      interactionId: current.id,
+      kind: "settled",
+      fromStatus: current.status,
+      toStatus: decision.status,
+      reason: input.reason,
+    });
 
-  getLogger().info("interaction.settled", {
-    "interaction.id": input.interactionId,
-    "interaction.from": current.status,
-    "interaction.to": decision.status,
-    "interaction.reason": input.reason,
-  });
-  return { settled: true, previousStatus: current.status };
+    getLogger().info("interaction.settled", {
+      "interaction.id": input.interactionId,
+      "interaction.from": current.status,
+      "interaction.to": decision.status,
+      "interaction.reason": input.reason,
+    });
+    return { settled: true, previousStatus: current.status };
+  };
+
+  if (typeof prisma.$transaction === "function") {
+    return prisma.$transaction((tx) => apply(tx));
+  }
+  return apply(prisma);
 }
 
 /**
@@ -142,7 +206,7 @@ export async function settleInteraction(
  * on a settled card, set it while an open card is marked.
  */
 export async function restampInteractionSurface(
-  prisma: PrismaClient,
+  prisma: KernelClient | PrismaClient,
   input: {
     interactionId: string;
     messageId: string | null;

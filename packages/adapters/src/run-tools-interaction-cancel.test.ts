@@ -38,9 +38,10 @@ function context(status = "ready_for_review", surfaces = 1) {
       riskLevel: "medium",
     },
   };
+  const inFlight = status === "executing";
   const prisma = {
     interaction: {
-      findUnique: async () => row,
+      findUnique: async () => ({ ...row, approvalEffectId: inFlight ? "effect-1" : null }),
       findFirst: async () => row,
       findMany: async () =>
         surfaces === 0
@@ -51,6 +52,9 @@ function context(status = "ready_for_review", surfaces = 1) {
                 surfaces: [{ surfaceId: "surf-1" }],
               },
             ],
+    },
+    externalEffect: {
+      findUnique: async () => (inFlight ? { id: "effect-1", status: "executing" } : null),
     },
   };
   return {
@@ -89,6 +93,30 @@ describe("cancel_interaction", () => {
       interactionId: "ix-1",
       revision: 2,
     });
+    expect(result).toMatchObject({ ok: false, error: "in_flight" });
+    expect(cancelService).not.toHaveBeenCalled();
+  });
+
+  it("refuses an in-flight send that still occupies the open kernel status", async () => {
+    cancelService.mockClear();
+    const ctx = context("ready_for_review");
+    const prisma = (
+      ctx as {
+        deps: {
+          prisma: {
+            interaction: { findUnique: () => Promise<unknown> };
+            externalEffect: { findUnique: () => Promise<unknown> };
+          };
+        };
+      }
+    ).deps.prisma;
+    prisma.interaction.findUnique = async () => ({
+      id: "ix-1",
+      status: "ready_for_review",
+      approvalEffectId: "effect-1",
+    });
+    prisma.externalEffect.findUnique = async () => ({ id: "effect-1", status: "ambiguous" });
+    const result = await cancelInteraction(ctx, { interactionId: "ix-1", revision: 2 });
     expect(result).toMatchObject({ ok: false, error: "in_flight" });
     expect(cancelService).not.toHaveBeenCalled();
   });

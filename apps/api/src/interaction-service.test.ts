@@ -28,6 +28,7 @@ import {
   InteractionEffectRunMissingError,
   InteractionEmailDeliveryError,
   InteractionSendRejectedError,
+  projectCapabilityGate,
   reconcileConfirmedInteractionService,
 } from "./interaction-service.js";
 
@@ -95,11 +96,27 @@ function memoryPrisma(
         where,
         data,
       }: {
-        where: { id: string; draftVersion: number };
+        where: {
+          id: string;
+          draftVersion?: number;
+          status?: string | { in: string[] };
+        };
         data: Partial<InteractionRecord>;
       }) => {
         const row = interactions.get(where.id);
-        if (!row || row.draftVersion !== where.draftVersion) return { count: 0 };
+        if (!row) return { count: 0 };
+        if (where.draftVersion !== undefined && row.draftVersion !== where.draftVersion) {
+          return { count: 0 };
+        }
+        if (typeof where.status === "string" && row.status !== where.status) return { count: 0 };
+        if (
+          where.status &&
+          typeof where.status === "object" &&
+          "in" in where.status &&
+          !where.status.in.includes(row.status)
+        ) {
+          return { count: 0 };
+        }
         Object.assign(row, data);
         return { count: 1 };
       },
@@ -561,7 +578,7 @@ describe("executeConfirmedInteractionService", () => {
   it("does not resend an in-flight effect; E′ reconciles ambiguous outcomes", async () => {
     const db = memoryPrisma(
       readyInteraction({
-        status: "executing",
+        status: "ready_for_review",
         confirmedVersion: 2,
         approvalEffectId: "effect-1",
       }),
@@ -589,7 +606,7 @@ describe("executeConfirmedInteractionService", () => {
         interactionId: "ix-1",
         ...readyMailbox,
       }),
-    ).rejects.toMatchObject({ code: "unconfirmed" });
+    ).rejects.toMatchObject({ code: "unknown" });
     expect(deliverInteractionEmail).not.toHaveBeenCalled();
     expect(db.effects.get("a2ui:interaction:ix-1:confirm:2")?.status).toBe("ambiguous");
   });
@@ -1183,5 +1200,44 @@ describe("confirmInteractionService on a row written before reconciliation", () 
     expect(effect).toMatchObject({
       request: { slots: { to: "a@example.com", subject: "Hi", body: "Hello" } },
     });
+  });
+});
+
+describe("projectCapabilityGate", () => {
+  it("does not write needs_connection onto a superseded card (F-06)", async () => {
+    const db = memoryPrisma(
+      readyInteraction({
+        status: "superseded",
+        messageId: "msg-1",
+      }),
+      {
+        surface: { surfaceId: "surf-1", protocolFamily: "v0_9" },
+        message: {
+          id: "msg-1",
+          blocks: [
+            {
+              kind: "a2ui_surface",
+              interactionId: "ix-1",
+              surfaceId: "surf-1",
+              protocolFamily: "v0_9",
+              draftVersion: 2,
+              intent: "email.compose",
+              status: "superseded",
+            },
+          ],
+        },
+      },
+    );
+    await projectCapabilityGate(
+      db.prisma,
+      {
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        interactionId: "ix-1",
+      },
+      "not_connected",
+    );
+    expect(db.interactions.get("ix-1")?.status).toBe("superseded");
   });
 });

@@ -1,6 +1,9 @@
+import { findWaitingConnectionCards, settleInteraction } from "@matebot/adapters";
 import type { InteractionPlan } from "@matebot/contracts";
 import type { InteractionRequiredApp } from "@matebot/core";
 import {
+  accountIdFromConnectIntent,
+  connectIntentMatchesApp,
   connectionSatisfiesApp,
   emailSurfaceBlockFields,
   interactionRequiredApp,
@@ -235,6 +238,17 @@ export async function resumeInteractionAfterConnection(
   if (!app || !input.appConnected) return { refreshedInteractionIds: [], queuedRunId: null };
   const committed = await deps.prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
+    const connectCards = await findWaitingConnectionCards(tx as never, input.threadId);
+    for (const row of connectCards) {
+      if (!connectIntentMatchesApp(row.intent, app)) continue;
+      const named = accountIdFromConnectIntent(row.intent);
+      if (input.accountId && named && named !== input.accountId) continue;
+      await settleInteraction(tx as never, {
+        interactionId: row.id,
+        status: "succeeded",
+        reason: "app connected",
+      });
+    }
     const outcome = await refreshWaitingInteractions(tx, {
       spaceId: input.actor.spaceId,
       threadId: input.threadId,

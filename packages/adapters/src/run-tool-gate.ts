@@ -750,6 +750,7 @@ async function showApprovalCard(ctx: RunContext, call: ToolCall, card: ApprovalC
       status: "awaiting_approval",
       block: ask,
       lease: runLeaseFor(deps, runId),
+      approvalScope: "user",
     });
     blocks = [published.block];
     skipMessage = true;

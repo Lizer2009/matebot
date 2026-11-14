@@ -14,6 +14,8 @@ import {
   historySlotsFromValues,
   interactionCapabilityForIntent,
   interactionSlotsFromPlan,
+  labeledSurfaceSchema,
+  TERMINAL_STATUSES,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
 import {
@@ -26,6 +28,7 @@ import {
   withTransactionRetry,
 } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
+import { cardSendIsInFlight } from "./interaction-kernel-store.js";
 import { senderStampFromBlock } from "./interaction-publish.js";
 
 /**
@@ -75,7 +78,10 @@ async function compilePlanSurface(input: {
 }> {
   // The same reconciliation the publish path applies. An edit republishes the card, and without
   // this the row would drift back to the model's spellings on the first keystroke.
-  const schema = interactionCapabilityForIntent(input.plan.intent)?.schema;
+  const capability = interactionCapabilityForIntent(input.plan.intent);
+  const schema = capability
+    ? labeledSurfaceSchema(capability.schema, { capability, title: input.plan.title })
+    : undefined;
   const reconciled = reconcilePlanToSchema(input.plan, schema, {
     ...(input.changedField ? { prefer: [input.changedField] } : {}),
   });
@@ -131,6 +137,9 @@ export async function updateInteractionFieldService(
   const current = await getInteraction(prisma, input.interactionId);
   if (!current || current.threadId !== input.threadId) {
     throw new InteractionNotFoundError(input.interactionId);
+  }
+  if (await cardSendIsInFlight(prisma, input.interactionId)) {
+    throw new InteractionTerminalError(input.interactionId, current.status);
   }
 
   const plan = current.plan as InteractionPlan;
@@ -252,6 +261,7 @@ export async function updateInteractionFieldService(
         // would leave the card's read-only sender row blank after the first keystroke.
         ...(previousBlock?.senderLabel ? { senderLabel: previousBlock.senderLabel } : {}),
         ...(previousBlock?.senderAddress ? { senderAddress: previousBlock.senderAddress } : {}),
+        ...(previousBlock?.reasonKey ? { reasonKey: previousBlock.reasonKey } : {}),
         ...stamps,
         ...(historySlots ? { historySlots } : {}),
       };
@@ -382,8 +392,9 @@ export async function cancelInteractionService(
       current.draftVersion,
     );
   }
+  const inFlight = await cardSendIsInFlight(prisma, input.interactionId);
   const decision = decideCancel({
-    status: current.status as InteractionLifecycleStatus,
+    status: inFlight ? "executing" : (current.status as InteractionLifecycleStatus),
     // An in-flight action resolves as an abort request rather than a refusal when
     // the caller's runtime can stop it; the caller checks that it actually did.
     runtimeCanAbort: input.runtimeCanAbort === true,
@@ -429,13 +440,20 @@ export async function cancelInteractionService(
 
   await withTransactionRetry(() =>
     prisma.$transaction(async (tx) => {
+      // Occupancy stays on the last kernel open status. Re-check the bound
+      // effect inside the transaction so a send that started after the outer
+      // read cannot be cancelled as if it were still a draft.
+      if (await cardSendIsInFlight(tx as PrismaClient, input.interactionId)) {
+        throw new InteractionCancelRejectedError(
+          "in_flight",
+          "这次操作已经在进行中或已经完成，不能再取消。",
+        );
+      }
       const updated = await tx.interaction.updateMany({
         where: {
           id: input.interactionId,
           draftVersion: input.expectedDraftVersion,
-          // Re-checked inside the transaction so a concurrent execute cannot slip
-          // a started action past the decision made above.
-          status: { notIn: ["executing", "succeeded", "unknown", "failed", "cancelled"] },
+          status: { notIn: [...TERMINAL_STATUSES, "unknown"] },
         },
         data: { status: "cancelled", confirmedVersion: null, draftVersion },
       });

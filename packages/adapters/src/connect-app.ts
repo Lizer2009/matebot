@@ -2,12 +2,14 @@ import type { AdapterContext, ManagedConnectorProvider } from "@matebot/adapter-
 import type { MessageBlock } from "@matebot/contracts";
 import {
   appConnectCard,
-  interactionResumesWhenConnected,
+  featuredConnectorProvidersMatch,
   l0aIntentForBlock,
   matchAppCatalog,
   matchesAppConnection,
+  pickMatchingConnectionCard,
 } from "@matebot/core";
 import type { PrismaClient, ThreadEvents } from "@matebot/db";
+import { findWaitingConnectionCards } from "./interaction-kernel-store.js";
 import { publishL0aView } from "./interaction-l0a-publish.js";
 import { annotateAppCatalog, annotateAppConnected } from "./route-annotation.js";
 
@@ -20,25 +22,14 @@ const CARD_SHOWN =
 
 async function openConnectionDemand(
   prisma: PrismaClient,
-  input: { threadId: string; provider: string; intent: string },
+  input: { threadId: string; provider: string; intent: string; accountId?: string },
 ) {
-  const row = await prisma.interaction.findFirst({
-    where: { threadId: input.threadId, status: "needs_connection" },
-    orderBy: { updatedAt: "desc" },
-    select: { id: true, intent: true, status: true },
+  const rows = await findWaitingConnectionCards(prisma, input.threadId);
+  return pickMatchingConnectionCard(rows, {
+    provider: input.provider,
+    intent: input.intent,
+    ...(input.accountId ? { accountId: input.accountId } : {}),
   });
-  if (!row) return undefined;
-  if (row.intent === input.intent || row.intent.startsWith(`${input.intent}.`)) return row;
-  if (
-    interactionResumesWhenConnected({
-      intent: row.intent,
-      interactionStatus: row.status,
-      provider: input.provider,
-    })
-  ) {
-    return row;
-  }
-  return undefined;
 }
 
 /** Catalog data is the only source of card content; serialize dedupe with the message write. */
@@ -85,13 +76,29 @@ export async function connectApp(
         "This app is already connected and its tools are available. Nothing has been run: no action has happened yet.",
     };
   const block = appConnectCard(entry);
-  const intent = l0aIntentForBlock(block);
-  const existingDemand = await openConnectionDemand(deps.prisma, {
-    threadId: target.threadId,
+  const accountIds = await namedReconnectAccountIds(deps.prisma, {
+    spaceId: context.spaceId,
+    userId: context.userId,
     provider: entry.slug,
-    intent,
   });
-  if (existingDemand) {
+  const namedIntents: Array<{ intent: string; accountId?: string }> =
+    accountIds.length > 0
+      ? accountIds.map((accountId) => ({
+          accountId,
+          intent: l0aIntentForBlock(block, { accountId }),
+        }))
+      : [{ intent: l0aIntentForBlock(block) }];
+  const pending = [];
+  for (const named of namedIntents) {
+    const existingDemand = await openConnectionDemand(deps.prisma, {
+      threadId: target.threadId,
+      provider: entry.slug,
+      intent: named.intent,
+      ...(named.accountId ? { accountId: named.accountId } : {}),
+    });
+    if (!existingDemand) pending.push(named);
+  }
+  if (pending.length === 0) {
     return {
       status: "pending",
       ...annotateAppCatalog(),
@@ -133,27 +140,59 @@ export async function connectApp(
       message: ALREADY_SHOWN,
     };
   }
-  const published = await publishL0aView(deps.prisma, {
-    spaceId: target.spaceId,
-    threadId: target.threadId,
-    botId: target.botId,
-    runId: target.id,
-    intent,
-    title: `Connect ${entry.name}`,
-    status: "needs_connection",
-    block,
-    clientNonce: skipPost.nonce,
-  });
-  await deps.events.notify(
-    target.threadId,
-    published.eventSeq,
-    published.amended ? undefined : target.id,
-  );
+  let last = {
+    eventSeq: 0,
+    amended: false,
+  };
+  for (const [index, named] of pending.entries()) {
+    const published = await publishL0aView(deps.prisma, {
+      spaceId: target.spaceId,
+      threadId: target.threadId,
+      botId: target.botId,
+      runId: target.id,
+      intent: named.intent,
+      title: `Connect ${entry.name}`,
+      status: "needs_connection",
+      block,
+      clientNonce: index === 0 ? skipPost.nonce : `${skipPost.nonce}:${named.intent}`,
+    });
+    last = published;
+  }
+  await deps.events.notify(target.threadId, last.eventSeq, last.amended ? undefined : target.id);
   return {
     status: "pending",
     // A catalog card the person has not authorized yet. It is shown, not connected, and it has
     // run nothing — three different things that must not be conflated in what the model reads.
     ...annotateAppCatalog(),
-    message: published.amended ? ALREADY_SHOWN : CARD_SHOWN,
+    message: last.amended ? ALREADY_SHOWN : CARD_SHOWN,
   };
+}
+
+async function namedReconnectAccountIds(
+  prisma: PrismaClient,
+  input: { spaceId: string; userId: string; provider: string },
+): Promise<string[]> {
+  if (typeof prisma.connection?.findMany !== "function") return [];
+  const rows = await prisma.connection.findMany({
+    where: {
+      spaceId: input.spaceId,
+      userId: input.userId,
+      status: { in: ["error", "pending"] },
+    },
+    select: { provider: true, providerRef: true },
+  });
+  const ids: string[] = [];
+  for (const row of rows) {
+    const ref = row.providerRef?.trim();
+    if (!ref) continue;
+    if (
+      row.provider.toLowerCase() !== input.provider.toLowerCase() &&
+      !featuredConnectorProvidersMatch(row.provider, input.provider)
+    ) {
+      continue;
+    }
+    if (ref.toLowerCase() === input.provider.toLowerCase()) continue;
+    ids.push(ref);
+  }
+  return [...new Set(ids)];
 }

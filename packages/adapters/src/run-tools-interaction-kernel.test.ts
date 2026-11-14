@@ -55,7 +55,7 @@ describe("present_interaction", () => {
     });
     const { interactionTools: tools } = await import("./run-tools-interaction.js");
 
-    const findFirst = vi.fn();
+    const findMany = vi.fn(async () => []);
     const handler = tools.present_interaction!;
     const finish = vi.fn((value: unknown) => value);
     await handler(
@@ -63,7 +63,7 @@ describe("present_interaction", () => {
         deps: {
           // No `connection` rows: the preflight stamp is "not connected", which must still
           // reach the publish call untouched — a connection card is not an open card.
-          prisma: { interaction: { findFirst }, connection: { findMany: async () => [] } },
+          prisma: { interaction: { findMany }, connection: { findMany: async () => [] } },
           events: { notify: vi.fn() },
         },
         run: { id: "r1", spaceId: "sp1", threadId: "t1", botId: "b1" },
@@ -76,7 +76,7 @@ describe("present_interaction", () => {
     expect(publishDirect).not.toHaveBeenCalled();
     // AC-26 reverse may look up a live connect.* view. A miss still publishes
     // through the kernel; the lookup is not a second compose-draft source of truth.
-    expect(findFirst).toHaveBeenCalled();
+    expect(findMany).toHaveBeenCalled();
     // The capability stamp still flows through: the kernel does not decide it.
     expect(publish.mock.calls[0]![1]).toMatchObject({
       spaceId: "sp1",

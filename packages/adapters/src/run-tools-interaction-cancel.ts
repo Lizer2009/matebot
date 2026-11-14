@@ -1,6 +1,7 @@
 import { decideCancel } from "@matebot/core";
 import { isA2uiFeatureEnabled } from "./a2ui-feature.js";
 import { cancelInteractionService } from "./interaction-field-writer.js";
+import { cardSendIsInFlight } from "./interaction-kernel-store.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { servicesFor } from "./run-tools-interaction-edit.js";
@@ -66,10 +67,13 @@ export async function cancelInteraction(
 
   const record = await services.loadInteraction(chosen);
   if (!record) return { ok: false, error: "unknown_interaction" };
-  // The same decision the route makes, so the two paths cannot disagree. The
-  // runtime can abort a provider request here, so a running action becomes an
-  // abort request rather than an outright refusal.
-  const decision = decideCancel({ status: record.status as never, runtimeCanAbort: true });
+  // Occupancy stays on the last kernel open status; in-flight is the bound
+  // effect. The route uses the same mapping so the two paths cannot disagree.
+  const inFlight = await cardSendIsInFlight(ctx.deps.prisma, chosen);
+  const decision = decideCancel({
+    status: inFlight ? "executing" : (record.status as never),
+    runtimeCanAbort: true,
+  });
   if (!decision.ok) return { ok: false, error: decision.error, reply: decision.message };
   if (decision.status === "abort_requested") {
     // The effect is running. The route owns the abort registry, so the tool says

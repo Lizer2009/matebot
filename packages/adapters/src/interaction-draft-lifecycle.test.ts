@@ -48,13 +48,24 @@ vi.mock("@matebot/db", async () => {
   };
 });
 
+const interactionFindUnique = vi.fn(async () => ({ approvalEffectId: null as string | null }));
+const effectFindUnique = vi.fn(async () => null as { id: string; status: string } | null);
+
 const prisma = {
+  interaction: {
+    findUnique: interactionFindUnique,
+  },
+  externalEffect: {
+    findUnique: effectFindUnique,
+  },
   $transaction: async (work: (tx: unknown) => Promise<unknown>) =>
     work({
       interaction: {
+        findUnique: interactionFindUnique,
         updateMany: txInteractionUpdateMany,
         update: vi.fn(async () => ({ id: "ix-1" })),
       },
+      externalEffect: { findUnique: effectFindUnique },
       message: { findUnique: txMessageFindUnique, update: txMessageUpdate },
     }),
   interactionSurface: { findFirst: (...args: unknown[]) => surfaceFindFirst(...args) },
@@ -522,6 +533,48 @@ describe("cancel always works", () => {
       data: { status: string };
     };
     expect(data.data.status).toBe("cancelled");
+  });
+
+  it("refuses to cancel a send whose effect is already in flight", async () => {
+    const { cancelInteractionService, InteractionCancelRejectedError } = await import(
+      "./interaction-field-writer.js"
+    );
+    getInteraction.mockResolvedValue({
+      id: "ix-1",
+      threadId: "thread-1",
+      status: "ready_for_review",
+      draftVersion: 1,
+      confirmedVersion: 1,
+      plan: emailPlan([
+        { name: "to", value: "a@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "s", required: true, status: "resolved" },
+        { name: "body", value: "b", required: true, status: "resolved" },
+      ]),
+      slots: { to: "a@example.test", subject: "s", body: "b" },
+      messageId: "msg-1",
+      approvalEffectId: "effect-1",
+    });
+    interactionFindUnique.mockResolvedValue({ approvalEffectId: "effect-1" });
+    effectFindUnique.mockResolvedValue({
+      id: "effect-1",
+      status: "executing",
+    });
+    try {
+      await expect(
+        cancelInteractionService(prisma, {
+          spaceId: "space-1",
+          threadId: "thread-1",
+          botId: "bot-1",
+          interactionId: "ix-1",
+          expectedDraftVersion: 1,
+          runtimeCanAbort: false,
+        }),
+      ).rejects.toBeInstanceOf(InteractionCancelRejectedError);
+      expect(txInteractionUpdateMany).not.toHaveBeenCalled();
+    } finally {
+      interactionFindUnique.mockResolvedValue({ approvalEffectId: null });
+      effectFindUnique.mockResolvedValue(null);
+    }
   });
 });
 

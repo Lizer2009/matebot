@@ -55,7 +55,12 @@ const callInput = (index = 0) => {
   return args;
 };
 
-function amendPrisma(existing: OpenCardRow, surfaceId = "s1", amendsInteractionId?: string) {
+function amendPrisma(
+  existing: OpenCardRow,
+  surfaceId = "s1",
+  amendsInteractionId?: string,
+  options?: { effectStatus?: string | null; approvalEffectId?: string | null },
+) {
   const updateInteraction = vi.fn().mockResolvedValue({ count: 1 });
   const updateMessage = vi.fn().mockResolvedValue({});
   // The row as it is once the amend holds its lock. Mutable, so a case can make
@@ -64,12 +69,20 @@ function amendPrisma(existing: OpenCardRow, surfaceId = "s1", amendsInteractionI
     status: existing.status,
     draftVersion: existing.draftVersion,
   }));
+  const approvalEffectId = options?.approvalEffectId ?? null;
+  const effectStatus = options?.effectStatus;
   const tx = {
     $executeRaw: vi.fn().mockResolvedValue(1),
     interaction: {
       updateMany: updateInteraction,
       update: vi.fn().mockResolvedValue({}),
-      findUnique: txFindUnique,
+      findUnique: async (args?: { select?: { approvalEffectId?: boolean } }) => {
+        if (args?.select?.approvalEffectId) return { approvalEffectId };
+        return txFindUnique();
+      },
+    },
+    externalEffect: {
+      findUnique: vi.fn(async () => (effectStatus ? { status: effectStatus } : null)),
     },
     message: {
       findUnique: vi.fn().mockResolvedValue({
@@ -92,6 +105,10 @@ function amendPrisma(existing: OpenCardRow, surfaceId = "s1", amendsInteractionI
       findFirst: vi.fn(async ({ where }: { where: { status?: { in?: string[] } } }) =>
         where.status?.in?.includes(existing.status) ? existing : null,
       ),
+      findUnique: vi.fn(async () => ({ approvalEffectId })),
+    },
+    externalEffect: {
+      findUnique: vi.fn(async () => (effectStatus ? { status: effectStatus } : null)),
     },
     interactionSurface: { findFirst: vi.fn().mockResolvedValue({ surfaceId }) },
     $transaction: vi.fn(async (run: (t: typeof tx) => unknown) => run(tx)),
@@ -317,16 +334,26 @@ describe("publishOrAmend", () => {
   it("closes a live card with no message before publishing a new one", async () => {
     const messageLess: OpenCardRow = { ...openCard, messageId: null };
     const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const findUnique = vi.fn().mockResolvedValue({
+      id: "i1",
+      status: "collecting",
+      staleAt: null,
+      messageId: null,
+      intent: "email.compose",
+      slots: {},
+    });
     const tx = {
-      interaction: { update: vi.fn().mockResolvedValue({}) },
-      message: { update: vi.fn().mockResolvedValue({}) },
+      interaction: { findUnique, updateMany, update: vi.fn().mockResolvedValue({}) },
+      message: { findUnique: vi.fn(), update: vi.fn().mockResolvedValue({}) },
+      interactionEvent: { create: vi.fn() },
     };
     const prisma = {
       interaction: {
         findFirst: vi.fn().mockResolvedValue(messageLess),
-        findUnique: vi.fn().mockResolvedValue({ id: "i1", status: "collecting", staleAt: null }),
+        findUnique,
         updateMany,
       },
+      interactionEvent: { create: vi.fn() },
       interactionSurface: { findFirst: vi.fn().mockResolvedValue(null) },
       $transaction: vi.fn(async (run: (t: typeof tx) => unknown) => run(tx)),
     };
@@ -369,9 +396,15 @@ describe("publishOrAmend", () => {
     expect(createInteraction).not.toHaveBeenCalled();
   });
 
-  // Amending a card mid-send is unsafe, so the lookup must not see it.
-  it("does not amend a card that is already executing", async () => {
-    const { prisma } = amendPrisma({ ...openCard, status: "executing" });
+  // Occupancy stays on the open kernel status; the in-flight effect forbids
+  // rewriting the payload and forbids stacking a second card.
+  it("does not amend or recreate a card whose send is already in flight", async () => {
+    const { prisma, updateInteraction, updateMessage } = amendPrisma(
+      { ...openCard, status: "ready_for_review" },
+      "s1",
+      undefined,
+      { approvalEffectId: "effect-1", effectStatus: "ambiguous" },
+    );
 
     const result = await publishOrAmend(prisma as never, {
       spaceId: "sp1",
@@ -381,11 +414,40 @@ describe("publishOrAmend", () => {
       plan,
     });
 
-    expect(prisma.interaction.findFirst.mock.calls[0]![0].where.status?.in ?? []).not.toContain(
-      "executing",
+    expect(result).toMatchObject({
+      interactionId: "i1",
+      messageId: "m1",
+      draftVersion: 1,
+      amended: false,
+    });
+    expect(createInteraction).not.toHaveBeenCalled();
+    expect(updateInteraction).not.toHaveBeenCalled();
+    expect(updateMessage).not.toHaveBeenCalled();
+    expect(upsertInteractionSurface).not.toHaveBeenCalled();
+  });
+
+  it("does not rewrite the payload when the send starts after the outer occupancy read", async () => {
+    const { prisma, updateInteraction, updateMessage } = amendPrisma(
+      { ...openCard, status: "ready_for_review" },
+      "s1",
+      undefined,
+      { approvalEffectId: "effect-1", effectStatus: "executing" },
     );
+    prisma.interaction.findUnique.mockResolvedValue({ approvalEffectId: null });
+
+    const result = await publishOrAmend(prisma as never, {
+      spaceId: "sp1",
+      threadId: "t1",
+      botId: "b1",
+      runId: "r1",
+      plan,
+    });
+
     expect(result.amended).toBe(false);
-    expect(createInteraction).toHaveBeenCalledTimes(1);
+    expect(result.draftVersion).toBe(1);
+    expect(createInteraction).not.toHaveBeenCalled();
+    expect(updateInteraction).not.toHaveBeenCalled();
+    expect(updateMessage).not.toHaveBeenCalled();
   });
 
   it("turns a second present for one intent into one card with one block", async () => {

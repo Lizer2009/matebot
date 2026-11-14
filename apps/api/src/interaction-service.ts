@@ -31,6 +31,7 @@ import type { InteractionPlan } from "@matebot/contracts";
 import type { EmailSurfaceCapability, InteractionLifecycleStatus } from "@matebot/core";
 import {
   canExecuteConfirmedInteraction,
+  canProjectNeedsConnection,
   confirmedEffectMatchesDraft,
   confirmInteractionDraftState,
   deliveryNeedsReconnect,
@@ -42,7 +43,9 @@ import {
   interactionConfirmIdempotencyKey,
   interactionEffectKind,
   interactionRequiredApp,
+  OPEN_STATUSES,
   readConfirmedCalendarDraft,
+  surfaceReasonKeyForApproval,
   timingFields,
 } from "@matebot/core";
 import type { Prisma, PrismaClient } from "@matebot/db";
@@ -277,17 +280,15 @@ function rejectUnlessMailboxReady(
  * undone by the very act of trying to send what was discarded. The guard lives here, at the
  * write, so neither caller has to remember it.
  */
-const SETTLED_STATUSES = ["cancelled", "succeeded", "unknown", "failed", "executing"] as const;
-
 function isSettled(status: string): boolean {
-  return (SETTLED_STATUSES as readonly string[]).includes(status);
+  return !canProjectNeedsConnection(status);
 }
 
 /**
  * A preflight miss must land on the card, not in prose: refresh the same surface
  * into its connection/reconnect template so the user has a button to press.
  */
-async function projectCapabilityGate(
+export async function projectCapabilityGate(
   prisma: PrismaClient,
   target: { spaceId: string; threadId: string; botId: string; interactionId: string },
   capability: EmailSurfaceCapability,
@@ -302,7 +303,7 @@ async function projectCapabilityGate(
         where: {
           id: current.id,
           draftVersion: current.draftVersion,
-          status: { notIn: [...SETTLED_STATUSES] },
+          status: { in: [...OPEN_STATUSES] },
         },
         data: { status: "needs_connection" },
       });
@@ -342,7 +343,7 @@ async function projectMailboxGate(
         where: {
           id: current.id,
           draftVersion: current.draftVersion,
-          status: { notIn: [...SETTLED_STATUSES] },
+          status: { in: [...OPEN_STATUSES] },
         },
         data: { status: "needs_connection" },
       });
@@ -513,6 +514,9 @@ export async function confirmInteractionService(
         botId: input.botId,
         interactionStatus: confirmed.status,
         approvalEffectId,
+        ...(confirmed.status === "awaiting_approval"
+          ? { reasonKey: surfaceReasonKeyForApproval({ scope: "setting" }) }
+          : {}),
       });
       await appendEventInTransaction(tx, {
         spaceId: input.spaceId,
@@ -663,10 +667,9 @@ export async function executeConfirmedInteractionService(
     throw new InteractionSendRejectedError("unconfirmed", "Send is already in progress");
   }
 
-  await prisma.interaction.updateMany({
-    where: { id: current.id, draftVersion: current.draftVersion },
-    data: { status: "executing" },
-  });
+  // Occupancy stays on the last kernel open status so the unique index still
+  // holds the slot. `executing` is a block lifecycle, projected below, not a
+  // row status.
 
   // §6.5.2: this runtime can abort a provider request, so a cancel is allowed to
   // ask. The controller is registered for exactly this effect and space, and

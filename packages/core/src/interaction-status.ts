@@ -92,6 +92,42 @@ export function isTerminalStatus(status: string): boolean {
   return TERMINAL_SET.has(status);
 }
 
+/** Whether `status` is one of the thirteen kernel values. */
+export function isKernelStatus(status: string): status is InteractionStatus {
+  return (INTERACTION_STATUSES as readonly string[]).includes(status);
+}
+
+/**
+ * Refuse a value the vocabulary does not contain.
+ *
+ * AC-4's type check lives here so every writer can share it. The database CHECK
+ * is the other half; neither is enough on its own.
+ */
+export function assertKernelStatus(status: string): asserts status is InteractionStatus {
+  if (!isKernelStatus(status)) {
+    throw new Error(`Interaction status is not in the kernel vocabulary: ${status}`);
+  }
+}
+
+/**
+ * Whether a preflight miss may rewrite this row to `needs_connection`.
+ *
+ * Terminal cards and `unknown` stay put: a discarded draft must not come back
+ * as a connect prompt, and an in-doubt send must not be relabelled.
+ */
+export function canProjectNeedsConnection(status: string): boolean {
+  if (!isKernelStatus(status)) return false;
+  if (isTerminalStatus(status) || status === "unknown" || status === "needs_connection") {
+    return false;
+  }
+  return true;
+}
+
+/** An ExternalEffect that means a send is already underway. */
+export function isInFlightEffectStatus(status: string): boolean {
+  return status === "ambiguous" || status === "executing";
+}
+
 /**
  * How a card's row status reads to the edit chooser and dispatch gate.
  *

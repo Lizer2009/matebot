@@ -73,6 +73,7 @@ function fakeThread() {
     },
     interaction: {
       findFirst: async () => null,
+      findMany: async () => [],
       findUnique: async () => ({ status: "needs_connection", draftVersion: 1 }),
       create: async ({ data }: { data: Record<string, unknown> }) => ({
         id: "ix-1",

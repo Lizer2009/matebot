@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertKernelStatus,
+  canProjectNeedsConnection,
   INTERACTION_STATUSES,
   isAutoSettleable,
   isEditableStatus,
+  isInFlightEffectStatus,
+  isKernelStatus,
   isOpenStatus,
   isTerminalStatus,
   OPEN_STATUSES,
@@ -86,5 +90,31 @@ describe("interaction status vocabulary", () => {
     }
     expect(surfaceStatusFor("needs_connection")).toBe("draft");
     expect(surfaceStatusFor("unknown")).toBe("draft");
+  });
+
+  it("rejects executing and other values the thirteen-word list does not contain (AC-4)", () => {
+    expect(isKernelStatus("executing")).toBe(false);
+    expect(isKernelStatus("submitting")).toBe(false);
+    expect(isKernelStatus("totally_bogus")).toBe(false);
+    expect(() => assertKernelStatus("executing")).toThrow(/kernel vocabulary/);
+    expect(() => assertKernelStatus("collecting")).not.toThrow();
+  });
+
+  it("does not reopen a settled or in-doubt card as a connection prompt", () => {
+    for (const status of TERMINAL_STATUSES) {
+      expect(canProjectNeedsConnection(status), status).toBe(false);
+    }
+    expect(canProjectNeedsConnection("unknown")).toBe(false);
+    expect(canProjectNeedsConnection("needs_connection")).toBe(false);
+    expect(canProjectNeedsConnection("executing")).toBe(false);
+    expect(canProjectNeedsConnection("ready_for_review")).toBe(true);
+    expect(canProjectNeedsConnection("collecting")).toBe(true);
+  });
+
+  it("treats ambiguous and executing effects as in-flight", () => {
+    expect(isInFlightEffectStatus("ambiguous")).toBe(true);
+    expect(isInFlightEffectStatus("executing")).toBe(true);
+    expect(isInFlightEffectStatus("intended")).toBe(false);
+    expect(isInFlightEffectStatus("completed")).toBe(false);
   });
 });
