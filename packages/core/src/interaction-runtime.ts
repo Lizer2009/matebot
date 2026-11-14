@@ -61,8 +61,7 @@ export function requiredFieldsSatisfied(
   // A calendar batch lives in `events`. The single-event slots stay empty on purpose,
   // and must not keep the card from being confirmed.
   const batchCoversSingleSlots =
-    isCalendarCreateIntent(plan.intent) &&
-    readConfirmedCalendarDraft(slots).kind === "batch";
+    isCalendarCreateIntent(plan.intent) && readConfirmedCalendarDraft(slots).kind === "batch";
   return plan.fields.every((field) => {
     if (!field.required) return true;
     if (batchCoversSingleSlots && (field.name === "start" || field.name === "end")) return true;

@@ -4,9 +4,9 @@ import { deriveMcpSlug, l0aIntentForBlock } from "@matebot/core";
 import type { McpServer } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { publishL0aView } from "./interaction-l0a-publish.js";
 import { toStringRecord } from "./memory-provider-factory.js";
 import { assertNoMcpEndpointCredential, assertSafeRemoteUrl } from "./remote-mcp.js";
-import { publishL0aView } from "./interaction-l0a-publish.js";
 import { isUniqueViolation, runLeaseFor } from "./run-messages.js";
 
 export { deriveMcpSlug } from "@matebot/core";

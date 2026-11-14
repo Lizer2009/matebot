@@ -170,8 +170,7 @@ describe("interaction status write guard", () => {
       .map((file) => relative(ROOT, file))
       .filter((file) => {
         const source = readFileSync(join(ROOT, file), "utf8");
-        const mentionsKind =
-          /kind:\s*"(app_connect|ask|choice|connect|mcp_approval)"/.test(source);
+        const mentionsKind = /kind:\s*"(app_connect|ask|choice|connect|mcp_approval)"/.test(source);
         if (!mentionsKind) return false;
         const writesTerminal = /status:\s*"(connected|answered|dismissed)"/.test(source);
         if (!writesTerminal) return false;

@@ -8,8 +8,8 @@ import {
   matchesAppConnection,
 } from "@matebot/core";
 import type { PrismaClient, ThreadEvents } from "@matebot/db";
-import { annotateAppCatalog, annotateAppConnected } from "./route-annotation.js";
 import { publishL0aView } from "./interaction-l0a-publish.js";
+import { annotateAppCatalog, annotateAppConnected } from "./route-annotation.js";
 
 const RECENT_MESSAGES = 50;
 

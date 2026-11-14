@@ -51,11 +51,7 @@ function l0aPlanFor(
 ): InteractionPlan {
   const scene = l0aScene(intent);
   const nextStep =
-    scene === "connect"
-      ? "request_connection"
-      : scene === "approval"
-        ? "request_approval"
-        : "ask";
+    scene === "connect" ? "request_connection" : scene === "approval" ? "request_approval" : "ask";
   return planWithResumePlan(
     {
       intent,

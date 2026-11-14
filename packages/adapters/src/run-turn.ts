@@ -14,10 +14,10 @@ import {
   displayName,
   humanizeToolName,
   isBackgroundRunTrigger,
-  redactSecrets,
-  redactSecretsAfter,
   isL0aBlock,
   l0aIntentForBlock,
+  redactSecrets,
+  redactSecretsAfter,
   TAKEOVER_COMPUTER_PENDING_STATE,
   userRunError,
   withoutLastToolStepNotes,
@@ -399,7 +399,7 @@ async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
     status: "pending" as const,
     actions: safeActions,
   };
-  let blocks: typeof ask[] = [ask];
+  let blocks: (typeof ask)[] = [ask];
   let skipMessage = false;
   if (isL0aBlock(ask) && typeof deps.prisma.interaction?.findFirst === "function") {
     const published = await publishL0aView(deps.prisma, {

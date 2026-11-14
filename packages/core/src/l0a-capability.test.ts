@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { cardKindForIntent, findInteractionCapability, isActionIntent } from "./interaction-capability.js";
+import {
+  cardKindForIntent,
+  findInteractionCapability,
+  isActionIntent,
+} from "./interaction-capability.js";
 import {
   derivedL0aBlockStatus,
   l0aHostInteractive,

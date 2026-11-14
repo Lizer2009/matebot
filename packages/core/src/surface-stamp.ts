@@ -38,7 +38,6 @@ export function isSurfaceTemplate(value: string): value is SurfaceTemplate {
 
 const KERNEL_STATUSES: ReadonlySet<string> = new Set(INTERACTION_STATUSES);
 
-
 /**
  * The interaction's status onto the two fields a rendered block carries.
  *

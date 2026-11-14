@@ -27,7 +27,9 @@ const SUCCESS_STATUSES = new Set(["sent", "executed", "succeeded", "confirmed"])
 
 export function isL0aIntent(intent: string): boolean {
   return (
-    intent.startsWith("connect.") || intent.startsWith("approval.") || intent.startsWith("question.")
+    intent.startsWith("connect.") ||
+    intent.startsWith("approval.") ||
+    intent.startsWith("question.")
   );
 }
 

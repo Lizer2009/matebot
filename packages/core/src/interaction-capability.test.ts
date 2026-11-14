@@ -178,7 +178,8 @@ describe("capability registry", () => {
       "packages/core/src/interaction-capability.ts",
       "packages/core/src/interaction-capability.test.ts",
     ]);
-    const classify = /(?<!\.kind\s*)(?<!\.kind\?)(?:===|!==)\s*"(?:email\.(?:compose|send)|calendar\.(?:create|compose|query)|interaction\.result)"/;
+    const classify =
+      /(?<!\.kind\s*)(?<!\.kind\?)(?:===|!==)\s*"(?:email\.(?:compose|send)|calendar\.(?:create|compose|query)|interaction\.result)"/;
     const localSet =
       /(?:new\s+Set\([^)]*(?:email\.(?:compose|send)|calendar\.(?:create|compose))|FORM_INTENTS|EMAIL_NATIVE_INTENTS|CALENDAR_INTENTS)/;
     const hits: string[] = [];
