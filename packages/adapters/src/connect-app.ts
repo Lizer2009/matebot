@@ -1,11 +1,45 @@
 import type { AdapterContext, ManagedConnectorProvider } from "@matebot/adapter-kit";
 import type { MessageBlock } from "@matebot/contracts";
-import { appConnectCard, matchAppCatalog, matchesAppConnection } from "@matebot/core";
+import {
+  appConnectCard,
+  interactionResumesWhenConnected,
+  l0aIntentForBlock,
+  matchAppCatalog,
+  matchesAppConnection,
+} from "@matebot/core";
 import type { PrismaClient, ThreadEvents } from "@matebot/db";
-import { appendEventInTransaction, createThreadMessageInTransaction } from "@matebot/db";
 import { annotateAppCatalog, annotateAppConnected } from "./route-annotation.js";
+import { publishL0aView } from "./interaction-l0a-publish.js";
 
 const RECENT_MESSAGES = 50;
+
+const ALREADY_SHOWN =
+  "Connection card already shown. Wait for the user to connect the app. The app is not connected yet and nothing has run.";
+const CARD_SHOWN =
+  "Connection card shown. Wait for the user to connect the app. The app is not connected yet and nothing has run.";
+
+async function openConnectionDemand(
+  prisma: PrismaClient,
+  input: { threadId: string; provider: string; intent: string },
+) {
+  const row = await prisma.interaction.findFirst({
+    where: { threadId: input.threadId, status: "needs_connection" },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true, intent: true, status: true },
+  });
+  if (!row) return undefined;
+  if (row.intent === input.intent || row.intent.startsWith(`${input.intent}.`)) return row;
+  if (
+    interactionResumesWhenConnected({
+      intent: row.intent,
+      interactionStatus: row.status,
+      provider: input.provider,
+    })
+  ) {
+    return row;
+  }
+  return undefined;
+}
 
 /** Catalog data is the only source of card content; serialize dedupe with the message write. */
 export async function connectApp(
@@ -51,14 +85,27 @@ export async function connectApp(
         "This app is already connected and its tools are available. Nothing has been run: no action has happened yet.",
     };
   const block = appConnectCard(entry);
-  const committed = await deps.prisma.$transaction(async (tx) => {
+  const intent = l0aIntentForBlock(block);
+  const existingDemand = await openConnectionDemand(deps.prisma, {
+    threadId: target.threadId,
+    provider: entry.slug,
+    intent,
+  });
+  if (existingDemand) {
+    return {
+      status: "pending",
+      ...annotateAppCatalog(),
+      message: ALREADY_SHOWN,
+    };
+  }
+  const skipPost = await deps.prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
     const nonce = `connect-app:${effectId}`;
     const replayed = await tx.message.findFirst({
       where: { threadId: target.threadId, clientNonce: nonce },
       select: { id: true },
     });
-    if (replayed) return null;
+    if (replayed) return { skip: true as const, nonce };
     // Only recent cards count as already shown; an old one far up the chat should not block a new one.
     const recent = await tx.message.findMany({
       where: { threadId: target.threadId },
@@ -74,39 +121,39 @@ export async function connectApp(
             candidate.status === "pending",
         ),
       )
-    )
-      return null;
-    const message = await createThreadMessageInTransaction(tx, {
-      threadId: target.threadId,
-      botId: target.botId,
-      runId: target.id,
-      role: "bot",
-      blocks: [block],
-      clientNonce: nonce,
-    });
-    const event = await appendEventInTransaction(tx, {
-      spaceId: target.spaceId,
-      threadId: target.threadId,
-      botId: target.botId,
-      runId: target.id,
-      type: "thread.message.created",
-      payload: { messageId: message.id, role: "bot", blocks: [block] },
-    });
-    return event;
+    ) {
+      return { skip: true as const, nonce };
+    }
+    return { skip: false as const, nonce };
   });
-  if (committed)
-    await deps.events.notify(
-      target.threadId,
-      committed.seq,
-      committed.firstResponse ? target.id : undefined,
-    );
+  if (skipPost.skip) {
+    return {
+      status: "pending",
+      ...annotateAppCatalog(),
+      message: ALREADY_SHOWN,
+    };
+  }
+  const published = await publishL0aView(deps.prisma, {
+    spaceId: target.spaceId,
+    threadId: target.threadId,
+    botId: target.botId,
+    runId: target.id,
+    intent,
+    title: `Connect ${entry.name}`,
+    status: "needs_connection",
+    block,
+    clientNonce: skipPost.nonce,
+  });
+  await deps.events.notify(
+    target.threadId,
+    published.eventSeq,
+    published.amended ? undefined : target.id,
+  );
   return {
     status: "pending",
     // A catalog card the person has not authorized yet. It is shown, not connected, and it has
     // run nothing — three different things that must not be conflated in what the model reads.
     ...annotateAppCatalog(),
-    message: committed
-      ? "Connection card shown. Wait for the user to connect the app. The app is not connected yet and nothing has run."
-      : "Connection card already shown. Wait for the user to connect the app. The app is not connected yet and nothing has run.",
+    message: published.amended ? ALREADY_SHOWN : CARD_SHOWN,
   };
 }

@@ -186,6 +186,50 @@ describe("publishL0aView", () => {
     ]);
   });
 
+  it("gives two named reconnects two card keys (AC-23)", async () => {
+    const { prisma } = fixture();
+    createInteraction
+      .mockResolvedValueOnce({
+        id: "ix-a",
+        intent: "connect.gmail.ca_1",
+        draftVersion: 1,
+        title: "Reconnect Gmail",
+        summary: null,
+      })
+      .mockResolvedValueOnce({
+        id: "ix-b",
+        intent: "connect.gmail.ca_2",
+        draftVersion: 1,
+        title: "Reconnect Gmail",
+        summary: null,
+      });
+
+    const first = await publishL0aView(prisma as never, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      intent: "connect.gmail.ca_1",
+      title: "Reconnect Gmail",
+      status: "needs_connection",
+      block: connectBlock,
+    });
+    const second = await publishL0aView(prisma as never, {
+      spaceId: "space-1",
+      threadId: "thread-1",
+      botId: "bot-1",
+      intent: "connect.gmail.ca_2",
+      title: "Reconnect Gmail",
+      status: "needs_connection",
+      block: connectBlock,
+    });
+
+    expect(first.amended).toBe(false);
+    expect(second.amended).toBe(false);
+    expect(first.interactionId).toBe("ix-a");
+    expect(second.interactionId).toBe("ix-b");
+    expect(createInteraction).toHaveBeenCalledTimes(2);
+  });
+
   it("settles a terminal L0-A view through the kernel", async () => {
     const { prisma, stored } = fixture();
     stored.blocks = [
