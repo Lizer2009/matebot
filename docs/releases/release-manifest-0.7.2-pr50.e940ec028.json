@@ -1,6 +1,8 @@
 {
   "schemaVersion": 1,
   "channel": "prerelease",
+  "withdrawn": true,
+  "withdrawnReason": "Do not deploy. Missing later CI-gap and occupancy fixes. Wait for a unique FileVersion > 0.7.2.0.",
   "releasedAt": "2026-11-14T05:58:40Z",
   "source": {
     "repository": "https://github.com/Lizer2009/matebot",
@@ -114,20 +116,23 @@
     "stackDir": "/home/lizer05/matebot-test",
     "rolesToReplace": ["migrate", "api", "web", "worker", "computer"],
     "rolesToKeep": ["postgres", "cf-proxy", "cloudflared", "volumes"],
-    "supervisor": "pin to the digest recorded by docker inspect before the switch; do not let MATEBOT_IMAGE_TAG move it",
+    "supervisor": "pin to the current field app digest from docker inspect (precheck 17b4ce1c / sha-8645af35-cal); never default overlay supervisor to the new app image",
+    "computerStubVsRuntime": "overlay computer is a pull-only stub; live sandboxes follow supervisor env MATEBOT_COMPUTER_IMAGE (field still sha-027c9e81). Swapping the stub is not a runtime upgrade.",
     "doNotStartUpdater": true,
     "doNotDownRakazo": true,
     "doNotPrune": true,
     "keepNginxServerNames": true,
-    "optionalWindowsLocalEntry": "copy the new exe into the existing $DOWNLOADS and change only the Windows 302 filename on test.matebot.dev; leave Android",
-    "prismaMigrationsAdded": [
+    "optionalWindowsLocalEntry": "copy the new exe into the existing $DOWNLOADS and change only the Windows 302 filename on test.matebot.dev; leave Android, domains, and Latest",
+    "prismaMigrationsInTreeAfter8645af35": [
       "20261126120000_interaction_card_key",
       "20261127120000_interaction_events",
       "20261128120000_bot_drafts_disabled",
       "20261129120000_interaction_status_check"
     ],
-    "mixedRun": "After CHECK, old writers storing executing fail. Migrate, then cut over. Not zero-downtime.",
-    "rollbackAfterCheck": "No reverse migration. Do not reattach 8645af35-cal to a CHECK-constrained database."
+    "prismaMigrationsAlreadyOn8645af35": ["20261125120000_a2ui_interactions"],
+    "inspectAppliedMigrations": "Field must SELECT from _prisma_migrations. Do not report four by commit count.",
+    "writerCutover": "Stop old api/web/worker first, then migrate, then start new writers. Not mixed-run, not zero-downtime.",
+    "rollbackAfterCheck": "No down migration. Keeping old images is not enough to restore a writable old app. Forward-roll to a CHECK-compatible image or accept the new vocabulary (user decision). Do not reattach 8645af35-cal."
   },
   "gates": {
     "bwideOnTestSource": {

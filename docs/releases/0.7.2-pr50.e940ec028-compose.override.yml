@@ -1,7 +1,13 @@
+# WITHDRAWN: do not apply this 0.7.2 overlay on matebottest.
 # Parent-ops overlay for matebottest. Not applied by this agent.
+# Stop old api/web/worker first, migrate, then start new writers. Do not migrate
+# while old writers are still serving.
 # Record the running supervisor digest with docker inspect BEFORE switching, then:
 #   SUPERVISOR_IMAGE='ghcr.io/lizer2009/matebot/app@sha256:<inspected>' \
 #     docker compose -f docker-compose.images.yml -f 0.7.2-pr50.e940ec028-compose.override.yml up -d
+# Pin SUPERVISOR_IMAGE to the current field app digest (inspect), never the new app image.
+# This file does not change supervisor env MATEBOT_COMPUTER_IMAGE (field still sha-027c9e81).
+# The computer service is a pull-only stub, not the live sandbox runtime.
 # Do not add an updater service. Do not retarget postgres, volumes, or nginx.
 
 services:
