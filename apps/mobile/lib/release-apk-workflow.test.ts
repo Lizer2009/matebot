@@ -199,12 +199,22 @@ describe("Android APK release workflow", () => {
     expect(app.expo.version).not.toBe("1.0.12");
     expect(app.expo.version > "1.0.12").toBe(true);
     // Nor any version published since, so a phone cannot think it already has this one.
-    for (const released of ["1.0.13", "1.0.14", "1.0.15", "1.0.16", "1.0.17", "1.0.18"]) {
+    // GitHub already has 1.0.19 (23) on android-pr49 and 1.0.19 (21) on android-pr48.
+    for (const released of [
+      "1.0.13",
+      "1.0.14",
+      "1.0.15",
+      "1.0.16",
+      "1.0.17",
+      "1.0.18",
+      "1.0.19",
+      "1.0.20",
+    ]) {
       expect(app.expo.version).not.toBe(released);
       expect(app.expo.version > released).toBe(true);
     }
     // The app config's code is only a fallback; EAS owns the built value. Assert the
     // fallback is not below what has shipped, so a local build cannot look older.
-    expect(app.expo.android.versionCode).toBeGreaterThanOrEqual(10);
+    expect(app.expo.android.versionCode).toBeGreaterThan(23);
   });
 });

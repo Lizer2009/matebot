@@ -4,7 +4,7 @@
     "slug": "matebot",
     "owner": "lizer-expo",
     "scheme": "matebot",
-    "version": "1.0.19",
+    "version": "1.0.21",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
@@ -113,7 +113,7 @@
     },
     "android": {
       "package": "com.matebot.app",
-      "versionCode": 10,
+      "versionCode": 24,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/icon.png",
       "adaptiveIcon": {
