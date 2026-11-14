@@ -163,6 +163,29 @@ describe("interaction status write guard", () => {
    * `lifecycle`, which still says `draft` for superseded, expired and cancelled (§4.4 keeps six
    * values there). Every writer must stamp it, so the truth travels with the block.
    */
+  it("settles L0-A terminal writes through the kernel (AC-25)", () => {
+    const files: string[] = [];
+    for (const dir of ["packages/adapters", "apps"]) walk(join(ROOT, dir), files);
+    const offenders = files
+      .map((file) => relative(ROOT, file))
+      .filter((file) => {
+        const source = readFileSync(join(ROOT, file), "utf8");
+        const mentionsKind =
+          /kind:\s*"(app_connect|ask|choice|connect|mcp_approval)"/.test(source);
+        if (!mentionsKind) return false;
+        const writesTerminal = /status:\s*"(connected|answered|dismissed)"/.test(source);
+        if (!writesTerminal) return false;
+        const persists =
+          /\bmessage\.update\b/.test(source) ||
+          /\bcreateThreadMessageInTransaction\b/.test(source) ||
+          /\bpauseRunForInput\b/.test(source);
+        if (!persists) return false;
+        return !source.includes("settleInteraction") && !source.includes("publishL0aView");
+      })
+      .sort();
+    expect(offenders).toEqual([]);
+  });
+
   it("stamps a status on every a2ui_surface block it writes", () => {
     const writers = [
       "packages/adapters/src/interaction-publish.ts",

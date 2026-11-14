@@ -1,6 +1,6 @@
 import { runContinueJob, runJobKey } from "@matebot/adapter-kit";
-import { markOpenCardsStale, settleCallRequest } from "@matebot/adapters";
-import type { Actor, ProductEvent } from "@matebot/contracts";
+import { markOpenCardsStale, settleCallRequest, settleInteraction } from "@matebot/adapters";
+import type { Actor, MessageBlock, ProductEvent } from "@matebot/contracts";
 import { a2uiSurfaceDocumentRef, parseA2uiSurfaceDocumentRef } from "@matebot/contracts";
 import {
   AttachmentValidationError,
@@ -10,6 +10,7 @@ import {
   EDITABLE_STATUSES,
   expandSkillReferencesInPrompt,
   interactionCapabilityForIntent,
+  isL0aBlock,
   MODEL_REQUIRED_SEND_ERROR,
   QUEUE_HOLDING_RUN_STATUSES,
   surfaceStatusFor,
@@ -748,6 +749,21 @@ export function threadsRoutes(ctx: RouterContext) {
           throw new ORPCError("CONFLICT", {
             message: "This prompt is no longer awaiting an answer",
           });
+        }
+        const answeredMessage = await deps.prisma.message.findUnique({
+          where: { id: input.messageId },
+          select: { blocks: true },
+        });
+        const answeredBlocks = Array.isArray(answeredMessage?.blocks)
+          ? (answeredMessage.blocks as MessageBlock[])
+          : [];
+        const l0a = answeredBlocks.find(isL0aBlock);
+        if (l0a?.interactionId) {
+          await settleInteraction(deps.prisma, {
+            interactionId: l0a.interactionId,
+            status: input.dismiss ? "cancelled" : "succeeded",
+            reason: input.dismiss ? "ask dismissed" : "ask answered",
+          }).catch(() => undefined);
         }
         await deps.jobs.enqueue(runContinueJob(input.runId)).catch((error) => {
           // The answer and queued run are durable; the reconciler repairs a missed immediate wake.

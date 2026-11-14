@@ -1,5 +1,6 @@
 import type { MessageBlock } from "@matebot/contracts";
 import type { InteractionStatus } from "./interaction-status.js";
+import { surfaceAffordanceFor } from "./surface-affordance.js";
 
 /**
  * L0-A interactive blocks share the interaction kernel without becoming A2UI
@@ -88,6 +89,15 @@ export function derivedL0aBlockStatus(
 function connectIntent(provider: string, accountId?: string): string {
   const slug = provider.trim().toLowerCase();
   return accountId ? `connect.${slug}.${accountId}` : `connect.${slug}`;
+}
+
+/** Whether a host may still draw Authorize / Allow / options for this view. */
+export function l0aHostInteractive(block: L0aBlock): boolean {
+  if (block.cardStatus) return surfaceAffordanceFor({ status: block.cardStatus }).interactive;
+  if (block.kind === "choice") return !block.answerId;
+  if (block.kind === "ask") return block.status !== "answered" && !block.dismissed;
+  if (block.kind === "mcp_approval") return block.status === "pending";
+  return block.status === "pending";
 }
 
 /** Stamp the kernel row onto a live L0-A view and derive the legacy block status. */

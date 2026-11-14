@@ -221,6 +221,11 @@ export interface PauseRunForInput {
    * (not in message blocks) so clients still see redacted labels.
    */
   offeredActions?: Array<{ id: string; label: string }>;
+  /**
+   * True when the card was already posted through the interaction kernel.
+   * The pause still waits; it must not insert a second message.
+   */
+  skipMessage?: boolean;
 }
 
 const CHOICE_ASK_CHECKPOINT_KIND = "choice_ask_v1";
@@ -1366,21 +1371,25 @@ export async function pauseRunForInput(
     });
     if (attempt.count !== 1) throw new Error("Active run attempt was not available to pause");
 
-    const message = await createThreadMessageInTransaction(tx, {
-      threadId: input.threadId,
-      role: "bot",
-      blocks: input.blocks,
-      botId: input.botId,
-      runId: input.runId,
-    });
-    const response = await appendEventInTransaction(tx, {
-      spaceId: input.spaceId,
-      threadId: input.threadId,
-      botId: input.botId,
-      type: "thread.message.created",
-      runId: input.runId,
-      payload: { messageId: message.id, role: "bot", blocks: input.blocks },
-    });
+    const response = input.skipMessage
+      ? undefined
+      : await (async () => {
+          const message = await createThreadMessageInTransaction(tx, {
+            threadId: input.threadId,
+            role: "bot",
+            blocks: input.blocks,
+            botId: input.botId,
+            runId: input.runId,
+          });
+          return appendEventInTransaction(tx, {
+            spaceId: input.spaceId,
+            threadId: input.threadId,
+            botId: input.botId,
+            type: "thread.message.created",
+            runId: input.runId,
+            payload: { messageId: message.id, role: "bot", blocks: input.blocks },
+          });
+        })();
     const run = await tx.run.findUnique({
       where: { id: input.runId },
       select: { userId: true },
@@ -1401,7 +1410,7 @@ export async function pauseRunForInput(
       threadId: waitingEvent.threadId,
       seq: waitingEvent.seq,
       continuationRunId,
-      firstResponseRunId: response.firstResponse ? input.runId : undefined,
+      firstResponseRunId: response?.firstResponse ? input.runId : undefined,
     };
   });
 

@@ -6,6 +6,7 @@ import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@matebot/contracts";
 import {
   isApprovalAskBlock,
   isSecretAskBlock,
+  l0aHostInteractive,
   resolveAskChoice,
   selectedAskActionLabel,
 } from "@matebot/core";
@@ -83,6 +84,7 @@ export function AskCard(props: AskCardProps) {
 }
 
 function PromptAskCard({ block, canAnswer, onAnswer, rpc = selectedSpaceRpc }: AskCardProps) {
+  canAnswer = canAnswer && l0aHostInteractive(block);
   const { t } = useLingui();
   const [editing, setEditing] = useState(false);
   const [answer, setAnswer] = useState(block.instructionUpdate?.after ?? "");

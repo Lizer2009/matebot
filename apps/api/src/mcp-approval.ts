@@ -1,3 +1,4 @@
+import { settleInteraction } from "@matebot/adapters";
 import type { Actor, MessageBlock } from "@matebot/contracts";
 import { QUEUE_HOLDING_RUN_STATUSES } from "@matebot/core";
 import type { Prisma, PrismaClient, ThreadEvents } from "@matebot/db";
@@ -131,6 +132,15 @@ async function rewriteCards(
           ? { ...block, status: input.status }
           : block,
       );
+      for (const block of matching) {
+        if (selectable(block) && block.interactionId) {
+          await settleInteraction(tx as never, {
+            interactionId: block.interactionId,
+            status: input.status === "dismissed" ? "cancelled" : "succeeded",
+            reason: "mcp approval",
+          });
+        }
+      }
       await tx.message.update({ where: { id: message.id }, data: { blocks: next } });
       flipped += 1;
       const eventBotId = message.botId ?? thread.botId ?? input.botId;

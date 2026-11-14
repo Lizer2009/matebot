@@ -71,6 +71,7 @@ export * from "./interaction-runtime.js";
 export * from "./interaction-simulation.js";
 export * from "./interaction-status.js";
 export * from "./interaction-template.js";
+export * from "./approval-surface-copy.js";
 export * from "./l0a-capability.js";
 export * from "./list-search.js";
 export * from "./logo-avatar-activity.js";

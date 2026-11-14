@@ -6,11 +6,19 @@ import { chooseFocus, markAppConnected, promptFocus } from "./onboarding.js";
 const posted = vi.hoisted(() => [] as Array<{ blocks: unknown[]; markUnread?: boolean }>);
 vi.mock("@matebot/db", async (original) => ({
   ...(await original<typeof db>()),
+  createInteraction: vi.fn(async () => ({
+    id: "ix-1",
+    intent: "question.clarify",
+    draftVersion: 1,
+    title: "What do you want me on first?",
+    summary: null,
+  })),
   createThreadMessageInTransaction: vi.fn(async (_tx, input) => {
     posted.push(input);
     return { id: "posted" };
   }),
   appendEventInTransaction: vi.fn(async () => ({ seq: 1 })),
+  appendInteractionEvent: vi.fn(),
 }));
 function fixture(catalog: unknown[]) {
   posted.length = 0;
@@ -20,11 +28,18 @@ function fixture(catalog: unknown[]) {
       findMany: vi.fn(async () => [{ id: "choice", blocks: [{ kind: "choice", answerId: null }] }]),
       update: vi.fn(),
     },
+    interaction: {
+      findFirst: vi.fn(async () => null),
+      update: vi.fn(),
+      findUnique: vi.fn(async () => ({ status: "collecting", draftVersion: 1 })),
+      updateMany: vi.fn(async () => ({ count: 1 })),
+    },
   };
   const deps = {
     prisma: {
       bot: { findFirst: vi.fn(async () => ({ id: "bot", thread: { id: "thread" } })) },
       $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(tx)),
+      interaction: tx.interaction,
     },
     events: { notify: vi.fn() },
     connectors: {

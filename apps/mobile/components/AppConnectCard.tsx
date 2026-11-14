@@ -1,5 +1,5 @@
 import type { MessageBlock } from "@matebot/contracts";
-import { appConnectedInput, waitForConnection } from "@matebot/core";
+import { appConnectedInput, l0aHostInteractive, waitForConnection } from "@matebot/core";
 import { fontWeight, typeScale } from "@matebot/ui-tokens";
 import { useEffect, useRef, useState } from "react";
 import type { ViewProps } from "react-native";
@@ -110,7 +110,7 @@ export function AppConnectCard({
             {view.description}
           </Text>
         </View>
-        {view.showAuthorize && !readOnly && threadId ? (
+        {view.showAuthorize && l0aHostInteractive(block) && !readOnly && threadId ? (
           <NativeActionButton
             label={view.actionLabel}
             accessibilityLabel={t("Connect {name}", { name: block.name })}

@@ -1,7 +1,12 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useLinkPrompt } from "@matebot/chat-ui/web";
 import type { MessageBlock } from "@matebot/contracts";
-import { appConnectedInput, mcpConnectionVerdict, waitForConnection } from "@matebot/core";
+import {
+  appConnectedInput,
+  l0aHostInteractive,
+  mcpConnectionVerdict,
+  waitForConnection,
+} from "@matebot/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@matebot/ui-web";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -29,6 +34,7 @@ export function ChoiceCard({
   const [error, setError] = useState<string | null>(null);
   const [locallyDismissed, setLocallyDismissed] = useState(false);
   const dismissed = locallyDismissed || block.answerId === "_dismissed";
+  const interactive = l0aHostInteractive(block);
 
   async function choose(optionId: string) {
     setPending(true);
@@ -84,7 +90,7 @@ export function ChoiceCard({
               key={option.id}
               letter={option.letter}
               selected={block.answerId === option.id}
-              disabled={Boolean(block.answerId) || pending}
+              disabled={!interactive || Boolean(block.answerId) || pending}
               onClick={() => void choose(option.id)}
             >
               <OnboardingFocusOptionLabel
@@ -152,6 +158,7 @@ export function AppConnectCard({
   const [error, setError] = useState<string | null>(null);
   const connectionAttempt = useRef<AbortController | null>(null);
   const status = block.status === "connected" ? "connected" : localStatus;
+  const interactive = l0aHostInteractive(block);
   useEffect(() => () => connectionAttempt.current?.abort(), []);
 
   async function authorize() {
@@ -220,11 +227,11 @@ export function AppConnectCard({
         </span>
         {status === "connected" ? (
           <SuccessPop label={t`Connected`} />
-        ) : (
+        ) : interactive ? (
           <Button disabled={busy} onClick={() => void authorize()}>
             {busy ? t`Waiting…` : t`Connect`}
           </Button>
-        )}
+        ) : null}
       </div>
       {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
     </BuiCard>
@@ -357,6 +364,7 @@ export function McpApprovalCard({
   // Blocks saved before the status field existed have none and count as pending.
   const state =
     savedStatus === "connected" || savedStatus === "dismissed" ? savedStatus : localStatus;
+  const interactive = l0aHostInteractive(block);
 
   async function authorize() {
     if (!botId || busy) {
@@ -423,7 +431,7 @@ export function McpApprovalCard({
         </span>
       </div>
       <p className="mt-1.5 truncate text-[12px] text-muted-foreground">{summary}</p>
-      {state === "pending" || state === "connecting" ? (
+      {interactive && (state === "pending" || state === "connecting") ? (
         <>
           <p className="mt-2 text-[13px] leading-[1.5] text-foreground/75">
             {needsOAuth

@@ -1,12 +1,13 @@
-import type { McpTransport, MessageBlock } from "@matebot/contracts";
+import type { McpTransport } from "@matebot/contracts";
 import { McpRemoteEndpointSchema, McpTransportSchema } from "@matebot/contracts";
-import { deriveMcpSlug } from "@matebot/core";
+import { deriveMcpSlug, l0aIntentForBlock } from "@matebot/core";
 import type { McpServer } from "@matebot/db";
 import { getLogger } from "@matebot/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { toStringRecord } from "./memory-provider-factory.js";
 import { assertNoMcpEndpointCredential, assertSafeRemoteUrl } from "./remote-mcp.js";
-import { isUniqueViolation, persistMessageInTransaction, runLeaseFor } from "./run-messages.js";
+import { publishL0aView } from "./interaction-l0a-publish.js";
+import { isUniqueViolation, runLeaseFor } from "./run-messages.js";
 
 export { deriveMcpSlug } from "@matebot/core";
 
@@ -202,37 +203,32 @@ export async function addMcpServerFromTool(
           enabled: true,
         },
       });
-      if (!parsed.assignToSelf) return { server };
-      const blocks: MessageBlock[] = [
-        {
-          kind: "mcp_approval",
-          name: server.name,
-          serverId: server.id,
-          transport: parsed.transport,
-          endpoint: parsed.endpoint,
-          needsOAuth: oauthLikely,
-          status: "pending",
-        },
-      ];
-      const committed = await persistMessageInTransaction(
-        tx,
-        run,
-        "bot",
-        blocks,
-        undefined,
-        undefined,
-        false,
-        runLeaseFor(deps, run.id),
-      );
-      return {
-        server,
-        eventSeq: committed.eventSeq,
-        firstResponseRunId: committed.firstResponseRunId,
-      };
+      return { server };
     });
     serverRow = created.server;
-    approvalEventSeq = created.eventSeq;
-    approvalResponseRunId = created.firstResponseRunId;
+    if (parsed.assignToSelf) {
+      const block = {
+        kind: "mcp_approval" as const,
+        name: serverRow.name,
+        serverId: serverRow.id,
+        transport: parsed.transport,
+        endpoint: parsed.endpoint,
+        needsOAuth: oauthLikely,
+        status: "pending" as const,
+      };
+      const published = await publishL0aView(deps.prisma, {
+        spaceId: run.spaceId,
+        threadId: run.threadId,
+        botId: run.botId,
+        runId: run.id,
+        intent: l0aIntentForBlock(block),
+        title: serverRow.name,
+        status: "awaiting_approval",
+        block,
+        lease: runLeaseFor(deps, run.id),
+      });
+      approvalEventSeq = published.eventSeq;
+    }
   } catch (error) {
     if (isUniqueViolation(error)) {
       return {

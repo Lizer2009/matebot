@@ -1,8 +1,12 @@
 import type { ConnectorRegistry } from "@matebot/adapters";
+import { publishL0aView, settleInteraction } from "@matebot/adapters";
 import type { Actor, MessageBlock } from "@matebot/contracts";
+import type { L0aBlock } from "@matebot/core";
 import {
   appConnectCard,
   connectedAppBlocks,
+  isL0aBlock,
+  l0aIntentForBlock,
   matchAppCatalog,
   matchesAppConnection,
 } from "@matebot/core";
@@ -72,12 +76,41 @@ const FOCUS_OPTIONS: FocusOption[] = [
   },
 ];
 
+function l0aTitle(block: L0aBlock): string {
+  if (block.kind === "choice") return block.question;
+  if (block.kind === "ask") return block.text;
+  if (block.kind === "mcp_approval") return block.name;
+  return `Connect ${block.name}`;
+}
+
 async function post(
   deps: OnboardingDeps,
   target: { spaceId: string; botId: string; threadId: string },
   blocks: MessageBlock[],
   markUnread = true,
 ): Promise<string> {
+  if (blocks.length > 1 && blocks.every(isL0aBlock)) {
+    let last = "";
+    for (const block of blocks) {
+      last = await post(deps, target, [block], markUnread);
+    }
+    return last;
+  }
+  const only = blocks.length === 1 ? blocks[0] : undefined;
+  if (only && isL0aBlock(only)) {
+    const block = only;
+    const published = await publishL0aView(deps.prisma, {
+      spaceId: target.spaceId,
+      threadId: target.threadId,
+      botId: target.botId,
+      intent: l0aIntentForBlock(block),
+      title: l0aTitle(block),
+      status: block.kind === "app_connect" ? "needs_connection" : "collecting",
+      block,
+    });
+    await deps.events.notify(target.threadId, published.eventSeq);
+    return published.messageId;
+  }
   const committed = await deps.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const message = await createThreadMessageInTransaction(tx, {
       threadId: target.threadId,
@@ -158,23 +191,19 @@ export async function promptFocus(
       select: { id: true },
     });
     if (intro) return null;
-    const message = await createThreadMessageInTransaction(tx, {
-      threadId: target.threadId,
-      role: "bot",
-      markUnread: false,
-      blocks,
-    });
-    const event = await appendEventInTransaction(tx, {
-      spaceId: target.spaceId,
-      threadId: target.threadId,
-      botId: target.botId,
-      type: "thread.message.created",
-      payload: { messageId: message.id, role: "bot", blocks },
-    });
-    return { message, event };
+    return true;
   });
   if (!committed) return;
-  await deps.events.notify(target.threadId, committed.event.seq);
+  const published = await publishL0aView(deps.prisma, {
+    spaceId: target.spaceId,
+    threadId: target.threadId,
+    botId: target.botId,
+    intent: l0aIntentForBlock(blocks[0] as Extract<MessageBlock, { kind: "choice" }>),
+    title: "What do you want me on first?",
+    status: "collecting",
+    block: blocks[0] as Extract<MessageBlock, { kind: "choice" }>,
+  });
+  await deps.events.notify(target.threadId, published.eventSeq);
 }
 
 export async function dismissFocus(
@@ -200,6 +229,14 @@ export async function dismissFocus(
         : block,
     );
     await tx.message.update({ where: { id: pending.id }, data: { blocks } });
+    const dismissed = (blocks as MessageBlock[]).find(isL0aBlock);
+    if (dismissed?.interactionId) {
+      await settleInteraction(tx as never, {
+        interactionId: dismissed.interactionId,
+        status: "cancelled",
+        reason: "focus dismissed",
+      });
+    }
     const event = await appendEventInTransaction(tx, {
       spaceId: target.spaceId,
       threadId: target.threadId,
@@ -238,6 +275,14 @@ export async function chooseFocus(
       block.kind === "choice" ? { ...block, answerId: option.id } : block,
     );
     await tx.message.update({ where: { id: pending.id }, data: { blocks } });
+    const chosen = (blocks as MessageBlock[]).find(isL0aBlock);
+    if (chosen?.interactionId) {
+      await settleInteraction(tx as never, {
+        interactionId: chosen.interactionId,
+        status: "succeeded",
+        reason: "focus chosen",
+      });
+    }
     const event = await appendEventInTransaction(tx, {
       spaceId: target.spaceId,
       threadId: target.threadId,
@@ -381,6 +426,20 @@ export async function markAppConnected(
         continue;
       const next = connectedAppBlocks(blocks, connectorId, entry.slug);
       await tx.message.update({ where: { id: message.id }, data: { blocks: next } });
+      for (const block of next) {
+        if (
+          isL0aBlock(block) &&
+          block.kind === "app_connect" &&
+          block.status === "connected" &&
+          block.interactionId
+        ) {
+          await settleInteraction(tx as never, {
+            interactionId: block.interactionId,
+            status: "succeeded",
+            reason: "app connected",
+          });
+        }
+      }
       events.push(
         await appendEventInTransaction(tx, {
           ...target,
