@@ -4,6 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 import { chooseFocus, markAppConnected, promptFocus } from "./onboarding.js";
 
 const posted = vi.hoisted(() => [] as Array<{ blocks: unknown[]; markUnread?: boolean }>);
+vi.mock("@matebot/adapters", async (original) => ({
+  ...(await original()),
+  settleInteraction: vi.fn(async () => ({ settled: true, previousStatus: "collecting" })),
+}));
 vi.mock("@matebot/db", async (original) => ({
   ...(await original<typeof db>()),
   createInteraction: vi.fn(async () => ({
@@ -56,6 +60,37 @@ function fixture(catalog: unknown[]) {
   return { deps, actor, tx };
 }
 describe("onboarding connection suggestions", () => {
+  it("stamps kernel cardStatus onto the chosen focus card", async () => {
+    const { deps, actor, tx } = fixture([]);
+    tx.message.findMany = vi.fn(async () => [
+      {
+        id: "choice",
+        blocks: [
+          {
+            kind: "choice",
+            question: "What do you want me on first?",
+            options: [{ id: "day", letter: "A", label: "Day-to-day work" }],
+            interactionId: "ix-1",
+            cardStatus: "collecting",
+          },
+        ],
+      },
+    ]) as never;
+    await chooseFocus(deps, actor, "bot", "day");
+    expect(tx.message.update).toHaveBeenCalledWith({
+      where: { id: "choice" },
+      data: {
+        blocks: [
+          expect.objectContaining({
+            answerId: "day",
+            cardStatus: "succeeded",
+            interactionId: "ix-1",
+          }),
+        ],
+      },
+    });
+  });
+
   it("does not invent authorization cards when no connector has an app catalog", async () => {
     const { deps, actor } = fixture([]);
     await chooseFocus(deps, actor, "bot", "day");

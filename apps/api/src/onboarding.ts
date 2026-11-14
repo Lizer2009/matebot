@@ -9,6 +9,7 @@ import {
   l0aIntentForBlock,
   matchAppCatalog,
   matchesAppConnection,
+  stampL0aBlock,
 } from "@matebot/core";
 import type { Prisma, PrismaClient, ThreadEvents } from "@matebot/db";
 import {
@@ -223,11 +224,16 @@ export async function dismissFocus(
       messageHasPendingChoice(message.blocks as MessageBlock[]),
     );
     if (!pending) return null;
-    const blocks = (pending.blocks as MessageBlock[]).map((block) =>
-      block.kind === "choice" && !block.answerId
-        ? { ...block, answerId: FOCUS_DISMISSED_ANSWER_ID }
-        : block,
-    );
+    const blocks = (pending.blocks as MessageBlock[]).map((block) => {
+      if (block.kind !== "choice" || block.answerId) return block;
+      const dismissed = { ...block, answerId: FOCUS_DISMISSED_ANSWER_ID };
+      return dismissed.interactionId
+        ? stampL0aBlock(dismissed, {
+            interactionId: dismissed.interactionId,
+            cardStatus: "cancelled",
+          })
+        : dismissed;
+    });
     await tx.message.update({ where: { id: pending.id }, data: { blocks } });
     const dismissed = (blocks as MessageBlock[]).find(isL0aBlock);
     if (dismissed?.interactionId) {
@@ -271,9 +277,16 @@ export async function chooseFocus(
       messageHasPendingChoice(message.blocks as MessageBlock[]),
     );
     if (!pending) return null;
-    const blocks = (pending.blocks as MessageBlock[]).map((block) =>
-      block.kind === "choice" ? { ...block, answerId: option.id } : block,
-    );
+    const blocks = (pending.blocks as MessageBlock[]).map((block) => {
+      if (block.kind !== "choice") return block;
+      const chosen = { ...block, answerId: option.id };
+      return chosen.interactionId
+        ? stampL0aBlock(chosen, {
+            interactionId: chosen.interactionId,
+            cardStatus: "succeeded",
+          })
+        : chosen;
+    });
     await tx.message.update({ where: { id: pending.id }, data: { blocks } });
     const chosen = (blocks as MessageBlock[]).find(isL0aBlock);
     if (chosen?.interactionId) {
@@ -424,7 +437,17 @@ export async function markAppConnected(
         )
       )
         continue;
-      const next = connectedAppBlocks(blocks, connectorId, entry.slug);
+      const next = connectedAppBlocks(blocks, connectorId, entry.slug).map((block) =>
+        isL0aBlock(block) &&
+        block.kind === "app_connect" &&
+        block.status === "connected" &&
+        block.interactionId
+          ? stampL0aBlock(block, {
+              interactionId: block.interactionId,
+              cardStatus: "succeeded",
+            })
+          : block,
+      );
       await tx.message.update({ where: { id: message.id }, data: { blocks: next } });
       for (const block of next) {
         if (
