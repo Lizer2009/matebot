@@ -161,7 +161,11 @@
       "log": "t327-bwide.log (copy t327-bwide.00c1c6178.log); full vitest graph, wider than t322 glob"
     },
     "isolatedPgKernel": { "files": 9, "tests": 61, "exit": 0 },
-    "isolatedPgOccupancyJourney": { "files": "1 passed | 9 skipped", "tests": "1 passed | 123 skipped", "exit": 0 },
+    "isolatedPgOccupancyJourney": {
+      "files": "1 passed | 9 skipped",
+      "tests": "1 passed | 123 skipped",
+      "exit": 0
+    },
     "live": { "passed": 22, "failed": 0, "exit": 0 },
     "occupancyUnits": { "files": 4, "tests": 32, "exit": 0 },
     "types": { "exit": 0 },
