@@ -3588,7 +3588,20 @@ describeJourneys("required product journeys", () => {
         "awaiting_approval",
         "collecting",
       ]);
-      expect(answerableAskMessageIds(both).size).toBe(2);
+      expect(
+        answerableAskMessageIds({
+          messages: both.messages.map((message) => ({
+            id: message.id,
+            runId: message.runId,
+            blocks: message.blocks.map((block) => ({
+              kind: block.kind ?? "",
+              status: block.status,
+            })),
+          })),
+          run: both.run,
+          activeRuns: both.activeRuns,
+        }).size,
+      ).toBe(2);
     });
 
     it("create_group refuses 1 and 11 members without a card", async () => {
