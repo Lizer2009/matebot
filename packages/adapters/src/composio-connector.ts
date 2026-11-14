@@ -759,7 +759,9 @@ export class ComposioConnector implements ComposioProvider {
     request: { state: string; code?: string },
     _context: AdapterContext,
   ): Promise<{ connectionRef: string }> {
-    return { connectionRef: request.state };
+    const { connectedAccounts } = await this.sdk();
+    const account = await connectedAccounts.waitForConnection(request.state).catch(() => undefined);
+    return { connectionRef: account?.id || request.state };
   }
 
   async revoke(connectionRef: string, context: AdapterContext): Promise<void> {

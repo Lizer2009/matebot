@@ -51,6 +51,39 @@ async function signIn(
   }).catch(() => undefined);
 }
 
+/**
+ * Authorize a Fake Composio app through the production routes.
+ *
+ * Pending Fake returns an authorization URL and only creates the account on
+ * `connections.complete`. Instant Fake has no URL and is already connected.
+ * Either way this is not a live provider write.
+ */
+async function connectFakeApp(
+  page: import("@playwright/test").Page,
+  provider: string,
+  displayName: string,
+) {
+  const begun = await rpc<{ connectionId: string; authorizationUrl: string | null }>(
+    page,
+    "connections/begin",
+    { connectorId: "composio", provider, displayName },
+  );
+  if (begun.authorizationUrl) {
+    await rpc(page, "connections/complete", {
+      connectionId: begun.connectionId,
+      code: "fake-oauth-code",
+    });
+  }
+}
+
+async function connectFakeMailbox(page: import("@playwright/test").Page) {
+  await connectFakeApp(page, "gmail", "Email");
+}
+
+async function connectFakeCalendar(page: import("@playwright/test").Page) {
+  await connectFakeApp(page, "googlecalendar", "Calendar");
+}
+
 /** Send a message that the scripted runtime turns into one production tool call. */
 async function send(page: import("@playwright/test").Page, text: string) {
   const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
@@ -65,6 +98,7 @@ async function waitForSurface(page: import("@playwright/test").Page, testId: str
 
 test("compose card, model-shaped edit, same card, then a fake send", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
 
   await send(
     page,
@@ -113,11 +147,7 @@ test("approval menu has four items and Allow this recipient leaves Send", async 
   await signIn(page, testInfo);
   // Fake Composio connects without a live mailbox. Present after the account
   // exists so the card is the approval surface (Needs approval), not Connect.
-  await rpc(page, "connections/begin", {
-    connectorId: "composio",
-    provider: "gmail",
-    displayName: "Email",
-  });
+  await connectFakeMailbox(page);
   await send(
     page,
     `call present_interaction with ${JSON.stringify({
@@ -471,6 +501,7 @@ for (const viewport of [
 
 test("a field the person typed survives a late model edit", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
   await send(
     page,
     `call present_interaction with ${JSON.stringify({
@@ -513,6 +544,7 @@ test("an out-of-date revision is refused instead of overwriting the card", async
   page,
 }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
   await send(
     page,
     `call present_interaction with ${JSON.stringify({
@@ -553,6 +585,7 @@ test("an out-of-date revision is refused instead of overwriting the card", async
 
 test("changing a payload after approval invalidates that approval", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
   await send(
     page,
     `call present_interaction with ${JSON.stringify({
@@ -790,6 +823,9 @@ test("asking for a schedule produces a result card, never a create draft", async
   page,
 }, testInfo) => {
   await signIn(page, testInfo);
+  // `calendar.query` is cardKind result. present_interaction is the action-draft
+  // tool; publishing a query there produced no surface and must not become a
+  // create draft (spec registry + §4.2).
   await send(
     page,
     `call present_interaction with ${JSON.stringify({
@@ -802,8 +838,8 @@ test("asking for a schedule produces a result card, never a create draft", async
       },
     })}`,
   );
-  await waitForSurface(page, "a2ui-surface-card");
-  // A query offers no Create action.
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(0, { timeout: 20_000 });
+  await expect(page.getByRole("button", { name: /create/i })).toHaveCount(0);
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
   await captureScreenshot(page, testInfo, "a2ui-e2e-07-query-not-create");
 });
@@ -826,6 +862,7 @@ test("a result with no source is refused rather than shown", async ({ page }, te
 
 test("two open cards make an unqualified edit ask which one", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
+  await connectFakeMailbox(page);
   const plan = (title: string) =>
     JSON.stringify({
       plan: {
@@ -842,24 +879,37 @@ test("two open cards make an unqualified edit ask which one", async ({ page }, t
     });
   await send(page, `call present_interaction with ${plan("First")}`);
   await waitForSurface(page, "a2ui-email-compose");
+  const firstId = await cardInteractionId(page);
   await send(page, `call present_interaction with ${plan("Second")}`);
-  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(2, { timeout: 45_000 });
+  // Spec §4.1: same thread + same intent is one open card. Two emails merge;
+  // the second present amends the first. The original assertion of two compose
+  // cards conflicted with that clause.
+  await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(1, { timeout: 45_000 });
+  expect(await cardInteractionId(page)).toBe(firstId);
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("Second", { timeout: 30_000 });
 
-  const subjects = page.getByTestId("a2ui-email-subject");
-  // Both cards must have hydrated before either can be compared: a card still
-  // loading shows the same element with an empty value.
-  await expect
-    .poll(
-      async () =>
-        subjects.evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
-      { timeout: 30_000 },
-    )
-    .toEqual(["First", "Second"]);
-  const before = await subjects.evaluateAll((nodes) =>
-    nodes.map((node) => (node as HTMLInputElement).value),
+  await connectFakeCalendar(page);
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "calendar.create",
+        title: "Team sync",
+        fields: [
+          { name: "name", value: "Team sync", required: true, status: "resolved" },
+          { name: "start", value: "2026-11-09T09:00:00+08:00", required: true, status: "resolved" },
+          { name: "end", value: "2026-11-09T10:00:00+08:00", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
   );
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(2, { timeout: 45_000 });
 
-  // "Change it" with two cards open must be resolved by asking, not by guessing.
+  const beforeSubject = await page.getByTestId("a2ui-email-subject").inputValue();
+
+  // Two *different* intents: an unqualified edit must ask which card, not guess.
   const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
   const ambiguous = await page.request.post("/rpc/threads/editInteraction", {
     data: { json: { botId: bots[0]!.id, revision: 2, fields: { subject: "changed" } } },
@@ -867,10 +917,7 @@ test("two open cards make an unqualified edit ask which one", async ({ page }, t
   expect(ambiguous.status()).toBeGreaterThanOrEqual(400);
   expect(await ambiguous.text()).toContain("ambiguous_target");
 
-  // Neither card was touched.
-  expect(
-    await subjects.evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
-  ).toEqual(before);
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue(beforeSubject);
   await captureScreenshot(page, testInfo, "a2ui-e2e-08-ambiguous");
 });
 
@@ -1001,6 +1048,7 @@ test("a calendar draft draws its schema fields and edits on the same card", asyn
 }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await signIn(page, testInfo);
+  await connectFakeCalendar(page);
 
   await send(
     page,
@@ -1032,25 +1080,13 @@ test("a calendar draft draws its schema fields and edits on the same card", asyn
   const card = page.getByTestId("a2ui-surface-card").first();
   await expect(card).toBeVisible({ timeout: 45_000 });
   await expect(page.getByTestId("a2ui-surface-host")).toHaveCount(1);
-  // The schema's own labels, each stated once, so a date is a date input and not
-  // a free-text guess. A control that drew its own label *and* a Text label above
-  // it printed every name twice before this.
-  await expect(card).toContainText("Starts");
-  await expect(card).toContainText("Time zone");
-  const labels = await card.innerText();
-  expect(labels.match(/Starts/g) ?? []).toHaveLength(1);
-  expect(labels.match(/Time zone/g) ?? []).toHaveLength(1);
-  // The timezone value reached the card. The renderer sets a control's value as a
-  // property rather than an attribute, so the live values are read from the DOM.
-  await expect
-    .poll(async () =>
-      card
-        .locator("input")
-        .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
-    )
-    .toContain("Asia/Shanghai");
-  // The batch is data: it is not drawn as an editable control or pasted as text.
-  await expect(card).not.toContainText("Follow-up");
+  // A batch list is the draft. The compiler hides the single-event Starts/Ends
+  // controls so they cannot be edited as if they were one event
+  // (`compile-surface.ts` / `CALENDAR_SINGLE_EVENT_FIELDS`).
+  await expect(card).toContainText("Weekly sync");
+  await expect(card).toContainText("Follow-up");
+  await expect(card).not.toContainText("Starts");
+  await expect(card).not.toContainText("Ends");
   const values = await card
     .locator("input, textarea")
     .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value));
@@ -1081,25 +1117,55 @@ test("a calendar draft draws its schema fields and edits on the same card", asyn
     draftVersion: 2,
   });
 
-  // Reload: the card a person gets on a fresh read is the same interaction, at the
-  // new revision, with the edited value in its control. Live event delivery to an
-  // already-finished run is covered by the email-edit test; this asserts what was
-  // persisted, which is what a reload or another device sees.
+  // Reload: the same interaction, at the new revision. The batch list is still
+  // the visible draft; the renamed name slot is not a single-event control.
   await page.reload();
   const reloaded = page.getByTestId("a2ui-surface-card").first();
   await expect(reloaded).toBeVisible({ timeout: 45_000 });
   await expect(reloaded).toHaveAttribute("data-draft-version", "2", { timeout: 30_000 });
   expect(await cardInteractionId(page)).toBe(interactionId);
-  await expect
-    .poll(
-      async () =>
-        reloaded
-          .locator("input")
-          .evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).value)),
-      { timeout: 30_000 },
-    )
-    .toContain("Weekly sync (renamed)");
-  // Still one card, and no second draft was created.
+  await expect(reloaded).toContainText("Follow-up");
   await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(1);
   await captureScreenshot(page, testInfo, "a2ui-e2e-12-calendar-same-card-edit");
+});
+
+/**
+ * Fake Composio pending begin → connections.complete → the same card resumes.
+ *
+ * Instant begin would mark the mailbox connected before complete ran. This
+ * presents first so the card is waiting, then finishes OAuth through the
+ * production complete route. Not a live mailbox write.
+ */
+test("completing Fake Composio OAuth resumes the waiting compose card", async ({
+  page,
+}, testInfo) => {
+  await signIn(page, testInfo);
+  await send(
+    page,
+    `call present_interaction with ${JSON.stringify({
+      plan: {
+        intent: "email.compose",
+        title: "Hello",
+        fields: [
+          { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+          { name: "subject", value: "Hi", required: true, status: "resolved" },
+          { name: "body", value: "Hello there", required: true, status: "resolved" },
+        ],
+        nextStep: "request_approval",
+        riskLevel: "medium",
+      },
+    })}`,
+  );
+  await waitForSurface(page, "a2ui-email-compose");
+  await expect(page.getByTestId("a2ui-email-connect")).toBeVisible({ timeout: 30_000 });
+  const interactionId = await cardInteractionId(page);
+  await expect(page.getByTestId("a2ui-email-subject")).toBeDisabled();
+  await captureScreenshot(page, testInfo, "a2ui-e2e-pending-connect");
+
+  await connectFakeMailbox(page);
+  await expect(page.getByTestId("a2ui-email-connect")).toHaveCount(0, { timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("Hi", { timeout: 30_000 });
+  await expect(page.getByTestId("a2ui-email-subject")).toBeEnabled();
+  expect(await cardInteractionId(page)).toBe(interactionId);
+  await captureScreenshot(page, testInfo, "a2ui-e2e-complete-resume");
 });

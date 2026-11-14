@@ -163,6 +163,26 @@ describe("interaction status write guard", () => {
    * `lifecycle`, which still says `draft` for superseded, expired and cancelled (§4.4 keeps six
    * values there). Every writer must stamp it, so the truth travels with the block.
    */
+  it("does not persist kind: connect blocks; they are a compatibility map only", () => {
+    const files: string[] = [];
+    for (const dir of ["packages/adapters", "apps"]) walk(join(ROOT, dir), files);
+    const writers = files
+      .map((file) => relative(ROOT, file))
+      .filter((file) => {
+        if (file.endsWith(".test.ts") || file.endsWith(".test.tsx")) return false;
+        const source = readFileSync(join(ROOT, file), "utf8");
+        if (!/\bkind:\s*"connect"/.test(source)) return false;
+        return (
+          /\bcreateThreadMessageInTransaction\b/.test(source) ||
+          /\bmessage\.create\b/.test(source) ||
+          /\bpauseRunForInput\b/.test(source) ||
+          /\bpublishL0aView\b/.test(source)
+        );
+      })
+      .sort();
+    expect(writers).toEqual([]);
+  });
+
   it("settles L0-A terminal writes through the kernel (AC-25)", () => {
     const files: string[] = [];
     for (const dir of ["packages/adapters", "apps"]) walk(join(ROOT, dir), files);

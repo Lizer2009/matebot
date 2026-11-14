@@ -18,3 +18,15 @@ export function relabelApprovalActionsForSlack<T extends MessageBlock>(block: T)
     ),
   };
 }
+
+/**
+ * Production delivery formatter: Slack messaging runs say Skip, everything else
+ * keeps Deny. Same `deny` id. Spec §14 #11. Not a live Slack send.
+ */
+export function approvalBlockForChannel<T extends MessageBlock>(
+  block: T,
+  channel: { trigger: string; provider?: string | null },
+): T {
+  if (channel.trigger !== "messaging" || channel.provider !== "slack") return block;
+  return relabelApprovalActionsForSlack(block);
+}

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { ManagedConnectorProvider } from "@matebot/adapter-kit";
-import { ConnectorRegistry } from "@matebot/adapters";
+import { ComposioConnector, ConnectorRegistry, FakeComposioClient } from "@matebot/adapters";
 import type { Actor } from "@matebot/contracts";
 import { interactionCardKey } from "@matebot/core/node/interaction-card-key";
 import type { PrismaClient } from "@matebot/db";
@@ -342,6 +342,41 @@ describePostgres("card recovery through the real connection routes", () => {
     expect(await system.externalEffect.findMany({ where: { spaceId } })).toEqual([]);
     return row;
   }
+
+  it("Fake Composio pending begin then complete resumes the waiting card", async () => {
+    const fake = new FakeComposioClient();
+    fake.authorizeMode = "pending";
+    const connector = new ComposioConnector({ client: fake });
+    const handler = new RPCHandler(createRouter(deps(connector)));
+
+    expect((await cardBlock())?.capability).toBe("not_connected");
+
+    const begun = await rpc(handler, "connections/begin", {
+      connectorId: "composio",
+      provider: "gmail",
+      displayName: "Gmail",
+    });
+    expect(begun.status).toBe(200);
+    const begunJson = (
+      begun.json as {
+        json: { connectionId: string; authorizationUrl: string | null; status?: string };
+      }
+    ).json;
+    expect(begunJson.authorizationUrl).toMatch(/^https:\/\/fake-composio\.test\/oauth/);
+    expect((await draft()).status).toBe("needs_connection");
+    expect(fake.accounts).toEqual([]);
+
+    const completed = await rpc(handler, "connections/complete", {
+      connectionId: begunJson.connectionId,
+      code: "fake-oauth-code",
+    });
+    expect(completed.status).toBe(200);
+    expect((completed.json as { json: { status: string } }).json.status).toBe("connected");
+    expect(fake.accounts.length).toBeGreaterThan(0);
+
+    await expectRecovered();
+    expect(await system.externalEffect.findMany({ where: { spaceId } })).toEqual([]);
+  });
 
   it("missing → begin → complete: the same card becomes editable and nothing is sent", async () => {
     const { provider, state, finishInBrowser } = mailboxProvider();

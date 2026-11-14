@@ -8,6 +8,7 @@ import type {
 import { runContinueJob } from "@matebot/adapter-kit";
 import {
   applyJudgeDecision,
+  approvalBlockForChannel,
   approvalModeFromPreference,
   batchActions,
   connectorKindFromToolName,
@@ -23,7 +24,6 @@ import {
   outboundSiteGate,
   planActionGate,
   redactSecrets,
-  relabelApprovalActionsForSlack,
   repeatsDeniedAction,
   resolveActionApprovalForTools,
   SITE_SENDING_TOOLS,
@@ -732,7 +732,10 @@ async function showApprovalCard(ctx: RunContext, call: ToolCall, card: ApprovalC
     const identity = await deps.prisma.messagingIdentity
       ?.findUnique?.({ where: { botId: bot.id }, select: { provider: true } })
       .catch(() => null);
-    if (identity?.provider === "slack") ask = relabelApprovalActionsForSlack(ask);
+    ask = approvalBlockForChannel(ask, {
+      trigger: run.trigger,
+      provider: identity?.provider,
+    });
   }
   let blocks = [ask];
   let skipMessage = false;

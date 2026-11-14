@@ -94,6 +94,32 @@ describe("ComposioConnector over the fake Composio client", () => {
     expect((failure as Error).message).not.toContain("ToolRouterV2_NoManagedAuth");
   });
 
+  it("keeps pending OAuth unconnected until complete waits on the request", async () => {
+    const fake = new FakeComposioClient();
+    fake.authorizeMode = "pending";
+    const connector = new ComposioConnector({ client: fake });
+
+    const begun = await connector.begin(
+      { provider: "gmail", redirectUrl: "http://example.test/callback" },
+      context(),
+    );
+    expect(begun.authorizationUrl).toMatch(/^https:\/\/fake-composio\.test\/oauth/);
+    expect(begun.state).toMatch(/^req_/);
+    expect(fake.accounts).toEqual([]);
+    await expect(connector.connectionReady(context(), "GMAIL")).resolves.toBe(false);
+
+    const completed = await connector.complete(
+      { state: begun.state, code: "fake-oauth" },
+      context(),
+    );
+    expect(completed.connectionRef).toMatch(/^ca_/);
+    expect(fake.accounts).toHaveLength(1);
+    await expect(connector.connectionReady(context(), "GMAIL")).resolves.toBe(true);
+    // A second wait (the route's resolveConnectedAccountId) still finds the same account.
+    const again = await connector.complete({ state: begun.state, code: "fake-oauth" }, context());
+    expect(again.connectionRef).toBe(completed.connectionRef);
+  });
+
   it("isolates connections by user and deletes the account on revoke", async () => {
     const { fake, connector } = setup();
     const ref = await connect(connector, "GMAIL");

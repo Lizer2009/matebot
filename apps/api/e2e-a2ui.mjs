@@ -98,7 +98,15 @@ const handles = await createApp({
   databaseUrl,
   modelConnectionFetch: createModelConnectionFixtureFetch(adapters.listPiCatalog()),
   prisma: undefined,
-  composio: new adapters.ComposioConnector({ client: new adapters.FakeComposioClient() }),
+  composio: new adapters.ComposioConnector({
+    client: (() => {
+      const fake = new adapters.FakeComposioClient();
+      // Pending OAuth: begin returns a URL and complete creates the account.
+      // Instant begin would skip connections.complete.
+      fake.authorizeMode = "pending";
+      return fake;
+    })(),
+  }),
   connectors: [new adapters.DestinationEmulator()],
   pipedream,
   email,

@@ -428,6 +428,23 @@ describe("present_interaction", () => {
     expect(publishOrAmend.mock.calls[0]![1]).not.toHaveProperty("amendsInteractionId");
   });
 
+  it("refuses result intents instead of publishing an action draft", async () => {
+    const result = (await interactionTools.present_interaction!(
+      context() as never,
+      call({
+        plan: {
+          intent: "calendar.query",
+          title: "Next week",
+          fields: [],
+          nextStep: "render",
+          riskLevel: "low",
+        },
+      }),
+    )) as Record<string, unknown>;
+    expect(result.error).toBe("result_intent");
+    expect(publishOrAmend).not.toHaveBeenCalled();
+  });
+
   it("refuses when FEATURE_A2UI is off", async () => {
     vi.stubEnv("FEATURE_A2UI", "0");
     const result = (await interactionTools.present_interaction!(

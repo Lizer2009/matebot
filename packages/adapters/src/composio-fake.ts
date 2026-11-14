@@ -77,6 +77,10 @@ const SYSTEM_LABELS = [
   { id: "TRASH", name: "TRASH", type: "system" },
 ] as const;
 
+function toolkitKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
 function functionTool(
   name: string,
   description: string,
@@ -212,10 +216,18 @@ export class FakeComposioClient implements ComposioClient {
   }> = [];
   /** When set, connected-account listing fails like an API outage. */
   failAccountList = false;
+  /**
+   * `instant` connects in begin (API-key style). `pending` returns an
+   * authorization URL and only creates the account when complete waits on it.
+   */
+  authorizeMode: "instant" | "pending" = "instant";
   private readonly sessionsById = new Map<string, ComposioSession>();
   private readonly mailboxesByUser = new Map<string, Mailbox>();
   private githubReleases: EmulatedGithubRelease[] = [...DEFAULT_MATEBOT_EMULATED_RELEASES];
   private nextId = 0;
+  private readonly pendingByRequest = new Map<string, { userId: string; slug: string }>();
+  /** Request ids already exchanged for an account, so complete then resolve can both wait. */
+  private readonly settledByRequest = new Map<string, string>();
 
   constructor(private readonly directory: readonly ToolkitDirectoryEntry[] = DEFAULT_DIRECTORY) {}
 
@@ -249,6 +261,21 @@ export class FakeComposioClient implements ComposioClient {
       };
     },
     waitForConnection: async (id: string): Promise<ConnectedAccountRetrieveResponse> => {
+      const settledId = this.settledByRequest.get(id);
+      if (settledId) {
+        const settled = this.accounts.find((candidate) => candidate.id === settledId);
+        if (!settled) throw notFound(`Connected account ${settledId} not found`);
+        return this.toResponse(settled);
+      }
+      const pending = this.pendingByRequest.get(id);
+      if (pending) {
+        const accountId = this.connect(pending.userId, pending.slug);
+        this.pendingByRequest.delete(id);
+        this.settledByRequest.set(id, accountId);
+        const created = this.accounts.find((candidate) => candidate.id === accountId);
+        if (!created) throw notFound(`Connected account ${accountId} not found`);
+        return this.toResponse(created);
+      }
       const account = this.accounts.find((candidate) => candidate.id === id);
       if (!account) throw notFound(`Connected account ${id} not found`);
       if (account.status !== "ACTIVE") {
@@ -343,10 +370,25 @@ export class FakeComposioClient implements ComposioClient {
   }
 
   private async authorize(userId: string, slug: string): Promise<ConnectionRequest> {
-    const toolkit = this.directory.find((entry) => entry.slug.toLowerCase() === slug.toLowerCase());
+    const toolkit = this.directory.find((entry) => toolkitKey(entry.slug) === toolkitKey(slug));
     if (!toolkit) throw notFound(`Toolkit ${slug} not found`);
     if (toolkit.noAuth)
       throw new Error(`ToolkitsIsNoAuth: ${toolkit.slug} does not require authentication`);
+    if (this.authorizeMode === "pending") {
+      const requestId = `req_${++this.nextId}`;
+      this.pendingByRequest.set(requestId, { userId, slug: toolkit.slug });
+      const state = {
+        id: requestId,
+        status: "INITIATED" as const,
+        redirectUrl: `https://fake-composio.test/oauth?state=${requestId}`,
+      };
+      return {
+        ...state,
+        waitForConnection: () => this.connectedAccounts.waitForConnection(requestId),
+        toJSON: () => state,
+        toString: () => JSON.stringify(state),
+      };
+    }
     // Connects instantly, the way an API-key or already-consented toolkit does.
     const id = this.connect(userId, toolkit.slug);
     const state = { id, status: "ACTIVE" as const, redirectUrl: null };

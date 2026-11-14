@@ -2,6 +2,7 @@ import type { ActionApprovalRule, InteractionPlan } from "@matebot/contracts";
 import { InteractionPlanSchema } from "@matebot/contracts";
 import type { EmailSurfaceCapability } from "@matebot/core";
 import {
+  cardKindForIntent,
   connectionSatisfiesApp,
   interactionRequiredApp,
   interactionSlotsFromPlan,
@@ -213,6 +214,14 @@ async function presentInteraction(ctx: RunContext, call: ToolCall) {
     return {
       error: "unknown_capability",
       reply: unknownCapabilityNotice(),
+    };
+  }
+  // Action drafts only. Result intents are `cardKind: "result"` and have their
+  // own tool (`present_result`). Publishing them here produced no surface.
+  if (cardKindForIntent(plan.intent) === "result") {
+    return {
+      error: "result_intent",
+      reply: "Result intents use present_result, not present_interaction.",
     };
   }
   // §9.6: the server now knows which surface to build, before it builds it.
