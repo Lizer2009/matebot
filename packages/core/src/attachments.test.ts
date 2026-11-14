@@ -378,6 +378,83 @@ describe("a2ui surface history", () => {
       ]),
     ).toBe("[card: email.compose → draft (to: a@b.com)]");
   });
+
+  it("projects L0-A kinds with status and account, never secrets (F-07)", () => {
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "ask",
+          text: "Allow this send?",
+          status: "pending",
+          cardStatus: "awaiting_approval",
+          input: "secret",
+          actions: [{ id: "deny", label: "Deny" }],
+        },
+      ]),
+    ).toBe("[card: ask → awaiting_approval]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "app_connect",
+          connectorId: "fake",
+          provider: "gmail",
+          name: "Gmail",
+          description: "Mail",
+          logo: null,
+          status: "pending",
+          cardStatus: "needs_connection",
+        },
+      ]),
+    ).toBe("[card: app_connect → needs_connection → gmail]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "choice",
+          question: "Which?",
+          options: [{ id: "a", letter: "A", label: "A" }],
+          cardStatus: "collecting",
+        },
+      ]),
+    ).toBe("[card: choice → collecting]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "mcp_approval",
+          serverId: "srv-1",
+          name: "Tools",
+          transport: "stdio",
+          endpoint: null,
+          needsOAuth: false,
+          status: "pending",
+          cardStatus: "awaiting_approval",
+        },
+      ]),
+    ).toBe("[card: mcp_approval → awaiting_approval]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "connect",
+          name: "Gmail",
+          initial: "G",
+          color: "test",
+          status: "pending",
+          cardStatus: "needs_connection",
+        },
+      ]),
+    ).toBe("[card: connect → needs_connection → Gmail]");
+    expect(
+      blocksToAgentHistoryText([
+        {
+          kind: "ask",
+          text: "API key",
+          status: "answered",
+          cardStatus: "succeeded",
+          answer: "sk-live-secret",
+          input: "secret",
+        },
+      ]),
+    ).toBe("[card: ask → succeeded]");
+  });
 });
 
 describe("artifactTypeLabel", () => {

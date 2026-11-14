@@ -910,6 +910,11 @@ export interface MessagingSendRequest {
   idempotencyKey?: string;
   /** A file to post as this message; only sent to platforms with the `files` capability. */
   attachment?: MessagingOutboundAttachment;
+  /**
+   * Approval/ask controls reconstructed from the source message.
+   * Slack renders Skip for deny. Never a live provider write by itself.
+   */
+  actions?: Array<{ id: string; label: string }>;
 }
 
 /** An outbound file, already read from the artifact store. */

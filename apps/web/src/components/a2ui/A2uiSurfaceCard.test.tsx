@@ -194,7 +194,8 @@ describe("A2uiSurfaceCard", () => {
       await Promise.resolve();
     });
     const refused = container.querySelector('[data-testid="a2ui-surface-refused"]');
-    expect(refused?.textContent).toMatch(/EvilWidget/);
+    expect(refused?.textContent).toContain("This card could not be shown.");
+    expect(refused?.textContent).not.toMatch(/EvilWidget|Unknown catalog/i);
     expect(container.querySelector('[data-testid="a2ui-surface-host"]')).toBeNull();
   });
 
@@ -928,9 +929,9 @@ describe("A2uiSurfaceCard when the document cannot be resolved", () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(
-      container.querySelector('[data-testid="a2ui-surface-placeholder-reason"]')?.textContent,
-    ).toBe("boom");
+    expect(container.textContent).toContain("This card could not be shown.");
+    expect(container.textContent).not.toContain("boom");
+    expect(container.querySelector('[data-testid="a2ui-surface-placeholder-reason"]')).toBeNull();
     const retry = container.querySelector("button");
     expect(retry?.textContent).toContain("Try again");
     await act(async () => {

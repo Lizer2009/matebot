@@ -13,12 +13,15 @@ function affordanceHintFromTemplate(
 ): { status?: string; lifecycle?: string } | undefined {
   switch (template) {
     case "action-submitting-card":
+    case "calendar-submitting-card":
       return { lifecycle: "submitting" };
     case "action-progress-card":
       return { lifecycle: "executing" };
     case "action-result-success":
+    case "calendar-result-success":
       return { lifecycle: "succeeded" };
     case "action-result-failed":
+    case "calendar-result-failed":
       return { lifecycle: "failed" };
     case "action-reconcile-card":
       return { lifecycle: "unknown" };

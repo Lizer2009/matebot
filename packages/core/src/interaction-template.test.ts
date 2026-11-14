@@ -191,7 +191,7 @@ describe("email surface template matrix", () => {
         intent: "calendar.create",
         interactionStatus: "ready_for_review",
       }).template,
-    ).toBe("action-draft-card");
+    ).toBe("calendar-draft-card");
   });
 
   // The two email rules that survive, because they are about an open draft's mailbox rather than

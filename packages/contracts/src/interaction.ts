@@ -95,6 +95,10 @@ export const EmailSurfaceTemplate = z.enum([
   "email-connection-card",
   "email-reauth-card",
   "email-draft-card",
+  "calendar-draft-card",
+  "calendar-submitting-card",
+  "calendar-result-success",
+  "calendar-result-failed",
   "action-draft-card",
   "action-submitting-card",
   "action-progress-card",
@@ -166,6 +170,13 @@ export const A2uiSurfaceBlockSchema = z.object({
    * needs them because it only sees the block, not Interaction.slots.
    */
   historySlots: z.record(z.string().trim().min(1), z.string()).optional(),
+  /**
+   * Why an approval card is waiting. Closed set, stamped by the kernel.
+   * Hosts resolve copy from the key; the model cannot supply this.
+   */
+  reasonKey: z
+    .enum(["rule.user", "rule.team", "setting.approval", "effect.irreversible"])
+    .optional(),
   /** Provider message id after a successful send. D′/E′ consume this. */
   providerMessageId: z.string().trim().min(1).optional(),
   /** Last send error when lifecycle is failed or unknown. */

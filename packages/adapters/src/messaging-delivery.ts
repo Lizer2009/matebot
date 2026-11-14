@@ -8,7 +8,12 @@ import type {
 } from "@matebot/adapter-kit";
 import { messagingDeliverJob, runContinueJob } from "@matebot/adapter-kit";
 import type { MessageBlock } from "@matebot/contracts";
-import { botMessageHopExhausted, nextBotMessageHop, pageLinksAsTitles } from "@matebot/core";
+import {
+  approvalBlockForChannel,
+  botMessageHopExhausted,
+  nextBotMessageHop,
+  pageLinksAsTitles,
+} from "@matebot/core";
 import type { PrismaClient, ThreadEvents } from "@matebot/db";
 import {
   appendEventInTransaction,
@@ -133,7 +138,10 @@ async function mirrorRun(deps: MessagingDeliveryDeps, runId: string): Promise<vo
   const linkedPages = linkedPageIds(messages);
   const rows = messages
     .flatMap((message) => {
-      const body = extractText(message.blocks, linkedPages);
+      const body = extractText(message.blocks, linkedPages, {
+        trigger: "messaging",
+        provider: identity.provider,
+      });
       const parts = body ? splitOutboundBody(identity.provider, body) : [];
       return [
         ...parts.map((part, index) => ({
@@ -201,7 +209,13 @@ async function mirrorChannelRun(
     return;
   const linkedPages = linkedPageIds(replies);
   const messages = replies
-    .map((message) => ({ message, text: extractText(message.blocks, linkedPages) }))
+    .map((message) => ({
+      message,
+      text: extractText(message.blocks, linkedPages, {
+        trigger: "messaging",
+        provider: "slack",
+      }),
+    }))
     .filter((entry) => entry.text);
   if (messages.length === 0) return;
 
@@ -391,11 +405,18 @@ async function sendConnectInvite(
         }
         const outbound = await tx.messagingOutbound.findUnique({
           where: { id: row.id },
-          select: { id: true },
+          select: { id: true, sourceMessageId: true },
         });
         if (!outbound) return "skipped";
         try {
-          const sent = await deps.messaging.sendToThread({ threadId, body: row.body }, context);
+          const sent = await deps.messaging.sendToThread(
+            {
+              threadId,
+              body: row.body,
+              ...(await actionsForOutbound(deps, outbound, "slack")),
+            },
+            context,
+          );
           await tx.messagingOutbound.updateMany({
             where: { id: row.id },
             data: { providerHandle: sent.handle },
@@ -571,7 +592,12 @@ async function deliverRow(
       attachment = { name: artifact.name, mimeType: artifact.mimeType, data };
     }
     const sent = await deps.messaging.sendToThread(
-      { threadId, body: row.body, ...(attachment ? { attachment } : {}) },
+      {
+        threadId,
+        body: row.body,
+        ...(attachment ? { attachment } : {}),
+        ...(await actionsForOutbound(deps, row, identity.provider)),
+      },
       context,
     );
     accepted = true;
@@ -758,11 +784,23 @@ function linkedPageIds(messages: readonly { blocks: unknown }[]): Set<string> {
  * The text other channels get. A page card cannot travel, so a page the reply does not name goes
  * as its title.
  */
-function extractText(blocks: unknown, linkedPages: ReadonlySet<string>): string {
+function extractText(
+  blocks: unknown,
+  linkedPages: ReadonlySet<string>,
+  channel?: { trigger: string; provider?: string | null },
+): string {
   if (!Array.isArray(blocks)) return "";
   return blocks
     .flatMap(
-      (block: { kind?: unknown; text?: unknown; pageId?: unknown; title?: unknown } | null) => {
+      (
+        block: {
+          kind?: unknown;
+          text?: unknown;
+          pageId?: unknown;
+          title?: unknown;
+          actions?: Array<{ id?: unknown; label?: unknown }>;
+        } | null,
+      ) => {
         if (block?.kind === "text" && typeof block.text === "string")
           return [pageLinksAsTitles(block.text)];
         if (
@@ -772,9 +810,60 @@ function extractText(blocks: unknown, linkedPages: ReadonlySet<string>): string 
           !linkedPages.has(block.pageId)
         )
           return [block.title];
+        if (block?.kind === "ask" && typeof block.text === "string") {
+          const labeled = channel
+            ? approvalBlockForChannel(block as MessageBlock, channel)
+            : (block as MessageBlock);
+          const labels =
+            labeled.kind === "ask"
+              ? (labeled.actions ?? [])
+                  .map((action) => action.label)
+                  .filter((label) => typeof label === "string" && label.trim())
+              : [];
+          return [block.text, ...labels];
+        }
         return [];
       },
     )
     .join("\n")
     .trim();
+}
+
+function extractAskActions(
+  blocks: unknown,
+  channel?: { trigger: string; provider?: string | null },
+): Array<{ id: string; label: string }> {
+  if (!Array.isArray(blocks)) return [];
+  const actions: Array<{ id: string; label: string }> = [];
+  for (const entry of blocks) {
+    if (!entry || typeof entry !== "object" || (entry as { kind?: unknown }).kind !== "ask") {
+      continue;
+    }
+    const labeled = channel
+      ? approvalBlockForChannel(entry as MessageBlock, channel)
+      : (entry as MessageBlock);
+    if (labeled.kind !== "ask" || !labeled.actions) continue;
+    for (const action of labeled.actions) {
+      if (typeof action.id === "string" && typeof action.label === "string") {
+        actions.push({ id: action.id, label: action.label });
+      }
+    }
+  }
+  return actions;
+}
+
+async function actionsForOutbound(
+  deps: MessagingDeliveryDeps,
+  row: Pick<MessagingOutboundRow, "sourceMessageId">,
+  provider: string,
+): Promise<{ actions?: Array<{ id: string; label: string }> }> {
+  if (!row.sourceMessageId || typeof deps.prisma.message?.findUnique !== "function") {
+    return {};
+  }
+  const source = await deps.prisma.message.findUnique({
+    where: { id: row.sourceMessageId },
+    select: { blocks: true },
+  });
+  const actions = extractAskActions(source?.blocks, { trigger: "messaging", provider });
+  return actions.length > 0 ? { actions } : {};
 }

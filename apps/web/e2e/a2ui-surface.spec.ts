@@ -12,10 +12,12 @@ test("A2UI surface fixture renders a timeline card when the flag is on", async (
   await captureScreenshot(page, testInfo, "a2ui-surface-fixture");
 });
 
-test("A2UI surface fixture refuses unknown catalog components", async ({ page }) => {
+test("A2UI surface fixture refuses unknown catalog components", async ({ page }, testInfo) => {
   await page.goto("/e2e/fixtures/a2ui-surface.html?refuse=1");
   await expect(page.getByTestId("a2ui-surface-refused")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText(/EvilWidget/)).toBeVisible();
+  await expect(page.getByText("This card could not be shown.")).toBeVisible();
+  await expect(page.getByText(/EvilWidget/)).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "a2ui-e2e-t321-safe-degrade");
 });
 
 /**

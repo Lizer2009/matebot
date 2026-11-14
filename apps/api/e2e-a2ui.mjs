@@ -117,7 +117,7 @@ const handles = await createApp({
   userDevices: new adapters.UserDeviceEmulator(),
 });
 
-const { seedExpiredSurface, inspectSeededSurface } = await import(
+const { seedExpiredSurface, inspectSeededSurface, inspectLastPresentRefusal } = await import(
   "./src/e2e-seed-expired-surface.ts"
 );
 const { markAwaitingApprovalExpired, expireDueLiveInteractions } = await import(
@@ -184,6 +184,22 @@ const server = serve({
       } catch (error) {
         return Response.json(
           { error: error instanceof Error ? error.message : "expire failed" },
+          { status: 400 },
+        );
+      }
+    }
+    if (url.pathname === "/__e2e/inspect-last-present" && request.method === "GET") {
+      try {
+        const botId = url.searchParams.get("botId") ?? "";
+        if (!botId) {
+          return Response.json({ error: "botId required" }, { status: 400 });
+        }
+        return Response.json(await inspectLastPresentRefusal(handles.prisma, botId), {
+          headers: { "cache-control": "no-store" },
+        });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "inspect failed" },
           { status: 400 },
         );
       }

@@ -55,7 +55,19 @@ describe("surfaceStampFor", () => {
     }
     expect(
       surfaceStampFor({ status: "ready_for_review", intent: "calendar.create" }).template,
-    ).toBe("action-draft-card");
+    ).toBe("calendar-draft-card");
+    expect(surfaceStampFor({ status: "submitting", intent: "calendar.create" }).template).toBe(
+      "calendar-submitting-card",
+    );
+    expect(surfaceStampFor({ status: "succeeded", intent: "calendar.create" }).template).toBe(
+      "calendar-result-success",
+    );
+    expect(surfaceStampFor({ status: "failed", intent: "calendar.create" }).template).toBe(
+      "calendar-result-failed",
+    );
+    expect(surfaceStampFor({ status: "superseded", intent: "calendar.create" }).template).toBe(
+      "action-superseded-card",
+    );
   });
 
   // A 批的已知洞：发信路径写词表外的 `executing`。本批不把它塞进 13 值，也不伪造一个状态。

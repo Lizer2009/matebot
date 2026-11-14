@@ -107,6 +107,26 @@ export function surfaceAffordanceFor(input: {
   return reasonKey ? { ...safe, reasonKey } : safe;
 }
 
+/**
+ * The closed-set reason a waiting-approval card may carry.
+ *
+ * `effect.irreversible` stays reserved until a capability declares an amount
+ * threshold. Emitting it with no source is how a card starts explaining itself
+ * wrongly (AC-24).
+ */
+export function surfaceReasonKeyForApproval(source?: {
+  scope?: "user" | "team" | "setting";
+}): SurfaceReasonKey {
+  if (source?.scope === "team") return "rule.team";
+  if (source?.scope === "user") return "rule.user";
+  return "setting.approval";
+}
+
+/** Drop anything that is not one of the four keys. */
+export function closedSurfaceReasonKey(value: string | undefined): SurfaceReasonKey | undefined {
+  return value && REASONS.has(value) ? (value as SurfaceReasonKey) : undefined;
+}
+
 /** Whether the retry path may revive this status. Mirrors `reviveCard`'s whitelist. */
 export function canRetryStatus(status: string): boolean {
   return status === "expired" || status === "failed";

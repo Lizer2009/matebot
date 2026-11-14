@@ -4,10 +4,13 @@ import type { A2uiActionListener, A2uiRendererModules } from "./load-a2ui";
 import { createA2uiProcessor, loadA2uiRenderer, safePlainMarkdown } from "./load-a2ui";
 import "./a2ui-theme.css";
 
+/** Fixed degrade copy. Never `cause.message`, never the surface id (AC-22). */
+export const A2UI_SURFACE_DEGRADE = "This card could not be shown.";
+
 type HostState =
   | { kind: "loading" }
   | { kind: "refused"; reason: string }
-  | { kind: "error"; reason: string }
+  | { kind: "error"; reason: string; hint?: string }
   | {
       kind: "ready";
       mods: A2uiRendererModules;
@@ -30,10 +33,13 @@ export function A2uiSurfaceHost({
   surfaceId,
   messages,
   onAction,
+  fallbackHint,
 }: {
   surfaceId: string;
   messages: unknown[];
   onAction?: A2uiActionListener;
+  /** Key slots/title shown under the fixed degrade sentence. Never a stack. */
+  fallbackHint?: string;
 }) {
   const [state, setState] = useState<HostState>({ kind: "loading" });
   /**
@@ -52,7 +58,13 @@ export function A2uiSurfaceHost({
   useEffect(() => {
     const guard = guardA2uiCatalogMessages(messages);
     if (!guard.ok) {
-      setState({ kind: "refused", reason: guard.reason });
+      // Catalog names and parser text stay off the card (AC-22). The guard still
+      // refuses the tree; only the fixed sentence and key slots are shown.
+      setState({
+        kind: "error",
+        reason: A2UI_SURFACE_DEGRADE,
+        ...(fallbackHint ? { hint: fallbackHint } : {}),
+      });
       return;
     }
 
@@ -72,23 +84,27 @@ export function A2uiSurfaceHost({
         if (!surface) {
           setState({
             kind: "error",
-            reason: `Surface "${surfaceId}" was not created by the message list`,
+            reason: A2UI_SURFACE_DEGRADE,
+            ...(fallbackHint ? { hint: fallbackHint } : {}),
           });
           return;
         }
         drawnSurfaceId.current = surfaceId;
         setState({ kind: "ready", mods, processor, surface });
-      } catch (cause) {
+      } catch {
         if (cancelled) return;
-        const reason = cause instanceof Error ? cause.message : "Failed to load A2UI renderer";
-        setState({ kind: "error", reason });
+        setState({
+          kind: "error",
+          reason: A2UI_SURFACE_DEGRADE,
+          ...(fallbackHint ? { hint: fallbackHint } : {}),
+        });
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [messages, surfaceId, dispatch]);
+  }, [messages, surfaceId, dispatch, fallbackHint]);
 
   if (state.kind === "loading") {
     // The renderer loads in a separate chunk, so there is a moment after the
@@ -115,7 +131,12 @@ export function A2uiSurfaceHost({
         role="status"
         className="matebot-a2ui-theme rounded-[12px] border border-border bg-muted px-4 py-3 text-[14px] text-muted-foreground"
       >
-        {state.reason}
+        <div>{state.reason}</div>
+        {state.kind === "error" && state.hint ? (
+          <div data-testid="a2ui-surface-degrade-hint" className="mt-1 truncate text-foreground">
+            {state.hint}
+          </div>
+        ) : null}
       </div>
     );
   }

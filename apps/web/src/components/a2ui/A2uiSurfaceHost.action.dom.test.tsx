@@ -148,4 +148,50 @@ describe("compiled surface click reaches the action bridge", () => {
     // The bridge is stable, but it always calls the listener the caller passed last.
     expect(next).toHaveBeenCalledTimes(1);
   });
+
+  it("degrades with a fixed sentence and hint, never cause.message (AC-22)", async () => {
+    await act(async () => {
+      root.render(
+        createElement(A2uiSurfaceHost, {
+          surfaceId: "missing-surface",
+          messages: [],
+          fallbackHint: "产品发布",
+        }),
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 80));
+    });
+    const refused = host.querySelector("[data-testid='a2ui-surface-refused']");
+    expect(refused?.textContent).toContain("This card could not be shown.");
+    expect(refused?.textContent).toContain("产品发布");
+    expect(refused?.textContent).not.toMatch(/missing-surface|Failed to load|was not created/i);
+  });
+
+  it("refuses an unknown catalog component with the same sentence, never the name (AC-22)", async () => {
+    await act(async () => {
+      root.render(
+        createElement(A2uiSurfaceHost, {
+          surfaceId: "surf-1",
+          messages: [
+            {
+              version: "v0.9",
+              updateComponents: {
+                surfaceId: "surf-1",
+                components: [{ id: "root", component: "ClickHereToWin" }],
+              },
+            },
+          ],
+          fallbackHint: "产品发布",
+        }),
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 80));
+    });
+    const refused = host.querySelector("[data-testid='a2ui-surface-refused']");
+    expect(refused?.textContent).toContain("This card could not be shown.");
+    expect(refused?.textContent).toContain("产品发布");
+    expect(refused?.textContent).not.toMatch(/ClickHereToWin|Unknown catalog/i);
+  });
 });

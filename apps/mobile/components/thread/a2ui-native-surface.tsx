@@ -2,8 +2,12 @@ import type { A2uiSurfaceBlock } from "@matebot/contracts";
 import {
   cardKindForIntent,
   emailSurfacePhase,
+  interactionCapabilityForIntent,
   needsRecovery,
+  surfaceActionLabel,
+  surfaceCardTitle,
   surfacePhase,
+  surfaceReasonCopy,
   surfaceStaleHint,
   surfaceStatusCopy,
 } from "@matebot/core";
@@ -141,14 +145,14 @@ export function A2uiNativeSurface({
       .then((next) => {
         if (!active) return;
         if (!next || next.length === 0) {
-          setLoadError(t("This card had no content to load."));
+          setLoadError(t("This card could not be shown."));
           return;
         }
         setLoaded(next);
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (!active) return;
-        setLoadError(error instanceof Error ? error.message : t("Could not load this card."));
+        setLoadError(t("This card could not be shown."));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -228,7 +232,14 @@ export function A2uiNativeSurface({
       return err instanceof Error && err.message ? err.message : t("Could not update the draft");
     }
     const effectiveConfirmed = localConfirmedVersion ?? block.confirmedVersion;
-    const title = block.title ?? t("Send email");
+    const emailCapability = block.intent ? interactionCapabilityForIntent(block.intent) : undefined;
+    const heading = emailCapability
+      ? surfaceCardTitle({ capability: emailCapability, title: block.title })
+      : { title: block.title ?? t("Send email"), category: undefined };
+    const title = heading.title;
+    const actionLabel = emailCapability
+      ? surfaceActionLabel({ capability: emailCapability, title: block.title })
+      : undefined;
     // One rule shared with the web card. A finished card already folded above;
     // `action` is the one control this open sheet may still show.
     const { phase, affordance: emailAffordance } = emailSurfacePhase({
@@ -257,7 +268,13 @@ export function A2uiNativeSurface({
         testID="a2ui-native-surface"
         style={{ gap: 8, width: "100%", minWidth: 0, alignSelf: "stretch" }}
       >
-        <Text>{title}</Text>
+        {heading.category ? <Text testID="a2ui-surface-category">{heading.category}</Text> : null}
+        <Text testID="a2ui-surface-title">{title}</Text>
+        {block.reasonKey ? (
+          <Text testID="a2ui-surface-reason">
+            {surfaceCopy(t, surfaceReasonCopy(block.reasonKey))}
+          </Text>
+        ) : null}
         {block.stale ? (
           <Text testID="a2ui-surface-stale-hint">{surfaceCopy(t, surfaceStaleHint())}</Text>
         ) : null}
@@ -387,7 +404,7 @@ export function A2uiNativeSurface({
             />
           ) : action === "submit" ? (
             <A2uiButton
-              label={t("Send")}
+              label={actionLabel ?? t("Send")}
               testID="a2ui-email-send"
               onPress={() => {
                 if (busy) return;
@@ -423,13 +440,23 @@ export function A2uiNativeSurface({
   if (!catalog.ok) {
     return (
       <View testID="a2ui-native-refused">
-        <Text>{catalog.component}</Text>
+        <Text>{t("This card could not be shown.")}</Text>
+        {block.title ? <Text>{block.title}</Text> : null}
       </View>
     );
   }
+  const catalogCapability = block.intent ? interactionCapabilityForIntent(block.intent) : undefined;
+  const catalogHeading = catalogCapability
+    ? surfaceCardTitle({ capability: catalogCapability, title: block.title })
+    : { title: block.title, category: undefined };
   return (
     <View testID="a2ui-native-surface">
-      {block.title ? <Text>{block.title}</Text> : null}
+      {catalogHeading.category ? (
+        <Text testID="a2ui-surface-category">{catalogHeading.category}</Text>
+      ) : null}
+      {catalogHeading.title ? (
+        <Text testID="a2ui-surface-title">{catalogHeading.title}</Text>
+      ) : null}
       {block.stale ? (
         <Text testID="a2ui-surface-stale-hint">{surfaceCopy(t, surfaceStaleHint())}</Text>
       ) : null}
@@ -447,7 +474,6 @@ export function A2uiNativeSurface({
       ) : loadError ? (
         <View testID="a2ui-native-load-error">
           <Text>{t("This card could not be shown.")}</Text>
-          <Text>{loadError}</Text>
           {canReload ? (
             <A2uiButton
               label={t("Try again")}

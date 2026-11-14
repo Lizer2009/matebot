@@ -397,6 +397,24 @@ async function expireDueInteractions(
   return body;
 }
 
+async function inspectLastPresent(botId: string): Promise<{
+  tool: { name?: string; error?: unknown; outcome?: string } | null;
+  queryRows: number;
+}> {
+  const response = await fetch(
+    `${e2eApi}/__e2e/inspect-last-present?botId=${encodeURIComponent(botId)}`,
+  );
+  const body = (await response.json()) as {
+    tool: { name?: string; error?: unknown; outcome?: string } | null;
+    queryRows: number;
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new Error(`inspect-last-present ${response.status}: ${body.error ?? "failed"}`);
+  }
+  return body;
+}
+
 async function inspectSurface(interactionId: string): Promise<SeededSurface> {
   const response = await fetch(
     `${e2eApi}/__e2e/inspect-surface?interactionId=${encodeURIComponent(interactionId)}`,
@@ -826,7 +844,7 @@ test("asking for a schedule produces a result card, never a create draft", async
   // `calendar.query` is cardKind result. present_interaction is the action-draft
   // tool; publishing a query there produced no surface and must not become a
   // create draft (spec registry + §4.2).
-  await send(
+  const botId = await send(
     page,
     `call present_interaction with ${JSON.stringify({
       plan: {
@@ -838,9 +856,20 @@ test("asking for a schedule produces a result card, never a create draft", async
       },
     })}`,
   );
-  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(0, { timeout: 20_000 });
+  await expect(
+    page.getByTestId("message-bot-bubble").getByText("Handled on the card."),
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(0);
   // Shell chrome has a Create control; a refused query must not draw a calendar card.
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
+  // Scripted assistant copy is canned; the production tool result is what must
+  // carry result_intent, and no calendar.query row is stored.
+  const refusal = await inspectLastPresent(botId);
+  expect(refusal.queryRows).toBe(0);
+  expect(refusal.tool).toMatchObject({
+    name: "present_interaction",
+    error: "result_intent",
+  });
   await captureScreenshot(page, testInfo, "a2ui-e2e-07-query-not-create");
 });
 
@@ -1187,4 +1216,42 @@ test("completing Fake Composio OAuth resumes the waiting compose card", async ({
   await expect(page.getByTestId("a2ui-email-subject")).toBeEnabled();
   expect(await cardInteractionId(page)).toBe(interactionId);
   await captureScreenshot(page, testInfo, "a2ui-e2e-complete-resume");
+});
+
+test("gmail and calendar connection cards can wait together (F-02)", async ({ page }, testInfo) => {
+  await signIn(page, testInfo);
+  const emailPlan = JSON.stringify({
+    plan: {
+      intent: "email.compose",
+      title: "Hello",
+      fields: [
+        { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "Hello", required: true, status: "resolved" },
+        { name: "body", value: "Hello there", required: true, status: "resolved" },
+      ],
+      nextStep: "request_approval",
+      riskLevel: "medium",
+    },
+  });
+  const calendarPlan = JSON.stringify({
+    plan: {
+      intent: "calendar.create",
+      title: "Team sync",
+      fields: [
+        { name: "name", value: "Team sync", required: true, status: "resolved" },
+        { name: "start", value: "2026-11-09T09:00:00+08:00", required: true, status: "resolved" },
+        { name: "end", value: "2026-11-09T10:00:00+08:00", required: true, status: "resolved" },
+      ],
+      nextStep: "request_approval",
+      riskLevel: "medium",
+    },
+  });
+  await send(
+    page,
+    `call present_interaction with ${emailPlan} then call present_interaction with ${calendarPlan}`,
+  );
+  await expect(page.getByTestId("a2ui-email-connect")).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(2, { timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-surface-card").nth(1)).toContainText(/Team sync|Calendar/i);
+  await captureScreenshot(page, testInfo, "a2ui-e2e-t321-two-connect");
 });

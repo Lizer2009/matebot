@@ -33,6 +33,8 @@ export type PublishL0aViewInput = {
   expiresAt?: Date | null;
   clientNonce?: string;
   reason?: string;
+  /** Closed-set reason when this view is waiting for approval. */
+  approvalScope?: "user" | "team" | "setting";
 };
 
 export type PublishL0aViewResult = {

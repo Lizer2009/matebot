@@ -154,6 +154,10 @@ const ACTION_BY_TEMPLATE: Record<EmailSurfaceTemplate, SimulatedPrimaryAction> =
   "email-connection-card": "connect",
   "email-reauth-card": "reconnect",
   "email-draft-card": "send",
+  "calendar-draft-card": "send",
+  "calendar-submitting-card": "none",
+  "calendar-result-success": "none",
+  "calendar-result-failed": "retry",
   // A card that is not mail still has one submit; the simulator only renders mail, so this is
   // the generic draft's action rather than a state the simulation reaches.
   "action-draft-card": "send",

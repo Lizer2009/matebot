@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { interactionCapabilityForIntent } from "./interaction-capability.js";
-import { surfaceActionLabel } from "./surface-action-label.js";
+import { labeledSurfaceSchema, surfaceActionLabel } from "./surface-action-label.js";
 
 describe("surfaceActionLabel", () => {
   it("builds the button from a whitelisted verb and the card's own title", () => {
@@ -30,5 +30,16 @@ describe("surfaceActionLabel", () => {
     );
     // No title: the label falls back to the verb alone rather than inventing an object.
     expect(surfaceActionLabel({ capability: email })).toBe("Send");
+  });
+
+  it("stamps the two-part label onto the registered schema the compiler prints", async () => {
+    const email = interactionCapabilityForIntent("email.compose")!;
+    expect(
+      labeledSurfaceSchema(email.schema, { capability: email, title: "产品发布" })?.action,
+    ).toMatchObject({
+      id: "send",
+      label: "Send 产品发布",
+    });
+    expect(labeledSurfaceSchema(email.schema, { capability: email })?.action?.label).toBe("Send");
   });
 });

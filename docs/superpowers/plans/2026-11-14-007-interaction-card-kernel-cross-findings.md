@@ -103,48 +103,48 @@
 
 ## Task 1: F-01 词表、占用、CHECK、迁移
 
-- [ ] **Step 1: 失败测试** PG：生产路径 `updateMany executing` 后再 create collecting 必须失败；`totally_bogus` 必须失败；在途 present 不得第二张卡；迁移夹具 executing+collecting 同 key → 一行开放。
-- [ ] **Step 2: 跑红**
-- [ ] **Step 3: 实现** 上节设计 + migration
-- [ ] **Step 4: 绿**
-- [ ] **Step 5: Commit** `fix(a2ui): keep in-flight cards on the kernel status`
+- [x] **Step 1: 失败测试** PG：生产路径 `updateMany executing` 后再 create collecting 必须失败；`totally_bogus` 必须失败；在途 present 不得第二张卡；迁移夹具 executing+collecting 同 key → 一行开放。
+- [x] **Step 2: 跑红**
+- [x] **Step 3: 实现** 上节设计 + migration
+- [x] **Step 4: 绿**
+- [x] **Step 5: Commit** `fix(a2ui): keep in-flight cards on the kernel status`
 
 ## Task 2: F-02 AC-26 多行
 
-- [ ] **Step 1: 失败测试** 旧 connect.gmail + 新 connect.googlecalendar；email.compose 不得叠卡；正向 connect_app(gmail) 不得被较新 calendar 挡住；ca_1 在较新日历后仍命中；跨 app 不互吞。生产 handler + 隔离 PG，禁止单行 stub。
-- [ ] **Step 2–5:** 红 → findMany 匹配 → 绿 → commit `fix(a2ui): match connection cards by app not newest row`
+- [x] **Step 1: 失败测试** 旧 connect.gmail + 新 connect.googlecalendar；email.compose 不得叠卡；正向 connect_app(gmail) 不得被较新 calendar 挡住；ca_1 在较新日历后仍命中；跨 app 不互吞。生产 handler + 隔离 PG，禁止单行 stub。
+- [x] **Step 2–5:** 红 → findMany 匹配 → 绿 → commit `fix(a2ui): match connection cards by app not newest row`
 
 ## Task 3: F-05 / F-06
 
-- [ ] settle 事务测试（块写失败则行回滚）
-- [ ] 调用**导出的** `projectCapabilityGate`：superseded 卡缺邮箱不得变 needs_connection
-- [ ] 收口 status writer：能走 settle/decide 的不再直写；allowlist 只缩不扩
-- [ ] Commit `fix(a2ui): settle atomically and keep terminals settled`
+- [x] settle 事务测试（块写失败则行回滚）
+- [x] 调用**导出的** `projectCapabilityGate`：superseded 卡缺邮箱不得变 needs_connection
+- [x] 收口 status writer：能走 settle/decide 的不再直写；allowlist 只缩不扩
+- [x] Commit `fix(a2ui): settle atomically and keep terminals settled`
 
 ## Task 4: F-07 / F-08 / F-10 / F-12
 
-- [ ] hist-repro 类单测：choice/app_connect/mcp_approval 投影含状态
-- [ ] PG：complete 连接后 connect.* 为 succeeded；再 complete 幂等；无客户端 RPC
-- [ ] 两账号断开出 `connect.gmail.{id}` 两张
-- [ ] mobile 标题测 category
-- [ ] Commit `fix(a2ui): project L0-A history and settle connect cards on complete`
+- [x] hist-repro 类单测：choice/app_connect/mcp_approval 投影含状态
+- [x] PG：complete 连接后 connect.* 为 succeeded；再 complete 幂等；无客户端 RPC
+- [x] 两账号断开出 `connect.gmail.{id}` 两张
+- [x] mobile 标题测 category
+- [x] Commit `fix(a2ui): project L0-A history and settle connect cards on complete`
 
 ## Task 5: F-03 / F-04 / F-11 / F-13 / F-15 / AC-3 / AC-11
 
-- [ ] calendar 非终态模板表驱动；终态仍 action-superseded 等
-- [ ] compile-surface 用 surfaceActionLabel；恶意标题消毒
-- [ ] AC-8c PG
-- [ ] reasonKey writer 闭集测试
-- [ ] live 断言 result_intent
-- [ ] AC-3 CTE 夹具；AC-11 扫描测量
-- [ ] Commit `fix(a2ui): wire calendar phases, labels, and leftover ACs`
+- [x] calendar 非终态模板表驱动；终态仍 action-superseded 等
+- [x] compile-surface 用 surfaceActionLabel；恶意标题消毒
+- [x] AC-8c PG
+- [x] reasonKey writer 闭集测试
+- [x] live 断言 result_intent
+- [x] AC-3 CTE 夹具；AC-11 扫描测量
+- [x] Commit `fix(a2ui): wire calendar phases, labels, and leftover ACs`
 
 ## Task 6: AC-21 / AC-22 / F-14
 
-- [ ] 同回合：有卡则回复 = nudge，不含收件人复述
-- [ ] Host 错误固定句 + 槽位，无 cause.message / surfaceId 句
-- [ ] messaging 请求带 actions；受控 Slack 表面 Skip 与 deny id；不真发
-- [ ] Commit `fix(a2ui): dedupe copy, degrade safely, format Slack Skip actions`
+- [x] 同回合：有卡则回复 = nudge，不含收件人复述
+- [x] Host 错误固定句 + 槽位，无 cause.message / surfaceId 句
+- [x] messaging 请求带 actions；受控 Slack 表面 Skip 与 deny id；不真发
+- [x] Commit `fix(a2ui): dedupe copy, degrade safely, format Slack Skip actions`
 
 ## Task 7: 验证与审查
 

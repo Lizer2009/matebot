@@ -187,6 +187,7 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
       }
       // Without the answer a later turn sees the question as still open and asks it again.
       if (block.kind === "ask") {
+        if (block.cardStatus) return `[card: ask → ${block.cardStatus}]`;
         if (block.status !== "answered" || !block.answer) return block.text;
         const choice = block.actions?.find((action) => action.id === block.answer);
         return `${block.text}\nAnswer: ${choice?.label ?? block.answer}`;
@@ -200,6 +201,26 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
           missed: "the user did not answer",
         }[block.status];
         return `[you called the user about: ${block.reason}; ${outcome}]${block.status === "answered" ? `\n${block.opening}` : ""}`;
+      }
+      if (
+        block.kind === "choice" ||
+        block.kind === "app_connect" ||
+        block.kind === "connect" ||
+        block.kind === "mcp_approval"
+      ) {
+        const state = "cardStatus" in block && block.cardStatus ? block.cardStatus : "pending";
+        const provider =
+          block.kind === "app_connect"
+            ? block.provider
+            : block.kind === "connect"
+              ? block.name
+              : undefined;
+        const extra = block as unknown as { accountId?: unknown };
+        const account = typeof extra.accountId === "string" ? extra.accountId : undefined;
+        const parts = [block.kind, state];
+        if (provider) parts.push(provider);
+        if (account) parts.push(account);
+        return `[card: ${parts.join(" → ")}]`;
       }
       if (block.kind === "a2ui_surface") {
         const intent = block.intent?.trim() || "a2ui_surface";

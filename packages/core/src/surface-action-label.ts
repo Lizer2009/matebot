@@ -1,3 +1,4 @@
+import type { InteractionSurfaceSchema } from "@matebot/contracts";
 import type { InteractionCapability } from "./interaction-capability.js";
 
 const OBJECT_MAX = 48;
@@ -32,4 +33,20 @@ export function surfaceActionLabel(input: {
   const verb = capitalizeVerb(input.capability.actionVerb);
   const object = sanitizeSurfaceObject(input.title);
   return object ? `${verb} ${object}` : verb;
+}
+
+/**
+ * The registered schema with the two-part button label the hosts actually draw.
+ *
+ * The compiler prints `schema.action.label` as-is. Production callers stamp the
+ * label here so a helper cannot sit unused while every card still says "Send".
+ */
+export function labeledSurfaceSchema(
+  schema: InteractionSurfaceSchema | undefined,
+  input: { capability: InteractionCapability; title?: string },
+): InteractionSurfaceSchema | undefined {
+  if (!schema?.action) return schema;
+  const label = surfaceActionLabel(input);
+  if (!label) return schema;
+  return { ...schema, action: { ...schema.action, label } };
 }

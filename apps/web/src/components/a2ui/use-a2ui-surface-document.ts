@@ -105,17 +105,18 @@ export function useA2uiSurfaceDocument(
         // with no components would otherwise render as a blank region.
         if (!messages || messages.length === 0) {
           setRemote(undefined);
-          setError("This card had no content to load.");
+          setError(null);
         } else {
           setRemote(messages);
         }
         setLoading(false);
       })
-      .catch((err: unknown) => {
+      .catch(() => {
         if (cancelled || !mounted.current) return;
         setRemote(undefined);
         setLoading(false);
-        setError(err instanceof Error ? err.message : "Could not load this card.");
+        // The card already has the fixed AC-22 sentence. Never `cause.message`.
+        setError(null);
       });
     return () => {
       cancelled = true;

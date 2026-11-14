@@ -154,3 +154,32 @@ export async function seedExpiredSurface(
   });
   return inspectSeededSurface(prisma, interactionId);
 }
+
+/** Last present_interaction completion plus whether a query intent ever became a row. */
+export async function inspectLastPresentRefusal(
+  prisma: PrismaClient,
+  botId: string,
+): Promise<{
+  tool: { name?: string; error?: unknown; outcome?: string } | null;
+  queryRows: number;
+}> {
+  const system = asSystem(prisma, "isolated e2e present-refusal inspect");
+  const run = await system.run.findFirst({
+    where: { botId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, threadId: true },
+  });
+  if (!run) return { tool: null, queryRows: 0 };
+  const event = await system.event.findFirst({
+    where: { runId: run.id, type: "agent.tool.completed" },
+    orderBy: { seq: "desc" },
+  });
+  const payload =
+    event?.payload && typeof event.payload === "object"
+      ? (event.payload as { name?: string; error?: unknown; outcome?: string })
+      : null;
+  const queryRows = await system.interaction.count({
+    where: { threadId: run.threadId, intent: "calendar.query" },
+  });
+  return { tool: payload, queryRows };
+}

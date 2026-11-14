@@ -125,6 +125,12 @@ function createDeps(overrides: {
             { id: "m-1", blocks: [{ kind: "text", text: "Hello from your bot" }] },
           ],
       ),
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => {
+        const messages = (overrides.messages ?? [
+          { id: "m-1", blocks: [{ kind: "text", text: "Hello from your bot" }] },
+        ]) as Array<{ id: string; blocks: unknown[] }>;
+        return messages.find((message) => message.id === where.id) ?? null;
+      }),
     },
     messagingIdentity: {
       findUnique: vi.fn(async () => identityRow),
@@ -248,6 +254,41 @@ function createDeps(overrides: {
 }
 
 describe("deliverMessagingOutbound", () => {
+  it("sends Slack Skip/deny actions reconstructed from the source ask (F-14)", async () => {
+    const deps = createDeps({
+      identity: { provider: "slack", dmThreadId: "slack:dm-1" },
+      messages: [
+        {
+          id: "m-ask",
+          blocks: [
+            {
+              kind: "ask",
+              text: "Allow this send?",
+              status: "pending",
+              approvalEffectId: "effect-1",
+              actions: [
+                { id: "allow", label: "Allow" },
+                { id: "deny", label: "Deny" },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    await deliverMessagingOutbound(deps, { runId: "run-1" }, context);
+    expect(deps.sendToThread).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: "slack:dm-1",
+        body: expect.stringMatching(/Skip/),
+        actions: expect.arrayContaining([
+          { id: "allow", label: "Allow" },
+          { id: "deny", label: "Skip" },
+        ]),
+      }),
+      context,
+    );
+  });
+
   it("mirrors a messaging DM run's bot text to the identity's conversation", async () => {
     const deps = createDeps({});
     await deliverMessagingOutbound(deps, { runId: "run-1" }, context);

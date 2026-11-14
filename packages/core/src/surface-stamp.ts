@@ -1,4 +1,4 @@
-import { isEmailComposeIntent } from "./interaction-capability.js";
+import { isCalendarCreateIntent, isEmailComposeIntent } from "./interaction-capability.js";
 import type { InteractionStatus } from "./interaction-status.js";
 import { INTERACTION_STATUSES } from "./interaction-status.js";
 import type { EmailSurfaceLifecycle } from "./interaction-template.js";
@@ -16,6 +16,10 @@ export const SURFACE_TEMPLATES = [
   "email-connection-card",
   "email-reauth-card",
   "email-draft-card",
+  "calendar-draft-card",
+  "calendar-submitting-card",
+  "calendar-result-success",
+  "calendar-result-failed",
   "action-draft-card",
   "action-submitting-card",
   "action-progress-card",
@@ -58,11 +62,17 @@ export function surfaceStampFor(input: { status: string; intent?: string }): {
 } {
   const { status } = input;
   const email = isEmailComposeIntent(input.intent);
+  const calendar = isCalendarCreateIntent(input.intent);
 
   if (status === "submitting" || status === "executing") {
     return {
       lifecycle: status === "submitting" ? "submitting" : "executing",
-      template: status === "submitting" ? "action-submitting-card" : "action-progress-card",
+      template:
+        status === "submitting"
+          ? calendar
+            ? "calendar-submitting-card"
+            : "action-submitting-card"
+          : "action-progress-card",
     };
   }
   if (!KERNEL_STATUSES.has(status)) {
@@ -72,7 +82,11 @@ export function surfaceStampFor(input: { status: string; intent?: string }): {
   }
 
   const kernel = status as InteractionStatus;
-  const draftTemplate: SurfaceTemplate = email ? "email-draft-card" : "action-draft-card";
+  const draftTemplate: SurfaceTemplate = email
+    ? "email-draft-card"
+    : calendar
+      ? "calendar-draft-card"
+      : "action-draft-card";
 
   switch (kernel) {
     case "collecting":
@@ -83,7 +97,7 @@ export function surfaceStampFor(input: { status: string; intent?: string }): {
       return {
         status: kernel,
         lifecycle: "draft",
-        template: email ? "email-connection-card" : "action-draft-card",
+        template: email ? "email-connection-card" : draftTemplate,
       };
     case "unknown":
       return { status: kernel, lifecycle: "unknown", template: "action-reconcile-card" };
@@ -91,9 +105,17 @@ export function surfaceStampFor(input: { status: string; intent?: string }): {
     case "executed":
     case "succeeded":
     case "confirmed":
-      return { status: kernel, lifecycle: "succeeded", template: "action-result-success" };
+      return {
+        status: kernel,
+        lifecycle: "succeeded",
+        template: calendar ? "calendar-result-success" : "action-result-success",
+      };
     case "failed":
-      return { status: kernel, lifecycle: "failed", template: "action-result-failed" };
+      return {
+        status: kernel,
+        lifecycle: "failed",
+        template: calendar ? "calendar-result-failed" : "action-result-failed",
+      };
     case "superseded":
       return { status: kernel, lifecycle: "draft", template: "action-superseded-card" };
     case "expired":

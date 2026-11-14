@@ -99,6 +99,19 @@ describe("surfaceAffordanceFor", () => {
     expect(surfaceAffordanceFor({ status: "ready_for_review" }).reasonKey).toBeUndefined();
   });
 
+  it("writes only closed-set keys from the approval source (F-13)", async () => {
+    const { closedSurfaceReasonKey, surfaceReasonKeyForApproval } = await import(
+      "./surface-affordance.js"
+    );
+    expect(surfaceReasonKeyForApproval({ scope: "user" })).toBe("rule.user");
+    expect(surfaceReasonKeyForApproval({ scope: "team" })).toBe("rule.team");
+    expect(surfaceReasonKeyForApproval({ scope: "setting" })).toBe("setting.approval");
+    expect(surfaceReasonKeyForApproval()).toBe("setting.approval");
+    expect(closedSurfaceReasonKey("effect.irreversible")).toBe("effect.irreversible");
+    expect(closedSurfaceReasonKey("click here to win")).toBeUndefined();
+    expect(closedSurfaceReasonKey("effect.amount")).toBeUndefined();
+  });
+
   it("allows a retry only where the kernel does", () => {
     expect(canRetryStatus("expired")).toBe(true);
     expect(canRetryStatus("failed")).toBe(true);

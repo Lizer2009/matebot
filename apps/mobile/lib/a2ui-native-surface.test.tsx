@@ -104,6 +104,12 @@ describe("native A2UI surface", () => {
     expect(surface?.querySelector('[data-testid="a2ui-email-send"]')).not.toBeNull();
   });
 
+  it("shows the same category heading web uses (F-12)", () => {
+    render(<A2uiNativeSurface block={{ ...block, title: "产品发布" }} />);
+    expect(text("a2ui-surface-category")).toBe("Email");
+    expect(text("a2ui-surface-title")).toBe("产品发布");
+  });
+
   it("hints that a live card may have a newer version without hiding Send", () => {
     render(<A2uiNativeSurface block={{ ...block, stale: true, status: "ready_for_review" }} />);
     expect(text("a2ui-surface-stale-hint")).toBe("There may be a newer version");
@@ -543,7 +549,8 @@ describe("native A2UI surface", () => {
         />,
       ),
     );
-    expect(text("a2ui-native-refused")).toBe("EvilWidget");
+    expect(text("a2ui-native-refused")).toContain("This card could not be shown.");
+    expect(text("a2ui-native-refused")).not.toMatch(/EvilWidget/i);
   });
 
   const resultBlock = {

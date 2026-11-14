@@ -5,8 +5,10 @@ import {
   interactionCapabilityForIntent,
   isActionIntent,
   needsRecovery,
+  surfaceActionLabel,
   surfaceCardTitle,
   surfacePhase,
+  surfaceReasonCopy,
   surfaceStaleHint,
   surfaceStatusCopy,
 } from "@matebot/core";
@@ -193,6 +195,14 @@ export function A2uiSurfaceCard({
             {summary}
           </div>
         ) : null}
+        {block.reasonKey ? (
+          <div
+            data-testid="a2ui-surface-reason"
+            className="mt-0.5 truncate text-[13px] leading-[18px] text-muted-foreground"
+          >
+            {surfaceCopy(surfaceReasonCopy(block.reasonKey))}
+          </div>
+        ) : null}
       </div>
       <div className="px-5 py-4">
         {emailCompose ? (
@@ -204,6 +214,9 @@ export function A2uiSurfaceCard({
             lifecycle={block.lifecycle}
             status={status}
             action={affordance.action}
+            actionLabel={
+              capability ? surfaceActionLabel({ capability, title: block.title }) : undefined
+            }
             error={block.error}
             fields={emailFieldsFromSurfaceMessages(document.messages)}
             {...(block.senderLabel ? { senderLabel: block.senderLabel } : {})}
@@ -225,6 +238,7 @@ export function A2uiSurfaceCard({
               surfaceId={block.surfaceId}
               messages={document.messages}
               onAction={affordance.action === "none" ? undefined : onAction}
+              fallbackHint={heading.title}
             />
             {/*
               An early card stored a title and two lines of text, and nothing to press.
@@ -270,7 +284,7 @@ export function A2uiSurfaceCard({
           <div
             data-testid="a2ui-surface-placeholder"
             data-loading={document.loading ? "true" : "false"}
-            data-error={document.error ?? undefined}
+            data-error={document.error ? "true" : undefined}
             role="status"
             aria-live="polite"
             className="flex flex-col gap-2 text-[14px] text-muted-foreground"
@@ -284,11 +298,6 @@ export function A2uiSurfaceCard({
                 <span>
                   <Trans>This card could not be shown.</Trans>
                 </span>
-                {document.error ? (
-                  <span data-testid="a2ui-surface-placeholder-reason" className="text-[13px]">
-                    {document.error}
-                  </span>
-                ) : null}
                 <div>
                   <Button variant="secondary" onClick={() => document.reload()}>
                     <Trans>Try again</Trans>

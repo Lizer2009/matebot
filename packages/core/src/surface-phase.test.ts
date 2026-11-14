@@ -26,7 +26,7 @@ describe("surfacePhase", () => {
     );
     // A calendar card has no mailbox card to show; it stays an ordinary draft.
     expect(surfacePhase({ intent: "calendar.create", status: "needs_connection" }).phase).toBe(
-      "action-draft-card",
+      "calendar-draft-card",
     );
   });
 

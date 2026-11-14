@@ -28,6 +28,7 @@ export function EmailComposeEditor({
   lifecycle,
   status,
   action: actionProp,
+  actionLabel,
   error: surfaceError,
   fields,
   senderLabel,
@@ -51,6 +52,8 @@ export function EmailComposeEditor({
   status?: string;
   /** The one control this card may still show. The host decides; this editor does not guess. */
   action?: SurfaceActionKind;
+  /** Two-part label from `surfaceActionLabel`. Falls back to Send. */
+  actionLabel?: string;
   error?: string;
   fields: EmailDraftFields;
   /** The connection's own label for the read-only "sending from" row. Never an address. */
@@ -419,7 +422,7 @@ export function EmailComposeEditor({
                   .finally(() => setBusy(false));
               }}
             >
-              {t`Send`}
+              {actionLabel ?? t`Send`}
             </Button>
           ) : null}
         </div>

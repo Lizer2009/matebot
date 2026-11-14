@@ -80,6 +80,23 @@ describe("compileInteractionSurface", () => {
     expect(label).toMatchObject({ component: "Text", text: "Send" });
   });
 
+  it("prints the two-part action label the kernel stamped onto the schema (F-04)", async () => {
+    const result = await compileInteractionSurface({
+      schema: {
+        ...schema,
+        action: { id: "send", label: "Send 产品发布", requiresRevision: true },
+      },
+      values,
+      surfaceId: "s-1",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const components = componentsOf(result.messages);
+    const buttons = components.filter((component) => component.component === "Button");
+    const label = byId(components, String(buttons[0]?.child));
+    expect(label).toMatchObject({ component: "Text", text: "Send 产品发布" });
+  });
+
   it("renders a choice field as ChoicePicker with declared options only", async () => {
     const result = await compileInteractionSurface({
       surfaceId: "s-choice",
