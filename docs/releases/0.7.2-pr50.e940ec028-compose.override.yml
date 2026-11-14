@@ -1,0 +1,19 @@
+# Parent-ops overlay for matebottest. Not applied by this agent.
+# Record the running supervisor digest with docker inspect BEFORE switching, then:
+#   SUPERVISOR_IMAGE='ghcr.io/lizer2009/matebot/app@sha256:<inspected>' \
+#     docker compose -f docker-compose.images.yml -f 0.7.2-pr50.e940ec028-compose.override.yml up -d
+# Do not add an updater service. Do not retarget postgres, volumes, or nginx.
+
+services:
+  migrate:
+    image: ghcr.io/lizer2009/matebot/app@sha256:d91bb1b118f0b69fcb2f3ee06b67cbd76a6451fdd242bc60bb17f2daeee196fe
+  api:
+    image: ghcr.io/lizer2009/matebot/app@sha256:d91bb1b118f0b69fcb2f3ee06b67cbd76a6451fdd242bc60bb17f2daeee196fe
+  web:
+    image: ghcr.io/lizer2009/matebot/app@sha256:d91bb1b118f0b69fcb2f3ee06b67cbd76a6451fdd242bc60bb17f2daeee196fe
+  worker:
+    image: ghcr.io/lizer2009/matebot/app@sha256:d91bb1b118f0b69fcb2f3ee06b67cbd76a6451fdd242bc60bb17f2daeee196fe
+  computer:
+    image: ghcr.io/lizer2009/matebot/computer@sha256:a46ead6ed0778080ff588fb51eeebd21f2c5db07da9843931b601a6d2ec4d69f
+  supervisor:
+    image: ${SUPERVISOR_IMAGE:?inspect the running supervisor digest first; do not default this to the new app image}

@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "channel": "prerelease",
+  "releasedAt": "2026-11-14T05:58:40Z",
+  "source": {
+    "repository": "https://github.com/Lizer2009/matebot",
+    "branch": "fix/tooling-defects-a2ui-presentation",
+    "pullRequest": 50,
+    "testSource": "e940ec028d07716da5da08686f92013a44e7a29a",
+    "packagingCommit": "563beaf684f1a85b1a27c079c1d46a9c6a552996",
+    "releaseTag": "v0.7.2-pr50.e940ec028",
+    "releaseTagCommit": "563beaf684f1a85b1a27c079c1d46a9c6a552996",
+    "packagingDiffFromTestSource": {
+      "files": ["apps/desktop/package.json"],
+      "fromVersion": "0.7.1-pr49.5daee6f29",
+      "toVersion": "0.7.2-pr50.e940ec028",
+      "note": "The tag names the test source. Image GIT_SHA and OCI revision are the packaging commit."
+    }
+  },
+  "previous": {
+    "fieldAppTag": "sha-8645af35-cal",
+    "fieldOciRevision": "027c9e81e2d593362fbdad7b1507a9d8ef285117",
+    "fieldHealthGitSha": "8645af35-cal",
+    "fieldNote": "OCI revision and health GIT_SHA are not the same source. Rollback from docker inspect RepoDigests, not from either SHA guessed as a GHCR tag.",
+    "desktopInField": "0.7.1-pr49.5daee6f29-cal",
+    "composeProject": "matebottest"
+  },
+  "versions": {
+    "desktop": "0.7.2-pr50.e940ec028",
+    "android": "untouched"
+  },
+  "images": {
+    "registry": "ghcr.io/lizer2009/matebot",
+    "tag": "0.7.2-pr50.e940ec028",
+    "shaTag": "sha-563beaf684f1a85b1a27c079c1d46a9c6a552996",
+    "platforms": ["linux/amd64", "linux/arm64"],
+    "mediaType": "application/vnd.oci.image.index.v1+json",
+    "app": {
+      "manifestDigest": "sha256:d91bb1b118f0b69fcb2f3ee06b67cbd76a6451fdd242bc60bb17f2daeee196fe",
+      "revisionLabel": "563beaf684f1a85b1a27c079c1d46a9c6a552996",
+      "gitShaEnv": "563beaf684f1a85b1a27c079c1d46a9c6a552996",
+      "created": "2026-11-14T05:51:18.463Z",
+      "amd64": "sha256:543a0841ab1367238afe39a92a45bbf35360f322543c4331edfdd1c75e2033e5",
+      "arm64": "sha256:3156706dac8ea1f34eee73445b54a122953967eeafebd0aefff79190b296aceb",
+      "attestationManifests": [
+        "sha256:76bf2367f728afc41adf894be02e25870cb5ef9a0618016c0e8b322db29b84aa",
+        "sha256:16c0db9c803dc16d1f1175bc8a4bf1328e3c27e42ee368b9e9c4bffc1bbd5ba0"
+      ],
+      "slsa": "https://github.com/Lizer2009/matebot/attestations/sha256:d91bb1b118f0b69fcb2f3ee06b67cbd76a6451fdd242bc60bb17f2daeee196fe"
+    },
+    "computer": {
+      "manifestDigest": "sha256:a46ead6ed0778080ff588fb51eeebd21f2c5db07da9843931b601a6d2ec4d69f",
+      "revisionLabel": "563beaf684f1a85b1a27c079c1d46a9c6a552996",
+      "created": "2026-11-14T05:51:14.392Z",
+      "slsa": "https://github.com/Lizer2009/matebot/attestations/sha256:a46ead6ed0778080ff588fb51eeebd21f2c5db07da9843931b601a6d2ec4d69f"
+    },
+    "updater": {
+      "manifestDigest": "sha256:032e8fda94c4f3fe1081c60cfef598bfc73a3563b06b5a244e0435d99b47dd5a",
+      "revisionLabel": "563beaf684f1a85b1a27c079c1d46a9c6a552996",
+      "created": "2026-11-14T05:51:41.189Z",
+      "slsa": "https://github.com/Lizer2009/matebot/attestations/sha256:032e8fda94c4f3fe1081c60cfef598bfc73a3563b06b5a244e0435d99b47dd5a",
+      "doNotStart": true
+    },
+    "floatingTagsMoved": [],
+    "floatingTagsVerified": {
+      "edge": "sha-027c9e81e2d593362fbdad7b1507a9d8ef285117",
+      "latest": "v0.6.0 / sha-6c519895ad1f98a4dc5b1be8aafc7c4e94ae5027"
+    },
+    "notes": [
+      "Pin by digest. Do not pin edge, latest, or the version tag.",
+      "Supervisor is not a separate image; pin it to the currently running app digest from docker inspect.",
+      "The updater image is published because the workflow always does; do not add it to matebottest.",
+      "PR workflow 43563370460 does not push. Packaging used existing runs 43563369404 and 43563369413 only."
+    ]
+  },
+  "windows": {
+    "release": "https://github.com/Lizer2009/matebot/releases/tag/v0.7.2-pr50.e940ec028",
+    "prerelease": true,
+    "latest": false,
+    "signed": false,
+    "signingEvidence": "electron-builder -c.win.signExecutable=false; PE has no PKCS7/Authenticode OIDs",
+    "fileVersionString": "0.7.2-pr50.e940ec028",
+    "nsisNumericReason": "Patch 0.7.2 so PE 0.7.2.0 > field 0.7.1.0 > 0.7.0.0",
+    "directUrl": "https://github.com/Lizer2009/matebot/releases/download/v0.7.2-pr50.e940ec028/Matebot-Setup-0.7.2-pr50.e940ec028.exe",
+    "packagedCloudOrigin": "https://app.matebot.dev",
+    "installer": {
+      "name": "Matebot-Setup-0.7.2-pr50.e940ec028.exe",
+      "bytes": 135344054,
+      "sha256": "1fb2509e8c6904fb868a5c292d085e8b450cd5d521a82181e0001e0331befa58",
+      "sha256VerifiedByDownload": true
+    },
+    "blockmap": {
+      "name": "Matebot-Setup-0.7.2-pr50.e940ec028.exe.blockmap",
+      "bytes": 142095,
+      "sha256": "d0af6baaf4759ae03caf221e4a0ac71775d60b17d7d861684ba56c10c338f848"
+    },
+    "checksums": {
+      "name": "SHA256SUMS",
+      "bytes": 223,
+      "sha256": "64a6500f5b0004e8edd72565d6c10d0b19288e25faf6c97f4c805a3c56a849d9"
+    },
+    "updateFeedIncluded": false,
+    "doNotUseAstroLatestHandler": true,
+    "githubReleasesLatestStill": "android"
+  },
+  "android": {
+    "untouched": true,
+    "release": "https://github.com/Lizer2009/matebot/releases/tag/android",
+    "releaseTitle": "Matebot for Android 1.0.18 (18) from android-pr42.7",
+    "apkSha256": "452bc34ebb9acbe491bb4f736b1c8213dfd4bd47e7ee2ce77355d0ac823bf4ca"
+  },
+  "upgrade": {
+    "composeProject": "matebottest",
+    "stackDir": "/home/lizer05/matebot-test",
+    "rolesToReplace": ["migrate", "api", "web", "worker", "computer"],
+    "rolesToKeep": ["postgres", "cf-proxy", "cloudflared", "volumes"],
+    "supervisor": "pin to the digest recorded by docker inspect before the switch; do not let MATEBOT_IMAGE_TAG move it",
+    "doNotStartUpdater": true,
+    "doNotDownRakazo": true,
+    "doNotPrune": true,
+    "keepNginxServerNames": true,
+    "optionalWindowsLocalEntry": "copy the new exe into the existing $DOWNLOADS and change only the Windows 302 filename on test.matebot.dev; leave Android",
+    "prismaMigrationsAdded": [
+      "20261126120000_interaction_card_key",
+      "20261127120000_interaction_events",
+      "20261128120000_bot_drafts_disabled",
+      "20261129120000_interaction_status_check"
+    ],
+    "mixedRun": "After CHECK, old writers storing executing fail. Migrate, then cut over. Not zero-downtime.",
+    "rollbackAfterCheck": "No reverse migration. Do not reattach 8645af35-cal to a CHECK-constrained database."
+  },
+  "gates": {
+    "bwideOnTestSource": {
+      "sha": "e940ec028d07716da5da08686f92013a44e7a29a",
+      "files": "979 passed | 68 skipped",
+      "tests": "17019 passed | 455 skipped",
+      "durationSeconds": 688.93,
+      "exit": 0,
+      "log": "t322-bwide.log footer only; vitest was not line-buffered"
+    },
+    "isolatedPg": { "files": 9, "tests": 61, "exit": 0 },
+    "live": { "passed": 22, "failed": 0, "exit": 0 },
+    "types": { "exit": 0 },
+    "lint": { "exit": 0, "warnings": 32, "infos": 24 },
+    "releasePrerelease": {
+      "runId": 43563369404,
+      "conclusion": "success"
+    },
+    "publishServerImage": {
+      "runId": 43563369413,
+      "conclusion": "success"
+    }
+  },
+  "notVerified": [
+    "Not deployed to the field host.",
+    "No Windows click-through; the user downloads the direct GitHub asset after parent ops switches .5.",
+    "No native iOS.",
+    "No live model, provider, Slack, or OAuth.",
+    "Field Windows /api/download 500 was not re-probed after this package; nginx was not changed here."
+  ]
+}
