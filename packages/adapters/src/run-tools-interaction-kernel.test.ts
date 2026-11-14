@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 // The card kernel owns the "is this a new card or the one already on screen" decision, so
 // `present_interaction` must hand it the plan and let it look. This suite isolates that one
-// observable: `publishOrAmend` is called, and no local `interaction.findFirst` runs.
+// observable: `publishOrAmend` is called, and `publishInteractionSurface` is not.
 //
 // (The brief named this file `run-tools-interaction-amend.test.ts`, but that path already holds
 // the `edit_interaction` amendment suite, so this one lives beside it instead.)
@@ -37,7 +37,7 @@ const plan = {
 
 describe("present_interaction", () => {
   // The regression this task closes: a second present must not create a second card.
-  it("publishes or amends through one call, never through a local draft lookup", async () => {
+  it("publishes or amends through one call, never a direct surface write", async () => {
     vi.stubEnv("FEATURE_A2UI", "1");
     publish.mockReset();
     publishDirect.mockClear();
@@ -74,8 +74,9 @@ describe("present_interaction", () => {
 
     expect(publish).toHaveBeenCalledTimes(1);
     expect(publishDirect).not.toHaveBeenCalled();
-    // The kernel resolves the card; a local findFirst would be a second source of truth.
-    expect(findFirst).not.toHaveBeenCalled();
+    // AC-26 reverse may look up a live connect.* view. A miss still publishes
+    // through the kernel; the lookup is not a second compose-draft source of truth.
+    expect(findFirst).toHaveBeenCalled();
     // The capability stamp still flows through: the kernel does not decide it.
     expect(publish.mock.calls[0]![1]).toMatchObject({
       spaceId: "sp1",
