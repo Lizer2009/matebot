@@ -200,7 +200,7 @@ export function presentResultDeps(ctx: RunContext): PresentResultDeps {
  * in scope, and the newest is tried first, so the file the user just handed over
  * is the one read.
  */
-async function attachedFileArtifactIds(
+export async function attachedFileArtifactIds(
   sourceMessageId: string | null | undefined,
   deps: RunContext["deps"],
 ): Promise<string[]> {

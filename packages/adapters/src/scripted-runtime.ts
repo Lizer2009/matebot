@@ -222,21 +222,42 @@ export function inferScript(
       ];
     }
   }
-  const a2ui =
-    /^(?:@\S+\s+)?call (present_interaction|present_result|refresh_result|edit_interaction|cancel_interaction) with (\{[\s\S]*\})/.exec(
-      words.trim(),
+  const a2uiName =
+    "present_interaction|present_result|refresh_result|edit_interaction|cancel_interaction";
+  const parseA2uiCall = (text: string) => {
+    const match = new RegExp(`^(?:@\\S+\\s+)?call (${a2uiName}) with (\\{[\\s\\S]*\\})$`).exec(
+      text.trim(),
     );
-  if (a2ui) {
-    const args = jsonObject(a2ui[2]!);
-    if (args) {
+    if (!match) return undefined;
+    const args = jsonObject(match[2]!);
+    return args ? { name: match[1]!, args } : undefined;
+  };
+  const chained = words.trim().split(/\s+then call\s+/i);
+  if (chained.length >= 2) {
+    const first = parseA2uiCall(chained[0]!);
+    const rest = chained.slice(1).map((part) => parseA2uiCall(`call ${part}`));
+    const toolCalls = [first, ...rest].filter(
+      (call): call is { name: string; args: Record<string, unknown> } => Boolean(call),
+    );
+    if (toolCalls.length >= 2) {
       return [
         {
           assistant: "Handled on the card.",
-          toolCalls: [{ name: a2ui[1]!, args }],
+          toolCalls,
           complete: true,
         },
       ];
     }
+  }
+  const a2ui = parseA2uiCall(words.trim());
+  if (a2ui) {
+    return [
+      {
+        assistant: "Handled on the card.",
+        toolCalls: [a2ui],
+        complete: true,
+      },
+    ];
   }
   if (lower.includes("can you check my gmail inbox?")) {
     return [

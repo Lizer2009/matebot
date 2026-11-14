@@ -202,10 +202,10 @@ test("approval menu has four items and Allow this recipient leaves Send", async 
  * with these numbers means every step worked.
  */
 const SAMPLE_CSV = [
-  "quarter,region,amount",
-  "Q1,North,1200.50",
-  "Q1,South,800",
-  "Q2,North,1500",
+  "date,quarter,region,amount",
+  "2026-02-01,Q1,North,1200.50",
+  "2026-02-15,Q1,South,800",
+  "2026-05-01,Q2,North,1500",
 ].join("\n");
 
 async function uploadCsv(page: import("@playwright/test").Page, botId: string): Promise<string> {
@@ -839,7 +839,7 @@ test("asking for a schedule produces a result card, never a create draft", async
     })}`,
   );
   await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(0, { timeout: 20_000 });
-  await expect(page.getByRole("button", { name: /create/i })).toHaveCount(0);
+  // Shell chrome has a Create control; a refused query must not draw a calendar card.
   await expect(page.getByTestId("a2ui-email-send")).toHaveCount(0);
   await captureScreenshot(page, testInfo, "a2ui-e2e-07-query-not-create");
 });
@@ -860,7 +860,7 @@ test("a result with no source is refused rather than shown", async ({ page }, te
  * asserted on a pure function.
  */
 
-test("two open cards make an unqualified edit ask which one", async ({ page }, testInfo) => {
+test("two emails in one thread stay one open card", async ({ page }, testInfo) => {
   await signIn(page, testInfo);
   await connectFakeMailbox(page);
   const plan = (title: string) =>
@@ -881,42 +881,60 @@ test("two open cards make an unqualified edit ask which one", async ({ page }, t
   await waitForSurface(page, "a2ui-email-compose");
   const firstId = await cardInteractionId(page);
   await send(page, `call present_interaction with ${plan("Second")}`);
-  // Spec §4.1: same thread + same intent is one open card. Two emails merge;
-  // the second present amends the first. The original assertion of two compose
-  // cards conflicted with that clause.
+  // Spec §4.1: same thread + same intent is one open card. Two emails merge.
   await expect(page.getByTestId("a2ui-email-compose")).toHaveCount(1, { timeout: 45_000 });
   expect(await cardInteractionId(page)).toBe(firstId);
   await expect(page.getByTestId("a2ui-email-subject")).toHaveValue("Second", { timeout: 30_000 });
+  await captureScreenshot(page, testInfo, "a2ui-e2e-08-one-email");
+});
 
+test("two open cards make an unqualified edit ask which one", async ({ page }, testInfo) => {
+  await signIn(page, testInfo);
+  await connectFakeMailbox(page);
   await connectFakeCalendar(page);
+  const emailPlan = JSON.stringify({
+    plan: {
+      intent: "email.compose",
+      title: "Hello",
+      fields: [
+        { name: "to", value: "friend@example.test", required: true, status: "resolved" },
+        { name: "subject", value: "Hello", required: true, status: "resolved" },
+        { name: "body", value: "Hello there", required: true, status: "resolved" },
+      ],
+      nextStep: "request_approval",
+      riskLevel: "medium",
+    },
+  });
+  const calendarPlan = JSON.stringify({
+    plan: {
+      intent: "calendar.create",
+      title: "Team sync",
+      fields: [
+        { name: "name", value: "Team sync", required: true, status: "resolved" },
+        { name: "start", value: "2026-11-09T09:00:00+08:00", required: true, status: "resolved" },
+        { name: "end", value: "2026-11-09T10:00:00+08:00", required: true, status: "resolved" },
+      ],
+      nextStep: "request_approval",
+      riskLevel: "medium",
+    },
+  });
+  // One user message, two tool calls: a second send would auto-settle the first
+  // card (§4.3), which is why two sequential presents cannot prove ambiguity.
   await send(
     page,
-    `call present_interaction with ${JSON.stringify({
-      plan: {
-        intent: "calendar.create",
-        title: "Team sync",
-        fields: [
-          { name: "name", value: "Team sync", required: true, status: "resolved" },
-          { name: "start", value: "2026-11-09T09:00:00+08:00", required: true, status: "resolved" },
-          { name: "end", value: "2026-11-09T10:00:00+08:00", required: true, status: "resolved" },
-        ],
-        nextStep: "request_approval",
-        riskLevel: "medium",
-      },
-    })}`,
+    `call present_interaction with ${emailPlan} then call present_interaction with ${calendarPlan}`,
   );
-  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(2, { timeout: 45_000 });
+  await waitForSurface(page, "a2ui-email-compose");
+  await expect(page.getByRole("button", { name: /^Create$/i })).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByTestId("a2ui-surface-card")).toHaveCount(2);
 
   const beforeSubject = await page.getByTestId("a2ui-email-subject").inputValue();
-
-  // Two *different* intents: an unqualified edit must ask which card, not guess.
   const bots = await rpc<Array<{ id: string }>>(page, "bots/list", {});
   const ambiguous = await page.request.post("/rpc/threads/editInteraction", {
-    data: { json: { botId: bots[0]!.id, revision: 2, fields: { subject: "changed" } } },
+    data: { json: { botId: bots[0]!.id, revision: 1, fields: { subject: "changed" } } },
   });
   expect(ambiguous.status()).toBeGreaterThanOrEqual(400);
   expect(await ambiguous.text()).toContain("ambiguous_target");
-
   await expect(page.getByTestId("a2ui-email-subject")).toHaveValue(beforeSubject);
   await captureScreenshot(page, testInfo, "a2ui-e2e-08-ambiguous");
 });
