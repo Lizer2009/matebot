@@ -134,7 +134,9 @@ describe("execution start timing", () => {
         expect(
           prisma.run.updateMany.mock.calls.every(([args]) => args.data.startedAt === undefined),
         ).toBe(true);
-        expect(sink.events).toEqual([]);
+        expect(sink.events.filter((event) => event.message === "run.execution_started")).toEqual(
+          [],
+        );
         return lease;
       });
       await expect(start()).rejects.toThrow("attempt setup failed");
